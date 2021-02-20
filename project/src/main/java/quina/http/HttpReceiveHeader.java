@@ -1,0 +1,358 @@
+package quina.http;
+
+import java.util.Iterator;
+import java.util.Map;
+
+import quina.util.collection.IndexMap;
+import quina.util.collection.ObjectList;
+import quina.util.collection.TreeKey;
+
+/**
+ * Http受信時のヘッダ管理用オブジェクト.
+ *
+ * サーバモードの場合はrequest時のヘッダ情報.
+ *
+ * クライアントモードの場合はresponse時のヘッダ情報.
+ *
+ * 内部的には「HttpIndexHeaders」の固定Httpヘッダを管理し
+ * put及びremove時の条件をIndexMapで管理します.
+ */
+public class HttpReceiveHeader implements Header {
+
+	// 追加条件.
+	private static final int MODE_PUT = 1;
+	// 削除条件.
+	private static final int MODE_REMOVE = 2;
+
+	// 追加・削除用のHeaderValue.
+	private static final class PutDeleteValue {
+		private final int mode;
+		private final String value;
+
+		public PutDeleteValue(int mode, String value) {
+			this.mode = mode;
+			this.value = value;
+		}
+
+		public int getMode() {
+			return mode;
+		}
+
+		public String getValue() {
+			return value;
+		}
+
+		@Override
+		public String toString() {
+			return new StringBuilder("mode: ")
+					.append((mode == MODE_PUT ? "PUT" : "REMOVE"))
+					.append(", value: ")
+					.append(value).toString();
+		}
+	}
+
+	// PutDelete用ヘッダ.
+	private IndexMap<Object, PutDeleteValue> putRemoveHeader;
+
+	// HttpIndexHeader.
+	private HttpIndexHeaders httpIndexHeaders;
+
+	// 現在の有効なキー情報群.
+	private String[] keys = null;
+
+	/**
+	 * コンストラクタ.
+	 * @param h
+	 */
+	public HttpReceiveHeader(HttpIndexHeaders h) {
+		httpIndexHeaders = h;
+	}
+
+	/**
+	 * コンストラクタ.
+	 * @param headerBin ヘッダ情報のバイナリを設定します.
+	 */
+	public HttpReceiveHeader(final byte[] headerBin) {
+		httpIndexHeaders = new HttpIndexHeaders(headerBin);
+	}
+
+	@Override
+	public void clear() {
+		// httpIndexHeadersの内容を削除としてputRemoveHeaderに登録する.
+		putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+		int len = httpIndexHeaders.size();
+		for(int i = 0; i < len; i ++) {
+			putRemoveHeader.put(new TreeKey(httpIndexHeaders.getKey(i)),
+				new PutDeleteValue(MODE_REMOVE, null));
+		}
+		// 有効なキー情報を初期化.
+		keys = null;
+	}
+
+	@Override
+	public String put(String key, String value) {
+		if(key == null || value == null) {
+			return null;
+		}
+		String ret;
+		// put及びremove条件が存在しない場合.
+		if(putRemoveHeader == null) {
+			putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+			ret = httpIndexHeaders.get(key);
+			putRemoveHeader.put(
+				new TreeKey((String)key),
+				new PutDeleteValue(MODE_PUT, value));
+			// 有効なキー情報を初期化.
+			keys = null;
+		// put及びremove条件の条件とhttpIndexHeadersで処理する.
+		} else {
+			PutDeleteValue val = null;
+			val = putRemoveHeader.get(key);
+			// put及びremove条件の条件が存在する場合.
+			if(val != null) {
+				ret = val.getValue();
+			// 存在しない場合はhttpIndexHeaders内容を返却値とする.
+			} else {
+				ret = httpIndexHeaders.get(key);
+			}
+			val = new PutDeleteValue(MODE_PUT, value);
+			putRemoveHeader.put(new TreeKey((String)key), val);
+			// 有効なキー情報を初期化.
+			keys = null;
+		}
+		return ret;
+	}
+
+	@Override
+	public String remove(Object key) {
+		if(key == null) {
+			return null;
+		}
+		// put及びremove条件が存在しない場合.
+		if(putRemoveHeader == null) {
+			// httpIndexHeadersにキー情報が存在しない場合.
+			if(!httpIndexHeaders.contains((String)key)) {
+				return null;
+			}
+			// 削除情報をセット.
+			putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+			putRemoveHeader.put(
+				new TreeKey((String)key),
+				new PutDeleteValue(MODE_REMOVE, null)
+				);
+			// 有効なキー情報を初期化.
+			keys = null;
+			return httpIndexHeaders.get((String)key);
+		}
+		// put及びremove条件から今回のキー情報を取得.
+		PutDeleteValue val = putRemoveHeader.get(key);
+		if(val != null) {
+			// put条件が存在する場合は削除.
+			if(val.getMode() == MODE_PUT) {
+				putRemoveHeader.remove(key);
+				// httpIndexHeadersに存在する場合.
+				if(httpIndexHeaders.contains((String)key)) {
+					// 削除条件を登録.
+					putRemoveHeader.put(
+						new TreeKey((String)key),
+						new PutDeleteValue(MODE_REMOVE, null)
+						);
+				}
+				// 有効なキー情報を初期化.
+				keys = null;
+				// put及びremove条件内容が０件の場合.
+				if(putRemoveHeader.size() == 0) {
+					// クリア.
+					putRemoveHeader = null;
+				}
+				return val.getValue();
+			// 削除条件が既に存在する場合は処理しない.
+			} else if(val.getMode() == MODE_REMOVE) {
+				return null;
+			}
+		}
+		// httpIndexHeadersにキー情報が存在しない場合.
+		if(!httpIndexHeaders.contains((String)key)) {
+			return null;
+		}
+		// 削除条件を登録.
+		putRemoveHeader.put(
+			new TreeKey((String)key),
+			new PutDeleteValue(MODE_REMOVE, null)
+			);
+		// 有効なキー情報を初期化.
+		keys = null;
+		return httpIndexHeaders.get((String)key);
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void putAll(Map<? extends String, ? extends String> m) {
+		if(m == null || m.size() == 0) {
+			return;
+		} else if(putRemoveHeader == null) {
+			putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+		}
+		Entry<String, String> e;
+		Iterator<?> itr = m.entrySet().iterator();
+		while(itr.hasNext()) {
+			e = (Entry)itr.next();
+			putRemoveHeader.put(
+				new TreeKey(e.getKey()),
+				new PutDeleteValue(MODE_PUT, e.getValue()));
+		}
+		// 有効なキー情報を初期化.
+		keys = null;
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		if(key == null) {
+			return false;
+		}
+		// put及び削除条件が存在する場合.
+		if(putRemoveHeader != null) {
+			final PutDeleteValue val = putRemoveHeader.get(key);
+			if(val != null) {
+				// putの場合は存在を示す.
+				if(val.getMode() == MODE_PUT) {
+					return true;
+				// remove条件は存在しない.
+				} else if(val.getMode() == MODE_REMOVE) {
+					return false;
+				}
+			}
+		}
+		// httpIndexHeadersから取得.
+		return httpIndexHeaders.contains((String)key);
+	}
+
+	@Override
+	public String get(Object key) {
+		if(key == null) {
+			return null;
+		}
+		// put及び削除条件が存在する場合.
+		if(putRemoveHeader != null) {
+			final PutDeleteValue val = putRemoveHeader.get(key);
+			if(val != null) {
+				// putの場合はその条件を取得.
+				if(val.getMode() == MODE_PUT) {
+					return val.getValue();
+				// remove条件はnull返却.
+				} else if(val.getMode() == MODE_REMOVE) {
+					return null;
+				}
+			}
+		}
+		// httpIndexHeadersから取得.
+		return httpIndexHeaders.get((String)key);
+	}
+
+	/**
+	 * 現在の有効なキー情報を取得.
+	 * ただしput及びremove条件が存在しない場合は有効なキーは作成されない.
+	 */
+	private void useKeys() {
+		// 有効なキー情報を再作成する必要はない場合.
+		if(keys != null || putRemoveHeader == null) {
+			return;
+		}
+		PutDeleteValue val;
+		ObjectList<String> list = new ObjectList<String>(
+			httpIndexHeaders.size() +
+			(putRemoveHeader == null ? 0 : putRemoveHeader.size()));
+		// put及びremove条件が存在する場合.
+		if(putRemoveHeader != null) {
+			int len = putRemoveHeader.size();
+			for(int i = 0; i < len; i ++) {
+				val = putRemoveHeader.valueAt(i);
+				// putのみを対象として有効なキーとする.
+				if(val.getMode() == MODE_PUT) {
+					list.add(((TreeKey)putRemoveHeader.keyAt(i)).getKey());
+				}
+			}
+		}
+		// httpIndexHeaders条件のうちput及びremove条件にマッチしないものを登録.
+		String key;
+		int len = httpIndexHeaders.size();
+		for(int i = 0; i < len; i ++) {
+			key = httpIndexHeaders.getKey(i);
+			if(!putRemoveHeader.containsKey(key)) {
+				list.add(key);
+			}
+		}
+		keys = list.toArray(String.class);
+	}
+
+	@Override
+	public String getValue(int no) {
+		useKeys();
+		if(keys == null) {
+			return httpIndexHeaders.getValue(no);
+		}
+		return get(keys[no]);
+	}
+
+	@Override
+	public String getKey(int no) {
+		useKeys();
+		if(keys == null) {
+			return httpIndexHeaders.getKey(no);
+		}
+		return keys[no];
+	}
+
+	@Override
+	public int size() {
+		useKeys();
+		if(keys == null) {
+			return httpIndexHeaders.size();
+		}
+		return keys.length;
+	}
+
+	/**
+	 * HttpIndexHeadersを取得.
+	 * @return HttpIndexHeaders HttpIndexHeadersを取得します.
+	 */
+	public HttpIndexHeaders getHttpIndexHeaders() {
+		return httpIndexHeaders;
+	}
+
+	/*
+	public static final void main(String[] args) throws Exception {
+		byte[] headers = (
+				"Accept: image/gif, image/jpeg\r\n" +
+				"accept-Language: ja\r\n" +
+				"Accept-Encoding: gzip, deflate\r\n" +
+				"user-Agent: Mozilla/4.0 (Compatible; MSIE 6.0; Windows NT 5.1;)\r\n" +
+				"Host: www.xxx.zzz\r\n" +
+				"connection: Keep-Alive\r\n"
+				).getBytes("UTF8");
+
+		HttpIndexHeaders ih = new HttpIndexHeaders(headers);
+		HttpReceiveHeader rh = new HttpReceiveHeader(ih);
+		System.out.println("size: " + rh.size());
+		//rh.clear();
+
+		System.out.println("size: " + rh.size());
+
+		rh.put("X-Hoge", "moge");
+		System.out.println("size: " + rh.size());
+		System.out.println("x-hoge: " + rh.get("x-hoge"));
+		rh.remove("x-hoge");
+		System.out.println("size: " + rh.size());
+		System.out.println("x-hoge: " + rh.get("x-hoge"));
+
+		System.out.println(rh.putRemoveHeader);
+
+		Entry<String, String> e;
+		Iterator<Entry<String, String>> itr = rh.entrySet().iterator();
+		while(itr.hasNext()) {
+			e = itr.next();
+			System.out.println("key: " + e.getKey() + " value: " + e.getValue());
+		}
+	}
+	*/
+}

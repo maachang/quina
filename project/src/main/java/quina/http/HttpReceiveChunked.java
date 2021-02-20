@@ -1,0 +1,179 @@
+package quina.http;
+
+import quina.net.nio.tcp.NioBuffer;
+
+/**
+ * 受信Chunked用オブジェクト.
+ */
+public final class HttpReceiveChunked {
+	// chunked format.
+	//
+	// (bodyLength[16進数])
+	// ¥r¥n
+	// (body)
+	// ¥r¥n
+	//
+	// end of chunked.
+	//
+	// 0
+	// ¥r¥n
+	// ¥r¥n
+
+	// Nio受信バッファ.
+	private NioBuffer nioBuffer = null;
+
+	// 受信完了フラグ.
+	private boolean eof = false;
+
+	// １つのチャンク受信長.
+	private int chunkedBodyLength = -1;
+
+	// １つのチャンク受信中データ長.
+	private int chunkedBodyPosition = 0;
+
+	// bodyLengthを取得するバイナリ長.
+	private final byte[] lengthBuffer = new byte[16];
+
+	/**
+	 * コンストラクタ.
+	 * @param r 対象のNio受信バッファを設定します.
+	 */
+	public HttpReceiveChunked(NioBuffer r) {
+		nioBuffer = r;
+	}
+
+	/**
+	 * クリア処理.
+	 */
+	public void clear() {
+		nioBuffer = null;
+	}
+
+	/**
+	 * 受信データの書き込み処理.
+	 * @param bin 対象のバイナリを設定します.
+	 */
+	public void write(byte[] bin) {
+		nioBuffer.write(bin, 0, bin.length);
+	}
+
+	/**
+	 * 読み込み処理.
+	 * @param buf 受信データを受け取るバッファを設定します.
+	 * @return int -1が返却された場合、受信完了しています.
+	 */
+	public int read(byte[] buf) {
+		return read(buf, 0, buf.length);
+	}
+
+	/**
+	 * 読み込み処理.
+	 * @param buf 受信データを受け取るバッファを設定します.
+	 * @param len bufの長さを設定します.
+	 * @return int -1が返却された場合、受信完了しています.
+	 */
+	public int read(byte[] buf, int len) {
+		return read(buf, 0, len);
+	}
+
+	/**
+	 * 読み込み処理.
+	 * @param buf 受信データを受け取るバッファを設定します.
+	 * @param off bufのオフセット値を設定します.
+	 * @param len bufの長さを設定します.
+	 * @return int -1が返却された場合、受信完了しています.
+	 */
+	public int read(byte[] buf, int off, int len) {
+		// eofの場合は-1.
+		if(eof) {
+			return -1;
+		}
+		int n, p, remLen;
+		int ret = 0;
+		// 基本的にchunked単位の情報を受信して、指定バッファにデータをセットする.
+		// 対象バッファが満タンになった場合はループを抜ける.
+		while(len > off) {
+			// chunkedBodyLengthが取得できていない場合.
+			if(chunkedBodyLength == -1) {
+				// chunkedBodyLength + ¥r¥n を検索.
+				p = nioBuffer.indexOf(HttpConstants.END_LINE);
+				if(p == -1) {
+					// chunkedBodyLengthが読み切れていない場合.
+					// ループを抜ける.
+					break;
+				// １つの塊が４バイトを超える長さの場合はエラーにする.
+				} else if(p > lengthBuffer.length) {
+					throw new HttpException("ありえないchunked-bodyLengthの長さ: " + p);
+				}
+				// 受信バッファから、chunkedBodyLength + ¥r¥nまでを読み込む.
+				nioBuffer.read(lengthBuffer, 0, p);
+				nioBuffer.skip(HttpConstants.END_LINE_LENGTH);
+				// chunkedBodyLength(16進数)を解析.
+				n = 0;
+				for(int i = p - 1, j = 0; i >= 0; i --, j ++) {
+					n += toHex(lengthBuffer[i]) << (4 << j);
+				}
+				// chunkedBodyLengthが0の場合はchunkedの終端.
+				if(n == 0) {
+					// 終端を検出した場合はループを抜ける.
+					eof = true;
+					break;
+				}
+				// chunkedの開始.
+				chunkedBodyPosition = 0;
+				chunkedBodyLength = n;
+			}
+			// chunkedBodyの残り受信データ長を取得.
+			remLen = chunkedBodyLength - chunkedBodyPosition;
+			// 読み込みバッファの長さの方がchunkedBody残りデータ長より少ない
+			if(remLen > nioBuffer.size()) {
+				remLen = nioBuffer.size();
+			}
+			// 残りデータよりもバッファ格納データの方が小さい場合.
+			if(len - off < remLen) {
+				n = nioBuffer.read(buf, off, len - off);
+			// 残りデータの方がバッファ格納データより大きい場合.
+			} else {
+				n = nioBuffer.read(buf, off, remLen);
+			}
+			off += n;
+			ret += n;
+			chunkedBodyPosition += n;
+			// chunkedBodyの読み込みが終わった場合.
+			if(chunkedBodyPosition == chunkedBodyLength) {
+				// chunkedBodyの終端(¥r¥n)が存在するかチェック.
+				p = nioBuffer.indexOf(HttpConstants.END_LINE);
+				if(p != 0) {
+					throw new HttpException("chunked-endの位置が不正");
+				}
+				// ¥r¥nを読み飛ばす.
+				nioBuffer.skip(HttpConstants.END_LINE_LENGTH);
+				// 次のchunkedを取得.
+				chunkedBodyLength = -1;
+				chunkedBodyPosition = 0;
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * Chunkedが終端を迎えたかチェック.
+	 * @return trueの場合、終端です.
+	 */
+	public boolean isEof() {
+		return eof;
+	}
+
+	/** byteを16進数値で変換. **/
+	private static final int toHex(final byte b) {
+		final char c = (char)(b & 0x00ff);
+		if (c >= '0' && c <= '9') {
+			return ((int) (c - '0') & 0x0000000f);
+		} else if (c >= 'A' && c <= 'F') {
+			return ((int) (c - 'A') & 0x0000000f) + 10;
+		} else if (c >= 'a' && c <= 'f') {
+			return ((int) (c - 'a') & 0x0000000f) + 10;
+		}
+		throw new HttpException("Not a hexadecimal value: " + c);
+	}
+}
