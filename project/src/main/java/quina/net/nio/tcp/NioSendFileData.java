@@ -119,6 +119,7 @@ public class NioSendFileData extends AbstractNioSendData {
 	 */
 	private final void init(boolean endToDeleteFlag, File file, long length)
 		throws IOException {
+		check();
 		if(!file.exists() || !file.canRead()) {
 			throw new IOException("The specified file'"
 				+ fileName + "'does not exist or you do not have read permission.");
@@ -239,6 +240,7 @@ public class NioSendFileData extends AbstractNioSendData {
 	 * @return boolean trueの場合は削除されます.
 	 */
 	public boolean isEndToDelete() {
+		check();
 		return copyCount != null;
 	}
 

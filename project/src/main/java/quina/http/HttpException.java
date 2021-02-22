@@ -47,10 +47,17 @@ public class HttpException extends QuinaException {
 	}
 
 	public HttpException(Throwable e) {
-		this(HttpStatus.InternalServerError, e);
+		this(getStatus(e), e);
 	}
 
 	public HttpException(String m, Throwable e) {
-		this(HttpStatus.InternalServerError, m, e);
+		this(getStatus(e), m, e);
+	}
+
+	private static final int getStatus(Throwable e) {
+		if(e instanceof QuinaException) {
+			return ((QuinaException)e).getStatus();
+		}
+		return 500;
 	}
 }

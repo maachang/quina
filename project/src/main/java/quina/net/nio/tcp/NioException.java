@@ -47,15 +47,15 @@ public class NioException extends RuntimeException {
 	public int getStatus() {
 		return status;
 	}
-	
+
 	public void setMessage(String msg) {
 		this.msg = msg;
 	}
-	
+
 	public String getMessage() {
 		return msg == null ? super.getMessage() : msg;
 	}
-	
+
 	public String getLocalizedMessage() {
 		return msg == null ? super.getLocalizedMessage() : msg;
 	}

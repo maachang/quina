@@ -16,21 +16,21 @@ abstract class AbstractNioSendData implements NioSendData {
 	protected boolean closeFlag;
 
 	/**
-	 * 処理前チェック.
-	 */
-	protected void check() {
-		if(closeFlag) {
-			throw new NioException("It is already closed.");
-		}
-	}
-
-	/**
 	 * クローズ処理.
 	 * @exception IOException
 	 */
 	@Override
 	public void close() throws IOException {
 		closeFlag = true;
+	}
+
+	/**
+	 * 処理前チェック.
+	 */
+	protected void check() {
+		if(closeFlag) {
+			throw new NioException("It is already closed.");
+		}
 	}
 
 	/**
@@ -59,6 +59,7 @@ abstract class AbstractNioSendData implements NioSendData {
 	 */
 	@Override
 	public boolean hasRemaining() {
+		check();
 		return remaining() > 0L;
 	}
 
@@ -68,6 +69,7 @@ abstract class AbstractNioSendData implements NioSendData {
 	 */
 	@Override
 	public boolean isEmpty() {
+		check();
 		return remaining() == 0L;
 	}
 }

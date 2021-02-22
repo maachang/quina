@@ -239,7 +239,7 @@ public final class NioUtil {
 			}
 		}
 		// ByteBufferに情報が格納されている場合は true 返却.
-		return buf.remaining() != 0;
+		return buf.remaining() > 0;
 	}
 
 	// ランダム名テーブル.

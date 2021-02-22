@@ -2,6 +2,7 @@ package quina;
 
 import quina.component.Component;
 import quina.component.ComponentManager;
+import quina.component.ErrorComponent;
 import quina.component.RegisterComponent;
 
 /**
@@ -39,6 +40,16 @@ public class Router {
 	}
 
 	/**
+	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router error(ErrorComponent component) {
+		manager.putError(component);
+		return this;
+	}
+
+	/**
 	 * 対象コンポーネントとルートを紐付けます.
 	 *
 	 * @param path コンポーネント実行するURLのパスを設定します.
@@ -72,5 +83,13 @@ public class Router {
 	 */
 	public RegisterComponent get(String url, String[] urls) {
 		return manager.get(url, urls);
+	}
+
+	/**
+	 * エラー発生時に呼び出されるコンポーネントを取得.
+	 * @return ErrorComponent エラーコンポーネントが返却されます.
+	 */
+	public ErrorComponent getError() {
+		return manager.getError();
 	}
 }

@@ -87,6 +87,7 @@ public class NioSendMemData extends AbstractNioSendData {
 	@Override
 	public void close() throws IOException {
 		super.close();
+		binary = null;
 	}
 
 	/**
@@ -116,6 +117,7 @@ public class NioSendMemData extends AbstractNioSendData {
 	 */
 	@Override
 	public int read(ByteBuffer buf) {
+		check();
 		if(!buf.hasRemaining()) {
 			return 0;
 		}

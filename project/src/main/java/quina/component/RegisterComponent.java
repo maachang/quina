@@ -5,6 +5,7 @@ import java.util.Map;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerRequest;
 
 /**
  * ComponentManagerに登録済みのコンポーネント.
@@ -188,6 +189,10 @@ public class RegisterComponent implements Component {
 	}
 	@Override
 	public void call(Method method, Request req, Response res) {
+		// HttpServerRequestの場合は、コンポーネントURLを設定.
+		if(req instanceof HttpServerRequest) {
+			((HttpServerRequest)req).setComponentUrl(url);
+		}
 		component.call(method, req, res);
 	}
 

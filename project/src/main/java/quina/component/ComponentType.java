@@ -7,6 +7,9 @@ public enum ComponentType {
 	/** 通常コンポーネント. **/
 	NORMAL(0x00, "normal"),
 
+	/** ファイルコンポーネント. **/
+	FILE(0x00, "file"),
+
 	/** RESTful 用コンポーネント. **/
 	RESTful(0x10, "RESTful"),
 
@@ -23,7 +26,10 @@ public enum ComponentType {
 	RESTfulPut(0x14, "RESTfulPut"),
 
 	/** RESTful PatchMethod用コンポーネント. **/
-	RESTfulPatch(0x15, "RESTfulPatch");
+	RESTfulPatch(0x15, "RESTfulPatch"),
+
+	/** エラーコンポーネント. **/
+	ERROR(0x8f, "error");
 
 	private int type;
 	private String name;

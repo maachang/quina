@@ -509,12 +509,13 @@ public class ComponentManager {
 	// 指定URLの条件が存在しない場合の実行コンポーネント.
 	private RegisterComponent notFoundUrlComponent = null;
 
+	// エラー発生時に呼び出すコンポーネント.
+	private ErrorComponent errorComponent = null;
 
 	/**
 	 * コンストラクタ.
 	 */
 	public ComponentManager() {
-
 	}
 
 	/**
@@ -524,6 +525,7 @@ public class ComponentManager {
 		staticComponent.clear();
 		rootAnyElement = new AnyElement(0, null);
 		notFoundUrlComponent = null;
+		errorComponent = null;
 	}
 
 	/**
@@ -587,6 +589,14 @@ public class ComponentManager {
 		// anyコンポーネント管理に追加.
 		putAnyElement(now, url, urls, 0, urlParam, component);
 		return false;
+	}
+
+	/**
+	 * エラー処理用のコンポーネントをセット.
+	 * @param component 対象のコンポーネントを設定します.
+	 */
+	public void putError(ErrorComponent component) {
+		errorComponent = component;
 	}
 
 	/**
@@ -657,6 +667,17 @@ public class ComponentManager {
 		}
 	}
 
+	/**
+	 * エラー時の登録コンポーネントを取得.
+	 * @return ErrorComponent エラー時のコンポーネントが返却されます.
+	 */
+	public ErrorComponent getError() {
+		// エラーコンポーネントが存在しない場合は
+		// 標準エラーコンポーネントを利用.
+		return errorComponent == null ?
+			DefaultErrorComponent.getInstance() : errorComponent;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
@@ -669,10 +690,15 @@ public class ComponentManager {
 		buf.append("#anyComponents\n");
 		// AnyElementを出力.
 		toAnyElementByString(buf, rootAnyElement);
-		buf.append("\n")
-			.append("*notFoundUrlComponent: ")
+		buf.append("\n");
+		// 指定URLが存在しない場合のコンポーネント実行.
+		buf.append("*notFoundUrlComponent: ")
 			.append(notFoundUrlComponent != null)
 			.append("\n");
+		// エラー発生時のコンポーネント実行.
+		buf.append("*errorComponent: ")
+		.append(errorComponent != null)
+		.append("\n");
 		return buf.toString();
 	}
 }

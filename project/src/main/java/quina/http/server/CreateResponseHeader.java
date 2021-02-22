@@ -7,6 +7,7 @@ import quina.QuinaConstants;
 import quina.http.Header;
 import quina.http.HttpConstants;
 import quina.http.HttpException;
+import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioSendBinaryListData;
 import quina.net.nio.tcp.NioSendData;
 import quina.util.collection.IndexMap;
@@ -18,18 +19,31 @@ import quina.util.collection.TreeKey;
 class CreateResponseHeader {
 	private CreateResponseHeader() {}
 
-	/** 予約ヘッダ名. **/
+	/**
+	 * 予約ヘッダ情報.
+	 * value = Object[2] = {mode, valueInfo}.
+	 * mode = 0 : 標準.
+	 * mode = 1 : キャッシュなし.
+	 * mode = 2 : ブラウザ用のクロスドメイン対応ヘッダ.
+	 *
+	 * valueInfo = 実際のHttpHeaderの要素.
+	 */
 	private static final IndexMap<Object, Object[]> RESERVATION_HEADERS;
 
-	/** Optionsレスポンス. **/
+	/** Optionsレスポンス[基本]. **/
 	private static final byte[] RESPONSE_OPSIONS_RESPONSE;
+	/** Optionsレスポンス[キャッシュなし対応]. **/
 	private static final byte[] RESPONSE_NO_CACHE_OPSIONS_RESPONSE;
+	/** Optionsレスポンス[クロスドメイン対応]. **/
 	private static final byte[] RESPONSE_CROSS_DOMAIN_OPSIONS_RESPONSE;
 
-	/** ステータス指定レスポンス. **/
+	/** ステータス指定レスポンス[開始情報]. **/
 	private static final byte[] RESPONSE_STATE_RESPONSE_FIRST;
+	/** ステータス指定レスポンス[基本]. **/
 	private static final byte[] RESPONSE_STATE_RESPONSE_RESERVATION;
+	/** ステータス指定レスポンス[キャッシュなし対応]. **/
 	private static final byte[] RESPONSE_NO_CACHE_STATE_RESPONSE_RESERVATION;
+	/** ステータス指定レスポンス[クロスドメイン対応]. **/
 	private static final byte[] RESPONSE_CROSS_DOMAIN_STATE_RESPONSE_RESERVATION;
 
 	// static - init.
@@ -45,10 +59,7 @@ class CreateResponseHeader {
 		// サーバー名.
 		final String serverName = QuinaConstants.SERVER_NAME +
 			"(" + QuinaConstants.SERVER_VERSION + ")";
-		// 予約レスポンスヘッダ.
-		// 0 : all.
-		// 1 : no cache.
-		// 2 : browser cross domain.
+		// 予約ヘッダを定義.
 		IndexMap<Object, Object[]> reservationHeaders = new IndexMap<Object, Object[]>();
 		reservationHeaders.put(new TreeKey("X-Accel-Buffering"),
 				new Object[] {0, "no"});
@@ -178,6 +189,9 @@ class CreateResponseHeader {
 	 * @param state Httpステータスを設定します.
 	 * @param msg Httpステータスメッセージを設定します.
 	 * @param header Httpヘッダを設定します.
+	 * @param mimeTypes mimeTypesを設定します.
+	 * @param mimeType 設定されたMimeTypeを設定します.
+	 * @param charset 文字コードを設定します.
 	 * @param noCache trueの場合はnocahcモードでヘッダを付与します.
 	 * @param crossDomain trueの場合はcrossDomain対応のヘッダを付与します.
 	 * @param bodyLength コンテンツ長を設定します.
@@ -185,10 +199,10 @@ class CreateResponseHeader {
 	 * @return NioSendData NioSendDataが返却されます.
 	 */
 	public static final NioSendData createHeader(
-		int state, String msg, Header header, boolean noCache, boolean crossDomain,
-		long bodyLength) {
+		int state, String msg, MimeTypes mimeTypes, Header header, String mimeType,
+		String charset, boolean noCache, boolean crossDomain, long bodyLength) {
 		// 文字コードはデフォルトの内容を取得.
-		final String charset = HttpConstants.getCharset();
+		charset = (charset == null || charset.isEmpty()) ? HttpConstants.getCharset() : charset;
 		try {
 			// 開始ヘッダをセット.
 			NioSendBinaryListData ret = new NioSendBinaryListData(RESPONSE_STATE_RESPONSE_FIRST);
@@ -218,6 +232,13 @@ class CreateResponseHeader {
 			if(bodyLength >= 0) {
 				// コンテンツ長が設定されている場合はコンテンツ長をセット.
 				buf.append("Content-Length:").append(bodyLength).append("\r\n");
+			}
+			// 対象のMimeTypeに対して、文字コードが必要かチェック.
+			if(mimeTypes.isAppendCharset(mimeType)) {
+				// 文字コードが設定されてない場合のみ設定.
+				if(mimeType.indexOf("charset") == -1) {
+					mimeType += "; charset=" + charset;
+				}
 			}
 			Object[] v;
 			Entry<String,String> e;

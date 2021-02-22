@@ -30,6 +30,12 @@ public interface Request extends Closeable {
 	public String getBaseUrl();
 
 	/**
+	 * コンポーネントに紐付けられてるURLを取得.
+	 * @return String コンポーネントに紐付けられてるURLが返却されます.
+	 */
+	public String getComponentUrl();
+
+	/**
 	 * HTTPバージョンを取得.
 	 * @return String HTTPバージョンが返却されます.
 	 */

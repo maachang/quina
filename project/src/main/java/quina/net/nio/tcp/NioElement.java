@@ -219,7 +219,7 @@ public class NioElement implements Closeable {
 	}
 
 	/**
-	 * 現在のSendDataオブジェクトを利用終了.
+	 * 現在のSendDataオブジェクトを取得して削除.
 	 *
 	 * @return NioSendData オブジェクトが返却されます.
 	 */

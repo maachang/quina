@@ -20,6 +20,9 @@ public class HttpServerRequest implements Request {
 	/** Http Method. **/
 	private Method method;
 
+	/** コンポーネントURL. **/
+	private String componentUrl;
+
 	/** 元のUrl. **/
 	private String baseUrl;
 
@@ -68,6 +71,7 @@ public class HttpServerRequest implements Request {
 	@Override
 	public void close() throws IOException {
 		this.method = null;
+		this.componentUrl = null;
 		this.baseUrl = null;
 		this.url = null;
 		this.version = null;
@@ -90,6 +94,11 @@ public class HttpServerRequest implements Request {
 	@Override
 	public String getBaseUrl() {
 		return baseUrl;
+	}
+
+	@Override
+	public String getComponentUrl() {
+		return componentUrl;
 	}
 
 	@Override
@@ -127,6 +136,14 @@ public class HttpServerRequest implements Request {
 	@Override
 	public Params getParams() {
 		return params;
+	}
+
+	/**
+	 * コンポーネントURLを設定.
+	 * @param componentUrl コンポーネントURLを設定します.
+	 */
+	public void setComponentUrl(String componentUrl) {
+		this.componentUrl = componentUrl;
 	}
 
 	// Httpパラメータをセット.

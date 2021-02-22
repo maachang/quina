@@ -3,10 +3,10 @@ package quina.http.server;
 import java.io.IOException;
 
 import quina.Quina;
+import quina.QuinaException;
 import quina.component.ComponentManager;
 import quina.component.RegisterComponent;
 import quina.http.HttpAnalysis;
-import quina.http.HttpConstants;
 import quina.http.HttpCustomPostParams;
 import quina.http.HttpElement;
 import quina.http.HttpMode;
@@ -93,14 +93,15 @@ public class HttpServerCall extends NioServerCall {
 				req = (HttpServerRequest)hem.getRequest();
 				res = (HttpServerResponse)hem.getResponse();
 				if(res == null) {
-					res = new HttpServerResponse(hem);
+					res = new HttpServerResponse(hem, mimeTypes);
 					hem.setResponse(res);
 				}
 				try {
+					// urlを取得.
 					String url = req.getUrl();
 					// urlを[/]でパース.
 					String[] urls = ComponentManager.getUrls(url);
-					// URLに対するコンテンツ実行.
+					// URLに対するコンテンツ取得.
 					comp = Quina.router().get(url, urls);
 					url = null;
 					// コンポーネントが取得された場合.
@@ -121,16 +122,14 @@ public class HttpServerCall extends NioServerCall {
 						if(params != null) {
 							req.setParams(params);
 						}
-						// RESTful形式の場合は、コンテンツタイプをJSON指定.
-						if(comp.getType().isRESTful()) {
-							res.setContentType(HttpConstants.MIME_TYPE_JSON);
-						}
 						// コンポーネント実行.
 						comp.call(req.getMethod(), req, res);
 					} else {
 						// エラー404返却.
 						sendError(404, req, res, null);
 					}
+				} catch(QuinaException qe) {
+					sendError(qe.getStatus(), req, res, qe);
 				} catch(Exception e) {
 					sendError(500, req, res, e);
 				}
@@ -142,6 +141,8 @@ public class HttpServerCall extends NioServerCall {
 
 	// HttpErrorを送信.
 	private static final void sendError(int state, Request req, Response res, Throwable e) {
-
+		// エラー実行.
+		Quina.router().getError()
+			.call(state, req, res, e);
 	}
 }

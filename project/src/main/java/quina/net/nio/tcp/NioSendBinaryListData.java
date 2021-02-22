@@ -159,6 +159,7 @@ public class NioSendBinaryListData extends AbstractNioSendData {
 	 */
 	@Override
 	public int read(ByteBuffer buf) throws IOException {
+		check();
 		// 送信データが存在しない場合.
 		if(list.size() == 0) {
 			// EOF.
