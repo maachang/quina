@@ -23,6 +23,9 @@ public class HttpServerRequest implements Request {
 	/** コンポーネントURL. **/
 	private String componentUrl;
 
+	/** コンポーネントスラッシュカウント. **/
+	private int componentSlashCount;
+
 	/** 元のUrl. **/
 	private String baseUrl;
 
@@ -102,6 +105,11 @@ public class HttpServerRequest implements Request {
 	}
 
 	@Override
+	public int getComponentUrlSlashCount() {
+		return componentSlashCount;
+	}
+
+	@Override
 	public String getVersion() {
 		return version;
 	}
@@ -141,9 +149,11 @@ public class HttpServerRequest implements Request {
 	/**
 	 * コンポーネントURLを設定.
 	 * @param componentUrl コンポーネントURLを設定します.
+	 * @param componentSlashCount コンポーネントURLのスラッシュの数を設定します
 	 */
-	public void setComponentUrl(String componentUrl) {
+	public void setComponentUrl(String componentUrl, int componentSlashCount) {
 		this.componentUrl = componentUrl;
+		this.componentSlashCount = componentSlashCount;
 	}
 
 	// Httpパラメータをセット.

@@ -7,7 +7,7 @@ import quina.QuinaException;
 import quina.component.ComponentManager;
 import quina.component.RegisterComponent;
 import quina.http.HttpAnalysis;
-import quina.http.HttpCustomPostParams;
+import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
 import quina.http.HttpMode;
 import quina.http.MimeTypes;
@@ -22,7 +22,7 @@ import quina.net.nio.tcp.server.NioServerCall;
  */
 public class HttpServerCall extends NioServerCall {
 	// カスタムなPostBody解析.
-	private HttpCustomPostParams custom = null;
+	private HttpCustomAnalysisParams custom = null;
 	// MimeTypes.
 	private MimeTypes mimeTypes = null;
 
@@ -31,7 +31,7 @@ public class HttpServerCall extends NioServerCall {
 	 * @param custom HttpRequestでのBodyの解釈をするオブジェクトを設定します.
 	 * @param mimeTypes mimeTypesを設定します.
 	 */
-	public HttpServerCall(HttpCustomPostParams custom, MimeTypes mimeTypes) {
+	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes) {
 		this.custom = custom;
 		this.mimeTypes = mimeTypes;
 	}
@@ -129,8 +129,10 @@ public class HttpServerCall extends NioServerCall {
 						sendError(404, req, res, null);
 					}
 				} catch(QuinaException qe) {
+					// QuinaExceptionの場合は、そのステータスを踏襲する.
 					sendError(qe.getStatus(), req, res, qe);
 				} catch(Exception e) {
+					// その他例外の場合は５００エラー.
 					sendError(500, req, res, e);
 				}
 				// 処理終了.

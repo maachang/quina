@@ -39,29 +39,47 @@ public class HttpAnalysis {
 	 * @param custom
 	 * @return
 	 */
-	public static final Params convertParams(Request req, HttpCustomPostParams custom) {
+	public static final Params convertParams(Request req, HttpCustomAnalysisParams custom) {
 		Params params = null;
 		final Method method = req.getMethod();
 		if (method == Method.GET) {
-			if(req.getUrl().length() != req.getBaseUrl().length()) {
-				params = getParams(req.getBaseUrl(), req.getUrl().length() + 1);
-			}
+			params = getGetParams(req, custom);
 		} else if (method == Method.POST || method == Method.PUT ||
 			method == Method.PATCH || method == Method.DELETE) {
-			params = postParams(req, custom);
+			params = getPostParams(req, custom);
 		}
 		return params;
 	}
 
 	/**
 	 * GETパラメータを取得.
-	 * @param url
+	 * @param req
 	 * @return
 	 */
-	public static final Params getParams(String url){
-		int p = url.indexOf("?");
+	public static final Params getGetParams(Request req){
+		return getGetParams(req, null);
+	}
+
+	/**
+	 * GETパラメータを取得.
+	 * @param req
+	 * @param custom
+	 * @return
+	 */
+	public static final Params getGetParams(Request req, HttpCustomAnalysisParams custom){
+		final String url = req.getBaseUrl();
+		final int p = url.indexOf("?");
 		if (p != -1) {
-			return HttpAnalysis.getParams(url, p + 1);
+			final String v = url.substring(p + 1);
+			// パラメータ解析のカスタム変換が存在する場合.
+			if(custom != null) {
+				Object o = custom.getParams(v);
+				if(o != null) {
+					return returnParams(o);
+				}
+			}
+			// 通常のGETパラメータ変換処理を行う.
+			return HttpAnalysis.getAnalysParams(v, 0);
 		}
 		return null;
 	}
@@ -72,8 +90,7 @@ public class HttpAnalysis {
 	 * @param custom
 	 * @return
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static final Params postParams(Request req, HttpCustomPostParams custom) {
+	public static final Params getPostParams(Request req, HttpCustomAnalysisParams custom) {
 		final long contentLength = req.getContentLength();
 		// Bodyデータが存在しない場合.
 		if(contentLength == 0) {
@@ -82,62 +99,53 @@ public class HttpAnalysis {
 		} else if (HttpConstants.getMaxRecvMemoryBodyLength() < contentLength) {
 			return null;
 		}
+		Object o;
 		// 文字列変換.
 		String v = req.getString();
 		// Body内容がJSON形式の場合.
 		String contentType = req.getHeader().get("Content-Type");
-		if (contentType.indexOf("application/json") == 0) {
-			Object o = Json.decode(v);
-			// デコード結果を返却.
-			if(o != null && o instanceof BinarySearchMap) {
-				// 形式がMap形式の場合はそのまま返却.
-				return new Params(((BinarySearchMap)o).getIndexMap());
-			}
-			// Map形式でない場合は[value]をキー名でMap形式で返却する.
-			return new Params("value", o);
-		// Body内容がPOST形式の場合.
-		} else if ("application/x-www-form-urlencoded".equals(contentType)) {
-			return HttpAnalysis.getParams(v, 0);
-		// Body内容のカスタム変換が存在する場合.
-		} else if(custom != null) {
-			Object o = custom.postParams(req);
+		// パラメータ解析のカスタム変換が存在する場合.
+		if(custom != null) {
+			o = custom.postParams(req, v, contentType);
 			// デコード結果を返却.
 			if(o != null) {
-				if(o instanceof Map) {
-					if(o instanceof BinarySearchMap) {
-						// Paramsオブジェクトの場合.
-						if(o instanceof Params) {
-							return (Params)o;
-						}
-						// 形式がBinarySearchMap形式の場合はそのまま返却.
-						return new Params(((BinarySearchMap)o).getIndexMap());
-					} else {
-						// それ以外のMap形式の場合.
-						return new Params((Map)o);
-					}
-				}
+				return returnParams(o);
 			}
-			// Map形式でない場合は[value]をキー名でMap形式で返却する.
-			return new Params("value", o);
-
+		}
+		// json変換の場合.
+		if (contentType.indexOf("application/json") == 0) {
+			// デコード結果を返却.
+			return returnParams(Json.decode(v));
+		// Body内容がPOST形式の場合.
+		} else if ("application/x-www-form-urlencoded".equals(contentType)) {
+			return HttpAnalysis.getAnalysParams(v, 0);
 		}
 		// 変換条件が存在しない場合.
 		return null;
 	}
 
-	/**
-	 * パラメータ変換処理. POSTのデータおよび、GETのデータを解析します.
-	 *
-	 * @param body
-	 *            対象のBody情報を設定します.
-	 * @param cset
-	 *            対象のキャラクタセットを設定します.
-	 * @param pos
-	 *            対象のポジションを設定します.
-	 * @return Params 変換結果を返却します.
-	 */
-	public static final Params getParams(String body, int pos) {
-		return getParams(body, null, pos);
+	// パラメータの戻り値を取得.
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static final Params returnParams(Object o) {
+		// デコード結果を返却.
+		if(o != null) {
+			if(o instanceof Map) {
+				if(o instanceof BinarySearchMap) {
+					// Paramsオブジェクトの場合.
+					if(o instanceof Params) {
+						return (Params)o;
+					}
+					// 形式がBinarySearchMap形式の場合はそのまま返却.
+					return new Params(((BinarySearchMap)o).getIndexMap());
+				} else {
+					// それ以外のMap形式の場合.
+					return new Params((Map)o);
+				}
+			}
+			// Map形式でない場合は[value]をキー名でMap形式で返却する.
+			return new Params("value", o);
+		}
+		return new Params("value", null);
 	}
 
 	/**
@@ -151,9 +159,24 @@ public class HttpAnalysis {
 	 *            対象のポジションを設定します.
 	 * @return Params 変換結果を返却します.
 	 */
-	public static final Params getParams(
+	public static final Params getAnalysParams(String body, int pos) {
+		return getAnalysParams(body, null, pos);
+	}
+
+	/**
+	 * パラメータ変換処理. POSTのデータおよび、GETのデータを解析します.
+	 *
+	 * @param body
+	 *            対象のBody情報を設定します.
+	 * @param cset
+	 *            対象のキャラクタセットを設定します.
+	 * @param pos
+	 *            対象のポジションを設定します.
+	 * @return Params 変換結果を返却します.
+	 */
+	public static final Params getAnalysParams(
 		String body, String cset, int pos) {
-		if(cset == null || cset.isEmpty()) {
+		if(cset == null) {
 			cset = HttpConstants.getCharset();
 		}
 		// パラメータバイナリを解析.

@@ -1,5 +1,7 @@
  package quina.http;
 
+import java.util.Map;
+
 import quina.util.collection.BinarySearchMap;
 import quina.util.collection.IndexMap;
 
@@ -29,6 +31,13 @@ public class Params extends BinarySearchMap<String, Object> {
 
 	/**
 	 * コンストラクタ.
+	 */
+	public Params(final Map<String, Object> v) {
+		super(v);
+	}
+
+	/**
+	 * コンストラクタ.
 	 * @param args
 	 */
 	public Params(final Object... args) {
@@ -37,6 +46,7 @@ public class Params extends BinarySearchMap<String, Object> {
 
 	@Override
 	public void setIndexMap(IndexMap<String, Object> m) {
+		super.setIndexMap(m);
 	}
 
 	@Override

@@ -16,7 +16,7 @@ import quina.util.collection.TreeKey;
 /**
  * HttpResponseヘッダ作成処理.
  */
-class CreateResponseHeader {
+public class CreateResponseHeader {
 	private CreateResponseHeader() {}
 
 	/**

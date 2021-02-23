@@ -13,6 +13,8 @@ import quina.http.server.HttpServerRequest;
 public class RegisterComponent implements Component {
 	// 登録時のURL.
 	private String url;
+	// URLのスラッシュ数.
+	private int urlSlashCount;
 	// URLパラメータ.
 	private Object[] urlParam;
 	// URLパラメータが有効かチェックするフラグ.
@@ -29,10 +31,24 @@ public class RegisterComponent implements Component {
 	 */
 	protected RegisterComponent(String url, Object[] urlParam, Component component) {
 		this.url = url;
+		this.urlSlashCount = countSlash(url);
 		this.urlParam = urlParam;
 		this.useUrlParam = useUrlParam(urlParam);
 		this.component = component;
 		this.lastAsterrisk = url.endsWith("/*");
+	}
+
+
+	// スラッシュの数をカウント.
+	protected static final int countSlash(final String s) {
+		int ret = 0;
+		final int len = s.length();
+		for(int i = 0; i < len; i ++) {
+			if(s.charAt(i) == '/') {
+				ret ++;
+			}
+		}
+		return ret;
 	}
 
 	// 有効なURLパラメータが存在するかチェック.
@@ -187,11 +203,15 @@ public class RegisterComponent implements Component {
 	public ComponentType getType() {
 		return component.getType();
 	}
+
+	// HttpServerRequestクラス.
+	private static final Class<?> httpServerRequest = HttpServerRequest.class;
+
 	@Override
 	public void call(Method method, Request req, Response res) {
 		// HttpServerRequestの場合は、コンポーネントURLを設定.
-		if(req instanceof HttpServerRequest) {
-			((HttpServerRequest)req).setComponentUrl(url);
+		if(httpServerRequest.equals(req.getClass())) {
+			((HttpServerRequest)req).setComponentUrl(url, urlSlashCount);
 		}
 		component.call(method, req, res);
 	}

@@ -36,6 +36,12 @@ public interface Request extends Closeable {
 	public String getComponentUrl();
 
 	/**
+	 * コンポーネントに紐付けられるURLのスラッシュの数を取得.
+	 * @return int コンポーネントに紐付けられるURLのスラッシュの数を返却します.
+	 */
+	public int getComponentUrlSlashCount();
+
+	/**
 	 * HTTPバージョンを取得.
 	 * @return String HTTPバージョンが返却されます.
 	 */
