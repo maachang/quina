@@ -14,7 +14,7 @@ import quina.util.collection.IndexMap;
 import quina.util.collection.TreeKey;
 
 /**
- * HttpResponseヘッダ作成処理.
+ * HttpServerResponseヘッダ作成処理.
  */
 public class CreateResponseHeader {
 	private CreateResponseHeader() {}

@@ -3,7 +3,7 @@ package quina.util.collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import quina.util.Json;
+import quina.util.json.Json;
 
 /**
  * IndexMapオブジェクト.
@@ -324,7 +324,7 @@ public class IndexMap<K, V> implements ReadIndexMap<K, V> {
 		}
 		@Override
 		public String toString() {
-			if(value instanceof String) {
+			if(value instanceof CharSequence) {
 				return new StringBuilder().append("\"").append(key).append("\": \"")
 					.append(value).append("\"").toString();
 			}

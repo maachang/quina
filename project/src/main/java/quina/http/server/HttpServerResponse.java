@@ -20,7 +20,7 @@ import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.NioSendFileData;
 import quina.net.nio.tcp.NioSendInputStreamData;
 import quina.util.FileUtil;
-import quina.util.Json;
+import quina.util.json.Json;
 
 /**
  * Httpサーバ用Httpレスポンス.
