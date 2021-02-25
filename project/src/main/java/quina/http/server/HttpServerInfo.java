@@ -6,6 +6,7 @@ import quina.http.EditMimeTypes;
 import quina.http.HttpCustomAnalysisParams;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
+import quina.net.nio.tcp.worker.NioWorkerConstants;
 import quina.util.collection.BinarySearchMap;
 
 /**
@@ -32,6 +33,8 @@ public class HttpServerInfo implements QuinaInfo {
 	private int backLog;
 	// サーバーソケット受信バッファ長.
 	private int serverRecvBuffer;
+	// サーバープーリング管理サイズ.
+	private int poolingManagerLength;
 	// カスタムなPostBody解析.
 	private HttpCustomAnalysisParams custom = null;
 	// MimeTypes.
@@ -56,6 +59,7 @@ public class HttpServerInfo implements QuinaInfo {
 		backLog = NioServerConstants.getBacklog();
 		serverRecvBuffer = NioServerConstants.getRecvBuffer();
 		bindAddress = null;
+		poolingManagerLength = NioWorkerConstants.getPoolingManageLength();
 		custom = null;
 		mimeTypes = new EditMimeTypes();
 	}
@@ -202,6 +206,22 @@ public class HttpServerInfo implements QuinaInfo {
 	 */
 	public void setServerRecvBuffer(int serverRecvBuffer) {
 		this.serverRecvBuffer = serverRecvBuffer;
+	}
+
+	/**
+	 * プーリングマネージャサイズを取得.
+	 * @return
+	 */
+	public int getPoolingManagerLength() {
+		return poolingManagerLength;
+	}
+
+	/**
+	 * プーリングマネージャサイズを設定.
+	 * @param poolingManagerLength
+	 */
+	public void setPoolingManagerLength(int poolingManagerLength) {
+		this.poolingManagerLength = poolingManagerLength;
 	}
 
 	/**

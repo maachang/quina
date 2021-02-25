@@ -19,10 +19,12 @@ public class Quina {
 	// コンフィグディレクトリ.
 	private String configDir = "./";
 
-	// HttpServerService.
+	// 基本サービス: HttpServerService.
+	// Httpサーバー関連のサービスを管理します.
 	private HttpServerService httpServerService;
 
-	// httpWorkerService.
+	// 基本サービス: HttpWorkerService.
+	// Httpワーカースレッド関連を管理します.
 	private HttpWorkerService httpWorkerService;
 
 	// コンストラクタ.
@@ -164,8 +166,8 @@ public class Quina {
  	 * Quinaのサービスがすべて開始済みかチェック.
 	 * @return boolean trueの場合、全てのサービスが開始しています.
 	 */
-	public boolean isStartup() {
-		return httpWorkerService.isStartup() && httpServerService.isStartup();
+	public boolean isStarted() {
+		return httpWorkerService.isStarted() && httpServerService.isStarted();
 	}
 
 	/**

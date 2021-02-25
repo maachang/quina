@@ -8,6 +8,7 @@ import quina.QuinaService;
 import quina.http.worker.HttpWorkerService;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerCore;
+import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.util.Flag;
 
 /**
@@ -22,6 +23,9 @@ public class HttpServerService implements QuinaService {
 
 	// HttpServer定義.
 	private HttpServerInfo info = new HttpServerInfo();
+
+	// プーリング管理.
+	private NioWorkerPoolingManager poolingManager;
 
 	// HttpWorkerService.
 	private HttpWorkerService httpWorkerService = null;
@@ -68,13 +72,13 @@ public class HttpServerService implements QuinaService {
 			// サーバーソケット作成.
 			server = NioUtil.createServerSocketChannel(
 				info.getBindAddress(), info.getBindPort(), info.getBackLog(), info.getServerRecvBuffer());
+			this.poolingManager = new NioWorkerPoolingManager(info.getPoolingManagerLength());
 			// サーバーコール生成.
-			call = new HttpServerCall(info.getCustom(), info.getMimeTypes());
+			this.call = new HttpServerCall(info.getCustom(), info.getMimeTypes());
 			// サーバーコア生成.
-			core = new NioServerCore(info.getByteBufferLength(), info.getSendBuffer(),
+			this.core = new NioServerCore(info.getByteBufferLength(), info.getSendBuffer(),
 				info.getRecvBuffer(), info.isKeepAlive(), info.isTcpNoDeley(),
-				server, call, httpWorkerService.getClientPoolingManager(),
-				httpWorkerService.getNioWorkerThreadManager());
+				server, call, this.poolingManager, httpWorkerService.getNioWorkerThreadManager());
 		} catch(QuinaException qe) {
 			stopService();
 			if(server != null) {
@@ -91,7 +95,7 @@ public class HttpServerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized boolean isStartup() {
+	public synchronized boolean isStarted() {
 		if(core != null) {
 			return core.isStartupThread();
 		}
@@ -111,6 +115,10 @@ public class HttpServerService implements QuinaService {
 		// 停止処理.
 		if(core != null) {
 			core.stopThread();
+		}
+		if(poolingManager != null) {
+			poolingManager.clear();
+			poolingManager = null;
 		}
 		call = null;
 	}
