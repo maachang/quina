@@ -1,4 +1,4 @@
-package quina.util.json;
+package quina.json;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -212,12 +212,13 @@ public final class Json {
 	/** [decodeJSON]１つの要素を変換. **/
 	private static final Object decJsonValue(final int[] n, final int no, String json) {
 		int len;
-		final CustomJsonIO conv = convertJsonIO.get();
 		if ((len = json.length()) <= 0) {
 			return json;
 		}
+		// JSON変換I/Oを取得.
+		final CustomJsonIO conv = convertJsonIO.get();
 		// 文字列コーテーション区切り.
-		else if ((json.startsWith("\"") && json.endsWith("\""))
+		if ((json.startsWith("\"") && json.endsWith("\""))
 				|| (json.startsWith("\'") && json.endsWith("\'"))) {
 			json = json.substring(1, len - 1);
 			// Date変換対象かチェック.
@@ -227,7 +228,7 @@ public final class Json {
 			return conv.jsonToString(json);
 		}
 		// NULL文字.
-		else if ("null".equals(json)) {
+		else if (treeEq("null", json)) {
 			return conv.jsonToNull();
 		}
 		// BOOLEAN.

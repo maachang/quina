@@ -1,6 +1,8 @@
 package quina.component;
 
 import quina.QuinaException;
+import quina.http.Request;
+import quina.http.Response;
 import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
 
@@ -8,6 +10,33 @@ import quina.util.collection.ObjectList;
  * コンポーネントを管理するオブジェクト.
  */
 public class ComponentManager {
+
+	// デフォルトのエラー処理コンポーネント.
+	private static final class DefaultErrorComponent
+		implements ErrorComponent {
+		private static final DefaultErrorComponent INST = new DefaultErrorComponent();
+
+		/**
+		 * 標準エラーコンポーネントを取得.
+		 * @return ErrorComponent 標準エラーコンポーネントが返却されます.
+		 */
+		public static final ErrorComponent getInstance() {
+			return INST;
+		}
+
+		/**
+		 * コンストラクタ.
+		 */
+		private DefaultErrorComponent() {
+		}
+
+		@Override
+		public void call(int state, Request req, Response res, Throwable e) {
+			// BodyなしのHttpHeaderでのエラーメッセージを送信.
+			res.setStatus(state, e.getMessage())
+				.send();
+		}
+	}
 
 	// スペースを指定長分セット.
 	protected static final StringBuilder toSpace(StringBuilder out, int len) {

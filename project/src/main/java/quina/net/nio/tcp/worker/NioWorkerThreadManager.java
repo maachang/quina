@@ -7,13 +7,6 @@ import quina.net.nio.tcp.NioElement;
  * Nioワーカースレッド管理.
  */
 public class NioWorkerThreadManager {
-	// 最小ワーカースレッド数.
-	private static final int MIN_WORKER_THREAD_LENGTH =
-		java.lang.Runtime.getRuntime().availableProcessors() << 1;
-
-	// 最大ワーカースレッド数.
-	private static final int MAX_WORKER_THREAD_LENGTH = 32768;
-
 	// ワーカースレッド群.
 	private final NioWorkerThread[] threads;
 
@@ -22,14 +15,22 @@ public class NioWorkerThreadManager {
 
 	/**
 	 * コンストラクタ.
+	 * @param handle ワーカースレッドハンドラーを設定します.
+	 */
+	public NioWorkerThreadManager(NioWorkerThreadHandler handle) {
+		this(NioWorkerConstants.getWorkerThreadLength(), handle);
+	}
+
+	/**
+	 * コンストラクタ.
 	 * @param len 生成するワーカースレッド数を設定します.
 	 * @param handle ワーカースレッドハンドラーを設定します.
 	 */
 	public NioWorkerThreadManager(int len, NioWorkerThreadHandler handle) {
-		if(len < MIN_WORKER_THREAD_LENGTH) {
-			len = MIN_WORKER_THREAD_LENGTH;
-		} else if(len > MAX_WORKER_THREAD_LENGTH) {
-			len = MAX_WORKER_THREAD_LENGTH;
+		if(len < NioWorkerConstants.MIN_WORKER_THREAD_LENGTH) {
+			len = NioWorkerConstants.MIN_WORKER_THREAD_LENGTH;
+		} else if(len > NioWorkerConstants.MAX_WORKER_THREAD_LENGTH) {
+			len = NioWorkerConstants.MAX_WORKER_THREAD_LENGTH;
 		}
 		if(handle != null) {
 			handle.initWorkerThreadManager(len);

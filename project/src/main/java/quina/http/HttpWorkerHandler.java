@@ -51,6 +51,7 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	 */
 	@Override
 	public void initWorkerThreadManager(int len) {
+		// ワーカスレッド毎のテンポラリバッファを生成.
 		Object[] lst = new Object[len];
 		for(int i = 0; i < len; i ++) {
 			lst[i] = new byte[tmpBufLen];

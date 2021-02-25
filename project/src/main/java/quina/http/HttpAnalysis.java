@@ -3,13 +3,13 @@ package quina.http;
 import java.io.IOException;
 import java.util.Map;
 
+import quina.json.Json;
 import quina.net.nio.tcp.NioRecvBody;
 import quina.net.nio.tcp.NioRecvFileBody;
 import quina.net.nio.tcp.NioRecvMemBody;
 import quina.util.Alphabet;
 import quina.util.StringUtil;
 import quina.util.collection.BinarySearchMap;
-import quina.util.json.Json;
 
 /**
  * Http解析処理.

@@ -3,6 +3,9 @@ package quina.net.nio.tcp.server;
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
 
+/**
+ * Nioサーバ定義.
+ */
 public class NioServerConstants {
 	private NioServerConstants() {}
 

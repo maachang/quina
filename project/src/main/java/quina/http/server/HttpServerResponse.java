@@ -14,13 +14,13 @@ import quina.http.HttpSendHeader;
 import quina.http.HttpStatus;
 import quina.http.MimeTypes;
 import quina.http.Response;
+import quina.json.Json;
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioSendBinaryListData;
 import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.NioSendFileData;
 import quina.net.nio.tcp.NioSendInputStreamData;
 import quina.util.FileUtil;
-import quina.util.json.Json;
 
 /**
  * Httpサーバ用Httpレスポンス.

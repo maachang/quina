@@ -7,21 +7,25 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Nioワーカー要素プーリング管理.
  */
 public class NioWorkerPoolingManager {
-	private static final int MIN_MANAGE_LENGTH = 8;
-	private static final int MAX_MANAGE_LENGTH = 65535;
 	private int manageLength;
 	private Queue<NioWorkerElement> pooling =
 		new ConcurrentLinkedQueue<NioWorkerElement>();
+	/**
+	 * コンストラクタ.
+	 */
+	public NioWorkerPoolingManager() {
+		this(NioWorkerConstants.getPoolingManageLength());
+	}
 
 	/**
 	 * コンストラクタ.
 	 * @param len プーリング管理する最大サイズを設定します.
 	 */
 	public NioWorkerPoolingManager(int len) {
-		if(len < MIN_MANAGE_LENGTH) {
-			len = MIN_MANAGE_LENGTH;
-		} else if(len > MAX_MANAGE_LENGTH) {
-			len = MAX_MANAGE_LENGTH;
+		if(len < NioWorkerConstants.MIN_POOLING_MANAGE_LENGTH) {
+			len = NioWorkerConstants.MIN_POOLING_MANAGE_LENGTH;
+		} else if(len > NioWorkerConstants.MAX_POOLING_MANAGE_LENGTH) {
+			len = NioWorkerConstants.MAX_POOLING_MANAGE_LENGTH;
 		}
 		manageLength = len;
 	}

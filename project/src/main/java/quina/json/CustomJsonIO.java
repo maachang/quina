@@ -1,4 +1,4 @@
-package quina.util.json;
+package quina.json;
 
 /**
  * JSONのI/Oに対するカスタム変換処理を定義します.

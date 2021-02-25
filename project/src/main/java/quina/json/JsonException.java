@@ -1,4 +1,4 @@
-package quina.util.json;
+package quina.json;
 
 import quina.QuinaException;
 

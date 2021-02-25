@@ -18,6 +18,9 @@ public class HttpServerConstants {
 	// チャング送信での１つの塊のバッファサイズデフォルト値.
 	private static final int DEF_SEND_CHUNKED_BUFFER_LENGTH = 4096;
 
+	// サーバーソケットのバインドポート番号.
+	private static final int DEF_BIND_SERVER_SOCKET_PORT = 3333;
+
 	// HttpResponseのNoCacheのモード.
 	private static final Bool noCacheMode = new Bool(DEF_NO_CACHE_MODE);
 
@@ -27,6 +30,10 @@ public class HttpServerConstants {
 	// チャング送信での１つの塊のバッファサイズ.
 	private static final Number32 sendChunkedBufferLength =
 		new Number32(DEF_SEND_CHUNKED_BUFFER_LENGTH);
+
+	// サーバーソケットのバインドポート番号.
+	private static final Number32 bindServerSocketPort =
+		new Number32(DEF_BIND_SERVER_SOCKET_PORT);
 
 	/**
 	 * デフォルトの条件でHttpレスポンスでキャッシュなしの定義をするか取得.
@@ -70,9 +77,25 @@ public class HttpServerConstants {
 
 	/**
 	 * デフォルトの条件でチャング通信の送信塊のサイズを設定.
-	 * @return long チャング通信の送信塊のサイズを設定します.
+	 * @param len チャング通信の送信塊のサイズを設定します.
 	 */
 	public static final void setSendChunkedBufferLength(int len) {
 		sendChunkedBufferLength.set(len);
+	}
+
+	/**
+	 * デフォルトのサーバソケットバインドポートを取得.
+	 * @return int サーバソケットバインドポートを取得します.
+	 */
+	public static final int getBindServerSocketPort() {
+		return bindServerSocketPort.get();
+	}
+
+	/**
+	 * デフォルトのサーバソケットバインドポートを設定.
+	 * @param port サーバソケットバインドポートを設定します.
+	 */
+	public static final void setBindServerSocketPort(int port) {
+		bindServerSocketPort.set(port);
 	}
 }

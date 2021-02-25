@@ -4,7 +4,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import quina.QuinaException;
-import quina.util.json.Json;
+import quina.json.Json;
 
 /**
  * 単純なJwtオブジェクト. (HS256のみ対応)
