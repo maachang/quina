@@ -1,15 +1,19 @@
 package quina.http.server;
 
 import quina.QuinaInfo;
+import quina.QuinaUtil;
 import quina.http.EditMimeTypes;
 import quina.http.HttpCustomAnalysisParams;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
+import quina.util.collection.BinarySearchMap;
 
 /**
  * Httpサーバ定義.
  */
 public class HttpServerInfo implements QuinaInfo {
+	// mimeConfigファイル名.
+	private static final String MIME_CONFIG_FILE = "mime";
 	// ByteBufferサイズ.
 	private int byteBufferLength;
 	// Socket送信バッファ長.
@@ -24,6 +28,10 @@ public class HttpServerInfo implements QuinaInfo {
 	private int bindPort;
 	// サーバーソケットBindアドレス.
 	private String bindAddress;
+	// サーバーソケット最大接続数.
+	private int backLog;
+	// サーバーソケット受信バッファ長.
+	private int serverRecvBuffer;
 	// カスタムなPostBody解析.
 	private HttpCustomAnalysisParams custom = null;
 	// MimeTypes.
@@ -45,6 +53,8 @@ public class HttpServerInfo implements QuinaInfo {
 		keepAlive = NioServerConstants.isKeepAlive();
 		tcpNoDeley = NioServerConstants.isTcpNoDeley();
 		bindPort = HttpServerConstants.getBindServerSocketPort();
+		backLog = NioServerConstants.getBacklog();
+		serverRecvBuffer = NioServerConstants.getRecvBuffer();
 		bindAddress = null;
 		custom = null;
 		mimeTypes = new EditMimeTypes();
@@ -163,6 +173,38 @@ public class HttpServerInfo implements QuinaInfo {
 	}
 
 	/**
+	 * サーバー接続最大数を取得.
+	 * @return
+	 */
+	public int getBackLog() {
+		return backLog;
+	}
+
+	/**
+	 * サーバー接続最大数を設定.
+	 * @param backLog
+	 */
+	public void setBackLog(int backLog) {
+		this.backLog = backLog;
+	}
+
+	/**
+	 * サーバー受信バッファを取得.
+	 * @return
+	 */
+	public int getServerRecvBuffer() {
+		return serverRecvBuffer;
+	}
+
+	/**
+	 * サーバー受信バッファを設定.
+	 * @param serverRecvBuffer
+	 */
+	public void setServerRecvBuffer(int serverRecvBuffer) {
+		this.serverRecvBuffer = serverRecvBuffer;
+	}
+
+	/**
 	 * Httpリクエストのパラメータ解析カスタム処理を取得.
 	 * @return
 	 */
@@ -199,6 +241,26 @@ public class HttpServerInfo implements QuinaInfo {
 
 	@Override
 	public String toString() {
-		return outString();
+		StringBuilder buf = new StringBuilder();
+		// このオブジェクト内容を出力.
+		QuinaUtil.toString(buf, 2, this);
+		if(mimeTypes != null) {
+			// mimeType内容を出力.
+			buf.append("\n").append("  *mimeType:\n");
+			this.mimeTypes.toString(buf, 4);
+		}
+		return buf.toString();
+	}
+
+	@Override
+	public void readConfig(String configDir) {
+		QuinaUtil.readConfig(configDir, this);
+		// mimeTypeの登録.
+		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(
+			configDir, MIME_CONFIG_FILE);
+		// jsonが取得できた場合.
+		if(json != null) {
+			mimeTypes.setMimeTypes(json);
+		}
 	}
 }

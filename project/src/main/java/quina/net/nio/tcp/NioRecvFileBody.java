@@ -492,7 +492,7 @@ public class NioRecvFileBody implements NioRecvBody {
 		}
 		public long skip(long n) throws IOException {
 			checkClose();
-			long ret = this.skip(n);
+			long ret = in.skip(n);
 			if(ret > 0L) {
 				nowFileSize[0] -= ret;
 			}

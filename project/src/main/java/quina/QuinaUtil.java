@@ -12,7 +12,7 @@ import quina.util.collection.ObjectList;
 /**
  * Quina関連のユーティリティ.
  */
-final class QuinaUtil {
+public final class QuinaUtil {
 	private QuinaUtil() {}
 
 	// JSONコンフィグの拡張子.
@@ -162,42 +162,74 @@ final class QuinaUtil {
 	}
 
 	/**
-	 * コンフィグ情報をQuinaInfoオブジェクトに設定.
-	 * @param configDir コンフィグディレクトリ名を設定します.
-	 * @param info 設定するQuinaInfoオブジェクトを設定します.
+	 * スペースをセット.
+	 * @param buf StringBuilderを設定します.
+	 * @param space スペースの数を設定します.
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void readConfig(String configDir, QuinaInfo info) {
-		if(!configDir.endsWith("/")) {
-			configDir += "/";
+	public static final void setSpace(StringBuilder buf, int space) {
+		for(int i = 0; i < space; i ++) {
+			buf.append(" ");
 		}
-		// クラス名からコンフィグファイル名を生成.
-		final Class<?> c = info.getClass();
-		String fileName = configDir + c.getSimpleName();
-		fileName = fileName.substring(0, 1).toLowerCase()
-			+ fileName.substring(1);
+	}
+
+	/**
+	 * json情報をロード.
+	 * @param configDir コンフィグディレクトリ名を設定します.
+	 * @param name ファイル名を設定します.
+	 * @return BinarySearchMap<String, Object> JSON情報が返却されます.
+	 */
+	@SuppressWarnings("unchecked")
+	public static final BinarySearchMap<String, Object> loadJson(String configDir, String name) {
+		String dir = configDir;
+		if(!dir.endsWith("/")) {
+			dir += "/";
+		}
 		// コンフィグファイルが存在するかチェック.
 		int len = JSON_CONFIG_EXTENSION.length;
 		boolean flg = false;
 		for(int i = 0; i < len; i ++) {
-			if(FileUtil.isFile(fileName + JSON_CONFIG_EXTENSION[i])) {
-				fileName = fileName + JSON_CONFIG_EXTENSION[i];
+			if(FileUtil.isFile(name + JSON_CONFIG_EXTENSION[i])) {
+				name = dir + name + JSON_CONFIG_EXTENSION[i];
 				flg = true;
 				break;
 			}
 		}
 		// コンフィグファイルが存在しない.
 		if(!flg) {
-			return;
+			return null;
 		}
-		// ファイルが存在する場合.
 		try {
 			// JSON解析をして、Map形式のみ処理をする.
-			final Object json = Json.encode(FileUtil.getFileString(fileName, "UTF8"));
+			final Object json = Json.decode(FileUtil.getFileString(name, "UTF8"));
 			if(!(json instanceof BinarySearchMap)) {
-				return;
+				return null;
 			}
+			return (BinarySearchMap<String, Object>)json;
+		} catch(QuinaException qe) {
+			throw qe;
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+	}
 
+	/**
+	 * コンフィグ情報をQuinaInfoオブジェクトに設定.
+	 * @param configDir コンフィグディレクトリ名を設定します.
+	 * @param info 設定するQuinaInfoオブジェクトを設定します.
+	 */
+	public static void readConfig(String configDir, QuinaInfo info) {
+		// クラス名からコンフィグファイル名を生成.
+		final Class<?> c = info.getClass();
+		String fileName = c.getSimpleName();
+		fileName = fileName.substring(0, 1).toLowerCase()
+			+ fileName.substring(1);
+		// json情報を取得.
+		BinarySearchMap<String, Object> config = loadJson(configDir, fileName);
+		if(config == null) {
+			// 存在しない場合は処理しない.
+			return;
+		}
+		try {
 			// 対象オブジェクトのset系のメソッド群を取得.
 			IndexMap<String, ObjectList<Method>> setMethods = getMethodList("set", c);
 
@@ -206,8 +238,7 @@ final class QuinaUtil {
 			int paramsType, lenJ;
 			String key, methodName;
 			ObjectList<Method> mlst;
-			BinarySearchMap<String, Object> config = (BinarySearchMap)json;
-			len = config.size();
+			int len = config.size();
 			for(int i = 0; i < len; i ++) {
 				// コンフィグキー名から、setメソッドを生成.
 				key = config.keyAt(i);
@@ -279,9 +310,7 @@ final class QuinaUtil {
 							}
 							f = true;
 							// スペースセット.
-							for(int k = 0; k < space; k ++) {
-								out.append(" ");
-							}
+							setSpace(out, space);
 							out.append(key).append(": ");
 							// 情報の型に合わせた出力.
 							if(o == null) {

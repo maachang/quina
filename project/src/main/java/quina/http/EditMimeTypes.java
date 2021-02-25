@@ -1,5 +1,12 @@
 package quina.http;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import quina.QuinaUtil;
+import quina.util.BooleanUtil;
+import quina.util.StringUtil;
 import quina.util.collection.IndexMap;
 
 /**
@@ -115,6 +122,54 @@ public class EditMimeTypes implements MimeTypes {
 	}
 
 	/**
+	 * 決められたMimeTypeのJSON形式で、MimeTypeを追加.
+	 * @param json 対象のJSON情報を設定します.
+	 */
+	@SuppressWarnings("unchecked")
+	public void setMimeTypes(Map<String, Object> json) {
+		//
+		// jsonの定義方法
+		// {
+		//   extension: mimeType // (1)
+		//   extension: {mimeType: mimeType, charset: true/false} // (2)
+		// }
+		// (1)の登録拡張子とmimeTypeを定義する場合です.
+		// (2)は基本(1)と同じだが、charset付与可能か否かが設定出来ます.
+		//
+		Map<String, Object> v;
+		Entry<String, Object> e;
+		Iterator<Entry<String, Object>> it = json.entrySet().iterator();
+		while(it.hasNext()) {
+			e = it.next();
+			if(e.getValue() instanceof Map) {
+				v = (Map<String, Object>)e.getValue();
+				if(v.containsKey("mimeType")) {
+					if(v.containsKey("charset")) {
+						put(e.getKey(),
+							StringUtil.parseString(v.get("mimeType")),
+							BooleanUtil.parseBoolean(v.get("charset")));
+					} else {
+						put(e.getKey(),
+							StringUtil.parseString(v.get("mimeType")));
+					}
+				}
+			} else {
+				put(e.getKey(), StringUtil.parseString(e.getValue()));
+			}
+		}
+	}
+
+	/**
+	 * MimeTypeをセット.
+	 * @param extension 拡張子を設定します.
+	 * @param mime mimeTypeを設定します.
+	 * @param appendCharsetFLag このmimeTypeにcharset追加可能な場合はtrueを設定します.
+	 */
+	public void put(String extension, String mime) {
+		put(extension, mime, false);
+	}
+
+	/**
 	 * MimeTypeをセット.
 	 * @param extension 拡張子を設定します.
 	 * @param mime mimeTypeを設定します.
@@ -194,5 +249,35 @@ public class EditMimeTypes implements MimeTypes {
 		return ret;
 	}
 
+	/**
+	 * 文字列変換.
+	 * @param out StringBuilderを設定します.
+	 * @param space データ毎の先頭スペース数を設定します.
+	 */
+	public void toString(StringBuilder out, int space) {
+		Boolean charset;
+		String extension, mimeType;
+		final int len = extensionToMimeTypes.size();
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				out.append("\n");
+			}
+			extension = extensionToMimeTypes.keyAt(i);
+			mimeType = extensionToMimeTypes.valueAt(i);
+			charset = appendCharsetToMimeTypes.get(mimeType);
+			QuinaUtil.setSpace(out, space);
+			out.append("extension: ").append(extension)
+				.append(", mimeType; ").append(mimeType);
+			if(charset != null && charset) {
+				out.append(", charset: ").append(charset);
+			}
+		}
+	}
 
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder("mimeType: \n");
+		toString(buf, 2);
+		return buf.toString();
+	}
 }

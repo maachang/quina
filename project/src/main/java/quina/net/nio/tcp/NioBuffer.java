@@ -807,7 +807,7 @@ public class NioBuffer {
 		@Override
 		public long skip(long n) throws IOException {
 			checkClose();
-			return this.skip(n);
+			return this.buffer.skip((int)n);
 		}
 		@Override
 		public int available() throws IOException {

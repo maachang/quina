@@ -1,6 +1,7 @@
 package quina.util.collection;
 
 import quina.util.Alphabet;
+import quina.util.FnvHash;
 
 /**
  * 大文字・小文字を区別しないキー情報.
@@ -25,7 +26,7 @@ public class TreeKey implements Comparable<Object> {
 
 		}
 		this.key = k;
-		this.hashCode = k.hashCode();
+		this.hashCode = FnvHash.fnv32(k);
 	}
 
 	/**
@@ -75,6 +76,9 @@ public class TreeKey implements Comparable<Object> {
 
 	@Override
 	public boolean equals(Object o) {
+		if(o == null) {
+			return false;
+		}
 		return compareTo(o) == 0;
 	}
 

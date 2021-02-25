@@ -11,8 +11,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.client.NioClientConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
+import quina.util.Flag;
 
 public final class NioUtil {
 	/**
@@ -324,5 +326,53 @@ public final class NioUtil {
 			f = null;
 		}
 		return headName + name;
+	}
+
+	/**
+	 * フラグがtrueになるまで待機処理.
+	 * @param timeout タイムアウト値を設定します.
+	 * @param flg 判別するフラグオブジェクトを設定します.
+	 * @return boolean [false]の場合、タイムアウトが発生しました.
+	 */
+	public static final boolean waitTo(long timeout, Flag flg) {
+		if(!flg.get()) {
+			long first = -1L;
+			if(timeout > 0L) {
+				first = System.currentTimeMillis() + timeout;
+			}
+			while(!flg.get()) {
+				if(first != -1L && first < System.currentTimeMillis()) {
+					return false;
+				}
+				try {
+					Thread.sleep(30L);
+				} catch(Exception e) {}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * フラグがtrueになるまで待機処理.
+	 * @param timeout タイムアウト値を設定します.
+	 * @param flg 判別するフラグオブジェクトを設定します.
+	 * @return boolean [false]の場合、タイムアウトが発生しました.
+	 */
+	public static final boolean waitTo(long timeout, Bool flg) {
+		if(!flg.get()) {
+			long first = -1L;
+			if(timeout > 0L) {
+				first = System.currentTimeMillis() + timeout;
+			}
+			while(!flg.get()) {
+				if(first != -1L && first < System.currentTimeMillis()) {
+					return false;
+				}
+				try {
+					Thread.sleep(30L);
+				} catch(Exception e) {}
+			}
+		}
+		return true;
 	}
 }

@@ -140,9 +140,11 @@ public class CreateResponseHeader {
 			// 通常ヘッダ開始条件.
 			responseHeaderFirst = ("HTTP/1.1 ").getBytes(charset);
 
-			// 最後にContent-Lengthを予約条件としてセット.
+			// 最後にContent-LengthとContent-Typeを予約条件としてセット.
 			reservationHeaders.put(new TreeKey("Content-Length"),
 				new Object[] {0, "0"});
+			reservationHeaders.put(new TreeKey("Content-Type"),
+				new Object[] {0, "X"});
 		} catch (Exception e) {
 			reservationHeaders = null;
 			optionsHeader = null;
@@ -188,9 +190,9 @@ public class CreateResponseHeader {
 	 * 送信可能なレスポンス用Httpヘッダを生成.
 	 * @param state Httpステータスを設定します.
 	 * @param msg Httpステータスメッセージを設定します.
-	 * @param header Httpヘッダを設定します.
 	 * @param mimeTypes mimeTypesを設定します.
-	 * @param mimeType 設定されたMimeTypeを設定します.
+	 * @param header Httpヘッダを設定します.
+	 * @param mime 設定されたMimeTypeを設定します.
 	 * @param charset 文字コードを設定します.
 	 * @param noCache trueの場合はnocahcモードでヘッダを付与します.
 	 * @param crossDomain trueの場合はcrossDomain対応のヘッダを付与します.
@@ -199,7 +201,7 @@ public class CreateResponseHeader {
 	 * @return NioSendData NioSendDataが返却されます.
 	 */
 	public static final NioSendData createHeader(
-		int state, String msg, MimeTypes mimeTypes, Header header, String mimeType,
+		int state, String msg, MimeTypes mimeTypes, Header header, String mime,
 		String charset, boolean noCache, boolean crossDomain, long bodyLength) {
 		// 文字コードはデフォルトの内容を取得.
 		charset = (charset == null || charset.isEmpty()) ? HttpConstants.getCharset() : charset;
@@ -233,12 +235,16 @@ public class CreateResponseHeader {
 				// コンテンツ長が設定されている場合はコンテンツ長をセット.
 				buf.append("Content-Length:").append(bodyLength).append("\r\n");
 			}
-			// 対象のMimeTypeに対して、文字コードが必要かチェック.
-			if(mimeTypes.isAppendCharset(mimeType)) {
-				// 文字コードが設定されてない場合のみ設定.
-				if(mimeType.indexOf("charset") == -1) {
-					mimeType += "; charset=" + charset;
+			// mimeTypeが存在する場合.
+			if(mime != null) {
+				// 対象のMimeTypeに対して、文字コードが必要かチェック.
+				if(mimeTypes.isAppendCharset(mime)) {
+					// 文字コードが設定されてない場合のみ設定.
+					if(mime.indexOf("charset") == -1) {
+						mime = mime + "; charset=" + charset;
+					}
 				}
+				buf.append("Content-Type:").append(mime).append("\r\n");
 			}
 			Object[] v;
 			Entry<String,String> e;

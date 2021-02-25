@@ -59,18 +59,109 @@ public class NioWorkerThreadManager {
 		for(int i = 0; i < len; i ++) {
 			threads[i].stopThread();
 		}
+	}
+
+	/**
+	 * ワーカーがすべて開始しているかチェック.
+	 * @return
+	 */
+	public boolean isStartupThread() {
+		final int len = threads.length;
+		for(int i = 0; i < len; i ++) {
+			if(!threads[i].isStartupThread()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * ワーカーがすべて終了しているかチェック.
+	 * @return
+	 */
+	public boolean isExitThread() {
+		final int len = threads.length;
+		for(int i = 0; i < len; i ++) {
+			if(!threads[i].isExitThread()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// 開始・終了完了待機処理.
+	private static final boolean waitTo(
+		NioWorkerThread[] threads, boolean startup, long timeout) {
 		int stop;
+		final int len = threads.length;
+		long first = -1L;
+		if(timeout > 0L) {
+			first = System.currentTimeMillis() + timeout;
+		}
 		while(true) {
 			stop = 0;
-			for(int i = 0; i < len; i ++) {
-				if(threads[i].isEndThread()) {
-					stop ++;
+			if(startup) {
+				for(int i = 0; i < len; i ++) {
+					if(threads[i].isStartupThread()) {
+						stop ++;
+						continue;
+					}
+					break;
+				}
+			} else {
+				for(int i = 0; i < len; i ++) {
+					if(threads[i].isExitThread()) {
+						stop ++;
+						continue;
+					}
+					break;
 				}
 			}
 			if(stop == len) {
-				break;
+				return true;
+			} else if(first != -1L && first < System.currentTimeMillis()) {
+				return false;
 			}
+			try {
+				Thread.sleep(50L);
+			} catch(Exception e) {}
 		}
+	}
+
+	/**
+	 * スレッド開始完了まで待機.
+	 * @return boolean [true]の場合、正しく完了しました.
+	 */
+	public boolean waitToStartup() {
+		return waitTo(threads, true, -1L);
+	}
+
+	/**
+	 * スレッド開始完了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく完了しました.
+	 */
+	public boolean waitToStartup(long timeout) {
+		return waitTo(threads, true, timeout);
+	}
+
+	/**
+	 * スレッド終了まで待機.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToExit() {
+		return waitTo(threads, false, -1L);
+	}
+
+	/**
+	 * スレッド終了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToExit(long timeout) {
+		return waitTo(threads, false, timeout);
 	}
 
 	/**

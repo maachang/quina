@@ -207,7 +207,7 @@ public class AbstractEntryIterator {
 
 		@Override
 		public boolean equals(Object o) {
-			return this.equals(o);
+			return base.equals(o);
 		}
 
 		@Override

@@ -74,10 +74,11 @@ public class HttpSendChunked extends InputStream {
 
 	// chunkedヘッダ長を取得.
 	private static final int chunkedHeadLength(int len) {
+		int headLen = len;
 		int ret = 0;
 		while (true) {
 			ret ++;
-			if ((len = len >> 4) == 0) {
+			if ((headLen = headLen >> 4) == 0) {
 				break;
 			}
 		}

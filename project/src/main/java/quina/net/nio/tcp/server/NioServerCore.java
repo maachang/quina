@@ -7,6 +7,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.NioElement;
 import quina.net.nio.tcp.NioSelector;
@@ -36,7 +37,12 @@ public class NioServerCore extends Thread {
 
 	// スレッド開始、終了管理フラグ.
 	private volatile boolean stopFlag = true;
-	private volatile boolean exitFlag = false;
+
+	// スレッド開始完了フラグ.
+	private final Bool startupFlag = new Bool(false);
+
+	// スレッド終了完了フラグ.
+	private final Bool exitFlag = new Bool(false);
 
 	// ワーカースレッドマネージャ.
 	private NioWorkerThreadManager workerMan;
@@ -122,6 +128,8 @@ public class NioServerCore extends Thread {
 	 */
 	public void startThread() {
 		stopFlag = false;
+		startupFlag.set(false);
+		exitFlag.set(false);
 		setDaemon(true);
 		start();
 	}
@@ -142,11 +150,55 @@ public class NioServerCore extends Thread {
 	}
 
 	/**
+	 * スレッドが開始完了しているかチェック.
+	 * @return
+	 */
+	public boolean isStartupThread() {
+		return startupFlag.get();
+	}
+
+	/**
 	 * スレッドが終了しているかチェック.
 	 * @return
 	 */
 	public boolean isExitThread() {
-		return exitFlag;
+		return exitFlag.get();
+	}
+
+	/**
+	 * スレッド開始完了まで待機.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToStartup() {
+		return waitToStartup(-1L);
+	}
+
+	/**
+	 * スレッド開始完了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToStartup(long timeout) {
+		return NioUtil.waitTo(timeout, startupFlag);
+	}
+
+	/**
+	 * スレッド終了まで待機.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToExit() {
+		return waitToExit(-1L);
+	}
+
+	/**
+	 * スレッド終了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToExit(long timeout) {
+		return NioUtil.waitTo(timeout, exitFlag);
 	}
 
 	/**
@@ -224,7 +276,7 @@ public class NioServerCore extends Thread {
 				call.endNio();
 			} catch (Exception e) {
 			}
-			exitFlag = true;
+			exitFlag.set(true);
 		}
 		if (d != null) {
 			throw d;
@@ -253,6 +305,9 @@ public class NioServerCore extends Thread {
 		NioSendLess sl = null;
 		NioReceiveWorkerElement wem = null;
 		byte[] rb = null;
+
+		// スレッド開始完了.
+		startupFlag.set(true);
 		while (!endFlag && !stopFlag) {
 			key = null;
 			em = null;

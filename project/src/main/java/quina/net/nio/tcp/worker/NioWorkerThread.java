@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
+import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.Wait;
 
 /**
@@ -28,8 +30,11 @@ public class NioWorkerThread extends Thread {
 	// スレッド停止フラグ.
 	private volatile boolean stopFlag = true;
 
+	// スレッド開始完了フラグ.
+	private final Bool startThreadFlag = new Bool(false);
+
 	// スレッド終了フラグ.
-	private volatile boolean endThreadFlag = false;
+	private final Bool endThreadFlag = new Bool(false);
 
 	/**
 	 * コンストラクタ.
@@ -75,7 +80,8 @@ public class NioWorkerThread extends Thread {
 	 */
 	public void startThread() {
 		stopFlag = false;
-		endThreadFlag = false;
+		startThreadFlag.set(false);
+		endThreadFlag.set(false);
 		setDaemon(true);
 		start();
 	}
@@ -96,11 +102,57 @@ public class NioWorkerThread extends Thread {
 	}
 
 	/**
+	 * ワーカーが開始しているかチェック.
+	 * @return
+	 */
+	public boolean isStartupThread() {
+		return startThreadFlag.get();
+	}
+
+	/**
 	 * ワーカーが終了しているかチェック.
 	 * @return
 	 */
-	public boolean isEndThread() {
-		return endThreadFlag;
+	public boolean isExitThread() {
+		return endThreadFlag.get();
+	}
+
+	/**
+	 * スレッド開始完了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToStartup() {
+		return NioUtil.waitTo(-1L, startThreadFlag);
+	}
+
+	/**
+	 * スレッド開始完了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToStartup(long timeout) {
+		return NioUtil.waitTo(timeout, startThreadFlag);
+	}
+
+	/**
+	 * スレッド終了まで待機.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToExit() {
+		return NioUtil.waitTo(-1L, endThreadFlag);
+	}
+
+	/**
+	 * スレッド終了まで待機.
+	 * @param timeout タイムアウトのミリ秒を設定します.
+	 *                0以下を設定した場合、無限に待ちます.
+	 * @return boolean [true]の場合、正しく終了しました.
+	 */
+	public boolean waitToExit(long timeout) {
+		return NioUtil.waitTo(timeout, endThreadFlag);
 	}
 
 	/**
@@ -122,6 +174,8 @@ public class NioWorkerThread extends Thread {
 				e.printStackTrace();
 			}
 		}
+		// スレッド終了完了.
+		endThreadFlag.set(true);
 		if (td != null) {
 			throw td;
 		}
@@ -136,6 +190,9 @@ public class NioWorkerThread extends Thread {
 		NioWorkerElement wem = null;
 		ThreadDeath ret = null;
 		boolean endFlag = false;
+
+		// スレッド開始完了.
+		startThreadFlag.set(true);
 		while (!endFlag && !stopFlag) {
 			try {
 				while (!endFlag && !stopFlag) {

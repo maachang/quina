@@ -244,7 +244,7 @@ public class IndexMap<K, V> implements ReadIndexMap<K, V> {
 			for(int i = 0; i < len; i ++) {
 				s = (Entry)lst[i];
 				d = ix.getEntry(s.key);
-				if(d == null || !s.equals(o)) {
+				if(d == null || !s.equals(d)) {
 					return false;
 				}
 			}

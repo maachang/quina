@@ -6,8 +6,8 @@ import quina.net.nio.tcp.NioException;
  * QuinaException.
  */
 public class QuinaException extends NioException {
-	protected int status;
-	protected String msg;
+	//protected int status;
+	//protected String msg;
 
 	public QuinaException(int status) {
 		super();

@@ -16,7 +16,7 @@ public class AbstractKeyIterator {
 	public static interface Base<K> {
 		/**
 		 * キーを取得.
-		 * 
+		 *
 		 * @param no
 		 * @return
 		 */
@@ -24,7 +24,7 @@ public class AbstractKeyIterator {
 
 		/**
 		 * キー数を取得.
-		 * 
+		 *
 		 * @return
 		 */
 		public int size();
@@ -75,7 +75,7 @@ public class AbstractKeyIterator {
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	/**
 	 * KeySet.
 	 */
@@ -174,7 +174,7 @@ public class AbstractKeyIterator {
 
 		@Override
 		public boolean equals(Object o) {
-			return this.equals(o);
+			return base.equals(o);
 		}
 
 		@Override
