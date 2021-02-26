@@ -8,7 +8,7 @@ public enum ComponentType {
 	NORMAL(0x00, "normal"),
 
 	/** ファイルコンポーネント. **/
-	FILE(0x00, "file"),
+	FILE(0x01, "file"),
 
 	/** RESTful 用コンポーネント. **/
 	RESTful(0x10, "RESTful"),

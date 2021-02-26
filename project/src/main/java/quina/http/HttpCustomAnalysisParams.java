@@ -23,5 +23,4 @@ public interface HttpCustomAnalysisParams {
 	 *                されます.
 	 */
 	public Object postParams(Request req, String body, String contentType);
-
 }

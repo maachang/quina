@@ -74,6 +74,32 @@ public class FileComponent implements Component {
 		return -1;
 	}
 
+	// 不正なURLかチェック.
+	protected static final void checkIllegalUrl(String target) {
+		char c;
+		int dotCount = 0;
+		final int len = target.length();
+		for(int i = 0; i < len; i ++) {
+			if((c = target.charAt(i)) == '*' || c == '?' || c == '\"' ||
+				c == '<' || c == '>' || c == '|' || c == ';' || c == ':' ||
+				c == ',' || c == '\\') {
+				// 禁止文字が含まれる場合はエラー.
+				throw new QuinaException(
+					"An invalid character string is set in the specified URL.");
+			} else if(c == '.') {
+				// ドットをカウントで取得.
+				dotCount ++;
+			} else if(c == '/' && dotCount >= 2) {
+				// [../]が含まれてる場合はエラー.
+				throw new QuinaException(
+					"An invalid character string is set in the specified URL.");
+			} else {
+				// それ以外の場合はドットカウントをクリア.
+				dotCount = 0;
+			}
+		}
+	}
+
 	/**
 	 * URLとコンポーネントURLの差分を取って、ローカルパスを取得.
 	 * @param componentUrl コンポーネントURLを設定します.
@@ -89,7 +115,7 @@ public class FileComponent implements Component {
 			throw new QuinaException("Component definition URL is not set.");
 		} else if(!componentUrl.endsWith("/*")) {
 			throw new QuinaException(
-				"The end of the component definition URL is not an asterisk.");
+				"The end of the component definition URL is not an asterisk: " + componentUrl);
 		}
 		int pos = positionSlash(url, countSlash);
 		if(pos == -1) {
@@ -97,7 +123,9 @@ public class FileComponent implements Component {
 				"The conditions of the component definition URL and this URL do not match: "
 				+ "componentUrl: " + componentUrl + " url: " + url);
 		}
-		return targetDir + url.substring(pos);
+		final String target = url.substring(pos);
+		checkIllegalUrl(target);
+		return targetDir + target;
 	}
 
 	@Override
