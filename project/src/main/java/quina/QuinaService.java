@@ -25,37 +25,37 @@ public interface QuinaService {
 	public void check(boolean flg);
 
 	/**
-	 * サービスが開始されているかチェック.
-	 * @return boolena [true]の場合、開始しています.
+	 * サービス開始処理[startService()]が実行されたかチェック.
+	 * @return boolena [true]の場合、サービス開始処理が呼び出されています.
 	 */
 	public boolean isStartService();
 
 	/**
-	 * サービスを開始.
+	 * サービスを開始処理.
 	 */
 	public void startService();
 
 	/**
-	 * サービスが開始完了したかチェック.
-	 * @return boolean trueの場合、サービスは開始完了しています.
+	 * サービスが起動完了したかチェック.
+	 * @return boolean trueの場合、サービスは起動完了しています.
 	 */
 	default boolean isStarted() {
 		return isStartService();
 	}
 
 	/**
-	 * サービスの開始が完了するまで待機します.
-	 * @return boolean [true]の場合、正しくサービス開始が行われました.
+	 * サービスが起動完了するまで待機します.
+	 * @return boolean [true]の場合、正しくサービスの起動完了が確認されました.
 	 */
 	default boolean waitToStartup() {
 		return waitToStartup(-1L);
 	}
 
 	/**
-	 * サービスの開始が完了するまで待機します.
+	 * サービスが起動完了するまで待機します.
 	 * @param timeout タイムアウト値を設定します.
 	 *                0以下を設定した場合は、無限に待ちます.
-	 * @return boolean [true]の場合、正しくサービス開始が行われました.
+	 * @return boolean [true]の場合、正しくサービスの起動完了が確認されました.
 	 */
 	default boolean waitToStartup(long timeout) {
 		return true;
@@ -67,26 +67,26 @@ public interface QuinaService {
 	public void stopService();
 
 	/**
-	 * サービスが終了したかチェック.
-	 * @return boolean trueの場合、サービスは終了しています.
+	 * サービスの終了が完了したかチェック.
+	 * @return boolean trueの場合、サービスの終了が完了しています.
 	 */
 	default boolean isExit() {
 		return !isStartService();
 	}
 
 	/**
-	 * サービスの停止が完了するまで待機します.
-	 * @return boolean [true]の場合、正しくサービス停止が行われました.
+	 * サービスの終了が完了するまで待機します.
+	 * @return boolean [true]の場合、正しくサービス終了が完了しました.
 	 */
 	default boolean waitToExit() {
 		return waitToExit(-1L);
 	}
 
 	/**
-	 * サービスの停止が完了するまで待機します.
+	 * サービスの終了が完了するまで待機します.
 	 * @param timeout タイムアウト値を設定します.
 	 *                0以下を設定した場合は、無限に待ちます.
-	 * @return boolean [true]の場合、正しくサービス停止が行われました.
+	 * @return boolean [true]の場合、正しくサービス終了が完了しました.
 	 */
 	default boolean waitToExit(long timeout) {
 		return true;

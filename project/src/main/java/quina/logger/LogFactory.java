@@ -11,31 +11,27 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.zip.GZIPOutputStream;
 
 /**
  * Logファクトリ.
  */
 public class LogFactory {
-	// 出力先ログ.
-	private String outDir = null;
-
-	// ログ出力レベル.
-	// 0: trace, 1: debug, 2: info, 3: warn, 4: error, 5: fatal.
-	private int outLogLevel = Log.DEBUG;
-
-	// １ファイルの最大サイズ(1MByte).
-	private long outFileSize = 0x00100000;
-
-	// コンソール出力モード.
-	private boolean outConsoleOut = true;
-
-	// 個別のログ設定用のコンフィグ.
-	private Map<String, Object> config = null;
+	// デフォルト定義名.
+	private static final String DEFAULT_NAME = "default";
 
 	// デフォルトのログ名.
 	private String defaultLogName = LogConstants.SYSTEM_LOG;
+
+	// 基本ログ定義.
+	private LogDefineElement defaultLogDefine = new LogDefineElement();
+
+	// ログ定義情報.
+	private final Map<String, LogDefineElement> manager = new HashMap<String, LogDefineElement>();
 
 	// シングルトン.
 	private static final LogFactory SNGL = new LogFactory();
@@ -56,6 +52,102 @@ public class LogFactory {
 
 	/**
 	 * ログコンフィグの設定.
+	 * @param json json定義を設定します.
+	 * @return LogFactory ログファクトリが返却されます.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public synchronized LogFactory config(Map<String, Object> json) {
+		/**
+		 * jsonのコンフィグ定義内容説明.
+		 *
+		 * ２つの定義方法がある。
+		 *
+		 * (1)１つは「共通定義」の方法.
+		 * {
+		 *   default: デフォルトのログ定義名を設定します
+		 *            (未定義の場合は "system" が割り当てられる.
+		 *   level: ログレベル(TRACE~FATALまで).
+		 *   console: コンソール出力モード(true/false).
+		 *   maxFileSize: １つのログ出力サイズ(byte).
+		 *   logDir 出力先のログディレクトリ.
+		 * }
+		 *
+		 * (2)もう１つはログ定義名単位で定義する方法.
+		 * {
+		 *   default : {
+		 *     default: デフォルトのログ定義名を設定します
+		 *              (未定義の場合は "system" が割り当てられる.
+		 *     level: ログレベル(TRACE~FATALまで).
+		 *     console: コンソール出力モード(true/false).
+		 *     maxFileSize: １つのログ出力サイズ(byte).
+		 *     logDir 出力先のログディレクトリ.
+		 *   },
+		 *   「ログ定義名」 : {
+		 *     level: ログレベル(TRACE~FATALまで).
+		 *     console: コンソール出力モード(true/false).
+		 *     maxFileSize: １つのログ出力サイズ(byte).
+		 *     logDir 出力先のログディレクトリ.
+		 *   }
+		 *   ・
+		 *   ・
+		 *   ・
+		 * }
+		 *
+		 * 共通定義では、どのログ定義名にも適用されます.
+		 *
+		 * ログ定義の場合は[default]の定義は必須で、それ以外
+		 * ログ定義名に対しての個別定義が可能です.
+		 */
+
+		// 最初にdefault定義を取得.
+		Map<String, Object> v;
+		LogDefineElement em;
+		Object n = json.get(DEFAULT_NAME);
+		// (2)の条件の場合.
+		if(n instanceof Map) {
+			em = new LogDefineElement(defaultLogDefine, v = (Map)n);
+			defaultLogDefine = em;
+			n = v.get(DEFAULT_NAME);
+		// (1)の条件の場合.
+		} else {
+			em = new LogDefineElement(defaultLogDefine, json);
+			defaultLogDefine = em;
+			n = json.get(DEFAULT_NAME);
+		}
+		// defaultログ定義名が存在する場合.
+		if(n != null && n instanceof String) {
+			// デフォルトログ名の変更.
+			setDefaultLogName(((String)n).trim());
+		}
+		// default条件をセット.
+		manager.put(defaultLogName, defaultLogDefine);
+		n = null; v = null;
+
+		// 各種ログ定義条件を取得.
+		String name;
+		Entry<String, Object> e;
+		Iterator<Entry<String, Object>> it = json.entrySet().iterator();
+		while(it.hasNext()) {
+			e = it.next();
+			// value が Map条件のものを取得.
+			if(e.getValue() instanceof Map) {
+				// デフォルト条件のものは「無視」する.
+				if(DEFAULT_NAME.equals(name = e.getKey())) {
+					continue;
+				}
+				// Map条件を取得.
+				v = (Map)e.getValue();
+				// 定義条件を読み込む.
+				em = new LogDefineElement(defaultLogDefine, v);
+				// LogFactoryに登録.
+				_register(name, em);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * ログ定義を登録.
 	 *
 	 * @param level
 	 *            出力させない基本ログレベルを設定します.
@@ -65,199 +157,225 @@ public class LogFactory {
 	 *            ログ分割をする基本ファイルサイズを設定します.
 	 * @param dir
 	 *            ログ出力先のディレクトリを設定します.
+	 * @return LogFactory
+	 *            LogFactoryオブジェクトが返却されます.
 	 */
-	public void config(Object level, boolean console, Long fileSize, String dir) {
-		if (level != null) {
-			if (level instanceof String) {
-				level = strLogLevelByNumber((String) level);
-			}
-			outLogLevel = isNumeric(level) ? convertInt(level) : Log.DEBUG;
-		}
-		if (fileSize != null) {
-			outFileSize = fileSize;
-			outFileSize = outFileSize < 0 ? -1 : outFileSize;
-		}
-		if (dir != null && dir.length() != 0) {
-			outDir = dir;
-		}
-		checkOutLogDir();
-	}
-
-	// ログ出力先を確定する.
-	private final void checkOutLogDir() {
-		if(outDir == null) {
-			outDir = LogConstants.getLogDirectory();
-		}
-		int p = outDir.lastIndexOf("/");
-		int pp = outDir.lastIndexOf("¥¥");
-		int endPos = outDir.length() - 1;
-		if(!(p == endPos || pp == endPos)) {
-			if(p == -1) {
-				outDir = outDir + "¥¥";
-			} else {
-				outDir = outDir + "/";
-			}
-		}
-		// ログ出力先フォルダが存在しない場合は作成する.
-		if (outDir != null && outDir.length() != 0) {
-			final File odir = new File(outDir);
-			if (!odir.isDirectory()) {
-				odir.mkdirs();
-			}
-		}
+	public synchronized LogFactory register(Object level, boolean console,
+		Long fileSize, String dir) {
+		return _register(defaultLogName,
+			new LogDefineElement(
+				defaultLogDefine, level, console, fileSize, dir));
 	}
 
 	/**
-	 * ログコンフィグの設定.
+	 * ログ定義を登録.
 	 *
-	 * @param json
+	 * @param name
+	 *            ログ定義名を設定します.
+	 * @param level
+	 *            出力させない基本ログレベルを設定します.
+	 * @param console
+	 *            コンソール出力を許可する場合[true]を設定します.
+	 * @param fileSize
+	 *            ログ分割をする基本ファイルサイズを設定します.
+	 * @param dir
+	 *            ログ出力先のディレクトリを設定します.
+	 * @return LogFactory
+	 *            LogFactoryオブジェクトが返却されます.
 	 */
-	public void config(Map<String, Object> json) {
-		Object level = json.get("level");
-		boolean console = true;
-		Long fileSize = null;
-		String dir = null;
+	public synchronized LogFactory register(String name,
+		Object level, boolean console, Long fileSize, String dir) {
+		return _register(name,
+			new LogDefineElement(
+				defaultLogDefine, level, console, fileSize, dir));
+	}
 
-		if (json.containsKey("console")) {
-			Object n = ("" + json.get("console")).toLowerCase();
-			console = !("false".equals(n) || "off".equals(n) || "f".equals(n));
-		}
-		if (json.containsKey("maxFileSize")) {
-			if (isNumeric(json.get("maxFileSize"))) {
-				fileSize = convertLong(json.get("maxFileSize"));
-			}
-		}
-		if (json.containsKey("logDir")) {
-			dir = "" + json.get("logDir");
-		}
-		config(level, console, fileSize, dir);
+	/**
+	 * ログ定義を登録.
+	 * @param name ログ定義名を設定します.
+	 * @return LogFactory LogFactoryオブジェクトが返却されます.
+	 */
+	public synchronized LogFactory register(String name) {
+		return _register(name, new LogDefineElement(defaultLogDefine));
+	}
 
-		// コンフィグ情報として保持.
-		config = json;
+	/**
+	 * ログ定義を登録.
+	 * @param element ログ定義要素を設定します.
+	 * @return LogFactory LogFactoryオブジェクトが返却されます.
+	 */
+	public synchronized LogFactory register(LogDefineElement element) {
+		return _register(defaultLogName, new LogDefineElement(element));
+	}
+
+	/**
+	 * ログ定義を登録.
+	 * @param name ログ定義名を設定します.
+	 * @param element ログ定義要素を設定します.
+	 * @return LogFactory LogFactoryオブジェクトが返却されます.
+	 */
+	public synchronized LogFactory register(String name, LogDefineElement element) {
+		return _register(name, new LogDefineElement(element));
+	}
+
+	/**
+	 * ログ定義を登録.
+	 * @param name ログ定義名を設定します.
+	 * @param element ログ定義要素を設定します.
+	 * @return LogFactory LogFactoryオブジェクトが返却されます.
+	 */
+	private synchronized LogFactory _register(String name, LogDefineElement element) {
+		if(name == null || element == null) {
+			throw new NullPointerException();
+		} else if((name = name.trim()).isEmpty()) {
+			throw new IllegalArgumentException();
+		}
+		// デフォルトのログ定義名でない、ログ定義の場合.
+		if(!defaultLogName.equals(name)) {
+			// 新しい定義要素として登録する.
+			manager.put(name, element);
+		// デフォルトのログ定義の場合.
+		} else {
+			// デフォルトのログ定義を置き換える.
+			defaultLogDefine = element;
+			manager.put(defaultLogName, defaultLogDefine);
+		}
+		return this;
+	}
+
+	/**
+	 * デフォルトのログ定義情報を取得.
+	 * @return LogDefineElement ログ定義情報が返却されます.
+	 */
+	public synchronized LogDefineElement getLogDefineElement() {
+		return defaultLogDefine;
+	}
+
+	/**
+	 * ログ定義名を設定して、ログ定義情報を取得.
+	 * @param name ログ定義名を設定します.
+	 * @return LogDefineElement ログ定義情報が返却されます.
+	 */
+	public synchronized LogDefineElement getLogDefineElement(String name) {
+		if(name == null || (name = name.trim()).isEmpty()) {
+			return null;
+		}
+		return manager.get(name);
+	}
+
+	/**
+	 * ログ定義名で登録済みかチェック.
+	 * @param name ログ定義名を設定します.
+	 * @return boolean [true]の場合登録されています.
+	 */
+	public synchronized boolean isLogDefineElement(String name) {
+		if(name == null || (name = name.trim()).isEmpty()) {
+			return false;
+		}
+		return manager.containsKey(name);
+	}
+
+	/**
+	 * 登録されたログ定義数を取得.
+	 * @return int ログ定義数が返却されます.
+	 */
+	public synchronized int getLogDefineSize() {
+		return manager.size();
+	}
+
+	/**
+	 * 登録されたログ定義名群を取得.
+	 * @return String[] ログ定義名群が返却されます.
+	 */
+	public synchronized String[] getLogDefineNames() {
+		int cnt = 0;
+		int len = manager.size();
+		String[] ret = new String[len];
+		Iterator<String> it = manager.keySet().iterator();
+		while(it.hasNext()) {
+			ret[cnt ++] = it.next();
+		}
+		return ret;
 	}
 
 	/**
 	 * デフォルトのログ名を設定.
 	 * @param name デフォルトのログ名を設定します.
+	 * @return boolean [true]の場合、正しく設定できました.
 	 */
-	public void setDefaultLogName(String name) {
-		if(name == null || (name = name.trim()).length() == 0) {
-			return;
+	public synchronized boolean setDefaultLogName(String name) {
+		// デフォルトのログ情報が確定済みの場合は名前の変更は不可.
+		// 指定名がnullか空の場合も変更できない.
+		if(defaultLogDefine.isFinalized() ||
+			name == null || (name = name.trim()).isEmpty()) {
+			return false;
 		}
+		// 置き換え前のデフォルトのログ名をbeforeで退避.
+		final String before = defaultLogName;
+		// 今回の定義名をセット.
 		defaultLogName = name;
+		// 前回のデフォルト定義を削除.
+		manager.remove(before);
+		// 新しい条件を再セット.
+		manager.put(defaultLogName, defaultLogDefine);
+		return true;
 	}
 
 	/**
 	 * デフォルトのログ名を取得.
 	 * @return String デフォルトのログ名が返却されます.
 	 */
-	public String getDefaultLogName() {
+	public synchronized String getDefaultLogName() {
 		return defaultLogName;
 	}
 
 	/**
-	 * デフォルトの設定ログレベルを取得.
-	 *
-	 * @return
+	 * デフォルトのログ情報取得.
+	 * @return Log ログオブジェクトが返却されます.
 	 */
-	public int logLevel() {
-		return outLogLevel;
+	public synchronized Log get() {
+		return new BaseLog(defaultLogName, defaultLogDefine);
 	}
 
 	/**
-	 * デフォルトのログ出力先フォルダ名取得.
-	 *
-	 * @return
+	 * 個別に定義されたログ情報取得.
+	 * @param name 個別に定義されたログ定義名を設定します.
+	 * @return Log ログオブジェクトが返却されます.
 	 */
-	public String logDir() {
-		return outDir;
-	}
-
-	/**
-	 * デフォルトの１つのログファイルサイズを取得.
-	 *
-	 * @return
-	 */
-	public long maxFileSize() {
-		return outFileSize;
-	}
-
-	/**
-	 * コンソール出力の許可取得.
-	 * @return
-	 */
-	public boolean isConsole() {
-		return outConsoleOut;
-	}
-
-	// ログ情報取得.
-	public Log get() {
-		return get(defaultLogName, null, null, null);
-	}
-
-	// ログ情報取得.
 	public Log get(String name) {
-		return get(name, null, null, null);
+		return get(name, null);
 	}
 
-	// ログ情報取得.
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Log get(String name, Object consoleOut, Object logLevel, Long fileSize) {
+	/**
+	 * 個別に定義されたログ情報取得.
+	 * @param name 個別に定義されたログ定義名を設定します.
+	 * @param element 対象のログ定義要素を設定します.
+	 * @return Log ログオブジェクトが返却されます.
+	 */
+	public synchronized Log get(String name, LogDefineElement element) {
 		if (name == null) {
 			throw new NullPointerException();
-		} else if (name.length() == 0) {
+		} else if ((name = name.trim()).isEmpty()) {
 			throw new IllegalArgumentException();
 		}
-		// コンフィグ情報が存在する場合は、コンフィグ情報の内容を元に設定.
-		if (config != null &&
-			(consoleOut == null || logLevel == null || fileSize == null)) {
-			Object o = config.get(name);
-			if (o instanceof Map) {
-				Map<String, Object> logConf = (Map) o;
-				if (logLevel == null) {
-					logLevel = logConf.get("logLevel");
-					if (logLevel != null && isNumeric(logLevel)) {
-						logLevel = convertInt(logLevel);
-					}
-				}
-				if (consoleOut == null) {
-					o = logConf.get("console");
-					if(o != null) {
-						String n = ("" + o).toLowerCase();
-						consoleOut = "false".equals(n) || "off".equals(n) || "f".equals(n);
-					}
-				}
-				if (fileSize == null) {
-					o = logConf.get("fileSize");
-					if (o != null && isNumeric(o)) {
-						fileSize = convertLong(o);
-					}
-				}
+		// ログ定義名とログ定義が存在する場合.
+		if(element != null) {
+			return new BaseLog(name, element);
+		}
+		LogDefineElement em;
+		// 定義されているデフォルト名と一致しない場合.
+		if(!defaultLogName.equals(name)) {
+			// 既に登録されている場合.
+			if((em = manager.get(name)) != null) {
+				return new BaseLog(name, em);
 			}
+			// デフォルトのログ定義を複製して、その名前のログ定義を作成.
+			em = new LogDefineElement(defaultLogDefine);
+			manager.put(name, em);
+			return new BaseLog(name, em);
 		}
-		int lv = outLogLevel;
-		boolean co = outConsoleOut;
-		long fs = outFileSize;
-		if (logLevel != null) {
-			if (logLevel instanceof String) {
-				logLevel = strLogLevelByNumber((String) logLevel);
-			}
-			lv = convertInt(logLevel);
-		}
-		if (fileSize != null) {
-			fs = fileSize < 0 ? -1 : fileSize;
-		}
-		if (consoleOut != null) {
-			if (consoleOut instanceof Boolean) {
-				co = (Boolean)consoleOut;
-			} else if(consoleOut instanceof Number) {
-				co = ((Number)consoleOut).intValue() != 0;
-			} else {
-				String n = ("" + consoleOut).toLowerCase();
-				co = "false".equals(n) || "off".equals(n) || "f".equals(n);
-			}
-		}
-		return new BaseLog(name, lv, co, fs, outDir);
+		// デフォルトのログ定義の呼び出し.
+		return new BaseLog(defaultLogName, defaultLogDefine);
 	}
 
 	/**
@@ -265,132 +383,249 @@ public class LogFactory {
 	 */
 	private static final class BaseLog implements Log {
 		private String name;
-		private String logDir;
-		private boolean consoleOut;
-		private int logLevel;
-		private long maxFileSize;
+		private LogDefineElement element;
 
-		BaseLog(String n, int lv, boolean co, long fs, String ld) {
-			name = n;
-			logLevel = lv;
-			consoleOut = co;
-			maxFileSize = fs;
-			logDir = ld;
+		/**
+		 * コンストラクタ.
+		 * @param name
+		 * @param element
+		 */
+		protected BaseLog(String name, LogDefineElement element) {
+			this.name = name;
+			this.element = element;
+
+			// ログオブジェクトの利用を確定する.
+			element.confirm();
 		}
 
+		/**
+		 * ログ出力.
+		 * @param level
+		 * @param args
+		 */
 		@Override
-		public boolean log(int level, Object... args) {
+		public boolean log(LogLevel level, Object... args) {
 			switch(level) {
 			case TRACE : trace(args); return true;
 			case DEBUG : debug(args); return true;
 			case INFO : info(args); return true;
+			case WARNING : warn(args); return true;
 			case WARN : warn(args); return true;
 			case ERROR : error(args); return true;
 			case FATAL : fatal(args); return true;
+			case CONSOLE: console(args); return true;
 			}
 			// ログレベルが不明な場合は、コンソール出力.
-			if(consoleOut) {
-				System.out.println(format("CONSOLE", args));
-			}
+			console(args);
 			return true;
 		}
 
+		/**
+		 * トレース出力.
+		 * @param args
+		 */
 		@Override
 		public void trace(Object... args) {
-			LogFactory.write(name, logLevel, consoleOut,
-				maxFileSize, TRACE, logDir, args);
+			LogFactory.write(name, element, LogLevel.TRACE, args);
 		}
 
+		/**
+		 * デバッグ出力.
+		 * @param args
+		 */
 		@Override
 		public void debug(Object... args) {
-			LogFactory.write(name, logLevel, consoleOut,
-				maxFileSize, DEBUG, logDir, args);
+			LogFactory.write(name, element, LogLevel.DEBUG, args);
 		}
 
+		/**
+		 * 情報出力.
+		 * @param args
+		 */
 		@Override
 		public void info(Object... args) {
-			LogFactory.write(name, logLevel, consoleOut,
-				maxFileSize, INFO, logDir, args);
+			LogFactory.write(name, element, LogLevel.INFO, args);
 		}
 
+		/**
+		 * 警告出力.
+		 * @param args
+		 */
 		@Override
 		public void warn(Object... args) {
-			LogFactory.write(name, logLevel, consoleOut,
-				maxFileSize, WARN, logDir, args);
+			LogFactory.write(name, element, LogLevel.WARN, args);
 		}
 
+		/**
+		 * エラー出力.
+		 * @param args
+		 */
 		@Override
 		public void error(Object... args) {
-			LogFactory.write(name, logLevel, consoleOut,
-				maxFileSize, ERROR, logDir, args);
+			LogFactory.write(name, element, LogLevel.ERROR, args);
 		}
 
+		/**
+		 * 致命的エラー出力.
+		 * @param args
+		 */
 		@Override
 		public void fatal(Object... args) {
-			LogFactory.write(name, logLevel, consoleOut,
-				maxFileSize, FATAL, logDir, args);
+			LogFactory.write(name, element, LogLevel.FATAL, args);
 		}
 
+		/**
+		 * コンソール出力.
+		 * @param args
+		 */
+		@Override
+		public void console(Object... args) {
+			if(element.isConsoleOut()) {
+				System.out.println(format(LogLevel.CONSOLE, args));
+			}
+		}
+
+		/**
+		 * トレース出力が許可されている場合.
+		 * @return boolean
+		 */
 		@Override
 		public boolean isTraceEnabled() {
-			return logLevel <= TRACE;
+			return element.getLogLevel()
+					.checkMinMaxEquals(LogLevel.TRACE) <= 0;
 		}
 
+		/**
+		 * デバッグ出力が許可されている場合.
+		 * @return boolean
+		 */
 		@Override
 		public boolean isDebugEnabled() {
-			return logLevel <= DEBUG;
+			return element.getLogLevel()
+					.checkMinMaxEquals(LogLevel.DEBUG) <= 0;
 		}
 
+		/**
+		 * 情報出力が許可されている場合.
+		 * @return boolean
+		 */
 		@Override
 		public boolean isInfoEnabled() {
-			return logLevel <= INFO;
+			return element.getLogLevel()
+					.checkMinMaxEquals(LogLevel.INFO) <= 0;
 		}
 
+		/**
+		 * 例外出力が許可されている場合.
+		 * @return boolean
+		 */
 		@Override
 		public boolean isWarnEnabled() {
-			return logLevel <= WARN;
+			return element.getLogLevel()
+					.checkMinMaxEquals(LogLevel.WARN) <= 0;
 		}
 
+		/**
+		 * エラー出力が許可されている場合.
+		 * @return boolean
+		 */
 		@Override
 		public boolean isErrorEnabled() {
-			return logLevel <= ERROR;
+			return element.getLogLevel()
+					.checkMinMaxEquals(LogLevel.ERROR) <= 0;
 		}
 
+		/**
+		 * 致命的エラー出力が許可されている場合.
+		 * @return boolean
+		 */
 		@Override
 		public boolean isFatalEnabled() {
-			return logLevel <= FATAL;
+			return element.getLogLevel()
+					.checkMinMaxEquals(LogLevel.FATAL) <= 0;
 		}
 
+		/**
+		 * コンソール出力が許可されている場合.
+		 * @return boolean
+		 */
+		@Override
+		public boolean isConsoleEnabled() {
+			if(element.isConsoleOut()) {
+				return element.getLogLevel()
+						.checkMinMaxEquals(LogLevel.CONSOLE) <= 0;
+			}
+			return false;
+		}
+
+		/**
+		 * 定義されているログ定義名を取得.
+		 * @return String
+		 */
 		@Override
 		public String getName() {
 			return name;
 		}
 
+		/**
+		 * 定義されているログ定義を取得.
+		 * @return
+		 */
+		public LogDefineElement getDefineElement() {
+			return element;
+		}
+
+		/**
+		 * 文字列を出力.
+		 * @return String
+		 */
 		@Override
 		public String toString() {
-			return new StringBuilder("\"name\": \"").append(name)
-				.append("\", \"logLevel\": \"").append(numberLogLevelByStr(logLevel))
-				.append("\", \"fileSize\": ").append(maxFileSize)
-				.append(", \"logDir\": \"").append(logDir).append("\"")
-				.toString();
+			StringBuilder buf = new StringBuilder("\"name\": \"")
+				.append(name).append("\", ");
+			return element.toString(buf).toString();
 		}
 	}
 
 	// 数値変換可能かチェック.
-	private static final boolean isNumeric(Object o) {
+	protected static final boolean isNumeric(Object o) {
 		if(o instanceof Number) {
 			return true;
 		}
-		try {
-			Long.parseLong(""+o);
-		} catch(Exception e) {
+		return isNumeric("" + o);
+	}
+
+	/**
+	 * 指定文字列が数値かチェック.
+	 * @param s 文字列を設定します.
+	 * @return trueの場合、文字列です.
+	 */
+	protected static final boolean isNumeric(String s) {
+		if(s == null || s.isEmpty()) {
 			return false;
+		}
+		char c;
+		int off = 0;
+		int dot = 0;
+		final int len = s.length();
+		if(s.charAt(0) == '-') {
+			off = 1;
+		}
+		for (int i = off; i < len; i++) {
+			if (!((c = s.charAt(i)) == '.' || (c >= '0' && c <= '9'))) {
+				return false;
+			} else if(c == '.') {
+				dot ++;
+				if(dot > 1) {
+					return false;
+				}
+			}
 		}
 		return true;
 	}
 
 	// int 変換.
-	private static final int convertInt(Object o) {
+	protected static final int convertInt(Object o) {
 		if(o instanceof Number) {
 			return ((Number)o).intValue();
 		}
@@ -398,7 +633,7 @@ public class LogFactory {
 	}
 
 	// long 変換.
-	private static final long convertLong(Object o) {
+	protected static final long convertLong(Object o) {
 		if(o instanceof Number) {
 			return ((Number)o).longValue();
 		}
@@ -407,7 +642,7 @@ public class LogFactory {
 
 	// 日付情報を取得.
 	@SuppressWarnings("deprecation")
-	private static final String dateString(Date d) {
+	protected static final String dateString(Date d) {
 		String n;
 		return new StringBuilder().append((d.getYear() + 1900)).append("-")
 				.append("00".substring((n = "" + (d.getMonth() + 1)).length())).append(n).append("-")
@@ -416,7 +651,7 @@ public class LogFactory {
 
 	// ログフォーマット情報を作成.
 	@SuppressWarnings("deprecation")
-	private static final String format(String type, Object[] args) {
+	private static final String format(LogLevel type, Object[] args) {
 		String n;
 		Date d = new Date();
 		StringBuilder buf = new StringBuilder();
@@ -444,53 +679,15 @@ public class LogFactory {
 	}
 
 	// stackTraceを文字出力.
-	private static final String getStackTrace(Throwable t) {
+	private static final String getStackTrace(final Throwable t) {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter pw = new PrintWriter(sw);
 		t.printStackTrace(pw);
 		return sw.toString();
 	}
 
-	// 文字指定のログレベルを、数値に変換.
-	private static final int strLogLevelByNumber(String level) {
-		level = level.toLowerCase();
-		if("trace".equals(level)) {
-			return Log.TRACE;
-		} else if("debug".equals(level) || "dev".equals(level)) {
-			return Log.DEBUG;
-		} else if("info".equals(level) || "normal".equals(level)) {
-			return Log.INFO;
-		} else if("warn".equals(level) || "warning".equals(level)) {
-			return Log.WARN;
-		} else if("err".equals(level) || "error".equals(level)) {
-			return Log.ERROR;
-		} else if("fatal".equals(level)) {
-			return Log.FATAL;
-		}
-		return Log.DEBUG;
-	}
-
-	// 対象のログレベルの数値を、文字変換.
-	private static final String numberLogLevelByStr(int level) {
-		switch (level) {
-		case Log.TRACE:
-			return "TRACE";
-		case Log.DEBUG:
-			return "DEBUG";
-		case Log.INFO:
-			return "INFO";
-		case Log.WARN:
-			return "WARN";
-		case Log.ERROR:
-			return "ERROR";
-		case Log.FATAL:
-			return "FATAL";
-		}
-		return "DEBUG";
-	}
-
 	// ファイル追加書き込み.
-	private static final void appendFile(String name, String out) {
+	private static final void appendFile(final String name, final String out) {
 		FileOutputStream o = null;
 		try {
 			byte[] b = out.getBytes("UTF8");
@@ -510,19 +707,23 @@ public class LogFactory {
 
 	// ログ出力処理.
 	@SuppressWarnings("deprecation")
-	private static final void write(final String name, final int logLevel, final boolean consoleOut,
-			final long fileSize, final int typeNo, final String logDir, final Object... args) {
+	private static final void write(final String name, final LogDefineElement element,
+		final LogLevel typeNo, final Object... args) {
+		final LogLevel logLevel = element.getLogLevel();
 		// 指定されたログレベル以下はログ出力させない場合.
-		if (typeNo < logLevel) {
+		if (typeNo.checkMinMaxEquals(logLevel) < 0) {
 			return;
 		}
+		final boolean consoleOut = element.isConsoleOut();
+		final long fileSize = element.getLogSize();
+		final String logDir = element.getDirectory();
 		// ログ出力先がない場合は作成.
 		final File dir = new File(logDir);
 		if (!dir.isDirectory()) {
 			dir.mkdirs();
 		}
 
-		final String format = format(numberLogLevelByStr(typeNo), args);
+		final String format = format(typeNo, args);
 		final String fileName = name + ".log";
 		final File stat = new File(logDir + fileName);
 		final Date date = new Date(stat.lastModified());
@@ -538,11 +739,12 @@ public class LogFactory {
 			String n;
 			int cnt = -1;
 			File renameToStat = null;
-			final String targetName = fileName + "." + dateString(date) + ".";
+			final String tname;
+			final File tstat;
 
-			// nameでjava内同期.
-			final String sync = name.intern();
-			synchronized (sync) {
+			// 条件によって新しいファイルに移行する場合はロック処理.
+			synchronized(element.getSync()) {
+				final String targetName = fileName + "." + dateString(date) + ".";
 				// 指定フォルダ内から、targetNameの条件とマッチするものを検索.
 				String[] list = dir.list(new FilenameFilter() {
 					public boolean accept(final File file, final String str) {
@@ -550,25 +752,27 @@ public class LogFactory {
 					}
 				});
 				// そこの一番高いカウント値＋１の値を取得.
+				String s;
 				int len = (list == null) ? 0 : list.length;
 				for (int i = 0; i < len; i++) {
 					n = list[i];
 					p = n.lastIndexOf(".");
-					v = Integer.parseInt(n.substring(p + 1));
-					if (cnt < v) {
-						cnt = v;
+					s = n.substring(p + 1);
+					if(isNumeric(s)) {
+						v = Integer.parseInt(s);
+						if (cnt < v) {
+							cnt = v;
+						}
 					}
 				}
 				// 今回のファイルをリネーム.
 				stat.renameTo(renameToStat = new File(logDir + targetName + (cnt + 1)));
+				// リネーム先ファイル名.
+				tname = logDir + targetName + (cnt + 1);
+				tstat = renameToStat;
 			}
-
-			// リネーム先ファイル名.
-			final String tname = logDir + targetName + (cnt + 1);
-			final File tstat = renameToStat;
-
 			// gzip圧縮(スレッド実行).
-			Thread t = new Thread() {
+			final Thread t = new Thread() {
 				public void run() {
 					try {
 						int len;
@@ -576,6 +780,7 @@ public class LogFactory {
 						InputStream in = new BufferedInputStream(new FileInputStream(tname));
 						OutputStream out = null;
 						try {
+							// gzipで圧縮する.
 							out = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(tname + ".gz")));
 							while ((len = in.read(b)) != -1) {
 								out.write(b, 0, len);
@@ -585,33 +790,37 @@ public class LogFactory {
 							out = null;
 							in.close();
 							in = null;
+							// ファイル削除.
 							tstat.delete();
 						} catch (Exception e) {
 						} finally {
 							if (out != null) {
 								try {
 									out.close();
-								} catch (Exception e) {
-								}
+								} catch (Exception e) {}
 							}
 							if (in != null) {
 								try {
 									in.close();
-								} catch (Exception e) {
-								}
+								} catch (Exception e) {}
 							}
 						}
-					} catch (Exception e) {
-					}
+					} catch (Exception e) {}
 				}
 			};
 			t.setDaemon(true);
 			t.start();
-			t = null;
 		}
+
 		// ログ出力.
-		appendFile(logDir + fileName, format);
+		// 書き込みロック.
+		final String outLogFile = logDir + fileName;
+		synchronized(element.getSync()) {
+			appendFile(outLogFile, format);
+		}
+		// コンソール出力が許可されている場合.
 		if(consoleOut) {
+			// ログ情報をコンソールアウト.
 			System.out.print(format);
 		}
 	}

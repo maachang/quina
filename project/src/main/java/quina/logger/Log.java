@@ -4,39 +4,22 @@ package quina.logger;
  * ログインターフェイス.
  */
 public interface Log {
-
-	/** トレースログ. **/
-	public static final int TRACE = 0;
-
-	/** デバッグログ. **/
-	public static final int DEBUG = 1;
-
-	/** 情報ログ. **/
-	public static final int INFO = 2;
-
-	/** 警告ログ. **/
-	public static final int WARN = 3;
-
-	/** エラーログ. **/
-	public static final int ERROR = 4;
-
-	/** 致命的なエラーログ. **/
-	public static final int FATAL = 5;
-
 	/**
 	 * 出力ログレベルを設定してログを出力.
 	 * @param level 出力対象のログレベルを設定します.
 	 * @param args 出力内容を設定します.
 	 * @return boolean [true]の場合は正しく処理されました.
 	 */
-	default boolean log(int level, Object... args) {
+	default boolean log(LogLevel level, Object... args) {
 		switch(level) {
 		case TRACE : trace(args); return true;
 		case DEBUG : debug(args); return true;
 		case INFO : info(args); return true;
+		case WARNING : warn(args); return true;
 		case WARN : warn(args); return true;
 		case ERROR : error(args); return true;
 		case FATAL : fatal(args); return true;
+		case CONSOLE: console(args); return true;
 		}
 		return false;
 	}
@@ -46,14 +29,16 @@ public interface Log {
 	 * @param level 出力対象のログレベルを設定します.
 	 * @return boolean [true]の場合は出力可能です.
 	 */
-	default boolean isEnabled(int level) {
+	default boolean isEnabled(LogLevel level) {
 		switch(level) {
 		case TRACE : return isTraceEnabled();
 		case DEBUG : return isDebugEnabled();
 		case INFO : return isInfoEnabled();
+		case WARNING : return isWarnEnabled();
 		case WARN : return isWarnEnabled();
 		case ERROR : return isErrorEnabled();
 		case FATAL : return isFatalEnabled();
+		case CONSOLE: return isFatalEnabled();
 		}
 		return false;
 	}
@@ -95,6 +80,12 @@ public interface Log {
 	public void fatal(Object... args);
 
 	/**
+	 * consoleログを出力.
+	 * @param args 出力内容を設定します.
+	 */
+	public void console(Object... args);
+
+	/**
 	 * traceログが出力可能かチェック.
 	 * @return boolean [true]の場合は出力可能です.
 	 */
@@ -131,8 +122,20 @@ public interface Log {
 	public boolean isFatalEnabled();
 
 	/**
-	 * ログ名を取得.
-	 * @return このログの名前が返却されます.
+	 * consoleログが出力可能かチェック.
+	 * @return boolean [true]の場合は出力可能です.
+	 */
+	public boolean isConsoleEnabled();
+
+	/**
+	 * 定義されているログ定義名を取得.
+	 * @return String 定義されているログの定義名が返却されます.
 	 */
 	public String getName();
+
+	/**
+	 * 定義されているログ定義を取得.
+	 * @return LogDefineElement 定義されているログ定義が返却されます.
+	 */
+	public LogDefineElement getDefineElement();
 }

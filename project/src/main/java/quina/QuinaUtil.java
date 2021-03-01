@@ -162,6 +162,16 @@ public final class QuinaUtil {
 	}
 
 	/**
+	 * スリープ処理.
+	 * @param time スリープ時間をミリ秒で設定します.
+	 */
+	public static final void sleep(long time) {
+		try {
+			Thread.sleep(time);
+		} catch(Exception e) {}
+	}
+
+	/**
 	 * スペースをセット.
 	 * @param buf StringBuilderを設定します.
 	 * @param space スペースの数を設定します.
@@ -218,16 +228,36 @@ public final class QuinaUtil {
 	 * @param info 設定するQuinaInfoオブジェクトを設定します.
 	 */
 	public static void readConfig(String configDir, QuinaInfo info) {
-		// クラス名からコンフィグファイル名を生成.
+
+		/**
+		 * 最初[登録されているQuinaInfo]の情報を元にファイル名として、
+		 * パッケージ名＋クラス名[xxx.yyy.zzz.Hoge.json]のような
+		 * コンフィグファイル名を持って、コンフィグファイルとして検索し
+		 * それが無い場合は[hoge.json]でコンフィグファイルを検索して
+		 * コンフィグ情報を読み込みます.
+		 */
+
+		// 最初にパッケージ名＋クラス名からコンフィグファイル名を生成.
+		String fileName;
+		BinarySearchMap<String, Object> config;
 		final Class<?> c = info.getClass();
-		String fileName = c.getSimpleName();
-		fileName = fileName.substring(0, 1).toLowerCase()
-			+ fileName.substring(1);
-		// json情報を取得.
-		BinarySearchMap<String, Object> config = loadJson(configDir, fileName);
+		// 最初は[infoオブジェクト]のパッケージ名を含めたクラス名での
+		// コンフィグファイル定義を検索.
+		fileName = c.getName();
+		config = loadJson(configDir, fileName);
+		// infoのパッケージ名＋クラス名では、コンフィグファイルは存在しない場合.
 		if(config == null) {
-			// 存在しない場合は処理しない.
-			return;
+			// つぎに[infoオブジェクト」のクラス名だけ(先頭文字を小文字変換)
+			// でのコンフィグファイル定義を検索.
+			fileName = c.getSimpleName();
+			fileName = fileName.substring(0, 1).toLowerCase()
+				+ fileName.substring(1);
+			// json情報を取得.
+			config = loadJson(configDir, fileName);
+			if(config == null) {
+				// 存在しない場合は処理しない.
+				return;
+			}
 		}
 		try {
 			// 対象オブジェクトのset系のメソッド群を取得.
