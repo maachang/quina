@@ -33,6 +33,9 @@ public class LogFactory {
 	// ログ定義情報.
 	private final Map<String, LogDefineElement> manager = new HashMap<String, LogDefineElement>();
 
+	// コンフィグ処理が呼び出されたかチェック.
+	private boolean configFlag = false;
+
 	// シングルトン.
 	private static final LogFactory SNGL = new LogFactory();
 
@@ -143,7 +146,17 @@ public class LogFactory {
 				_register(name, em);
 			}
 		}
+		// コンフィグ情報呼び出し完了.
+		this.configFlag = true;
 		return this;
+	}
+
+	/**
+	 * コンフィグ呼び出しが行われたかチェック.
+	 * @return
+	 */
+	public synchronized boolean isConfig() {
+		return configFlag;
 	}
 
 	/**
@@ -394,8 +407,11 @@ public class LogFactory {
 			this.name = name;
 			this.element = element;
 
-			// ログオブジェクトの利用を確定する.
-			element.confirm();
+			// ログ確定処理が行われてない場合.
+			if(!element.isFinalized()) {
+				// ログオブジェクトの利用を確定する.
+				element.confirm();
+			}
 		}
 
 		/**
@@ -740,7 +756,6 @@ public class LogFactory {
 			int cnt = -1;
 			File renameToStat = null;
 			final String tname;
-			final File tstat;
 
 			// 条件によって新しいファイルに移行する場合はロック処理.
 			synchronized(element.getSync()) {
@@ -766,50 +781,13 @@ public class LogFactory {
 					}
 				}
 				// 今回のファイルをリネーム.
-				stat.renameTo(renameToStat = new File(logDir + targetName + (cnt + 1)));
-				// リネーム先ファイル名.
 				tname = logDir + targetName + (cnt + 1);
-				tstat = renameToStat;
+				renameToStat = new File(tname);
+				stat.renameTo(renameToStat);
 			}
-			// gzip圧縮(スレッド実行).
-			final Thread t = new Thread() {
-				public void run() {
-					try {
-						int len;
-						byte[] b = new byte[1024];
-						InputStream in = new BufferedInputStream(new FileInputStream(tname));
-						OutputStream out = null;
-						try {
-							// gzipで圧縮する.
-							out = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(tname + ".gz")));
-							while ((len = in.read(b)) != -1) {
-								out.write(b, 0, len);
-							}
-							out.flush();
-							out.close();
-							out = null;
-							in.close();
-							in = null;
-							// ファイル削除.
-							tstat.delete();
-						} catch (Exception e) {
-						} finally {
-							if (out != null) {
-								try {
-									out.close();
-								} catch (Exception e) {}
-							}
-							if (in != null) {
-								try {
-									in.close();
-								} catch (Exception e) {}
-							}
-						}
-					} catch (Exception e) {}
-				}
-			};
-			t.setDaemon(true);
-			t.start();
+			// gzip変換.
+			toGzip(tname, renameToStat);
+			renameToStat = null;
 		}
 
 		// ログ出力.
@@ -823,5 +801,55 @@ public class LogFactory {
 			// ログ情報をコンソールアウト.
 			System.out.print(format);
 		}
+	}
+
+	// ファイルをGZIP変換.
+	protected static final void toGzip(String name, File stat) {
+		final String tname = name;
+		final File tstat = stat;
+		// gzip圧縮(スレッド実行).
+		final Thread t = new Thread() {
+			public void run() {
+				InputStream in = null;
+				try {
+					int len;
+					byte[] b = new byte[4096];
+					in = new BufferedInputStream(
+						new FileInputStream(tname));
+					OutputStream out = null;
+					try {
+						// gzipで圧縮する.
+						out = new GZIPOutputStream(new BufferedOutputStream(
+							new FileOutputStream(tname + ".gz")));
+						while ((len = in.read(b)) != -1) {
+							out.write(b, 0, len);
+						}
+						out.flush();
+						out.close();
+						out = null;
+						in.close();
+						in = null;
+						// ファイル削除.
+						tstat.delete();
+					} catch (Exception e) {
+					} finally {
+						if (out != null) {
+							try {
+								out.close();
+							} catch (Exception e) {}
+						}
+					}
+				} catch (Exception e) {
+				} finally {
+					if (in != null) {
+						try {
+							in.close();
+						} catch (Exception e) {}
+					}
+				}
+			}
+		};
+		t.setDaemon(false);
+		t.start();
 	}
 }

@@ -4,7 +4,9 @@ import quina.http.server.HttpServerInfo;
 import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
+import quina.logger.LogFactory;
 import quina.util.FileUtil;
+import quina.util.collection.BinarySearchMap;
 import quina.util.collection.ObjectList;
 
 /**
@@ -125,6 +127,8 @@ public class Quina {
 		if(configDir != null && !configDir.isEmpty()) {
 			setConfigDirectory(configDir);
 		}
+		// ログのコンフィグ定義.
+		loadLogConfig(this.configDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
 		httpWorkerService.readConfig(this.configDir);
 		httpServerService.readConfig(this.configDir);
@@ -134,6 +138,21 @@ public class Quina {
 			quinaServiceManager.get(i).readConfig(this.configDir);
 		}
 		return this;
+	}
+
+	// ログのコンフィグ定義.
+	private static final void loadLogConfig(String configDir) {
+		final LogFactory logFactory = LogFactory.getInstance();
+		// LogFactoryが既にコンフィグ設定されている場合.
+		if(logFactory.isConfig()) {
+			return;
+		}
+		// log.jsonのコンフィグファイルを取得.
+		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(configDir, "log");
+		if(json == null) {
+			return;
+		}
+		logFactory.config(json);
 	}
 
 	/**
@@ -334,7 +353,7 @@ public class Quina {
 	 * QuinaService管理オブジェクト.
 	 */
 	protected static final class QuinaServiceManager {
-		private ObjectList<QuinaServiceEntry> list;
+		private final ObjectList<QuinaServiceEntry> list = new ObjectList<QuinaServiceEntry>();
 
 		/**
 		 * コンストラクタ.
@@ -344,7 +363,7 @@ public class Quina {
 		// 検索.
 		private static final int search(
 			ObjectList<QuinaServiceEntry> list, String name) {
-			int len = list.size();
+			final int len = list.size();
 			for(int i = 0; i < len; i ++) {
 				if(name.equals(list.get(i).getName())) {
 					return i;

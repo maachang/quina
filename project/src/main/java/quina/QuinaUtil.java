@@ -17,7 +17,7 @@ public final class QuinaUtil {
 
 	// JSONコンフィグの拡張子.
 	private static final String[] JSON_CONFIG_EXTENSION = new String[] {
-		".json", ".JSON"
+		".json", ".JSON", ".conf", ".CONF"
 	};
 
 	// 対象オブジェクトに対する、methodのhead + メソッド名のものを取得.
@@ -185,7 +185,7 @@ public final class QuinaUtil {
 	/**
 	 * json情報をロード.
 	 * @param configDir コンフィグディレクトリ名を設定します.
-	 * @param name ファイル名を設定します.
+	 * @param name ファイル名(拡張子なし)を設定します.
 	 * @return BinarySearchMap<String, Object> JSON情報が返却されます.
 	 */
 	@SuppressWarnings("unchecked")

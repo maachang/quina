@@ -226,6 +226,11 @@ public class IndexMap<K, V> implements ReadIndexMap<K, V> {
 		return list.get(no);
 	}
 
+	@Override
+	public int hashCode() {
+		return list.size();
+	}
+
 	/**
 	 * 対象オブジェクトと一致するかチェック.
 	 * @param o
@@ -310,6 +315,10 @@ public class IndexMap<K, V> implements ReadIndexMap<K, V> {
 		@Override
 		public int compareTo(K n) {
 			return ((Comparable)key).compareTo(n);
+		}
+		@Override
+		public int hashCode() {
+			return key.hashCode();
 		}
 		@Override
 		public boolean equals(Object o) {
