@@ -75,15 +75,37 @@ public final class Json {
 	}
 
 	/**
-	 * JSON形式から、オブジェクト変換2.
+	 * JSON形式から、オブジェクト変換.
+	 * この呼び出しでは、コメントは除去しません.
 	 *
 	 * @param json
 	 *            対象のJSON情報を設定します.
 	 * @return Object 変換されたJSON情報が返されます.
 	 */
 	public static final Object decode(String json) {
+		return decode(false, json);
+	}
+
+	/**
+	 * JSON形式から、オブジェクト変換.
+	 *
+	 * @param cutComment
+	 *            コメントを削除する場合はtrue.
+	 * @param json
+	 *            対象のJSON情報を設定します.
+	 * @return Object 変換されたJSON情報が返されます.
+	 */
+	public static final Object decode(boolean cutComment, String json) {
 		if (json == null) {
 			return null;
+		}
+		// コメント削除条件が設定されている場合.
+		if(cutComment) {
+			// コメントを削除する.
+			json = cutComment(json);
+			if(json == null || json.isEmpty()) {
+				return null;
+			}
 		}
 		List<Object> list;
 		final int[] n = new int[1];
@@ -425,28 +447,143 @@ public final class Json {
 		throw new JsonException("Failed to parse JSON");
 	}
 
-	/** 日付情報チェック. **/
+	/**
+	 * 日付情報チェック.
+	 * @param o
+	 * @return
+	 */
 	public static final boolean isNumeric(final String o) {
 		return NumberUtil.isNumeric(o);
 	}
 
-	/** 大文字・小文字区別なしの文字判別. **/
+	/**
+	 * 大文字・小文字区別なしの文字判別.
+	 * @param s
+	 * @param d
+	 * @return
+	 */
 	public static final boolean treeEq(final String s, final String d) {
 		return Alphabet.eq(s, d);
 	}
 
-	/** 日付変換対象の文字列かチェック. **/
+	/**
+	 * 日付変換対象の文字列かチェック.
+	 * @param s
+	 * @return
+	 */
 	public static final boolean isDate(final String s) {
 		return DateUtil.isISO8601(s);
 	}
 
-	/** 日付を文字変換. **/
+	/**
+	 * 日付を文字変換.
+	 * @param d
+	 * @return
+	 */
 	public static final String dateToString(final java.util.Date d) {
 		return DateUtil.toISO8601(d);
 	}
 
-	/** 文字を日付変換. **/
+	/**
+	 * 文字を日付変換.
+	 * @param s
+	 * @return
+	 */
 	public static final Date stringToDate(final String s) {
 		return DateUtil.toISO8601(s);
+	}
+
+	/**
+	 * コメント除去.
+	 *
+	 * @param str コメント除去を行う文字列を設定します.
+	 * @return String 除外された文字列が返却されます.
+	 */
+	public static final String cutComment(String str) {
+		if (str == null || str.length() <= 0) {
+			return "";
+		}
+		StringBuilder buf = new StringBuilder();
+		int len = str.length();
+		int cote = -1;
+		int commentType = -1;
+		int bef = -1;
+		char c, c2;
+		for (int i = 0; i < len; i++) {
+			if (i != 0) {
+				bef = str.charAt(i - 1);
+			}
+			c = str.charAt(i);
+			// コメント内の処理.
+			if (commentType != -1) {
+				switch (commentType) {
+				case 1: // １行コメント.
+					if (c == '\n') {
+						buf.append(c);
+						commentType = -1;
+					}
+					break;
+				case 2: // 複数行コメント.
+					if (c == '\n') {
+						buf.append(c);
+					} else if (len > i + 1 && c == '*' && str.charAt(i + 1) == '/') {
+						i++;
+						commentType = -1;
+					}
+					break;
+				}
+				continue;
+			}
+			// シングル／ダブルコーテーション内の処理.
+			if (cote != -1) {
+				if (c == cote && (char) bef != '\\') {
+					cote = -1;
+				}
+				buf.append(c);
+				continue;
+			}
+			// コメント(// or /* ... */).
+			if (c == '/') {
+				if (len <= i + 1) {
+					buf.append(c);
+					continue;
+				}
+				c2 = str.charAt(i + 1);
+				if (c2 == '*') {
+					commentType = 2;
+					continue;
+				} else if (c2 == '/') {
+					commentType = 1;
+					continue;
+				}
+			}
+			// コメント(--)
+			else if (c == '-') {
+				if (len <= i + 1) {
+					buf.append(c);
+					continue;
+				}
+				c2 = str.charAt(i + 1);
+				if (c2 == '-') {
+					commentType = 1;
+					continue;
+				}
+			}
+			// コメント(#)
+			else if (c == '#') {
+				if (len <= i + 1) {
+					buf.append(c);
+					continue;
+				}
+				commentType = 1;
+				continue;
+			}
+			// コーテーション開始.
+			else if ((c == '\'' || c == '\"') && (char) bef != '\\') {
+				cote = (int) (c & 0x0000ffff);
+			}
+			buf.append(c);
+		}
+		return buf.toString();
 	}
 }

@@ -92,7 +92,7 @@ public final class QuinaUtil {
 		}
 		try {
 			// JSON解析をして、Map形式のみ処理をする.
-			final Object json = Json.decode(FileUtil.getFileString(name, "UTF8"));
+			final Object json = Json.decode(true, FileUtil.getFileString(name, "UTF8"));
 			if(!(json instanceof BinarySearchMap)) {
 				return null;
 			}

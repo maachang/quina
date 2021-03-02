@@ -59,7 +59,7 @@ public class QuinaConfig {
 		 * 定義されているデフォルト返却情報を取得します.
 		 * @return Object デフォルト返却情報が返されます.
 		 */
-		public Object getDefault() {
+		public Object getDefaultValue() {
 			return defaultValue;
 		}
 
@@ -70,24 +70,24 @@ public class QuinaConfig {
 		 * @param def デフォルト値を設定します.
 		 */
 		protected void set(Object val, TypesClass clz, Object def) {
-			value = val;
-			clazz = clz;
-			defaultValue = def;
+			this.value = val;
+			this.clazz = clz;
+			this.defaultValue = def;
 			if(value != null) {
 				try {
 					switch(clz) {
-					case Boolean: value = this.getBoolean(); break;
-					case Byte: value = this.getByte(); break;
-					case Short: value = this.getShort(); break;
-					case Integer: value = this.getInteger(); break;
-					case Long: value = this.getLong(); break;
-					case Float: value = this.getFloat(); break;
-					case Double: value = this.getDouble(); break;
-					case Date: value = this.getDate(); break;
-					case String: value = this.getString(); break;
+					case Boolean: this.value = this.getBoolean(); break;
+					case Byte: this.value = this.getByte(); break;
+					case Short: this.value = this.getShort(); break;
+					case Integer: this.value = this.getInteger(); break;
+					case Long: this.value = this.getLong(); break;
+					case Float: this.value = this.getFloat(); break;
+					case Double: this.value = this.getDouble(); break;
+					case Date: this.value = this.getDate(); break;
+					case String: this.value = this.getString(); break;
 					}
 				} catch(Exception e) {
-					value = null;
+					this.value = null;
 				}
 			}
 		}
@@ -123,6 +123,11 @@ public class QuinaConfig {
 	// 予約キー情報.
 	private final IndexMap<Object, Object[]> reservationKeys =
 		new IndexMap<Object, Object[]>();
+
+	/**
+	 * コンストラクタ.
+	 */
+	protected QuinaConfig() {}
 
 	/**
 	 * 予約キー定義.
@@ -220,12 +225,12 @@ public class QuinaConfig {
 	 * @param key 対象のキー名を設定します.
 	 * @return TypesClass 定義されているデフォルト値が返却されます.
 	 */
-	public Object getDefault(String key) {
+	public Object getDefaultValue(String key) {
 		Object[] ret = reservationKeys.get(key);
 		if(ret == null) {
 			return null;
 		}
-		return ret[0];
+		return ret[1];
 	}
 
 	/**
