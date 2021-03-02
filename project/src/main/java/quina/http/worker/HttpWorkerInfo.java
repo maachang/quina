@@ -1,19 +1,16 @@
 package quina.http.worker;
 
+import quina.QuinaConfig;
 import quina.QuinaInfo;
 import quina.net.nio.tcp.worker.NioWorkerConstants;
 import quina.net.nio.tcp.worker.NioWorkerElement;
 import quina.net.nio.tcp.worker.NioWorkerThreadHandler;
+import quina.util.collection.TypesClass;
 
 /**
  * Httpワーカー定義.
  */
 public class HttpWorkerInfo implements QuinaInfo {
-	// ワーカースレッド管理サイズ.
-	private int workerThreadLength;
-	// ワーカースレッドハンドラー.
-	private NioWorkerThreadHandler workerThreadHandler;
-
 	// 空のワーカースレッドハンドラ.
 	private static final class BlankWorkerThreadHandler implements NioWorkerThreadHandler {
 		@Override
@@ -37,6 +34,15 @@ public class HttpWorkerInfo implements QuinaInfo {
 		}
 	}
 
+	// ワーカースレッドハンドラー.
+	private NioWorkerThreadHandler workerThreadHandler;
+
+	// コンフィグ情報.
+	private QuinaConfig config = new QuinaConfig(
+		// ワーカースレッド管理サイズ.
+		"workerThreadLength", TypesClass.Integer, NioWorkerConstants.getWorkerThreadLength()
+	);
+
 	/**
 	 * コンストラクタ.
 	 */
@@ -46,9 +52,13 @@ public class HttpWorkerInfo implements QuinaInfo {
 
 	@Override
 	public void reset() {
-		// デフォルト値を初期化.
-		workerThreadLength = NioWorkerConstants.getWorkerThreadLength();
+		config.clear();
 		workerThreadHandler = new BlankWorkerThreadHandler();
+	}
+
+	@Override
+	public QuinaConfig getQuinaConfig() {
+		return config;
 	}
 
 	/**
@@ -56,7 +66,7 @@ public class HttpWorkerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getWorkerThreadLength() {
-		return workerThreadLength;
+		return config.get("workerThreadLength").getInt();
 	}
 
 	/**
@@ -64,7 +74,7 @@ public class HttpWorkerInfo implements QuinaInfo {
 	 * @param workerThreadLength
 	 */
 	public void setWorkerThreadLength(int workerThreadLength) {
-		this.workerThreadLength = workerThreadLength;
+		config.set("workerThreadLength", workerThreadLength);
 	}
 
 	/**

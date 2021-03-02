@@ -1,20 +1,33 @@
 package quina;
 
+import quina.util.collection.BinarySearchMap;
+
 /**
  * Quina情報管理.
  */
 public interface QuinaInfo {
 	/**
+	 * QuinaConfigを取得.
+	 * @return QuinaConfig QuinaConfigが返却されます.
+	 */
+	public QuinaConfig getQuinaConfig();
+
+	/**
 	 * 情報の初期化.
 	 */
-	public void reset();
+	default void reset() {
+		getQuinaConfig().clear();
+	}
 
 	/**
 	 * コンフィグ情報を読み込む.
 	 * @param configDir コンフィグファイル読み込み先のディレクトリを設定します.
 	 */
 	default void readConfig(String configDir) {
-		QuinaUtil.readConfig(configDir, this);
+		final BinarySearchMap<String, Object> json = QuinaUtil.loadConfig(configDir, this);
+		if(json != null) {
+			getQuinaConfig().setConfig(json);
+		}
 	}
 
 	/**
@@ -25,7 +38,7 @@ public interface QuinaInfo {
 		StringBuilder out = new StringBuilder();
 		out.append("QuinaInfo: ")
 			.append(this.getClass().getName()).append("\n");
-		QuinaUtil.toString(out, 2, this);
+		getQuinaConfig().toString(out, 2);
 		return out.toString();
 	}
 }

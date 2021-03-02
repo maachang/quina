@@ -1,5 +1,6 @@
 package quina.http.server;
 
+import quina.QuinaConfig;
 import quina.QuinaInfo;
 import quina.QuinaUtil;
 import quina.http.EditMimeTypes;
@@ -8,6 +9,7 @@ import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
 import quina.net.nio.tcp.worker.NioWorkerConstants;
 import quina.util.collection.BinarySearchMap;
+import quina.util.collection.TypesClass;
 
 /**
  * Httpサーバ定義.
@@ -15,26 +17,31 @@ import quina.util.collection.BinarySearchMap;
 public class HttpServerInfo implements QuinaInfo {
 	// mimeConfigファイル名.
 	private static final String MIME_CONFIG_FILE = "mime";
-	// ByteBufferサイズ.
-	private int byteBufferLength;
-	// Socket送信バッファ長.
-	private int sendBuffer;
-	// Socket受信バッファ長
-	private int recvBuffer;
-	// KeepAlive
-	private boolean keepAlive;
-	// TcpNoDeley.
-	private boolean tcpNoDeley;
-	// サーバーソケットBindポート.
-	private int bindPort;
-	// サーバーソケットBindアドレス.
-	private String bindAddress;
-	// サーバーソケット最大接続数.
-	private int backLog;
-	// サーバーソケット受信バッファ長.
-	private int serverRecvBuffer;
-	// サーバープーリング管理サイズ.
-	private int poolingManagerLength;
+
+	// コンフィグ情報.
+	private final QuinaConfig config = new QuinaConfig(
+		// ByteBufferサイズ.
+		"byteBufferLength", TypesClass.Integer, NioConstants.getByteBufferLength(),
+		// Socket送信バッファ長.
+		"sendBuffer", TypesClass.Integer, NioServerConstants.getSendBuffer(),
+		// Socket受信バッファ長
+		"recvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer(),
+		// KeepAlive
+		"keepAlive", TypesClass.Boolean, NioServerConstants.isKeepAlive(),
+		// TcpNoDeley.
+		"tcpNoDeley", TypesClass.Boolean, NioServerConstants.isTcpNoDeley(),
+		// サーバーソケットBindポート.
+		"bindPort", TypesClass.Integer, HttpServerConstants.getBindServerSocketPort(),
+		// サーバーソケットBindアドレス.
+		"bindAddress", TypesClass.String, null,
+		// サーバーソケット最大接続数.
+		"backLog", TypesClass.Integer, NioServerConstants.getBacklog(),
+		// サーバーソケット受信バッファ長.
+		"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer(),
+		// サーバープーリング管理サイズ.
+		"poolingManagerLength", TypesClass.Integer, NioWorkerConstants.getPoolingManageLength()
+	);
+
 	// カスタムなPostBody解析.
 	private HttpCustomAnalysisParams custom = null;
 	// MimeTypes.
@@ -49,19 +56,14 @@ public class HttpServerInfo implements QuinaInfo {
 
 	@Override
 	public void reset() {
-		// デフォルト値を初期化.
-		byteBufferLength = NioConstants.getByteBufferLength();
-		sendBuffer = NioServerConstants.getSendBuffer();
-		recvBuffer = NioServerConstants.getRecvBuffer();
-		keepAlive = NioServerConstants.isKeepAlive();
-		tcpNoDeley = NioServerConstants.isTcpNoDeley();
-		bindPort = HttpServerConstants.getBindServerSocketPort();
-		backLog = NioServerConstants.getBacklog();
-		serverRecvBuffer = NioServerConstants.getRecvBuffer();
-		bindAddress = null;
-		poolingManagerLength = NioWorkerConstants.getPoolingManageLength();
+		config.clear();
 		custom = null;
 		mimeTypes = new EditMimeTypes();
+	}
+
+	@Override
+	public QuinaConfig getQuinaConfig() {
+		return config;
 	}
 
 	/**
@@ -69,7 +71,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getByteBufferLength() {
-		return byteBufferLength;
+		return config.get("getbyteBufferLength").getInt();
 	}
 
 	/**
@@ -77,7 +79,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param byteBufferLength
 	 */
 	public void setByteBufferLength(int byteBufferLength) {
-		this.byteBufferLength = byteBufferLength;
+		config.set("byteBufferLength", byteBufferLength);
 	}
 
 	/**
@@ -85,7 +87,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getSendBuffer() {
-		return sendBuffer;
+		return config.get("sendBuffer").getInt();
 	}
 
 	/**
@@ -93,7 +95,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param sendBuffer
 	 */
 	public void setSendBuffer(int sendBuffer) {
-		this.sendBuffer = sendBuffer;
+		config.set("sendBuffer", sendBuffer);
 	}
 
 	/**
@@ -101,7 +103,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getRecvBuffer() {
-		return recvBuffer;
+		return config.get("recvBuffer").getInt();
 	}
 
 	/**
@@ -109,7 +111,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param recvBuffer
 	 */
 	public void setRecvBuffer(int recvBuffer) {
-		this.recvBuffer = recvBuffer;
+		config.set("recvBuffer", recvBuffer);
 	}
 
 	/**
@@ -117,7 +119,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public boolean isKeepAlive() {
-		return keepAlive;
+		return config.get("keepAlive").getBool();
 	}
 
 	/**
@@ -125,7 +127,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param keepAlive
 	 */
 	public void setKeepAlive(boolean keepAlive) {
-		this.keepAlive = keepAlive;
+		config.set("keepAlive", keepAlive);
 	}
 
 	/**
@@ -133,7 +135,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public boolean isTcpNoDeley() {
-		return tcpNoDeley;
+		return config.get("tcpNoDeley").getBool();
 	}
 
 	/**
@@ -141,7 +143,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param tcpNoDeley
 	 */
 	public void setTcpNoDeley(boolean tcpNoDeley) {
-		this.tcpNoDeley = tcpNoDeley;
+		config.set("tcpNoDeley", tcpNoDeley);
 	}
 
 	/**
@@ -149,7 +151,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getBindPort() {
-		return bindPort;
+		return config.get("bindPort").getInt();
 	}
 
 	/**
@@ -157,7 +159,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param bindPort
 	 */
 	public void setBindPort(int bindPort) {
-		this.bindPort = bindPort;
+		config.set("bindPort", bindPort);
 	}
 
 	/**
@@ -165,7 +167,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public String getBindAddress() {
-		return bindAddress;
+		return config.get("bindAddress").getString();
 	}
 
 	/**
@@ -173,7 +175,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param bindAddress
 	 */
 	public void setBindAddress(String bindAddress) {
-		this.bindAddress = bindAddress;
+		config.set("bindAddress", bindAddress);
 	}
 
 	/**
@@ -181,7 +183,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getBackLog() {
-		return backLog;
+		return config.get("backLog").getInt();
 	}
 
 	/**
@@ -189,7 +191,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param backLog
 	 */
 	public void setBackLog(int backLog) {
-		this.backLog = backLog;
+		config.set("backLog", backLog);
 	}
 
 	/**
@@ -197,7 +199,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getServerRecvBuffer() {
-		return serverRecvBuffer;
+		return config.get("serverRecvBuffer").getInt();
 	}
 
 	/**
@@ -205,7 +207,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param serverRecvBuffer
 	 */
 	public void setServerRecvBuffer(int serverRecvBuffer) {
-		this.serverRecvBuffer = serverRecvBuffer;
+		config.set("serverRecvBuffer", serverRecvBuffer);
 	}
 
 	/**
@@ -213,7 +215,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getPoolingManagerLength() {
-		return poolingManagerLength;
+		return config.get("poolingManagerLength").getInt();
 	}
 
 	/**
@@ -221,7 +223,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @param poolingManagerLength
 	 */
 	public void setPoolingManagerLength(int poolingManagerLength) {
-		this.poolingManagerLength = poolingManagerLength;
+		config.set("poolingManagerLength", poolingManagerLength);
 	}
 
 	/**
@@ -263,7 +265,7 @@ public class HttpServerInfo implements QuinaInfo {
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
 		// このオブジェクト内容を出力.
-		QuinaUtil.toString(buf, 2, this);
+		config.toString(buf, 2);
 		if(mimeTypes != null) {
 			// mimeType内容を出力.
 			buf.append("\n").append("  *mimeType:\n");
@@ -274,8 +276,9 @@ public class HttpServerInfo implements QuinaInfo {
 
 	@Override
 	public void readConfig(String configDir) {
-		QuinaUtil.readConfig(configDir, this);
-		// mimeTypeの登録.
+		// コンフィグ情報を読み込む.
+		QuinaInfo.super.readConfig(configDir);
+		// mimeTypeのコンフィグ読み込み.
 		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(
 			configDir, MIME_CONFIG_FILE);
 		// jsonが取得できた場合.
