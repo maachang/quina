@@ -26,7 +26,11 @@ public final class ObjectList<T> implements ReadList<T> {
 	 *            初期配列サイズを設定します.
 	 */
 	public ObjectList(int buf) {
-		if (buf < DEF) {
+		if(buf <= 0) {
+			// ０以下の場合は空の配列を生成.
+			buf = 0;
+		// 0以上でデフォルト以下なら、デフォルト値をセット.
+		} else if (buf < DEF) {
 			buf = DEF;
 		}
 		max = buf;

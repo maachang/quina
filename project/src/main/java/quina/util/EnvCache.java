@@ -26,7 +26,7 @@ public class EnvCache {
 	 * @return String
 	 */
 	public static final String get(String name) {
-		Map<String, String> c = getCache();
+		final Map<String, String> c = getCache();
 		String ret = c.get(name);
 		if (ret == null) {
 			ret = System.getenv(name);

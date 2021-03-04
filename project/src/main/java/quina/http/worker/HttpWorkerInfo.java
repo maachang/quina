@@ -2,45 +2,24 @@ package quina.http.worker;
 
 import quina.QuinaConfig;
 import quina.QuinaInfo;
+import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.worker.NioWorkerConstants;
-import quina.net.nio.tcp.worker.NioWorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerThreadHandler;
 import quina.util.collection.TypesClass;
 
 /**
  * Httpワーカー定義.
  */
 public class HttpWorkerInfo implements QuinaInfo {
-	// 空のワーカースレッドハンドラ.
-	private static final class BlankWorkerThreadHandler implements NioWorkerThreadHandler {
-		@Override
-		public void initWorkerThreadManager(int len) {
-		}
-
-		@Override
-		public void startThreadCall(int no) {
-		}
-
-		@Override
-		public void endThreadCall(int no) {
-		}
-
-		@Override
-		public void errorCall(int no, Throwable t) {
-		}
-
-		@Override
-		public void endWorkerElement(NioWorkerElement em) {
-		}
-	}
-
-	// ワーカースレッドハンドラー.
-	private NioWorkerThreadHandler workerThreadHandler;
-
 	// コンフィグ情報.
 	private QuinaConfig config = new QuinaConfig(
 		// ワーカースレッド管理サイズ.
-		"workerThreadLength", TypesClass.Integer, NioWorkerConstants.getWorkerThreadLength()
+		"workerThreadLength", TypesClass.Integer, NioWorkerConstants.getWorkerThreadLength(),
+		// サーバープーリング管理サイズ.
+		"serverPoolingManagerLength", TypesClass.Integer, NioWorkerConstants.getPoolingManageLength(),
+		// クライアントプーリング管理サイズ.
+		"clientPoolingManagerLength", TypesClass.Integer, NioWorkerConstants.getPoolingManageLength(),
+		// 受信テンポラリバッファサイズ.
+		"recvTmpBuffer", TypesClass.Integer, NioConstants.getByteBufferLength()
 	);
 
 	/**
@@ -53,7 +32,6 @@ public class HttpWorkerInfo implements QuinaInfo {
 	@Override
 	public void reset() {
 		config.clear();
-		workerThreadHandler = new BlankWorkerThreadHandler();
 	}
 
 	@Override
@@ -78,19 +56,51 @@ public class HttpWorkerInfo implements QuinaInfo {
 	}
 
 	/**
-	 * ワーカースレッドハンドラを取得.
+	 * サーバープーリングマネージャサイズを取得.
 	 * @return
 	 */
-	public NioWorkerThreadHandler getWorkerThreadHandler() {
-		return workerThreadHandler;
+	public int getServerPoolingManagerLength() {
+		return config.get("serverPoolingManagerLength").getInt();
 	}
 
 	/**
-	 * ワーカースレッドハンドラを設定.
-	 * @param workerThreadHandler
+	 * サーバープーリングマネージャサイズを設定.
+	 * @param serverPoolingManagerLength
 	 */
-	public void setWorkerThreadHandler(NioWorkerThreadHandler workerThreadHandler) {
-		this.workerThreadHandler = workerThreadHandler;
+	public void setServerPoolingManagerLength(int serverPoolingManagerLength) {
+		config.set("serverPoolingManagerLength", serverPoolingManagerLength);
+	}
+
+	/**
+	 * クライアントプーリングマネージャサイズを取得.
+	 * @return
+	 */
+	public int getClientPoolingManagerLength() {
+		return config.get("clientPoolingManagerLength").getInt();
+	}
+
+	/**
+	 * クライアントプーリングマネージャサイズを設定.
+	 * @param poolingManagerLength
+	 */
+	public void setClientPoolingManagerLength(int clientPoolingManagerLength) {
+		config.set("clientPoolingManagerLength", clientPoolingManagerLength);
+	}
+
+	/**
+	 * 受信テンポラリバッファサイズを取得.
+	 * @return
+	 */
+	public int getRecvTmpBuffer() {
+		return config.get("recvTmpBuffer").getInt();
+	}
+
+	/**
+	 * 受信テンポラリバッファサイズを設定.
+	 * @param recvTmpBuffer
+	 */
+	public void setRecvTmpBuffer(int recvTmpBuffer) {
+		config.set("recvTmpBuffer", recvTmpBuffer);
 	}
 
 	@Override

@@ -31,12 +31,15 @@ public class IndexMap<K, V> implements ReadIndexMap<K, V> {
 	 */
 	public IndexMap(final Object... args) {
 		if(args.length == 1) {
-			if(args[0] instanceof Map) {
+			if(args[0] == null) {
+				list = new ObjectList<Entry<K, V>>();
+			} else if(args[0] instanceof Map) {
 				list = new ObjectList<Entry<K, V>>(((Map)args[0]).size());
 				putAll(args[0]);
 				return;
 			} else if(args[0] instanceof Number) {
 				list = new ObjectList<Entry<K, V>>(((Number)args[0]).intValue());
+				return;
 			} else if(args[0] instanceof String && Json.isNumeric((String)args[0])) {
 				list = new ObjectList<Entry<K, V>>(Integer.parseInt((String)args[0]));
 				return;

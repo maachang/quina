@@ -36,6 +36,7 @@ public final class NioUtil {
 	 * @param ch 対象のSocketChannelを設定します.
 	 */
 	public static final void closeChannel(Channel ch) {
+		//new Throwable("trace").printStackTrace();
 		if (ch instanceof SocketChannel) {
 			try {
 				((SocketChannel) ch).socket().close();
@@ -226,11 +227,14 @@ public final class NioUtil {
 	 */
 	public static final boolean sendDataToWriteByteBuffer(NioElement em, ByteBuffer buf)
 		throws IOException {
+		int len;
+		int sendLen = 0;
 		NioSendData in = em.getSendData();
 		// 送信データが存在し、ByteBufferに設定可能な領域が有る場合.
 		while (in != null && buf.hasRemaining()) {
+			len = in.read(buf);
 			// 終端を検知.
-			if (in.read(buf) == -1) {
+			if (len == -1) {
 				// 現在の sendData をクローズして次の情報を取得.
 				em.removeSendData();
 				try {
@@ -238,21 +242,25 @@ public final class NioUtil {
 				} catch (Exception e) {
 				}
 				in = em.getSendData();
+			} else {
+				// 今回の送信データ長として加算.
+				sendLen = len;
 			}
 		}
-		// ByteBufferに情報が格納されている場合は true 返却.
-		return buf.remaining() > 0;
+		// 送信データが存在する場合は true 返却.
+		return sendLen > 0;
 	}
 
 	// ランダム名テーブル.
-	private static final char[] RANDOM_NAME_CODE = new char[] { (char) 'A', (char) 'B', (char) 'C', (char) 'D', (char) 'E',
-			(char) 'F', (char) 'G', (char) 'H', (char) 'I', (char) 'J', (char) 'K', (char) 'L', (char) 'M', (char) 'N',
-			(char) 'O', (char) 'P', (char) 'Q', (char) 'R', (char) 'S', (char) 'T', (char) 'U', (char) 'V', (char) 'W',
-			(char) 'X', (char) 'Y', (char) 'Z', (char) 'a', (char) 'b', (char) 'c', (char) 'd', (char) 'e', (char) 'f',
-			(char) 'g', (char) 'h', (char) 'i', (char) 'j', (char) 'k', (char) 'l', (char) 'm', (char) 'n', (char) 'o',
-			(char) 'p', (char) 'q', (char) 'r', (char) 's', (char) 't', (char) 'u', (char) 'v', (char) 'w', (char) 'x',
-			(char) 'y', (char) 'z', (char) '0', (char) '1', (char) '2', (char) '3', (char) '4', (char) '5', (char) '6',
-			(char) '7', (char) '8', (char) '9', (char) '-', (char) '_' };
+	private static final char[] RANDOM_NAME_CODE = new char[] {
+		(char) 'A', (char) 'B', (char) 'C', (char) 'D', (char) 'E', (char) 'F', (char) 'G', (char) 'H', (char) 'I',
+		(char) 'J', (char) 'K', (char) 'L', (char) 'M', (char) 'N', (char) 'O', (char) 'P', (char) 'Q', (char) 'R',
+		(char) 'S', (char) 'T', (char) 'U', (char) 'V', (char) 'W', (char) 'X', (char) 'Y', (char) 'Z', (char) 'a',
+		(char) 'b', (char) 'c', (char) 'd', (char) 'e', (char) 'f', (char) 'g', (char) 'h', (char) 'i', (char) 'j',
+		(char) 'k', (char) 'l', (char) 'm', (char) 'n', (char) 'o', (char) 'p', (char) 'q', (char) 'r', (char) 's',
+		(char) 't', (char) 'u', (char) 'v', (char) 'w', (char) 'x', (char) 'y', (char) 'z', (char) '0', (char) '1',
+		(char) '2', (char) '3', (char) '4', (char) '5', (char) '6', (char) '7', (char) '8', (char) '9', (char) '-',
+		(char) '_' };
 
 	/**
 	 * ランダム名を取得.

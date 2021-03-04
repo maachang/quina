@@ -73,7 +73,7 @@ public class HttpServerAnalysis {
 				throw new HttpException("Received data is not an HTTP request:"
 					+ Arrays.toString(list));
 			}
-			long contentLength;
+			Long contentLength;
 			Method method = Method.get(list[0].trim().toUpperCase());
 			String url = list[1].trim();
 			String version = list[2].trim().toUpperCase();
@@ -104,6 +104,10 @@ public class HttpServerAnalysis {
 
 			// コンテンツ長を取得.
 			contentLength = indexHeader.getLong("content-length");
+			if(contentLength == null) {
+				// nullの場合はコンテンツ長が設定されていない.
+				contentLength = -1L;
+			}
 
 			// HttpBodyが存在するMethodの場合.
 			if(method.isBody()) {
@@ -138,7 +142,7 @@ public class HttpServerAnalysis {
 					throw new HttpException(HttpStatus.Conflict);
 				}
 				// コンテンツ長が無いので0でセット.
-				contentLength = 0;
+				contentLength = 0L;
 				// 受信処理終了.
 				element.setState(HttpElementState.STATE_END_RECV);
 			}

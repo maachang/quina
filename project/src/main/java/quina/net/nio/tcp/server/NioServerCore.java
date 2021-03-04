@@ -121,6 +121,7 @@ public class NioServerCore extends Thread {
 		this.call = call;
 		this.workerMan = workerMan;
 		this.pooling = pooling;
+		call.init();
 	}
 
 	/**
@@ -131,6 +132,7 @@ public class NioServerCore extends Thread {
 		startupFlag.set(false);
 		exitFlag.set(false);
 		setDaemon(true);
+		call.startThread();
 		start();
 	}
 
@@ -139,6 +141,7 @@ public class NioServerCore extends Thread {
 	 */
 	public void stopThread() {
 		stopFlag = true;
+		call.stopThread();
 	}
 
 	/**
@@ -358,7 +361,7 @@ public class NioServerCore extends Thread {
 								// ソケット初期化.
 								if (NioUtil.initSocketChannel(ch, ssb, srb, kpF, tnF)) {
 									// SocketChannelの初期化処理.
-									if(nc.initSocket(ch)) {
+									if(!nc.initSocket(ch)) {
 										NioUtil.closeChannel(ch);
 										ch = null;
 										continue;

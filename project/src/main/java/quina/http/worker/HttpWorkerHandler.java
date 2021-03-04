@@ -1,4 +1,4 @@
-package quina.http;
+package quina.http.worker;
 
 import quina.logger.Log;
 import quina.logger.LogFactory;
@@ -19,10 +19,10 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	private static final Log LOG = LogFactory.getInstance().get();
 
 	// nioサーバ用プーリングマネージャ.
-	private final NioWorkerPoolingManager serverPooling;
+	private NioWorkerPoolingManager serverPooling;
 
 	// nioクライアント用プーリングマネージャ.
-	private final NioWorkerPoolingManager clientPooling;
+	private NioWorkerPoolingManager clientPooling;
 
 	// 受信用テンポラリバッファ長.
 	private int tmpBufLen;
@@ -32,17 +32,45 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 
 	/**
 	 * コンストラクタ.
+	 * @param tmpBufLen 受信テンポラリバッファサイズを設定します.
 	 * @param serverPooling nioサーバ用プーリングマネージャを設定します.
 	 * @param clientPooling nioクライアント用プーリングマネージャを設定します.
 	 */
-	public HttpWorkerHandler(NioWorkerPoolingManager serverPooling,
-		NioWorkerPoolingManager clientPooling, int tmpBufLen) {
+	public HttpWorkerHandler(int tmpBufLen, NioWorkerPoolingManager serverPooling,
+			NioWorkerPoolingManager clientPooling) {
+		setTmpRecvBufLength(tmpBufLen);
+		setPoolingManagers(serverPooling, clientPooling);
+	}
+
+
+	/**
+	 * プーリングマネージャを設定.
+	 * @param serverPooling nioサーバ用プーリングマネージャを設定します.
+	 * @param clientPooling nioクライアント用プーリングマネージャを設定します.
+	 */
+	public void setPoolingManagers(NioWorkerPoolingManager serverPooling,
+		NioWorkerPoolingManager clientPooling) {
 		this.serverPooling = serverPooling;
 		this.clientPooling = clientPooling;
+	}
+
+	/**
+	 * 受信用テンポラリバッファサイズを設定します.
+	 * @param tmpBufLen 受信テンポラリバッファサイズを設定します.
+	 */
+	public void setTmpRecvBufLength(int tmpBufLen) {
 		if(tmpBufLen <= 0) {
 			tmpBufLen = NioConstants.getByteBufferLength();
 		}
 		this.tmpBufLen = tmpBufLen;
+	}
+
+	/**
+	 * 受信用テンポラリバッファサイズを取得.
+	 * @return
+	 */
+	public int getTmpRecvBufLength() {
+		return tmpBufLen;
 	}
 
 	/**
@@ -66,7 +94,7 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	@Override
 	public void startThreadCall(int no) {
 		if(LOG.isInfoEnabled()) {
-			LOG.info("*** start worker(" + no + ") thread");
+			LOG.info("*** start worker(" + no + ") thread.");
 		}
 	}
 
@@ -77,7 +105,7 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	@Override
 	public void endThreadCall(int no) {
 		if(LOG.isInfoEnabled()) {
-			LOG.info("*** end worker(" + no + ") thread");
+			LOG.info("*** end worker(" + no + ") thread.");
 		}
 	}
 
@@ -116,11 +144,15 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 				// NioCallの型がサーバ用の場合.
 				if(call instanceof NioServerCall) {
 					rem.close();
-					serverPooling.offer(rem);
+					if(serverPooling != null) {
+						serverPooling.offer(rem);
+					}
 				// NioCallの型がクライアントの場合.
 				} else if(call instanceof NioClientCall) {
 					rem.close();
-					clientPooling.offer(rem);
+					if(clientPooling != null) {
+						clientPooling.offer(rem);
+					}
 				}
 			} catch(Exception e) {}
 			return;

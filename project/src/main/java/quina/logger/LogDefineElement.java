@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import quina.util.StringUtil;
+
 /**
  * ログ定義要素.
  */
@@ -99,7 +101,7 @@ public class LogDefineElement {
 	protected final boolean confirm() {
 		// 確定済みにする.
 		boolean flg = false;
-		while(finalizedFlag.compareAndSet((flg = finalizedFlag.get()), true));
+		while(!finalizedFlag.compareAndSet((flg = finalizedFlag.get()), true));
 		// 既に確定済みの場合.
 		if(flg) {
 			return false;
@@ -165,7 +167,7 @@ public class LogDefineElement {
 	 * デフォルト条件を設定.
 	 * @return
 	 */
-	protected LogDefineElement set() {
+	public LogDefineElement set() {
 		defaultDefine();
 		return this;
 	}
@@ -175,7 +177,7 @@ public class LogDefineElement {
 	 * @param defaultInfo
 	 * @return
 	 */
-	protected LogDefineElement set(LogDefineElement defaultInfo) {
+	public LogDefineElement set(LogDefineElement defaultInfo) {
 		if(defaultInfo != null) {
 			setDirectory(defaultInfo.getDirectory());
 			setLogLevel(defaultInfo.getLogLevel());
@@ -191,7 +193,7 @@ public class LogDefineElement {
 	 * @param map
 	 * @return
 	 */
-	protected LogDefineElement set(Map<String, Object> map) {
+	public LogDefineElement set(Map<String, Object> map) {
 		checkFinalized();
 		Object n;
 		String dir = null;
@@ -249,7 +251,7 @@ public class LogDefineElement {
 	 * @param fileSize ログ分割をする基本ファイルサイズを設定します.
 	 * @param directory ログ出力先のディレクトリを設定します.
 	 */
-	protected LogDefineElement set(
+	public LogDefineElement set(
 		Object level, Boolean cons, Long fileSize, String directory) {
 		checkFinalized();
 		String dir = null;
@@ -289,10 +291,10 @@ public class LogDefineElement {
 	 * @param directory
 	 * @return
 	 */
-	protected LogDefineElement setDirectory(String directory) {
+	public LogDefineElement setDirectory(String directory) {
 		checkFinalized();
 		if(directory != null && !directory.isEmpty()) {
-			this.directory = checkOutLogDir(directory);
+			this.directory = StringUtil.envPath(directory);
 		}
 		return this;
 	}
@@ -310,7 +312,7 @@ public class LogDefineElement {
 	 * @param logLevel
 	 * @return
 	 */
-	protected LogDefineElement setLogLevel(LogLevel logLevel) {
+	public LogDefineElement setLogLevel(LogLevel logLevel) {
 		checkFinalized();
 		if(logLevel != null) {
 			this.logLevel = logLevel;
@@ -331,7 +333,7 @@ public class LogDefineElement {
 	 * @param logSize
 	 * @return
 	 */
-	protected LogDefineElement setLogSize(Long logSize) {
+	public LogDefineElement setLogSize(Long logSize) {
 		checkFinalized();
 		if(logSize != null && logSize > 0L) {
 			this.logSize = logSize;
@@ -352,7 +354,7 @@ public class LogDefineElement {
 	 * @param consoleOut
 	 * @return
 	 */
-	protected LogDefineElement setConsoleOut(Boolean consoleOut) {
+	public LogDefineElement setConsoleOut(Boolean consoleOut) {
 		checkFinalized();
 		if(consoleOut != null) {
 			this.consoleOut = consoleOut;
@@ -373,7 +375,7 @@ public class LogDefineElement {
 	 * @param buf
 	 * @return
 	 */
-	protected StringBuilder toString(StringBuilder buf) {
+	public StringBuilder toString(StringBuilder buf) {
 		buf.append("\"logLevel\": \"").append(logLevel)
 			.append("\", \"fileSize\": ").append(logSize)
 			.append("\", \"consoleOut\": ").append(consoleOut)

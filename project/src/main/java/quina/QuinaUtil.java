@@ -2,6 +2,7 @@ package quina;
 
 import quina.json.Json;
 import quina.util.FileUtil;
+import quina.util.StringUtil;
 import quina.util.collection.BinarySearchMap;
 
 /**
@@ -76,23 +77,24 @@ public final class QuinaUtil {
 		if(!dir.endsWith("/")) {
 			dir += "/";
 		}
+		// 環境変数が定義されている場合は置き換える.
+		dir = StringUtil.envPath(configDir);
 		// コンフィグファイルが存在するかチェック.
 		int len = JSON_CONFIG_EXTENSION.length;
-		boolean flg = false;
+		String fileName = null;
 		for(int i = 0; i < len; i ++) {
 			if(FileUtil.isFile(name + JSON_CONFIG_EXTENSION[i])) {
-				name = dir + name + JSON_CONFIG_EXTENSION[i];
-				flg = true;
+				fileName = dir + name + JSON_CONFIG_EXTENSION[i];
 				break;
 			}
 		}
 		// コンフィグファイルが存在しない.
-		if(!flg) {
+		if(fileName == null) {
 			return null;
 		}
 		try {
 			// JSON解析をして、Map形式のみ処理をする.
-			final Object json = Json.decode(true, FileUtil.getFileString(name, "UTF8"));
+			final Object json = Json.decode(true, FileUtil.getFileString(fileName, "UTF8"));
 			if(!(json instanceof BinarySearchMap)) {
 				return null;
 			}

@@ -11,7 +11,7 @@ import quina.net.nio.tcp.NioSendData;
 public final class NioClientSendOrder {
 	private SocketChannel channel;
 	private NioSendData[] datas;
-	
+
 	/**
 	 * コンストラクタ.
 	 * @param channel SocketChannelを設定します.
@@ -26,7 +26,7 @@ public final class NioClientSendOrder {
 		this.channel = channel;
 		this.datas = datas;
 	}
-	
+
 	/**
 	 * 情報破棄.
 	 * 管理している情報を全てクローズしてnullクリアします.
@@ -35,7 +35,9 @@ public final class NioClientSendOrder {
 		if(channel != null) {
 			try {
 				channel.close();
-			} catch(Exception e) {}
+			} catch(Exception e) {
+
+			}
 			channel = null;
 		}
 		if(datas != null) {
@@ -49,16 +51,16 @@ public final class NioClientSendOrder {
 			datas = null;
 		}
 	}
-	
+
 	/**
 	 * 情報クリア.
-	 * 管理してい情報にnullを設定してクリアします.
+	 * 管理情報にnullを設定してクリアします.
 	 */
 	public void clear() {
 		channel = null;
 		datas = null;
 	}
-	
+
 	/**
 	 * SocketChannelを取得.
 	 * @return
@@ -66,7 +68,7 @@ public final class NioClientSendOrder {
 	public SocketChannel getChannel() {
 		return channel;
 	}
-	
+
 	/**
 	 * 送信Bodyを取得.
 	 * @return

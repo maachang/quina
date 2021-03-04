@@ -97,7 +97,7 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 				}
 				return len;
 			}
-			buf.get(tmpBuf, 0, len);
+			buf.put(tmpBuf, 0, len);
 			return len;
 		} else {
 			return 0;

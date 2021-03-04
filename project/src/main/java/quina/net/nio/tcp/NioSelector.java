@@ -6,14 +6,16 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
+
 public final class NioSelector {
 	private Selector selector = null;
 	private Set<SelectionKey> selecterSet = null;
-	private volatile boolean wakeupFlag = false;
+	private final Bool wakeupFlag = new Bool(false);
 
 	/**
 	 * コンストラクタ.
-	 * 
+	 *
 	 * @exception Exception
 	 *                例外.
 	 */
@@ -52,26 +54,26 @@ public final class NioSelector {
 	 */
 	protected final void reset() {
 		selecterSet = selector.selectedKeys();
-		wakeupFlag = false;
+		wakeupFlag.set(false);
 	}
 
 	/**
 	 * 待機処理.
-	 * 
+	 *
 	 * @return [true]の場合、情報が存在します.
 	 * @exception Exception
 	 *                例外.
 	 */
 	public final boolean select() throws Exception {
 		if (selecterSet.size() != 0) {
-			wakeupFlag = false;
+			wakeupFlag.set(false);
 			// Thread.yield() ;
 			selector.selectNow();
 			return true;
 		}
 		// Wakeup処理が呼び出された場合.
-		if (wakeupFlag) {
-			wakeupFlag = false;
+		if (wakeupFlag.get()) {
+			wakeupFlag.set(false);
 			// Thread.yield() ;
 			return selector.selectNow() != 0;
 		}
@@ -82,7 +84,7 @@ public final class NioSelector {
 
 	/**
 	 * 待機処理.
-	 * 
+	 *
 	 * @param timeout
 	 *            タイムアウト値を設定します.
 	 * @return [true]の場合、情報が存在します.
@@ -91,14 +93,14 @@ public final class NioSelector {
 	 */
 	public final boolean select(final int timeout) throws Exception {
 		if (selecterSet.size() != 0) {
-			wakeupFlag = false;
+			wakeupFlag.set(false);
 			// Thread.yield() ;
 			selector.selectNow();
 			return true;
 		}
 		// Wakeup処理が呼び出された場合.
-		if (wakeupFlag) {
-			wakeupFlag = false;
+		if (wakeupFlag.get()) {
+			wakeupFlag.set(false);
 			// Thread.yield() ;
 			return selector.selectNow() != 0;
 		}
@@ -109,7 +111,7 @@ public final class NioSelector {
 
 	/**
 	 * 未処理件数を取得.
-	 * 
+	 *
 	 * @return boolean [true]の場合、未処理件数が存在します.
 	 */
 	public final boolean isNotEmpty() {
@@ -123,8 +125,8 @@ public final class NioSelector {
 		// select呼び出し以降に、
 		// wakeupが行われていない場合は
 		// wakeup実行.
-		if (!wakeupFlag) {
-			wakeupFlag = true;
+		if (!wakeupFlag.get()) {
+			wakeupFlag.set(true);
 			selector.wakeup();
 		}
 	}
@@ -134,21 +136,21 @@ public final class NioSelector {
 	 */
 	public final void changeWakeup() {
 		// selectNowを呼び出すフラグのみをセット.
-		wakeupFlag = true;
+		wakeupFlag.set(true);
 	}
 
 	/**
 	 * 書き込み処理等のWakeup処理したかチェック.
-	 * 
+	 *
 	 * @return boolean [true]の場合、Wakeupしています.
 	 */
 	public final boolean isWakeup() {
-		return wakeupFlag;
+		return wakeupFlag.get();
 	}
 
 	/**
 	 * selectedKeysを取得.
-	 * 
+	 *
 	 * @return Set<SelectionKey> Setオブジェクトが返却されます.
 	 */
 	public final Set<SelectionKey> selectedKeys() {
@@ -157,7 +159,7 @@ public final class NioSelector {
 
 	/**
 	 * Iteratorを取得.
-	 * 
+	 *
 	 * @return Iterator<SelectionKey> Iteratorが返却されます.
 	 */
 	public final Iterator<SelectionKey> iterator() {
@@ -166,7 +168,7 @@ public final class NioSelector {
 
 	/**
 	 * 登録されているSelectionKey情報を取得.
-	 * 
+	 *
 	 * @return Iterator<SelectionKey> Iteratorが返却されます.
 	 */
 	public final Iterator<SelectionKey> regKeys() {
@@ -175,7 +177,7 @@ public final class NioSelector {
 
 	/**
 	 * チャネル登録.
-	 * 
+	 *
 	 * @param channel
 	 *            登録対象のチャネルを設定します.
 	 * @param op
@@ -190,7 +192,7 @@ public final class NioSelector {
 
 	/**
 	 * チャネル登録.
-	 * 
+	 *
 	 * @param channel
 	 *            登録対象のチャネルを設定します.
 	 * @param op

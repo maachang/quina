@@ -36,9 +36,13 @@ public class NioSendBinaryListData extends AbstractNioSendData {
 		public int read(ByteBuffer buf) throws IOException {
 			int sendLen = (int)(len - pos);
 			sendLen = buf.remaining() > sendLen ? sendLen : buf.remaining();
+			// 送信データが設定可能な場合.
 			if(sendLen > 0) {
-				buf.get(binary, pos, sendLen);
+				buf.put(binary, pos, sendLen);
 				pos += sendLen;
+			// 送信データが設定できない場合.
+			} else {
+				return -1;
 			}
 			return sendLen;
 		}
@@ -57,6 +61,22 @@ public class NioSendBinaryListData extends AbstractNioSendData {
 		 */
 		public int getLength() {
 			return len;
+		}
+
+		/**
+		 * value内容を文字列変換.
+		 * @param buf 対象のStringBuilderを設定します.
+		 * @param charset バイナリから文字に変換する文字コードを設定します.
+		 */
+		public void valueToString(StringBuilder buf, String charset) {
+			if(charset == null) {
+				charset = "UTF8";
+			}
+			try {
+				buf.append("position: ").append(pos);
+				buf.append(" length: ").append(len);
+				buf.append(" value: {").append(new String(binary, charset)).append("}");
+			} catch(Exception e) {}
 		}
 	}
 
@@ -188,6 +208,22 @@ public class NioSendBinaryListData extends AbstractNioSendData {
 			}
 		}
 		return ret;
+	}
+
+	/**
+	 * value内容を文字列に変換.
+	 * @param charset バイナリから文字変換する文字コードを設定します.
+	 * @return String value内容が文字列で返却されます.
+	 */
+	public String valueToString(String charset) {
+		int len = list.size();
+		StringBuilder buf = new StringBuilder();
+		buf.append("[BinaryListBody]: ").append(len);
+		for(int i = 0; i < len; i ++) {
+			buf.append("\n");
+			list.get(i).valueToString(buf, charset);
+		}
+		return buf.toString();
 	}
 
 	@Override

@@ -9,20 +9,29 @@ import quina.component.RegisterComponent;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
+import quina.http.HttpException;
 import quina.http.HttpMode;
+import quina.http.Method;
 import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.logger.Log;
+import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
+import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.server.NioServerCall;
 
 /**
  * Httpサーバコール.
  */
 public class HttpServerCall extends NioServerCall {
+	// ログ出力.
+	private static final Log LOG = LogFactory.getInstance().get();
+
 	// カスタムなPostBody解析.
 	private HttpCustomAnalysisParams custom = null;
+
 	// MimeTypes.
 	private MimeTypes mimeTypes = null;
 
@@ -34,6 +43,79 @@ public class HttpServerCall extends NioServerCall {
 	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes) {
 		this.custom = custom;
 		this.mimeTypes = mimeTypes;
+	}
+
+	/**
+	 * NioServerCoreが生成された時に呼び出されます.
+	 */
+	@Override
+	public void init() {
+		LOG.info("### init HttpServerCall.");
+	}
+
+	/**
+	 * NioServerCoreのstartThread処理が呼ばれた時に呼び出されます.
+	 */
+	@Override
+	public void startThread() {
+		LOG.info("### startThread HttpServerCall.");
+	}
+
+	/**
+	 * NioServerCoreのstopThread処理が呼ばれた時に呼び出されます.
+	 */
+	@Override
+	public void stopThread() {
+		LOG.info("### stopThread HttpServerCall.");
+	}
+
+	/**
+	 * nio開始処理.
+	 *
+	 * @return boolean [true]の場合、正常に処理されました.
+	 */
+	@Override
+	public boolean startNio() {
+		LOG.info("### started HttpServerCall.");
+		return true;
+	}
+
+	/**
+	 * nio終了処理.
+	 */
+	@Override
+	public void endNio() {
+		LOG.info("### end HttpServerCall.");
+	}
+
+	/**
+	 * エラーハンドリング.
+	 *
+	 * @param e エラー用の例外オブジェクトを設定されます.
+	 */
+	@Override
+	public void error(Throwable e) {
+		if(LOG.isWarnEnabled()) {
+			LOG.warn("### error", e);
+		}
+	}
+
+	/**
+	 * Accept処理.
+	 *
+	 * @param em
+	 *            対象のBaseNioElementオブジェクトが設定されます.
+	 * @return boolean [true]の場合、正常に処理されました.
+	 * @exception IOException
+	 *                IO例外.
+	 */
+	@Override
+	public boolean accept(NioElement em)
+		throws IOException {
+		if(LOG.isTraceEnabled()) {
+			LOG.trace("### accept: " + em.getRemoteAddress());
+		}
+		return true;
 	}
 
 	/**
@@ -91,6 +173,12 @@ public class HttpServerCall extends NioServerCall {
 			case STATE_END_RECV:
 				// requestを取得.
 				req = (HttpServerRequest)hem.getRequest();
+				// methodがoptionかチェック.
+				if(Method.OPTIONS.equals(req.getMethod())) {
+					// Option送信.
+					sendOptions(hem, req);
+					return true;
+				}
 				res = (HttpServerResponse)hem.getResponse();
 				if(res == null) {
 					res = new HttpServerResponse(hem, mimeTypes);
@@ -121,6 +209,9 @@ public class HttpServerCall extends NioServerCall {
 						// パラメータが存在する場合はリクエストセット.
 						if(params != null) {
 							req.setParams(params);
+						// パラメータが存在しない場合は空のパラメータをセット.
+						} else {
+							req.setParams(new Params(0));
 						}
 						// コンポーネント実行.
 						comp.call(req.getMethod(), req, res);
@@ -138,6 +229,30 @@ public class HttpServerCall extends NioServerCall {
 				// 処理終了.
 				return true;
 			}
+		}
+	}
+
+	// Option送信.
+	private static final void sendOptions(HttpElement em, HttpServerRequest req) {
+		try {
+			// optionのデータを取得.
+			final NioSendData options = CreateResponseHeader.createOptionsHeader(true, false);
+			// NioElementに送信データを登録.
+			em.setSendData(options);
+			// 送信開始.
+			em.startWrite();
+		} catch(Exception e) {
+			// 例外の場合は要素をクローズして終了.
+			try {
+				em.close();
+			} catch(Exception ee) {}
+			try {
+				req.close();
+			} catch(Exception ee) {}
+			if(e instanceof HttpException) {
+				throw (HttpException)e;
+			}
+			throw new HttpException(e);
 		}
 	}
 

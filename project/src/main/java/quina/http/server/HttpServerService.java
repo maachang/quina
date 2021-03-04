@@ -8,7 +8,6 @@ import quina.QuinaService;
 import quina.http.worker.HttpWorkerService;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerCore;
-import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.util.Flag;
 
 /**
@@ -18,14 +17,8 @@ public class HttpServerService implements QuinaService {
 	// Nioサーバコア.
 	private NioServerCore core;
 
-	// HttpServer実行処理.
-	private HttpServerCall call;
-
 	// HttpServer定義.
 	private HttpServerInfo info = new HttpServerInfo();
-
-	// プーリング管理.
-	private NioWorkerPoolingManager poolingManager;
 
 	// HttpWorkerService.
 	private HttpWorkerService httpWorkerService = null;
@@ -64,21 +57,28 @@ public class HttpServerService implements QuinaService {
 
 	@Override
 	public synchronized void startService() {
+		// HttpWorkerServiceが開始していない場合はエラー.
+		if(!httpWorkerService.isStarted()) {
+			throw new QuinaException("HttpWorkerService is not started.");
+		}
+		// 一度起動している場合はエラー.
 		if(startFlag.setToGetBefore(true)) {
 			throw new QuinaException(this.getClass().getName() + " has already started.");
 		}
 		ServerSocketChannel server = null;
 		try {
+			// サーバーコール生成.
+			final HttpServerCall call = new HttpServerCall(info.getCustom(), info.getMimeTypes());
 			// サーバーソケット作成.
 			server = NioUtil.createServerSocketChannel(
 				info.getBindAddress(), info.getBindPort(), info.getBackLog(), info.getServerRecvBuffer());
-			this.poolingManager = new NioWorkerPoolingManager(info.getPoolingManagerLength());
-			// サーバーコール生成.
-			this.call = new HttpServerCall(info.getCustom(), info.getMimeTypes());
 			// サーバーコア生成.
 			this.core = new NioServerCore(info.getByteBufferLength(), info.getSendBuffer(),
 				info.getRecvBuffer(), info.isKeepAlive(), info.isTcpNoDeley(),
-				server, call, this.poolingManager, httpWorkerService.getNioWorkerThreadManager());
+				server, call, httpWorkerService.getServerPoolingManager(),
+				httpWorkerService.getNioWorkerThreadManager());
+			// サーバスレッド開始.
+			this.core.startThread();
 		} catch(QuinaException qe) {
 			stopService();
 			if(server != null) {
@@ -115,12 +115,9 @@ public class HttpServerService implements QuinaService {
 		// 停止処理.
 		if(core != null) {
 			core.stopThread();
+			core = null;
 		}
-		if(poolingManager != null) {
-			poolingManager.clear();
-			poolingManager = null;
-		}
-		call = null;
+		startFlag.set(false);
 	}
 
 	@Override

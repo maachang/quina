@@ -69,7 +69,7 @@ public class QuinaConfig {
 		 * @param clz 定義された型を設定します.
 		 * @param def デフォルト値を設定します.
 		 */
-		protected void set(Object val, TypesClass clz, Object def) {
+		protected QuinaConfigElement set(Object val, TypesClass clz, Object def) {
 			this.value = val;
 			this.clazz = clz;
 			this.defaultValue = def;
@@ -90,12 +90,20 @@ public class QuinaConfig {
 					this.value = null;
 				}
 			}
+			return this;
 		}
 
 		@Override
 		public String toString() {
+			// 最初はvalueを取得.
+			Object o = value;
 			if(value == null) {
-				return "null";
+				// valueがnullの場合はデフォルトを取得.
+				o = defaultValue;
+				if(o == null) {
+					// デフォルトもnullの場合.
+					return "null";
+				}
 			}
 			switch(clazz) {
 			case Boolean:
@@ -105,13 +113,13 @@ public class QuinaConfig {
 			case Long:
 			case Float:
 			case Double:
-				return value.toString();
+				return o.toString();
 			case String:
-				return "\"" + value + "\"";
+				return "\"" + o + "\"";
 			case Date:
-				return Json.dateToString((java.util.Date)value);
+				return Json.dateToString((java.util.Date)o);
 			}
-			return value.toString();
+			return o.toString();
 		}
 	}
 
@@ -121,8 +129,8 @@ public class QuinaConfig {
 		new ConcurrentHashMap<Object, QuinaConfigElement>();
 
 	// 予約キー情報.
-	private final IndexMap<Object, Object[]> reservationKeys =
-		new IndexMap<Object, Object[]>();
+	private final IndexMap<Object, QuinaConfigElement> reservationKeys =
+		new IndexMap<Object, QuinaConfigElement>();
 
 	/**
 	 * コンストラクタ.
@@ -154,11 +162,12 @@ public class QuinaConfig {
 			} else if(v instanceof Number) {
 				clazz = TypesClass.get(((Number)v).intValue());
 			} else {
-				clazz = TypesClass.get("" + v);
+				clazz = TypesClass.get(v.toString());
 			}
 			if(clazz != null) {
-				reservationKeys.put(key, new Object[] {
-					clazz, defines[i+2]});
+				// 型とデフォルト値をセット.
+				reservationKeys.put(key, new QuinaConfigElement().
+					set(null, clazz, defines[i + 2]));
 			}
 			key = null;
 			clazz = null;
@@ -194,7 +203,7 @@ public class QuinaConfig {
 	 * @retrun boolean 設定に成功した場合trueが返却されます.
 	 */
 	public boolean set(String key, Object value) {
-		Object[] c = reservationKeys.get(key);
+		final QuinaConfigElement c = reservationKeys.get(key);
 		if(c == null) {
 			return false;
 		}
@@ -203,7 +212,7 @@ public class QuinaConfig {
 			em = new QuinaConfigElement();
 			config.put(new TreeKey(key), em);
 		}
-		em.set(value, (TypesClass)c[0], c[1]);
+		em.set(value, c.getTypesClass(), c.getDefaultValue());
 		return true;
 	}
 
@@ -213,24 +222,24 @@ public class QuinaConfig {
 	 * @return TypesClass 定義されている型が返却されます.
 	 */
 	public TypesClass getTypesClass(String key) {
-		Object[] ret = reservationKeys.get(key);
+		final QuinaConfigElement ret = reservationKeys.get(key);
 		if(ret == null) {
 			return null;
 		}
-		return (TypesClass)ret[0];
+		return ret.getTypesClass();
 	}
 
 	/**
 	 * 指定キーに対する定義されたデフォルト値を取得.
 	 * @param key 対象のキー名を設定します.
-	 * @return TypesClass 定義されているデフォルト値が返却されます.
+	 * @return Object 定義されているデフォルト値が返却されます.
 	 */
 	public Object getDefaultValue(String key) {
-		Object[] ret = reservationKeys.get(key);
+		final QuinaConfigElement ret = reservationKeys.get(key);
 		if(ret == null) {
 			return null;
 		}
-		return ret[1];
+		return ret.getDefaultValue();
 	}
 
 	/**
@@ -239,7 +248,11 @@ public class QuinaConfig {
 	 * @return QuinaConfigElement コンフィグ要素が返却されます.
 	 */
 	public QuinaConfigElement get(String key) {
-		return config.get(key);
+		QuinaConfigElement ret = config.get(key);
+		if(ret == null) {
+			return reservationKeys.get(key);
+		}
+		return ret;
 	}
 
 	/**

@@ -152,6 +152,7 @@ public class Quina {
 		if(json == null) {
 			return;
 		}
+		// ログコンフィグをセット.
 		logFactory.config(json);
 	}
 
@@ -170,10 +171,6 @@ public class Quina {
 	public HttpServerInfo getHttpServerInfo() {
 		return (HttpServerInfo)httpServerService.getInfo();
 	}
-
-
-
-
 
 	/**
 	 * 全てのQuinaサービスを開始処理.
@@ -212,7 +209,7 @@ public class Quina {
 		// 基本サービスの開始処理[start()]が呼び出された場合.
 		if(httpServerService.isStartService() &&
 			httpWorkerService.isStartService()) {
-			// 登録サービスの開始処理[start()]がよびだされたかチェック.
+			// 登録サービスの開始処理[start()]が呼び出されたかチェック.
 			final int len = quinaServiceManager.size();
 			for(int i = 0; i < len; i ++) {
 				if(!quinaServiceManager.get(i).isStartService()) {

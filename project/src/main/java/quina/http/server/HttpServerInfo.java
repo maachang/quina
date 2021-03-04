@@ -7,7 +7,6 @@ import quina.http.EditMimeTypes;
 import quina.http.HttpCustomAnalysisParams;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
-import quina.net.nio.tcp.worker.NioWorkerConstants;
 import quina.util.collection.BinarySearchMap;
 import quina.util.collection.TypesClass;
 
@@ -37,9 +36,7 @@ public class HttpServerInfo implements QuinaInfo {
 		// サーバーソケット最大接続数.
 		"backLog", TypesClass.Integer, NioServerConstants.getBacklog(),
 		// サーバーソケット受信バッファ長.
-		"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer(),
-		// サーバープーリング管理サイズ.
-		"poolingManagerLength", TypesClass.Integer, NioWorkerConstants.getPoolingManageLength()
+		"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer()
 	);
 
 	// カスタムなPostBody解析.
@@ -71,7 +68,7 @@ public class HttpServerInfo implements QuinaInfo {
 	 * @return
 	 */
 	public int getByteBufferLength() {
-		return config.get("getbyteBufferLength").getInt();
+		return config.get("byteBufferLength").getInt();
 	}
 
 	/**
@@ -208,22 +205,6 @@ public class HttpServerInfo implements QuinaInfo {
 	 */
 	public void setServerRecvBuffer(int serverRecvBuffer) {
 		config.set("serverRecvBuffer", serverRecvBuffer);
-	}
-
-	/**
-	 * プーリングマネージャサイズを取得.
-	 * @return
-	 */
-	public int getPoolingManagerLength() {
-		return config.get("poolingManagerLength").getInt();
-	}
-
-	/**
-	 * プーリングマネージャサイズを設定.
-	 * @param poolingManagerLength
-	 */
-	public void setPoolingManagerLength(int poolingManagerLength) {
-		config.set("poolingManagerLength", poolingManagerLength);
 	}
 
 	/**

@@ -12,6 +12,25 @@ import quina.net.nio.tcp.NioUtil;
  * NioServerコールバック.
  */
 public abstract class NioServerCall implements NioCall {
+
+	/**
+	 * NioServerCoreが生成された時に呼び出されます.
+	 */
+	public void init() {
+	}
+
+	/**
+	 * NioServerCoreのstartThread処理が呼ばれた時に呼び出されます.
+	 */
+	public void startThread() {
+	}
+
+	/**
+	 * NioServerCoreのstopThread処理が呼ばれた時に呼び出されます.
+	 */
+	public void stopThread() {
+	}
+
 	/**
 	 * Accept処理.
 	 *
@@ -58,7 +77,8 @@ public abstract class NioServerCall implements NioCall {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean initSocket(SocketChannel ch) throws IOException {
+	public boolean initSocket(SocketChannel ch)
+		throws IOException {
 		return true;
 	}
 
@@ -85,7 +105,7 @@ public abstract class NioServerCall implements NioCall {
 	@Override
 	public boolean send(NioElement em, ByteBuffer buf)
 		throws IOException {
-		return setSendData(em, buf);
+		return this.setSendData(em, buf);
 	}
 
 	/**

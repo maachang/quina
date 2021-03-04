@@ -124,7 +124,7 @@ public class NioSendMemData extends AbstractNioSendData {
 		int sendLen = (int)(length - position);
 		sendLen = buf.remaining() > sendLen ? sendLen : buf.remaining();
 		if(sendLen > 0) {
-			buf.get(binary, (int)position, sendLen);
+			buf.put(binary, (int)position, sendLen);
 			position += (long)sendLen;
 		} else {
 			return -1;

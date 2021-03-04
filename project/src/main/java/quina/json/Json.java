@@ -55,7 +55,7 @@ public final class Json {
 			return null;
 		}
 		CustomJsonIO old = convertJsonIO.get();
-		while(convertJsonIO.compareAndSet(old, custom)) {
+		while(!convertJsonIO.compareAndSet(old, custom)) {
 			old = convertJsonIO.get();
 		}
 		return old;

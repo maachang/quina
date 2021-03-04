@@ -381,7 +381,7 @@ public class HttpServerResponse implements Response {
 	@Override
 	public Response sendJSON(Object value, String charset) {
 		final String json = Json.encode(value);
-		if(getContentType() == null) {
+		if(contentType == null) {
 			setContentType("application/json");
 		}
 		return send(json, charset);

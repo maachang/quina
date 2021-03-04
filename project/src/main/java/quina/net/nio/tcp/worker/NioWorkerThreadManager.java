@@ -92,32 +92,33 @@ public class NioWorkerThreadManager {
 	// 開始・終了完了待機処理.
 	private static final boolean waitTo(
 		NioWorkerThread[] threads, boolean startup, long timeout) {
-		int stop;
+		int i;
+		int count;
 		final int len = threads.length;
 		long first = -1L;
 		if(timeout > 0L) {
 			first = System.currentTimeMillis() + timeout;
 		}
 		while(true) {
-			stop = 0;
+			count = 0;
 			if(startup) {
-				for(int i = 0; i < len; i ++) {
+				for(i = 0; i < len; i ++) {
 					if(threads[i].isStartupThread()) {
-						stop ++;
+						count ++;
 						continue;
 					}
 					break;
 				}
 			} else {
-				for(int i = 0; i < len; i ++) {
+				for(i = 0; i < len; i ++) {
 					if(threads[i].isExitThread()) {
-						stop ++;
+						count ++;
 						continue;
 					}
 					break;
 				}
 			}
-			if(stop == len) {
+			if(count == len) {
 				return true;
 			} else if(first != -1L && first < System.currentTimeMillis()) {
 				return false;

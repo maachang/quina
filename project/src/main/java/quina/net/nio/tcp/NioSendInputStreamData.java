@@ -78,7 +78,7 @@ public class NioSendInputStreamData extends AbstractNioSendData {
 			if(len <= 0) {
 				return len;
 			}
-			buf.get(tmpBuf, 0, len);
+			buf.put(tmpBuf, 0, len);
 			position += (long)len;
 			return len;
 		} else {

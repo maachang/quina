@@ -163,7 +163,7 @@ public class NioWorkerThread extends Thread {
 			try {
 				handle.startThreadCall(no);
 			} catch(Exception e) {
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 		final ThreadDeath td = execute();
@@ -171,7 +171,7 @@ public class NioWorkerThread extends Thread {
 			try {
 				handle.endThreadCall(no);
 			} catch(Exception e) {
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 		// スレッド終了完了.

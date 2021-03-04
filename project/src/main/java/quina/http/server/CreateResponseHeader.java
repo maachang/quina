@@ -7,6 +7,7 @@ import quina.QuinaConstants;
 import quina.http.Header;
 import quina.http.HttpConstants;
 import quina.http.HttpException;
+import quina.http.HttpStatus;
 import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioSendBinaryListData;
 import quina.net.nio.tcp.NioSendData;
@@ -32,29 +33,24 @@ public class CreateResponseHeader {
 
 	/** Optionsレスポンス[基本]. **/
 	private static final byte[] RESPONSE_OPSIONS_RESPONSE;
-	/** Optionsレスポンス[キャッシュなし対応]. **/
-	private static final byte[] RESPONSE_NO_CACHE_OPSIONS_RESPONSE;
-	/** Optionsレスポンス[クロスドメイン対応]. **/
-	private static final byte[] RESPONSE_CROSS_DOMAIN_OPSIONS_RESPONSE;
 
-	/** ステータス指定レスポンス[開始情報]. **/
-	private static final byte[] RESPONSE_STATE_RESPONSE_FIRST;
+	/** ステータス指定レスポンス200ステータスデフォルト[開始情報]. **/
+	private static final byte[] RESPONSE_STATE_RESPONSE_DEFAULT_FIRST;
 	/** ステータス指定レスポンス[基本]. **/
 	private static final byte[] RESPONSE_STATE_RESPONSE_RESERVATION;
-	/** ステータス指定レスポンス[キャッシュなし対応]. **/
-	private static final byte[] RESPONSE_NO_CACHE_STATE_RESPONSE_RESERVATION;
-	/** ステータス指定レスポンス[クロスドメイン対応]. **/
-	private static final byte[] RESPONSE_CROSS_DOMAIN_STATE_RESPONSE_RESERVATION;
+
+	/** レスポンス[キャッシュなし対応]. **/
+	private static final byte[] RESPONSE_NO_CACHE_RESPONSE;
+	/** レスポンス[クロスドメイン対応]. **/
+	private static final byte[] RESPONSE_CROSS_DOMAIN_RESPONSE;
 
 	// static - init.
 	static {
 		byte[] optionsHeader;
-		byte[] optionsNoCacheHeader;
-		byte[] optionsCrossDomainHeader;
-		byte[] responseHeaderFirst;
+		byte[] responseHeaderDefaultFirst;
 		byte[] responseHeaderReservation;
-		byte[] responseNoCacheHeaderReservation;
-		byte[] responseCrossDomainHeaderReservation;
+		byte[] noCacheHeader;
+		byte[] crossDomainHeader;
 		final String charset = HttpConstants.getCharset();
 		// サーバー名.
 		final String serverName = QuinaConstants.SERVER_NAME +
@@ -79,14 +75,15 @@ public class CreateResponseHeader {
 			new Object[] {2, "content-type,x-accel-buffering,*"});
 		reservationHeaders.put(new TreeKey("Access-Control-Allow-Methods"),
 			new Object[] {2, "GET,POST,DELETE,PUSH,PATCH"});
+		String optionsFirst = "HTTP/1.1 200 OK\r\n" +
+			"Allow:GET,POST,DELETE,PUSH,PATCH,OPTIONS\r\n";
 		// 固定ヘッダ情報を生成.
 		try {
 			int i, len;
 			Object[] v;
 
 			// OptionHeaderを生成.
-			StringBuilder buf = new StringBuilder("HTTP/1.1 200 OK\r\n")
-				.append("Allow:GET,POST,DELETE,PUSH,PATCH,OPTIONS\r\n");
+			StringBuilder buf = new StringBuilder();
 			StringBuilder noCacheBuf = new StringBuilder();
 			StringBuilder crossDomainBuf = new StringBuilder();
 			len = reservationHeaders.size();
@@ -96,49 +93,32 @@ public class CreateResponseHeader {
 				case 0: // 標準.
 					buf.append(reservationHeaders.keyAt(i)).append(":")
 						.append(v[1]).append("\r\n");
+					break;
 				case 1: // ノーキャッシュ用.
 					noCacheBuf.append(reservationHeaders.keyAt(i)).append(":")
 						.append(v[1]).append("\r\n");
+					break;
 				case 2: // クロスドメイン用.
 					crossDomainBuf.append(reservationHeaders.keyAt(i)).append(":")
 					.append(v[1]).append("\r\n");
+					break;
 				}
 			}
-			buf.append("Content-Length:0\r\n\r\n");
-			optionsHeader = buf.toString().getBytes(charset);
-			buf = null;
-			optionsNoCacheHeader = noCacheBuf.toString().getBytes(charset);
-			noCacheBuf = null;
-			optionsCrossDomainHeader = crossDomainBuf.toString().getBytes(charset);
-			crossDomainBuf = null;
-
-			// 通常ヘッダ予約条件.
-			buf = new StringBuilder();
-			noCacheBuf = new StringBuilder();
-			crossDomainBuf = new StringBuilder();
-			for(i = 0; i < len; i ++) {
-				v = reservationHeaders.valueAt(i);
-				switch((Integer)v[0]) {
-				case 0: // 標準.
-					buf.append(reservationHeaders.keyAt(i)).append(":")
-						.append(v[1]).append("\r\n");
-				case 1: // ノーキャッシュ用.
-					noCacheBuf.append(reservationHeaders.keyAt(i)).append(":")
-						.append(v[1]).append("\r\n");
-				case 2: // クロスドメイン用.
-					crossDomainBuf.append(reservationHeaders.keyAt(i)).append(":")
-					.append(v[1]).append("\r\n");
-				}
-			}
+			// レスポンス標準ヘッダを出力.
 			responseHeaderReservation = buf.toString().getBytes(charset);
+			// オプション用ヘッダを生成.
+			buf.append("Content-Length:0\r\n\r\n");
+			optionsHeader = (optionsFirst + buf.toString()).getBytes(charset);
 			buf = null;
-			responseNoCacheHeaderReservation = noCacheBuf.toString().getBytes(charset);
+
+			// ノーキャッシュとクロスドメインは共通.
+			noCacheHeader = noCacheBuf.toString().getBytes(charset);
 			noCacheBuf = null;
-			responseCrossDomainHeaderReservation = crossDomainBuf.toString().getBytes(charset);
+			crossDomainHeader = crossDomainBuf.toString().getBytes(charset);
 			crossDomainBuf = null;
 
-			// 通常ヘッダ開始条件.
-			responseHeaderFirst = ("HTTP/1.1 ").getBytes(charset);
+			// 通常200ステータスヘッダ開始条件.
+			responseHeaderDefaultFirst = ("HTTP/1.1 200 OK\r\n").getBytes(charset);
 
 			// 最後にContent-LengthとContent-Typeを予約条件としてセット.
 			reservationHeaders.put(new TreeKey("Content-Length"),
@@ -147,23 +127,19 @@ public class CreateResponseHeader {
 				new Object[] {0, "X"});
 		} catch (Exception e) {
 			reservationHeaders = null;
-			optionsHeader = null;
-			optionsNoCacheHeader = null;
-			optionsCrossDomainHeader = null;
-			responseHeaderFirst = null;
+			crossDomainHeader = null;
+			responseHeaderDefaultFirst = null;
 			responseHeaderReservation = null;
-			responseNoCacheHeaderReservation = null;
-			responseCrossDomainHeaderReservation = null;
+			optionsHeader = null;
+			noCacheHeader = null;
 		}
 		// 情報をセット.
 		RESERVATION_HEADERS = reservationHeaders;
 		RESPONSE_OPSIONS_RESPONSE = optionsHeader;
-		RESPONSE_NO_CACHE_OPSIONS_RESPONSE = optionsNoCacheHeader;
-		RESPONSE_CROSS_DOMAIN_OPSIONS_RESPONSE = optionsCrossDomainHeader;
-		RESPONSE_STATE_RESPONSE_FIRST = responseHeaderFirst;
+		RESPONSE_STATE_RESPONSE_DEFAULT_FIRST = responseHeaderDefaultFirst;
 		RESPONSE_STATE_RESPONSE_RESERVATION = responseHeaderReservation;
-		RESPONSE_NO_CACHE_STATE_RESPONSE_RESERVATION = responseNoCacheHeaderReservation;
-		RESPONSE_CROSS_DOMAIN_STATE_RESPONSE_RESERVATION = responseCrossDomainHeaderReservation;
+		RESPONSE_NO_CACHE_RESPONSE = noCacheHeader;
+		RESPONSE_CROSS_DOMAIN_RESPONSE = crossDomainHeader;
 	}
 
 	/**
@@ -177,11 +153,11 @@ public class CreateResponseHeader {
 		NioSendBinaryListData ret = new NioSendBinaryListData(RESPONSE_OPSIONS_RESPONSE);
 		// noCacheヘッダが有効な場合.
 		if(noCache) {
-			ret.offer(RESPONSE_NO_CACHE_OPSIONS_RESPONSE);
+			ret.offer(RESPONSE_NO_CACHE_RESPONSE);
 		}
 		// crossDomainヘッダが有効な場合.
 		if(crossDomain) {
-			ret.offer(RESPONSE_CROSS_DOMAIN_OPSIONS_RESPONSE);
+			ret.offer(RESPONSE_CROSS_DOMAIN_RESPONSE);
 		}
 		return ret;
 	}
@@ -207,24 +183,33 @@ public class CreateResponseHeader {
 		charset = (charset == null || charset.isEmpty()) ? HttpConstants.getCharset() : charset;
 		try {
 			// 開始ヘッダをセット.
-			NioSendBinaryListData ret = new NioSendBinaryListData(RESPONSE_STATE_RESPONSE_FIRST);
-			// HTTPステータスとメッセージをセット.
-			ret.offer(
-				new StringBuilder().append(state).append(" ").append(msg).append("\r\n")
-				.toString().getBytes(charset));
+			NioSendBinaryListData ret = new NioSendBinaryListData();
+			if(msg == null && state == 200) {
+				// ステータス200 OK 返却の場合.
+				ret.offer(RESPONSE_STATE_RESPONSE_DEFAULT_FIRST);
+			} else {
+				// それ以外のステータスの場合.
+				if(msg == null) {
+					// ステータスのデフォルトのメッセージを設定します.
+					msg = HttpStatus.getHttpStatus(state).getMessage();
+				}
+				ret.offer(new StringBuilder("HTTP/1.1 ")
+					.append(state).append(" ").append(msg).append("\r\n")
+					.toString().getBytes(charset));
+			}
 			int flagMode = 0;
 			// 予約ヘッダをセット.
 			ret.offer(RESPONSE_STATE_RESPONSE_RESERVATION);
 			// noCacheヘッダが有効な場合.
 			if(noCache) {
-				ret.offer(RESPONSE_NO_CACHE_STATE_RESPONSE_RESERVATION);
+				ret.offer(RESPONSE_NO_CACHE_RESPONSE);
 			} else {
 				// noCacheヘッダが無効な場合.
 				flagMode |= 1;
 			}
 			// crossDomainヘッダが有効な場合.
 			if(crossDomain) {
-				ret.offer(RESPONSE_CROSS_DOMAIN_STATE_RESPONSE_RESERVATION);
+				ret.offer(RESPONSE_CROSS_DOMAIN_RESPONSE);
 			} else {
 				// crossDomainHeaderが無効な場合.
 				flagMode |= 2;
@@ -245,20 +230,26 @@ public class CreateResponseHeader {
 					}
 				}
 				buf.append("Content-Type:").append(mime).append("\r\n");
+			// MimeTypeが存在しない場合.
+			} else {
+				buf.append("Content-Type:application/octet-stream\r\n");
 			}
-			Object[] v;
-			Entry<String,String> e;
-			Iterator<Entry<String, String>> it = header.entrySet().iterator();
-			while(it.hasNext()) {
-				e = it.next();
-				v = RESERVATION_HEADERS.get(e.getKey());
-				// オリジナルヘッダ名が予約ヘッダ名とかぶる場合はセット出来ない.
-				// [RESERVATION_HEADERS]に存在しない場合.
-				// 存在した場合の区分とflgModeをand計算した時０以外が返却された場合.
-				// これらの場合は、オリジナルヘッダとして利用できる.
-				if(v == null || ((Integer)v[0] & flagMode) != 0) {
-					// １つのオリジナルヘッダ要素をセット.
-					buf.append(e.getKey()).append(":").append(e.getValue()).append("\r\n");
+			// オリジナルヘッダが存在する場合.
+			if(header != null && header.size() > 0) {
+				Object[] v;
+				Entry<String,String> e;
+				Iterator<Entry<String, String>> it = header.entrySet().iterator();
+				while(it.hasNext()) {
+					e = it.next();
+					v = RESERVATION_HEADERS.get(e.getKey());
+					// オリジナルヘッダ名が予約ヘッダ名とかぶる場合はセット出来ない.
+					// [RESERVATION_HEADERS]に存在しない場合.
+					// 存在した場合の区分とflgModeをand計算した時０以外が返却された場合.
+					// これらの場合は、オリジナルヘッダとして利用できる.
+					if(v == null || ((Integer)v[0] & flagMode) != 0) {
+						// １つのオリジナルヘッダ要素をセット.
+						buf.append(e.getKey()).append(":").append(e.getValue()).append("\r\n");
+					}
 				}
 			}
 			// ヘッダ終端をセット.
