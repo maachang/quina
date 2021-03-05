@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.response.RESTfulResponse;
 
 /**
  * RESTfulzメソッドPatch専用のComponent.
@@ -26,12 +27,12 @@ public interface RESTfulPatch extends Component {
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response res) {
+	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.PATCH) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		patch(req, res, req.getParams());
+		patch(req, (RESTfulResponse)res, req.getParams());
 
 	}
 
@@ -41,5 +42,5 @@ public interface RESTfulPatch extends Component {
 	 * @param res HttpResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public void patch(Request req, Response res, Params params);
+	public void patch(Request req, RESTfulResponse res, Params params);
 }

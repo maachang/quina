@@ -22,7 +22,6 @@ public class Quina {
 	// ルータオブジェクト.
 	private final Router router;
 
-
 	// 基本サービス: HttpServerService.
 	// Httpサーバー関連のサービスを管理します.
 	private final HttpServerService httpServerService;

@@ -4,6 +4,8 @@ import quina.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.response.AbstractResponse;
+import quina.http.response.ResponseUtil;
 import quina.util.FileUtil;
 
 /**
@@ -134,13 +136,13 @@ public class FileComponent implements Component {
 	}
 
 	@Override
-	public void call(Method method, Request req, Response res) {
+	public void call(Method method, Request req, Response<?> res) {
 		final String fileName = urlAndComponentUrlByMargeLocalPath(
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),
 			req.getUrl(), targetDir);
 		if(FileUtil.isFile(fileName)) {
 			throw new QuinaException(404);
 		}
-		res.sendFile(fileName);
+		ResponseUtil.sendFile((AbstractResponse<?>)res, fileName);
 	}
 }

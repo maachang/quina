@@ -41,7 +41,7 @@ public class QuinaTest {
 
 		// JSON送信.
 		quina.getRouter().route("/", (RESTfulGet)(req, res, params) -> {
-			res.sendJSON(new BinarySearchMap<String, Object>("hello", "world"));
+			res.send(new BinarySearchMap<String, Object>("hello", "world"));
 		});
 
 		// quinaを開始して、終了まで待機する.

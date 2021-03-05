@@ -2,10 +2,10 @@ package quina.component;
 
 import java.util.Map;
 
+import quina.http.HttpRequest;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerRequest;
 
 /**
  * ComponentManagerに登録済みのコンポーネント.
@@ -205,13 +205,13 @@ public class RegisterComponent implements Component {
 	}
 
 	// HttpServerRequestクラス.
-	private static final Class<?> httpServerRequest = HttpServerRequest.class;
+	private static final Class<?> httpServerRequestClass = HttpRequest.class;
 
 	@Override
-	public void call(Method method, Request req, Response res) {
+	public void call(Method method, Request req, Response<?> res) {
 		// HttpServerRequestの場合は、コンポーネントURLを設定.
-		if(httpServerRequest.equals(req.getClass())) {
-			((HttpServerRequest)req).setComponentUrl(url, urlSlashCount);
+		if(httpServerRequestClass.equals(req.getClass())) {
+			((HttpRequest)req).setComponentUrl(url, urlSlashCount);
 		}
 		component.call(method, req, res);
 	}

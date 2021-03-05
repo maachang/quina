@@ -10,23 +10,42 @@ public enum ComponentType {
 	/** ファイルコンポーネント. **/
 	FILE(0x01, "file"),
 
+	/** 同期用コンポーネント. **/
+	Sync(0x10, "Sync"),
+
 	/** RESTful 用コンポーネント. **/
-	RESTful(0x10, "RESTful"),
+	RESTful(0x20, "RESTful"),
 
 	/** RESTful GetMethod用コンポーネント. **/
-	RESTfulGet(0x11, "RESTfulGet"),
+	RESTfulGet(0x21, "RESTfulGet"),
 
 	/** RESTful PostMethod用コンポーネント. **/
-	RESTfulPost(0x12, "RESTfulPost"),
+	RESTfulPost(0x22, "RESTfulPost"),
 
 	/** RESTful DeleteMethod用コンポーネント. **/
-	RESTfulDelete(0x13, "RESTfulDelete"),
+	RESTfulDelete(0x23, "RESTfulDelete"),
 
 	/** RESTful PutMethod用コンポーネント. **/
-	RESTfulPut(0x14, "RESTfulPut"),
+	RESTfulPut(0x24, "RESTfulPut"),
 
 	/** RESTful PatchMethod用コンポーネント. **/
-	RESTfulPatch(0x15, "RESTfulPatch"),
+	RESTfulPatch(0x25, "RESTfulPatch"),
+
+	/** [同期]RESTful GetMethod用コンポーネント. **/
+	RESTfulGetSync(0x31, "RESTfulGetSync"),
+
+	/** [同期]RESTful PostMethod用コンポーネント. **/
+	RESTfulPostSync(0x32, "RESTfulPostSync"),
+
+	/** [同期]RESTful DeleteMethod用コンポーネント. **/
+	RESTfulDeleteSync(0x33, "RESTfulDeleteSync"),
+
+	/** [同期]RESTful PutMethod用コンポーネント. **/
+	RESTfulPutSync(0x34, "RESTfulPutSync"),
+
+	/** [同期]RESTful PatchMethod用コンポーネント. **/
+	RESTfulPatchSync(0x35, "RESTfulPatchSync"),
+
 
 	/** エラーコンポーネント. **/
 	ERROR(0x8f, "error");
@@ -61,5 +80,13 @@ public enum ComponentType {
 	 */
 	public boolean isRESTful() {
 		return (type & RESTful.type) == RESTful.type;
+	}
+
+	/**
+	 * 同期系のコンポーネントタイプかチェック.
+	 * @return boolean trueの場合は同期系のコンポーネントです.
+	 */
+	public boolean isSync() {
+		return (type & Sync.type) == Sync.type;
 	}
 }

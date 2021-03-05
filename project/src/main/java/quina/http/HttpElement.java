@@ -22,7 +22,7 @@ public class HttpElement extends NioElement {
 	private Request request = null;
 
 	/** Httpレスポンス. **/
-	private Response response = null;
+	private Response<?> response = null;
 
 	/** 受信ヘッダチェック済みデータポジション. **/
 	private int receiveHeaderPosition = 0;
@@ -139,7 +139,7 @@ public class HttpElement extends NioElement {
  	 * @param res
  	 * @return
  	 */
- 	public HttpElement setResponse(Response res) {
+ 	public HttpElement setResponse(Response<?> res) {
  		this.response = res;
  		return this;
  	}
@@ -148,7 +148,7 @@ public class HttpElement extends NioElement {
  	 * レスポンスを取得.
  	 * @return
  	 */
-	public Response getResponse() {
+	public Response<?> getResponse() {
 		return response;
 	}
 

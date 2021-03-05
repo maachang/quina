@@ -22,5 +22,5 @@ public interface ErrorComponent {
 	 * @param res HttpResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
-	public void call(int state, Request req, Response res, Throwable e);
+	public void call(int state, Request req, Response<?> res, Throwable e);
 }

@@ -3,6 +3,8 @@ package quina.component;
 import quina.QuinaException;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.response.AbstractResponse;
+import quina.http.response.ResponseUtil;
 import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
 
@@ -31,10 +33,10 @@ public class ComponentManager {
 		}
 
 		@Override
-		public void call(int state, Request req, Response res, Throwable e) {
+		public void call(int state, Request req, Response<?> res, Throwable e) {
 			// BodyなしのHttpHeaderでのエラーメッセージを送信.
-			res.setStatus(state, e.getMessage())
-				.send();
+			res.setStatus(state, e.getMessage());
+			ResponseUtil.send((AbstractResponse<?>)res);
 		}
 	}
 

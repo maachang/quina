@@ -1,24 +1,19 @@
 package quina.component;
 
-import quina.http.HttpException;
 import quina.http.Method;
-import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.response.ResponseUtil;
 import quina.http.response.SyncResponse;
 
-/**
- * [同期]RESTfulzメソッドDelete専用のComponent.
- */
-public interface RESTfulDeleteSync extends Component {
+public interface ComponentSync extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
 	default ComponentType getType() {
-		return ComponentType.RESTfulDeleteSync;
+		return ComponentType.Sync;
 	}
 
 	/**
@@ -29,20 +24,22 @@ public interface RESTfulDeleteSync extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
-		if(method != Method.DELETE) {
-			throw new HttpException(405,
-				"The specified method: " + method + " cannot be used for this URL.");
+		Object ret = call(req, (SyncResponse)res);
+		if(ret instanceof byte[]) {
+			ResponseUtil.send((SyncResponse)res, (byte[])ret);
+		} else if(ret instanceof String) {
+			ResponseUtil.send((SyncResponse)res, (String)ret);
+		} else {
+			ResponseUtil.sendJSON((SyncResponse)res, ret);
 		}
-		ResponseUtil.sendJSON((SyncResponse)res,
-				delete(req, (SyncResponse)res, req.getParams()));
 	}
 
 	/**
-	 * DELETEメソッド用実行.
+	 * GETメソッド用実行.
 	 * @param req HttpRequestが設定されます.
 	 * @param res SyncResponseが設定されます.
-	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public Object delete(Request req, SyncResponse res, Params params);
+	public Object call(Request req, SyncResponse res);
+
 }

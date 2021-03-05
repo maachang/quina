@@ -5,17 +5,22 @@ import java.io.IOException;
 import quina.Quina;
 import quina.QuinaException;
 import quina.component.ComponentManager;
+import quina.component.ComponentType;
 import quina.component.RegisterComponent;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpMode;
+import quina.http.HttpRequest;
 import quina.http.Method;
 import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.response.DefaultResponse;
+import quina.http.response.RESTfulResponse;
+import quina.http.response.SyncResponse;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
@@ -137,10 +142,11 @@ public class HttpServerCall extends NioServerCall {
 	@Override
 	public boolean receive(Object o, NioElement em, byte[] rcvBin)
 		throws IOException {
-		HttpServerRequest req;
-		HttpServerResponse res;
+		HttpRequest req;
+		Response<?> res;
 		Params params;
 		RegisterComponent comp;
+		ComponentType ctype;
 		final byte[] tmpBuf = (byte[])o;
 		final HttpElement hem = (HttpElement)em;
 		while(true) {
@@ -172,17 +178,12 @@ public class HttpServerCall extends NioServerCall {
 			// 受信完了.
 			case STATE_END_RECV:
 				// requestを取得.
-				req = (HttpServerRequest)hem.getRequest();
+				req = (HttpRequest)hem.getRequest();
 				// methodがoptionかチェック.
 				if(Method.OPTIONS.equals(req.getMethod())) {
 					// Option送信.
 					sendOptions(hem, req);
 					return true;
-				}
-				res = (HttpServerResponse)hem.getResponse();
-				if(res == null) {
-					res = new HttpServerResponse(hem, mimeTypes);
-					hem.setResponse(res);
 				}
 				try {
 					// urlを取得.
@@ -194,6 +195,25 @@ public class HttpServerCall extends NioServerCall {
 					url = null;
 					// コンポーネントが取得された場合.
 					if(comp != null) {
+						// レスポンスを取得.
+						res = hem.getResponse();
+						// Elementにレスポンスがない場合.
+						if(res == null) {
+							// コンポーネントタイプを取得.
+							ctype = comp.getType();
+							// このコンポーネントは同期コンポーネントの場合.
+							if(ctype.isSync()) {
+								res = new SyncResponse(hem, mimeTypes);
+							// このコンポーネントはRESTful系の場合.
+							} else if(ctype.isRESTful()) {
+								res = new RESTfulResponse(hem, mimeTypes);
+							// デフォルトレスポンス.
+							} else {
+								res = new DefaultResponse(hem, mimeTypes);
+							}
+							// レスポンスをセット.
+							hem.setResponse(res);
+						}
 						// パラメータを取得.
 						params = HttpAnalysis.convertParams(req, custom);
 						// URLパラメータ条件が存在する場合.
@@ -217,14 +237,14 @@ public class HttpServerCall extends NioServerCall {
 						comp.call(req.getMethod(), req, res);
 					} else {
 						// エラー404返却.
-						sendError(404, req, res, null);
+						sendError(404, req, defaultRespones(hem, mimeTypes), null);
 					}
 				} catch(QuinaException qe) {
 					// QuinaExceptionの場合は、そのステータスを踏襲する.
-					sendError(qe.getStatus(), req, res, qe);
+					sendError(qe.getStatus(), req, defaultRespones(hem, mimeTypes), qe);
 				} catch(Exception e) {
 					// その他例外の場合は５００エラー.
-					sendError(500, req, res, e);
+					sendError(500, req, defaultRespones(hem, mimeTypes), e);
 				}
 				// 処理終了.
 				return true;
@@ -232,8 +252,18 @@ public class HttpServerCall extends NioServerCall {
 		}
 	}
 
+	// デフォルトのResponseを取得.
+	private static final Response<?> defaultRespones(HttpElement em, MimeTypes mimeTypes) {
+		Response<?> res = em.getResponse();
+		if(res == null) {
+			res = new DefaultResponse(em, mimeTypes);
+			em.setResponse(res);
+		}
+		return res;
+	}
+
 	// Option送信.
-	private static final void sendOptions(HttpElement em, HttpServerRequest req) {
+	private static final void sendOptions(HttpElement em, HttpRequest req) {
 		try {
 			// optionのデータを取得.
 			final NioSendData options = CreateResponseHeader.createOptionsHeader(true, false);
@@ -257,7 +287,7 @@ public class HttpServerCall extends NioServerCall {
 	}
 
 	// HttpErrorを送信.
-	private static final void sendError(int state, Request req, Response res, Throwable e) {
+	private static final void sendError(int state, Request req, Response<?> res, Throwable e) {
 		// エラー実行.
 		Quina.router().getError()
 			.call(state, req, res, e);

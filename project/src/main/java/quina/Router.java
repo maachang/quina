@@ -9,16 +9,19 @@ import quina.component.RegisterComponent;
  * URLアクセスに対するコンポーネントを管理.
  */
 public class Router {
+	// 基本マッピングパス.
 	private String path = "/";
+
+	// コンポーネントマネージャ.
 	private ComponentManager manager = new ComponentManager();
 
 	/**
-	 * 基本パスをセット.
+	 * パスのマッピング.
 	 * @param path 基本パスを設定します.
 	 *             先頭[/]の場合はフルパスで再定義します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
-	public Router path(String path) {
+	public Router mapping(String path) {
 		if(!path.startsWith("/")) {
 			path = "/" + path;
 		}

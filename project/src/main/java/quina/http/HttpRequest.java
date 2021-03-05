@@ -1,54 +1,44 @@
-package quina.http.server;
+package quina.http;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import quina.http.Header;
-import quina.http.HttpAnalysis;
-import quina.http.HttpElement;
-import quina.http.HttpException;
-import quina.http.HttpIndexHeaders;
-import quina.http.HttpReceiveHeader;
-import quina.http.Method;
-import quina.http.Params;
-import quina.http.Request;
-
 /**
- * Httpサーバ用Httpリクエスト.
+ * Httpリクエスト.
  */
-public class HttpServerRequest implements Request {
+public class HttpRequest implements Request {
 	/** Http Method. **/
-	private Method method;
+	protected Method method;
 
 	/** コンポーネントURL. **/
-	private String componentUrl;
+	protected String componentUrl;
 
 	/** コンポーネントスラッシュカウント. **/
-	private int componentSlashCount;
+	protected int componentSlashCount;
 
 	/** 元のUrl. **/
-	private String baseUrl;
+	protected String baseUrl;
 
 	/** urlだけを抽出した情報. **/
-	private String url;
+	protected String url;
 
 	/** Http Version. **/
-	private String version;
+	protected String version;
 
 	/** Bodyサイズ. **/
-	private long contentLength;
+	protected long contentLength;
 
 	/** Http Header Body. **/
-	private HttpReceiveHeader header;
+	protected HttpReceiveHeader header;
 
 	/** HTTP要素. **/
-	private HttpElement element;
+	protected HttpElement element;
 
 	/** Httpパラメータ. **/
-	private Params params;
+	protected Params params;
 
 	/** HttpBody取得フラグ. **/
-	private boolean readHttpBodyFlag = false;
+	protected boolean readHttpBodyFlag = false;
 
 	/**
 	 * コンストラクタ.
@@ -59,7 +49,7 @@ public class HttpServerRequest implements Request {
 	 * @param contentLength コンテンツ長を設定します.
 	 * @param header Httpヘッダ情報を設定します.
 	 */
-	protected HttpServerRequest(HttpElement element, Method method, String url,
+	public HttpRequest(HttpElement element, Method method, String url,
 		String version, long contentLength, HttpIndexHeaders header) {
 		this.method = method;
 		this.baseUrl = url;
@@ -156,13 +146,19 @@ public class HttpServerRequest implements Request {
 		this.componentSlashCount = componentSlashCount;
 	}
 
-	// Httpパラメータをセット.
-	protected void setParams(Params params) {
+	/**
+	 * Httpパラメータをセット.
+	 * @param params
+	 */
+	public void setParams(Params params) {
 		this.params = params;
 	}
 
-	// Http要素を取得.
-	protected HttpElement getElement() {
+	/**
+	 * Http要素を取得.
+	 * @return
+	 */
+	public HttpElement getElement() {
 		return element;
 	}
 }
