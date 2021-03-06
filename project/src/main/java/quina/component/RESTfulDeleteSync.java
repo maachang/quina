@@ -34,7 +34,7 @@ public interface RESTfulDeleteSync extends Component {
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
 		ResponseUtil.sendJSON((SyncResponse)res,
-				delete(req, (SyncResponse)res, req.getParams()));
+			delete(req, (SyncResponse)res, req.getParams()));
 	}
 
 	/**

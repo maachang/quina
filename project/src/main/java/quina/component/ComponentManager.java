@@ -33,9 +33,18 @@ public class ComponentManager {
 		}
 
 		@Override
+		public void call(int state, Request req, Response<?> res) {
+			call(state, req, res, null);
+		}
+
+		@Override
 		public void call(int state, Request req, Response<?> res, Throwable e) {
 			// BodyなしのHttpHeaderでのエラーメッセージを送信.
-			res.setStatus(state, e.getMessage());
+			if(e != null) {
+				res.setStatus(state, e.getMessage());
+			} else {
+				res.setStatus(state);
+			}
 			ResponseUtil.send((AbstractResponse<?>)res);
 		}
 	}
@@ -167,6 +176,12 @@ public class ComponentManager {
 			return anyComponent;
 		}
 
+		@Override
+		public String toString() {
+			StringBuilder buf = new StringBuilder();
+			return toString(buf, 0).toString();
+		}
+
 		/**
 		 * 文字列変換.
 		 * @param out 文字列出力先のStringBuilderを設定します.
@@ -181,7 +196,9 @@ public class ComponentManager {
 			ComponentManager.toSpace(out, spacePos)
 				.append("anyPath: ").append(anyPath != null).append("\n");
 			ComponentManager.toSpace(out, spacePos)
-				.append("anyComponent: ").append(anyComponent != null).append("\n");
+				.append("useAnyComponent: [")
+				.append(anyComponent == null ? "Do not have" : "Have got")
+				.append("]\n");
 			if(anyComponent != null) {
 				anyComponent.toString(out, spacePos);
 			}
@@ -420,7 +437,7 @@ public class ComponentManager {
 	}
 
 	/**
-	 * anyなAnyComponentを検索.
+	 * any(${id} or *)なAnyComponentを検索.
 	 * @param out 見つかったAnyElementがセットされる.
 	 * @param urls スラッシュで区切られたURL文字列が設定される.
 	 * @param now 検索開始対象のAnyElementが設定される.
@@ -438,7 +455,7 @@ public class ComponentManager {
 			// 終端を検知出来ない場合.
 			if(p != len) {
 				// staticで最後に見つかった内容の続きをany検索.
-				return searchAnyComponentByAny(out, urls, len, out[0], p + 1);
+				return searchAnyComponentByAny(out, urls, len, out[0], p);
 			}
 			// 終端が見つかった場合.
 			return p;
@@ -682,8 +699,8 @@ public class ComponentManager {
 				em = now.staticPaths.valueAt(i);
 				no = em.getPosition() << 1;
 				toSpace(buf, no).
-					append("@static: ").append(" key: ").
-					append(now.staticPaths.keyAt(i)).append("\n");
+					append("@static: ").append(" key: \"").
+					append(now.staticPaths.keyAt(i)).append("\"\n");
 				// 次の条件を出力.
 				toAnyElementByString(buf, em);
 			}

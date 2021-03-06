@@ -1,54 +1,55 @@
 package quina.component;
 
+import static quina.component.ComponentConstants.*;
+
 /**
  * コンポーネントタイプを取得.
  */
 public enum ComponentType {
 	/** 通常コンポーネント. **/
-	NORMAL(0x00, "normal"),
-
-	/** ファイルコンポーネント. **/
-	FILE(0x01, "file"),
+	NORMAL(TYPE_NORMAL, "normal"),
 
 	/** 同期用コンポーネント. **/
-	Sync(0x10, "Sync"),
+	Sync(TYPE_SYNC, "Sync"),
 
 	/** RESTful 用コンポーネント. **/
-	RESTful(0x20, "RESTful"),
+	RESTful(TYPE_RESTFUL, "RESTful"),
 
 	/** RESTful GetMethod用コンポーネント. **/
-	RESTfulGet(0x21, "RESTfulGet"),
-
-	/** RESTful PostMethod用コンポーネント. **/
-	RESTfulPost(0x22, "RESTfulPost"),
-
-	/** RESTful DeleteMethod用コンポーネント. **/
-	RESTfulDelete(0x23, "RESTfulDelete"),
-
-	/** RESTful PutMethod用コンポーネント. **/
-	RESTfulPut(0x24, "RESTfulPut"),
-
-	/** RESTful PatchMethod用コンポーネント. **/
-	RESTfulPatch(0x25, "RESTfulPatch"),
+	RESTfulGet(TYPE_RESTFUL + 1, "RESTfulGet"),
 
 	/** [同期]RESTful GetMethod用コンポーネント. **/
-	RESTfulGetSync(0x31, "RESTfulGetSync"),
+	RESTfulGetSync(TYPE_SYNC + TYPE_RESTFUL + 1, "RESTfulGetSync"),
+
+	/** RESTful PostMethod用コンポーネント. **/
+	RESTfulPost(TYPE_RESTFUL + 2, "RESTfulPost"),
 
 	/** [同期]RESTful PostMethod用コンポーネント. **/
-	RESTfulPostSync(0x32, "RESTfulPostSync"),
+	RESTfulPostSync(TYPE_SYNC + TYPE_RESTFUL + 2, "RESTfulPostSync"),
+
+	/** RESTful DeleteMethod用コンポーネント. **/
+	RESTfulDelete(TYPE_RESTFUL + 3, "RESTfulDelete"),
 
 	/** [同期]RESTful DeleteMethod用コンポーネント. **/
-	RESTfulDeleteSync(0x33, "RESTfulDeleteSync"),
+	RESTfulDeleteSync(TYPE_SYNC + TYPE_RESTFUL + 3, "RESTfulDeleteSync"),
+
+	/** RESTful PutMethod用コンポーネント. **/
+	RESTfulPut(TYPE_RESTFUL + 4, "RESTfulPut"),
 
 	/** [同期]RESTful PutMethod用コンポーネント. **/
-	RESTfulPutSync(0x34, "RESTfulPutSync"),
+	RESTfulPutSync(TYPE_SYNC + TYPE_RESTFUL + 4, "RESTfulPutSync"),
+
+	/** RESTful PatchMethod用コンポーネント. **/
+	RESTfulPatch(TYPE_RESTFUL + 5, "RESTfulPatch"),
 
 	/** [同期]RESTful PatchMethod用コンポーネント. **/
-	RESTfulPatchSync(0x35, "RESTfulPatchSync"),
+	RESTfulPatchSync(TYPE_SYNC + TYPE_RESTFUL + 5, "RESTfulPatchSync"),
 
+	/** ファイルコンポーネント. **/
+	FILE(TYPE_FILE, "file"),
 
 	/** エラーコンポーネント. **/
-	ERROR(0x8f, "error");
+	ERROR(TYPE_ERROR, "error");
 
 	private int type;
 	private String name;
@@ -79,7 +80,7 @@ public enum ComponentType {
 	 * @return boolean trueの場合はRESTful系のコンポーネントです.
 	 */
 	public boolean isRESTful() {
-		return (type & RESTful.type) == RESTful.type;
+		return (type & TYPE_RESTFUL) == TYPE_RESTFUL;
 	}
 
 	/**
@@ -87,6 +88,6 @@ public enum ComponentType {
 	 * @return boolean trueの場合は同期系のコンポーネントです.
 	 */
 	public boolean isSync() {
-		return (type & Sync.type) == Sync.type;
+		return (type & TYPE_SYNC) == TYPE_SYNC;
 	}
 }

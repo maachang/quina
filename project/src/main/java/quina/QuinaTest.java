@@ -1,6 +1,6 @@
 package quina;
 
-import quina.component.RESTfulGet;
+import quina.component.RESTfulGetSync;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
 import quina.util.collection.BinarySearchMap;
@@ -39,9 +39,14 @@ public class QuinaTest {
 	public void startTest() {
 		final Quina quina = Quina.get();
 
-		// JSON送信.
-		quina.getRouter().route("/", (RESTfulGet)(req, res, params) -> {
-			res.send(new BinarySearchMap<String, Object>("hello", "world"));
+		// http://127.0.0.1:3333/
+		quina.getRouter().route("/", (RESTfulGetSync)(req, res, params) -> {
+			return new BinarySearchMap<String, Object>("hello", "world");
+		});
+
+		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
+		quina.getRouter().route("/hoge/moge/${id}/a/${name}/", (RESTfulGetSync)(req, res, params) -> {
+			return new BinarySearchMap<String, Object>("params", params);
 		});
 
 		// quinaを開始して、終了まで待機する.

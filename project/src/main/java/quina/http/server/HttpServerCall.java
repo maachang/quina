@@ -289,7 +289,12 @@ public class HttpServerCall extends NioServerCall {
 	// HttpErrorを送信.
 	private static final void sendError(int state, Request req, Response<?> res, Throwable e) {
 		// エラー実行.
-		Quina.router().getError()
-			.call(state, req, res, e);
+		if(e == null) {
+			Quina.router().getError()
+				.call(state, req, res);
+		} else {
+			Quina.router().getError()
+				.call(state, req, res, e);
+		}
 	}
 }

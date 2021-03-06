@@ -204,13 +204,10 @@ public class RegisterComponent implements Component {
 		return component.getType();
 	}
 
-	// HttpServerRequestクラス.
-	private static final Class<?> httpServerRequestClass = HttpRequest.class;
-
 	@Override
 	public void call(Method method, Request req, Response<?> res) {
 		// HttpServerRequestの場合は、コンポーネントURLを設定.
-		if(httpServerRequestClass.equals(req.getClass())) {
+		if(req instanceof HttpRequest) {
 			((HttpRequest)req).setComponentUrl(url, urlSlashCount);
 		}
 		component.call(method, req, res);

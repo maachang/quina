@@ -95,4 +95,9 @@ public class Router {
 	public ErrorComponent getError() {
 		return manager.getError();
 	}
+
+	@Override
+	public String toString() {
+		return manager.toString();
+	}
 }

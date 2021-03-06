@@ -5,7 +5,10 @@ import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
+import quina.shutdown.ShutdownManager;
+import quina.util.Args;
 import quina.util.FileUtil;
+import quina.util.StringUtil;
 import quina.util.collection.BinarySearchMap;
 import quina.util.collection.ObjectList;
 
@@ -32,6 +35,12 @@ public class Quina {
 
 	// Quinaサービス管理.
 	private QuinaServiceManager quinaServiceManager;
+
+	// シャットダウンマネージャー.
+	private ShutdownManager shutdownManager;
+
+	// 実行引数管理.
+	private Args args;
 
 	// コンストラクタ.
 	private Quina() {
@@ -89,7 +98,8 @@ public class Quina {
 	public Quina setConfigDirectory(String configDir) {
 		check(true);
 		try {
-			configDir = FileUtil.getFullPath(configDir);
+			configDir = FileUtil.getFullPath(
+				StringUtil.envPath(configDir));
 			if(!configDir.endsWith("/")) {
 				configDir = configDir + "/";
 			}
@@ -301,6 +311,28 @@ public class Quina {
 	}
 
 	/**
+	 * コマンドライン引数を設定.
+	 * @param args main(String[] args) で渡される args 変数をセットします.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public Quina setArgs(String[] args) {
+		if(args == null) {
+			this.args = new Args();
+		} else {
+			this.args = new Args(args);
+		}
+		return this;
+	}
+
+	/**
+	 * コマンドライン引数管理オブジェクトを取得.
+	 * @return Args コマンドライン引数管理オブジェクトが返却されます.
+	 */
+	public Args getArgs() {
+		return args;
+	}
+
+	/**
 	 * 1つのQuinaService要素.
 	 */
 	protected static final class QuinaServiceEntry {
@@ -349,7 +381,8 @@ public class Quina {
 	 * QuinaService管理オブジェクト.
 	 */
 	protected static final class QuinaServiceManager {
-		private final ObjectList<QuinaServiceEntry> list = new ObjectList<QuinaServiceEntry>();
+		private final ObjectList<QuinaServiceEntry> list =
+			new ObjectList<QuinaServiceEntry>();
 
 		/**
 		 * コンストラクタ.
