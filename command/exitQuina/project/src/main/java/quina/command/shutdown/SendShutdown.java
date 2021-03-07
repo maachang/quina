@@ -1,4 +1,4 @@
-package quina.shutdown;
+package quina.command.shutdown;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -137,7 +137,7 @@ public class SendShutdown {
 			DatagramPacket p = new DatagramPacket(new byte[512], 512);
 			s.receive(p);
 			// 同じデータが返却された場合は正常終了.
-			if(ShutdownManager.eqShutdownConnection(p, token)) {
+			if(eqShutdownConnection(p, token)) {
 				return true;
 			}
 		} catch (Exception e) {
@@ -148,6 +148,24 @@ public class SendShutdown {
 				} catch (Exception e) {
 				}
 			}
+		}
+		return false;
+	}
+
+	/**
+	 * シャットダウンコネクションデータが受信されたかチェック.
+	 */
+	protected static final boolean eqShutdownConnection(
+		final DatagramPacket packet, final byte[] token) {
+		if (packet.getLength() == token.length) {
+			final int len = packet.getLength();
+			final byte[] bin = packet.getData();
+			for (int i = 0; i < len; i++) {
+				if ((token[i] & 0x000000ff) != (bin[i] & 0x000000ff)) {
+					return false;
+				}
+			}
+			return true;
 		}
 		return false;
 	}

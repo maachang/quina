@@ -7,27 +7,27 @@ public class ComponentConstants {
 	private ComponentConstants() {}
 
 	/**
-	 * 同期タイプ.
+	 * コンポーネント定義: 同期タイプ.
 	 */
 	public static final int TYPE_SYNC = 0x0100;
 
 	/**
-	 * RESTfulタイプ.
+	 * コンポーネント定義: RESTfulタイプ.
 	 */
 	public static final int TYPE_RESTFUL = 0x0200;
 
 	/**
-	 * ノーマルコンポーネント.
+	 * コンポーネント定義: ノーマルコンポーネント.
 	 */
 	public static final int TYPE_NORMAL = 0x0000;
 
 	/**
-	 * ファイルコンポーネント.
+	 * コンポーネント定義: ファイルコンポーネント.
 	 */
 	public static final int TYPE_FILE = 0x00ff;
 
 	/**
-	 * エラーコンポーネントタイプ
+	 * コンポーネント定義: エラーコンポーネントタイプ
 	 */
 	public static final int TYPE_ERROR = 0x8000;
 }

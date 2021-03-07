@@ -5,7 +5,9 @@ import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
+import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownManager;
+import quina.shutdown.ShutdownManagerInfo;
 import quina.util.Args;
 import quina.util.FileUtil;
 import quina.util.StringUtil;
@@ -45,6 +47,8 @@ public class Quina {
 	// コンストラクタ.
 	private Quina() {
 		this.router = new Router();
+		this.shutdownManager = new ShutdownManager();
+		this.shutdownManager.getInfo().register(new QuinaShutdownCall());
 		this.quinaServiceManager = new QuinaServiceManager();
 		this.httpWorkerService = new HttpWorkerService();
 		this.httpServerService = new HttpServerService(this.httpWorkerService);
@@ -138,6 +142,8 @@ public class Quina {
 		}
 		// ログのコンフィグ定義.
 		loadLogConfig(this.configDir);
+		// シャットダウンマネージャのコンフィグ定義.
+		loadShutdownManagerConfig(this.configDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
 		httpWorkerService.readConfig(this.configDir);
 		httpServerService.readConfig(this.configDir);
@@ -163,6 +169,30 @@ public class Quina {
 		}
 		// ログコンフィグをセット.
 		logFactory.config(json);
+	}
+
+	// シャットダウンマネージャのコンフィグ条件を設定.
+	private final void loadShutdownManagerConfig(String configDir) {
+		final ShutdownManagerInfo info = shutdownManager.getInfo();
+		// shutdownManagerのコンフィグが既に設定されている場合.
+		if(info.isConfig()) {
+			return;
+		}
+		// shutdown.jsonのコンフィグファイルを取得.
+		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(configDir, "shutdown");
+		if(json == null) {
+			return;
+		}
+		// shutdownManagerのコンフィグ条件をセット.
+		info.config(json);
+	}
+
+	/**
+	 * シャットダウンマネージャ情報を取得.
+	 * @return ShutdownManagerInfo シャットダウンマネージャ情報が返却されます.
+	 */
+	public ShutdownManagerInfo getShutdownManagerInfo() {
+		return shutdownManager.getInfo();
 	}
 
 	/**
@@ -303,6 +333,12 @@ public class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina waitToExit() {
+		// シャットダウンマネージャが開始されていない場合.
+		if(!shutdownManager.getInfo().isStart()) {
+			// 開始する.
+			shutdownManager.startShutdown();
+			LogFactory.getInstance().get().info("### start ShutdownManager");
+		}
 		// すべてのサービスが終了するまで待機.
 		while(!isExit()) {
 			QuinaUtil.sleep(50L);
@@ -497,6 +533,18 @@ public class Quina {
 				return list.get(no).getName();
 			}
 			return null;
+		}
+	}
+
+	// QuinaShutdownCall.
+	private static final class QuinaShutdownCall
+		extends ShutdownCall {
+		@Override
+		public void call() {
+			// Quinaの停止を実施.
+			LogFactory.getInstance().get()
+				.info("### start shutdown hook");
+			Quina.get().stop();
 		}
 	}
 }

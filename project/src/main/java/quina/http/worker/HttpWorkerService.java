@@ -118,7 +118,7 @@ public class HttpWorkerService implements QuinaService {
 		if(manager != null) {
 			return manager.isExitThread();
 		}
-		return false;
+		return true;
 	}
 
 	@Override

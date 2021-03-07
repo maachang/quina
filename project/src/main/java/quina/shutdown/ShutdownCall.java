@@ -24,10 +24,15 @@ public abstract class ShutdownCall {
 	}
 
 	/**
-	 * シャットダウン完了.
+	 * シャットダウン完了として呼び出す.
+	 * @return boolean 前回の条件が返却されます.
 	 */
-	protected void shutdown() {
-		while(!isShutdown.compareAndSet(isShutdown.get(), true));
+	protected boolean successShutdown() {
+		boolean ret = isShutdown.get();
+		while(!isShutdown.compareAndSet(ret, true)) {
+			ret = isShutdown.get();
+		}
+		return ret;
 	}
 
 	/**

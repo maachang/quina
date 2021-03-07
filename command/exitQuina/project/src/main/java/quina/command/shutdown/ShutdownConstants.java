@@ -1,4 +1,4 @@
-package quina.shutdown;
+package quina.command.shutdown;
 
 import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicInteger;

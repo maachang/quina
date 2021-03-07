@@ -125,7 +125,7 @@ public class HttpServerService implements QuinaService {
 		if(core != null) {
 			return core.isExitThread();
 		}
-		return false;
+		return true;
 	}
 
 	@Override

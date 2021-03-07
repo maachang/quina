@@ -39,17 +39,21 @@ public class QuinaTest {
 	public void startTest() {
 		final Quina quina = Quina.get();
 
+		quina.getRouter()
+
 		// http://127.0.0.1:3333/
-		quina.getRouter().route("/", (RESTfulGetSync)(req, res, params) -> {
+		.route("/", (RESTfulGetSync)(req, res, params) -> {
 			return new BinarySearchMap<String, Object>("hello", "world");
-		});
+		})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
-		quina.getRouter().route("/hoge/moge/${id}/a/${name}/", (RESTfulGetSync)(req, res, params) -> {
+		.route("/hoge/moge/${id}/a/${name}/", (RESTfulGetSync)(req, res, params) -> {
 			return new BinarySearchMap<String, Object>("params", params);
 		});
 
 		// quinaを開始して、終了まで待機する.
 		quina.start().waitToExit();
+
+		System.out.println("exitQuinaTest.");
 	}
 }
