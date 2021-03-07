@@ -115,7 +115,6 @@ public class HttpServerService implements QuinaService {
 		// 停止処理.
 		if(core != null) {
 			core.stopThread();
-			core = null;
 		}
 		startFlag.set(false);
 	}
@@ -131,7 +130,10 @@ public class HttpServerService implements QuinaService {
 	@Override
 	public synchronized boolean waitToExit(long timeout) {
 		if(core != null) {
-			return core.waitToExit();
+			if(core.waitToExit()) {
+				core = null;
+				return true;
+			}
 		}
 		return true;
 	}

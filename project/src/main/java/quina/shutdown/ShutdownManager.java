@@ -4,8 +4,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import quina.shutdown.ShutdownManagerInfo.ShutdownCallManager;
+import sun.misc.Signal;
 
 /**
  * シャットダウン管理オブジェクト.
@@ -38,12 +40,30 @@ public class ShutdownManager {
 		}
 	}
 
+	// シグナル登録フラグ.
+	private static final AtomicBoolean regSignalFlag = new AtomicBoolean(false);
+
+	// シグナル登録.
+	// これを行わないとctrl-cなどでシャットダウンフックが検知されない.
+	public static final void registerSignal() {
+		// シグナルは１度だけ登録.
+		boolean flg = regSignalFlag.get();
+		while(!regSignalFlag.compareAndSet(flg, true)) {
+			flg = regSignalFlag.get();
+		}
+		if(!flg) {
+			// Register a signal handler for Ctrl-C that runs the shutdown hooks
+			Signal.handle(new Signal("INT"), sig -> System.exit(0));
+		}
+	}
+
 	/**
 	 * シャットダウン処理の監視を開始.
 	 */
 	public void startShutdown() {
 		synchronized(info.getSync()) {
 			info.checkStart();
+			registerSignal();
 			ShutdownCallManager cman = info.getCallManager();
 			// シャットダウンコールが存在するかチェック.
 			if(cman == null || cman.size() <= 0) {
@@ -97,24 +117,6 @@ public class ShutdownManager {
 	// シャットダウンフックを解除.
 	private static final void stopShutdownHook(Thread t) {
 		Runtime.getRuntime().removeShutdownHook(t);
-	}
-
-	/**
-	 * シャットダウンコネクションデータが受信されたかチェック.
-	 */
-	protected static final boolean eqShutdownConnection(
-		final DatagramPacket packet, final byte[] token) {
-		if (packet.getLength() == token.length) {
-			final int len = packet.getLength();
-			final byte[] bin = packet.getData();
-			for (int i = 0; i < len; i++) {
-				if ((token[i] & 0x000000ff) != (bin[i] & 0x000000ff)) {
-					return false;
-				}
-			}
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -219,7 +221,7 @@ public class ShutdownManager {
 				connection.receive(packet);
 				// 受信されたら、シャットダウンコネクション情報と一致するかチェック.
 				if (packet.getLength() == shutdownToken.length &&
-					eqShutdownConnection(packet, shutdownToken)) {
+					SendShutdown.eqShutdownConnection(packet, shutdownToken)) {
 					// 一致する場合は、相手側にシャットダウンコネクションを返信.
 					int srcPort = packet.getPort();
 					for(int i = 0; i < retry; i ++) {

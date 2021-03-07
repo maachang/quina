@@ -35,19 +35,26 @@ public class Command {
 	}
 
 	public void outHelp() {
-		System.out.println("quinaExit varsion " + VERSION);
-		System.out.println(" [params]");
+		System.out.println("Command to shut down quina.");
+		System.out.println();
+		System.out.println("With this command, you can shut down the running quina.");
+		System.out.println();
+		System.out.println("Usage: quinaExit [options]");
+		System.out.println(" where options include:");
 
 		System.out.println("  -v [--version] Display version information .");
 		System.out.println("  -h [--help] Display the help contents.");
 		System.out.println("  -t [--token] Set the token for shutdown.");
 		System.out.println("    If not set, the default value will be assigned.");
 		System.out.println("  -p [--port] Set the shutdown port for quina.");
-		System.out.println("    If not set, " + ShutdownConstants.getPort() + " will be assigned.");
+		System.out.println("    If not set, " + ShutdownConstants.getPort() +
+			" will be assigned.");
 		System.out.println("  -o [--timeout] Set the receive timeout value.");
-		System.out.println("    If not set, " + ShutdownConstants.getTimeout() + " msec will be assigned.");
+		System.out.println("    If not set, " + ShutdownConstants.getTimeout() +
+			" milliseconds will be assigned.");
 		System.out.println("  -r [--retry] Set the number of retries.");
-		System.out.println("    If not set, " + ShutdownConstants.getRetry() + " times will be assigned.");
+		System.out.println("    If not set, " + ShutdownConstants.getRetry() +
+			" retries will be assigned.");
 		System.out.println();
 	}
 
@@ -88,7 +95,9 @@ public class Command {
 		if(Args.isNumeric(e)) {
 			retry = Integer.parseInt(e);
 		}
-		System.out.println("send quit exit conection.");
+		SendShutdown.setVerbose(true);
+
+		System.out.println("Sends a shutdown signal to quina.");
 		boolean res = SendShutdown.send(token, port, timeout, retry);
 		if(res) {
 			System.out.println("You have successfully shut down quina.");

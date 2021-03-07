@@ -100,7 +100,6 @@ public class HttpWorkerService implements QuinaService {
 		// 停止処理.
 		if(manager != null) {
 			manager.stopThread();
-			manager = null;
 		}
 		if(serverPoolingManager != null) {
 			serverPoolingManager.clear();
@@ -124,7 +123,10 @@ public class HttpWorkerService implements QuinaService {
 	@Override
 	public synchronized boolean waitToExit(long timeout) {
 		if(manager != null) {
-			return manager.waitToExit(timeout);
+			if(manager.waitToExit(timeout)) {
+				manager = null;
+				return true;
+			}
 		}
 		return false;
 	}

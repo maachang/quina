@@ -15,6 +15,25 @@ public class SendShutdown {
 	protected SendShutdown() {
 	}
 
+	// 詳細表示.
+	private static volatile boolean verbose = false;
+
+	/**
+	 * 詳細表示を行うかチェックします.
+	 * @param m
+	 */
+	public static final void setVerbose(boolean m) {
+		verbose = m;
+	}
+
+	/**
+	 * 詳細表示モードかチェックします.
+	 * @return
+	 */
+	public static final boolean isVerbose() {
+		return verbose;
+	}
+
 	/**
 	 * シャットダウン通知.
 	 */
@@ -93,12 +112,44 @@ public class SendShutdown {
 				retry = ShutdownConstants.MAX_RETRY;
 			}
 		}
+		if (port <= 0 || port > 65535) {
+			port = ShutdownConstants.getPort();
+		}
+		if(timeout <= 0 || timeout > ShutdownConstants.MAX_TIMEOUT) {
+			if(timeout <= 0) {
+				timeout = ShutdownConstants.getTimeout();
+			} else {
+				timeout = ShutdownConstants.MAX_TIMEOUT;
+			}
+		}
 		final byte[] t = token == null ?
 			ShutdownConstants.getShutdownToken() :
 			ShutdownConstants.createShutdownToken(token);
+		if(verbose) {
+			StringBuilder buf = new StringBuilder();
+			if(ShutdownConstants.DEFAULT_TOKEN.equals(token)) {
+				buf.append(" Token [DEFAULT]");
+			} else {
+				buf.append(" Token \"").append(token).append("\"");
+			}
+			buf.append(" with a timeout value of ").append(timeout)
+				.append(" milliseconds and ").append(retry).append(" retries.");
+			System.out.println(buf.toString());
+		}
 		for (int i = 0; i < retry; i++) {
+			if(verbose) {
+				System.out.println(" Sends the " + (i + 1) + "th shutdown command.");
+			}
 			if (sendShutdownConnection(t, port, timeout)) {
+				if(verbose) {
+					System.out.println(" The shutdown command was successfully sent.");
+					System.out.println();
+				}
 				return true;
+			}
+			if(verbose) {
+				System.out.println(" Failed to send the shutdown command.");
+				System.out.println();
 			}
 		}
 		return false;
@@ -122,6 +173,9 @@ public class SendShutdown {
 				timeout = ShutdownConstants.MAX_TIMEOUT;
 			}
 		}
+		token = token == null ?
+			ShutdownConstants.getShutdownToken() :
+			token;
 		DatagramSocket s = null;
 		try {
 			// 規定条件を送信.
