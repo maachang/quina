@@ -127,7 +127,7 @@ public class SendShutdown {
 			ShutdownConstants.createShutdownToken(token);
 		if(verbose) {
 			StringBuilder buf = new StringBuilder();
-			if(ShutdownConstants.DEFAULT_TOKEN.equals(token)) {
+			if(ShutdownConstants.getDefaultToken().equals(token)) {
 				buf.append(" Token [DEFAULT]");
 			} else {
 				buf.append(" Token \"").append(token).append("\"");

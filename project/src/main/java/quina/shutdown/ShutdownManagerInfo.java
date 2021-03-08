@@ -97,7 +97,7 @@ public class ShutdownManagerInfo {
 			checkStart();
 			setRetry(getInt(this.retry, json.get("retry")));
 			setBindPort(getInt(this.bindPort, json.get("bindPort"), json.get("port")));
-			setToken(getString(ShutdownConstants.DEFAULT_TOKEN,
+			setToken(getString(ShutdownConstants.getDefaultToken(),
 				json.get("token"), json.get("shutdownToken")));
 			return this;
 		}

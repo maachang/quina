@@ -8,12 +8,17 @@ public class Command {
 	// バージョン.
 	private static final String VERSION = "0.0.1";
 
+	// 基本的なQuinaShutdownToken.
+	private static final String DEFAULT_TOKEN = "@aniuq";
+
 	/**
 	 * メイン処理.
 	 * @param args
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
+		// シャットダウンデフォルトトークンを設定.
+		ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
 		Command cmd = new Command(args);
 		try {
 			cmd.execute();
@@ -83,7 +88,7 @@ public class Command {
 			return;
 		}
 
-		String token = ShutdownConstants.DEFAULT_TOKEN;
+		String token = ShutdownConstants.getDefaultToken();
 		int port = ShutdownConstants.getPort();
 		int timeout = ShutdownConstants.getTimeout();
 		int retry = ShutdownConstants.getRetry();

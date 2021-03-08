@@ -6,6 +6,7 @@ import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
 import quina.shutdown.ShutdownCall;
+import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
 import quina.shutdown.ShutdownManagerInfo;
 import quina.util.Args;
@@ -20,6 +21,9 @@ import quina.util.collection.ObjectList;
 public class Quina {
 	// シングルトン.
 	private static final Quina SNGL = new Quina();
+
+	// 基本的なQuinaShutdownToken.
+	private static final String DEFAULT_TOKEN = "@aniuq";
 
 	// コンフィグディレクトリ.
 	private String configDir = QuinaConstants.DEFAULT_CONFIG_DIRECTORY;
@@ -46,10 +50,16 @@ public class Quina {
 
 	// コンストラクタ.
 	private Quina() {
+		// シャットダウンデフォルトトークンを設定.
+		ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
+		// ルーターオブジェクト生成.
 		this.router = new Router();
+		// シャットダウンマネージャを生成し、quinaシャットダウンコールをセット.
 		this.shutdownManager = new ShutdownManager();
 		this.shutdownManager.getInfo().register(new QuinaShutdownCall());
+		// quinaServiceを管理するマネージャを生成.
 		this.quinaServiceManager = new QuinaServiceManager();
+		// HTTP関連サービスを生成.
 		this.httpWorkerService = new HttpWorkerService();
 		this.httpServerService = new HttpServerService(this.httpWorkerService);
 	}
@@ -335,9 +345,10 @@ public class Quina {
 	public Quina waitToExit() {
 		// シャットダウンマネージャが開始されていない場合.
 		if(!shutdownManager.getInfo().isStart()) {
-			// 開始する.
+			// シャットダウンマネージャを開始.
 			shutdownManager.startShutdown();
-			LogFactory.getInstance().get().info("### start ShutdownManager");
+			LogFactory.getInstance().get()
+				.info("### start ShutdownManager");
 		}
 		// すべてのサービスが終了するまで待機.
 		while(!isExit()) {
@@ -543,7 +554,7 @@ public class Quina {
 		public void call() {
 			// Quinaの停止を実施.
 			LogFactory.getInstance().get()
-				.info("### start shutdown hook");
+				.info("* * A shutdown hook has been detected * *");
 			Quina.get().stop();
 		}
 	}

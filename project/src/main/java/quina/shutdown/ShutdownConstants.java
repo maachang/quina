@@ -46,9 +46,10 @@ public class ShutdownConstants {
 	private static final String TOKEN_HEADER = "0x0035, 0x0071, 0x0033, 0x0060";
 
 	/**
-	 * 基本的なQuinaShutdownToken.
+	 * デフォルトトークン名.
 	 */
-	public static final String DEFAULT_TOKEN = "@aniuq";
+	private static final AtomicReference<String> defaultToken =
+		new AtomicReference<String>("@token");
 
 	/**
 	 * シャットダウン送信リトライ回数.
@@ -69,7 +70,7 @@ public class ShutdownConstants {
 	 * シャットダウントークン情報.
 	 */
 	private static final AtomicReference<byte[]> token =
-		new AtomicReference<byte[]>(createShutdownToken(DEFAULT_TOKEN));
+		new AtomicReference<byte[]>(createShutdownToken(defaultToken.get()));
 
 	/**
 	 * シャットダウン用の相互通信用トークンの作成.
@@ -78,7 +79,7 @@ public class ShutdownConstants {
 	 */
 	protected static final byte[] createShutdownToken(String token) {
 		if(token == null || token.isEmpty()) {
-			token = DEFAULT_TOKEN;
+			token = defaultToken.get();
 		}
 		try {
 			return MessageDigest.getInstance("SHA-1").
@@ -86,6 +87,22 @@ public class ShutdownConstants {
 		} catch(Exception e) {
 			throw new ShutdownException(e);
 		}
+	}
+
+	/**
+	 * デフォルトトークンを取得.
+	 * @return String デフォルトトークンが返却されます.
+	 */
+	public static final String getDefaultToken() {
+		return defaultToken.get();
+	}
+
+	public static final void setDefaultToken(String token) {
+		if(token == null || token.isEmpty()) {
+			return;
+		}
+		while(!defaultToken.compareAndSet(defaultToken.get(), token));
+		setShutdownToken(token);
 	}
 
 	/**
