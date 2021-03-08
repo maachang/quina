@@ -1,5 +1,8 @@
 package quina.shutdown;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -7,7 +10,6 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import quina.shutdown.ShutdownManagerInfo.ShutdownCallManager;
-import sun.misc.Signal;
 
 /**
  * シャットダウン管理オブジェクト.
@@ -40,12 +42,46 @@ public class ShutdownManager {
 		}
 	}
 
+	// sun.misc.Signalを使うと「警告」が出るので、それを回避する対応.
+	// また将来的にsun.misc.Signalが廃止された時に回避する対応.
+	private static final void setupSunMiscSignal_INT(Object o) {
+		// Signal.handle(new Signal("INT"), sig -> System.exit(0));
+		// コレと同じ対応をリフレクションで実施.
+
+		// Check that sun.misc.SignalHandler and sun.misc.Signal exists
+		try {
+			final Class<?> signalClass = Class.forName("sun.misc.Signal");
+			final Class<?> signalHandlerClass = Class.forName("sun.misc.SignalHandler");
+			// Implement signal handler
+			final Object signalHandler = Proxy.newProxyInstance(o.getClass().getClassLoader(),
+				new Class<?>[]{signalHandlerClass}, new InvocationHandler() {
+					public Object invoke(Object proxy, Method method, Object[] args)
+						throws Throwable {
+						// only method we are proxying is handle()
+						System.exit(0);
+						return null;
+					}
+				});
+			// Register the signal handler, this code is equivalent to:
+			// Signal.handle(new Signal("INT"), signalHandler);
+			signalClass.getMethod("handle", signalClass, signalHandlerClass)
+				.invoke(null, signalClass.getConstructor(String.class).newInstance("INT"),
+					signalHandler);
+		} catch (ClassNotFoundException cnfe) {
+			// sun.misc Signal handler classes don't exist
+		} catch (Exception e) {
+			// Ignore this one too, if the above failed, the signal API is
+			// incompatible with what we're expecting
+		}
+	}
+
+
 	// シグナル登録フラグ.
 	private static final AtomicBoolean regSignalFlag = new AtomicBoolean(false);
 
 	// シグナル登録.
 	// これを行わないとctrl-cなどでシャットダウンフックが検知されない.
-	public static final void registerSignal() {
+	public static final void registerSignal(Object o) {
 		// シグナルは１度だけ登録.
 		boolean flg = regSignalFlag.get();
 		while(!regSignalFlag.compareAndSet(flg, true)) {
@@ -53,7 +89,9 @@ public class ShutdownManager {
 		}
 		if(!flg) {
 			// Register a signal handler for Ctrl-C that runs the shutdown hooks
-			Signal.handle(new Signal("INT"), sig -> System.exit(0));
+			//Signal.handle(new Signal("INT"), sig -> System.exit(0));
+			// sun.misc.Signalを使うと「警告」が出るので、回避対応.
+			setupSunMiscSignal_INT(o);
 		}
 	}
 
@@ -63,7 +101,7 @@ public class ShutdownManager {
 	public void startShutdown() {
 		synchronized(info.getSync()) {
 			info.checkStart();
-			registerSignal();
+			registerSignal(this);
 			ShutdownCallManager cman = info.getCallManager();
 			// シャットダウンコールが存在するかチェック.
 			if(cman == null || cman.size() <= 0) {
