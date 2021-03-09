@@ -560,10 +560,14 @@ public class ComponentManager {
 	// エラー発生時に呼び出すコンポーネント.
 	private ErrorComponent errorComponent = null;
 
+	// Etagマネージャ.
+	private EtagManager etagManager = null;
+
 	/**
 	 * コンストラクタ.
 	 */
 	public ComponentManager() {
+		etagManager = new EtagManager();
 	}
 
 	/**
@@ -574,6 +578,7 @@ public class ComponentManager {
 		rootAnyElement = new AnyElement(0, null);
 		notFoundUrlComponent = null;
 		errorComponent = null;
+		etagManager = null;
 	}
 
 	/**
@@ -620,6 +625,7 @@ public class ComponentManager {
 					"It is a URL that has already been registered: " + url);
 			}
 			// staticコンポーネント管理に追加.
+			component = fileComponentByAppendEtagComponent(component);
 			staticComponent.put(url, new RegisterComponent(url, null, component));
 			return true;
 		}
@@ -635,8 +641,21 @@ public class ComponentManager {
 		}
 		out[0] = null;
 		// anyコンポーネント管理に追加.
+		component = fileComponentByAppendEtagComponent(component);
 		putAnyElement(now, url, urls, 0, urlParam, component);
 		return false;
+	}
+
+	// コンポーネントがファイルコンポーネントの場合は
+	// Etag管理オブジェクトをセット.
+	private final Component fileComponentByAppendEtagComponent(Component component) {
+		// ファイルコンポーネントに対してEtagManagerを設定.
+		if(component.getType() == ComponentType.FILE) {
+			if(component instanceof FileComponent) {
+				((FileComponent)component).setEtagManager(etagManager);
+			}
+		}
+		return component;
 	}
 
 	/**
@@ -724,6 +743,14 @@ public class ComponentManager {
 		// 標準エラーコンポーネントを利用.
 		return errorComponent == null ?
 			DefaultErrorComponent.getInstance() : errorComponent;
+	}
+
+	/**
+	 * Etag管理定義情報を取得.
+	 * @return EtagManagerInfo Etag管理定義情報が返却されます.
+	 */
+	public EtagManagerInfo getEtagManagerInfo() {
+		return etagManager.getInfo();
 	}
 
 	@Override

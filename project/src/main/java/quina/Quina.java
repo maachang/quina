@@ -1,5 +1,6 @@
 package quina;
 
+import quina.component.EtagManagerInfo;
 import quina.http.server.HttpServerInfo;
 import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
@@ -154,6 +155,8 @@ public class Quina {
 		loadLogConfig(this.configDir);
 		// シャットダウンマネージャのコンフィグ定義.
 		loadShutdownManagerConfig(this.configDir);
+		// Etagマネージャのコンフィグ定義.
+		loadEtagManagerConfig(this.configDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
 		httpWorkerService.readConfig(this.configDir);
 		httpServerService.readConfig(this.configDir);
@@ -197,12 +200,35 @@ public class Quina {
 		info.config(json);
 	}
 
+	// Etagマネージャのコンフィグ条件を設定.
+	private final void loadEtagManagerConfig(String configDir) {
+		final EtagManagerInfo info = router.getEtagManagerInfo();
+		if(info.isDone()) {
+			return;
+		}
+		// etag.jsonのコンフィグファイルを取得.
+		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(configDir, "etag");
+		if(json == null) {
+			return;
+		}
+		// etagManagerのコンフィグ条件をセット.
+		info.config(json);
+	}
+
 	/**
 	 * シャットダウンマネージャ情報を取得.
 	 * @return ShutdownManagerInfo シャットダウンマネージャ情報が返却されます.
 	 */
 	public ShutdownManagerInfo getShutdownManagerInfo() {
 		return shutdownManager.getInfo();
+	}
+
+	/**
+	 * Etag管理定義情報を取得.
+	 * @return EtagManagerInfo Etag管理定義情報が返却されます.
+	 */
+	public EtagManagerInfo getEtagManagerInfo() {
+		return router.getEtagManagerInfo();
 	}
 
 	/**
@@ -228,6 +254,13 @@ public class Quina {
 	public Quina start() {
 		check(true);
 		try {
+			// Etag管理情報を取得.
+			final EtagManagerInfo etagManagerInfo =
+				router.getEtagManagerInfo();
+			// Etag管理情報が確定されていない場合は確定する.
+			if(!etagManagerInfo.isDone()) {
+				etagManagerInfo.done();
+			}
 			// 登録されたQuinaServiceを起動.
 			QuinaService qs;
 			final int len = quinaServiceManager.size();

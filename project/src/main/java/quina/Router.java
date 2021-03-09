@@ -3,6 +3,7 @@ package quina;
 import quina.component.Component;
 import quina.component.ComponentManager;
 import quina.component.ErrorComponent;
+import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
 
 /**
@@ -94,6 +95,14 @@ public class Router {
 	 */
 	public ErrorComponent getError() {
 		return manager.getError();
+	}
+
+	/**
+	 * Etag管理定義情報を取得.
+	 * @return EtagManagerInfo Etag管理定義情報が返却されます.
+	 */
+	public EtagManagerInfo getEtagManagerInfo() {
+		return manager.getEtagManagerInfo();
 	}
 
 	@Override

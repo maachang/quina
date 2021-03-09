@@ -14,6 +14,11 @@ public interface Response<T> extends Closeable {
 	public void close() throws IOException;
 
 	/**
+	 * レスポンス情報をリセット.
+	 */
+	public void reset();
+
+	/**
 	 * Httpステータスを取得.
 	 * @return HttpStatus Httpステータスが返却されます.
 	 */

@@ -36,7 +36,8 @@ public final class FileUtil {
 	private static final long _getFileTime(int type, String name) throws Exception {
 		File fp = new File(name);
 		if (fp.exists()) {
-			BasicFileAttributes attrs = Files.readAttributes(Paths.get(name), BasicFileAttributes.class);
+			BasicFileAttributes attrs = Files.readAttributes(
+				Paths.get(name), BasicFileAttributes.class);
 			switch (type) {
 			// ファイル作成時間.
 			case 0:

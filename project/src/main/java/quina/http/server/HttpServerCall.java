@@ -288,13 +288,23 @@ public class HttpServerCall extends NioServerCall {
 
 	// HttpErrorを送信.
 	private static final void sendError(int state, Request req, Response<?> res, Throwable e) {
+		// レスポンス情報をリセットして、デフォルトレスポンスに変換する.
+		final Response<?> response;
+		// 指定レスポンスがDefaultResponseの場合はリセット.
+		if(res instanceof DefaultResponse) {
+			response = (DefaultResponse)res;
+			response.reset();
+		// 指定レスポンスがDefaultResponseでない場合は作り直す.
+		} else {
+			response = new DefaultResponse(res);
+		}
 		// エラー実行.
 		if(e == null) {
 			Quina.router().getError()
-				.call(state, req, res);
+				.call(state, req, response);
 		} else {
 			Quina.router().getError()
-				.call(state, req, res, e);
+				.call(state, req, response, e);
 		}
 	}
 }

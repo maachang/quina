@@ -54,6 +54,22 @@ public abstract class AbstractResponse<T> implements Response<T>{
 		message = null;
 		contentType = null;
 		charset = null;
+		cacheMode = !HttpServerConstants.isNoCacheMode();
+		crossDomain = HttpServerConstants.isCrossDomainMode();
+	}
+
+	/**
+	 * レスポンス情報をリセット.
+	 */
+	@Override
+	public void reset() {
+		header = null;
+		state = HttpStatus.OK;
+		message = null;
+		contentType = null;
+		charset = HttpConstants.getCharset();
+		cacheMode = !HttpServerConstants.isNoCacheMode();
+		crossDomain = HttpServerConstants.isCrossDomainMode();
 	}
 
 	/**

@@ -16,6 +16,9 @@ public class FileComponent implements Component {
 	// ターゲットディレクトリ.
 	protected String targetDir = null;
 
+	// EtagManager.
+	protected EtagManager etagManager = null;
+
 	/**
 	 * ローカルファイルを返信するコンポーネント.
 	 *
@@ -90,15 +93,28 @@ public class FileComponent implements Component {
 				throw new QuinaException(
 					"An invalid character string is set in the specified URL.");
 			} else if(c == '.') {
-				// ドットをカウントで取得.
-				dotCount ++;
-			} else if(c == '/' && dotCount >= 2) {
-				// [../]が含まれてる場合はエラー.
+				// ../ or /../ の可能性の場合.
+				if(dotCount >= 0) {
+					dotCount ++;
+				}
+			} else if(c == '/') {
+				if(dotCount >= 1) {
+					// ./ or /./ or ../ or /../ のような
+					// 相対パスを表すものはエラー返却.
+					throw new QuinaException(
+						"An invalid character string is set in the specified URL.");
+				} else {
+					// [/] を検知した場合は、dotCountを０にセット.
+					dotCount = 0;
+				}
+			} else if(dotCount >= 1) {
+				// .xxx or /.xxx or ..xyz or /..xyz のような
+				// 先頭に.が名前の隠しファイルの可能性がある場合.
 				throw new QuinaException(
 					"An invalid character string is set in the specified URL.");
 			} else {
-				// それ以外の場合はドットカウントをクリア.
-				dotCount = 0;
+				// dotカウントを / が来るまで無効にする.
+				dotCount = -1;
 			}
 		}
 	}
@@ -131,6 +147,14 @@ public class FileComponent implements Component {
 		return targetDir + target;
 	}
 
+	/**
+	 * EtagManagerを設定.
+	 * @param etagManager EtagManagerを設定します.
+	 */
+	protected void setEtagManager(EtagManager etagManager) {
+		this.etagManager = etagManager;
+	}
+
 	@Override
 	public ComponentType getType() {
 		return ComponentType.FILE;
@@ -138,12 +162,20 @@ public class FileComponent implements Component {
 
 	@Override
 	public void call(Method method, Request req, Response<?> res) {
-		final String fileName = urlAndComponentUrlByMargeLocalPath(
+		// 要求URLパスとローカルディレクトリ名とマージ.
+		final String path = urlAndComponentUrlByMargeLocalPath(
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),
 			req.getUrl(), targetDir);
-		if(FileUtil.isFile(fileName)) {
+		// 対象のファイルが存在しない場合.
+		if(!FileUtil.isFile(path)) {
+			// 404エラーを返却.
 			throw new QuinaException(404);
+		// Etag定義の確認.
+		} else if(etagManager.setResponse(path, req, res)) {
+			// 接続元と一致の場合はキャッシュ処理として0byteBody返却.
+			ResponseUtil.send((AbstractResponse<?>)res);
+		} else {
+			ResponseUtil.sendFile((AbstractResponse<?>)res, path);
 		}
-		ResponseUtil.sendFile((AbstractResponse<?>)res, fileName);
 	}
 }

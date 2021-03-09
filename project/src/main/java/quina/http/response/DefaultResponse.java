@@ -4,11 +4,24 @@ import java.io.InputStream;
 
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
+import quina.http.Response;
 
 /**
  * 標準的なレスポンス.
  */
 public class DefaultResponse extends AbstractResponse<DefaultResponse> {
+
+	/***
+	 * コンストラクタ.
+	 * @param res レスポンスオブジェクトを設定します.
+	 */
+	@SuppressWarnings("rawtypes")
+	public DefaultResponse(Response<?> res) {
+		AbstractResponse r = (AbstractResponse)res;
+		this.element = r.element;
+		this.mimeTypes = r.mimeTypes;
+	}
+
 	/**
 	 * コンストラクタ.
 	 * @param element Http要素を設定します.
