@@ -11,13 +11,14 @@ import quina.http.response.SyncResponse;
 /**
  * [同期]RESTfulzメソッドPatch専用のComponent.
  */
-public interface RESTfulPatchSync extends Component {
+public abstract class RESTfulPatchSync extends AbstractValidationComponent<RESTfulPatchSync>
+	implements Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	default ComponentType getType() {
+	public ComponentType getType() {
 		return ComponentType.RESTfulPatchSync;
 	}
 
@@ -28,13 +29,13 @@ public interface RESTfulPatchSync extends Component {
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response<?> res) {
+	public void call(Method method, Request req, Response<?> res) {
 		if(method != Method.PATCH) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
 		ResponseUtil.sendJSON((SyncResponse)res,
-			patch(req, (SyncResponse)res, req.getParams()));
+			patch(req, (SyncResponse)res, execute(req)));
 	}
 
 	/**
@@ -44,5 +45,5 @@ public interface RESTfulPatchSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public Object patch(Request req, SyncResponse res, Params params);
+	public abstract Object patch(Request req, SyncResponse res, Params params);
 }

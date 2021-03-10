@@ -10,13 +10,14 @@ import quina.http.response.RESTfulResponse;
 /**
  * RESTfulzメソッドPut専用のComponent.
  */
-public interface RESTfulPut extends Component {
+public abstract class RESTfulPut extends AbstractValidationComponent<RESTfulPut>
+	implements Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	default ComponentType getType() {
+	public ComponentType getType() {
 		return ComponentType.RESTfulPut;
 	}
 
@@ -27,12 +28,12 @@ public interface RESTfulPut extends Component {
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response<?> res) {
+	public void call(Method method, Request req, Response<?> res) {
 		if(method != Method.PUT) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		put(req, (RESTfulResponse)res, req.getParams());
+		put(req, (RESTfulResponse)res, execute(req));
 	}
 
 	/**
@@ -41,5 +42,5 @@ public interface RESTfulPut extends Component {
 	 * @param res RESTfulResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public void put(Request req, RESTfulResponse res, Params params);
+	public abstract void put(Request req, RESTfulResponse res, Params params);
 }

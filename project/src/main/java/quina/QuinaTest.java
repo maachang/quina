@@ -2,6 +2,9 @@ package quina;
 
 import quina.component.FileComponent;
 import quina.component.RESTfulGetSync;
+import quina.http.Params;
+import quina.http.Request;
+import quina.http.response.SyncResponse;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
 import quina.util.collection.BinarySearchMap;
@@ -44,14 +47,22 @@ public class QuinaTest {
 		quina.getRouter()
 
 		// http://127.0.0.1:3333/
-		.route("/", (RESTfulGetSync)(req, res, params) -> {
-			return new BinarySearchMap<String, Object>("hello", "world");
+		.route("/", new RESTfulGetSync() {
+			@Override
+			public Object get(Request req, SyncResponse res, Params params) {
+				return new BinarySearchMap<String, Object>("hello", "world");
+			}
 		})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
-		.route("/hoge/moge/${id}/a/${name}/", (RESTfulGetSync)(req, res, params) -> {
-			return new BinarySearchMap<String, Object>("params", params);
-		})
+		.route("/hoge/moge/${id}/a/${name}/", new RESTfulGetSync() {
+			public Object get(Request req, SyncResponse res, Params params) {
+				return new BinarySearchMap<String, Object>("params", params);
+			}
+		}.createValidation(
+			"id", "number", "range 10 20"
+			,"name", "string", "not null"
+		))
 
 		// http://127.0.0.1:3333/public/*
 		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));

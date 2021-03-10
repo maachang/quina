@@ -18,17 +18,19 @@ public interface ErrorComponent {
 	/**
 	 * HttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
+	 * @param restful RESTfulの処理呼び出しの場合はtrue.
 	 * @param req HttpRequestを設定します.
 	 * @param res HttpResponseを設定します.
 	 */
-	public void call(int state, Request req, Response<?> res);
+	public void call(int state, boolean restful, Request req, Response<?> res);
 
 	/**
 	 * HttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
+	 * @param restful RESTfulの処理呼び出しの場合はtrue.
 	 * @param req HttpRequestを設定します.
 	 * @param res HttpResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
-	public void call(int state, Request req, Response<?> res, Throwable e);
+	public void call(int state, boolean restful, Request req, Response<?> res, Throwable e);
 }

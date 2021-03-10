@@ -33,19 +33,28 @@ public class ComponentManager {
 		}
 
 		@Override
-		public void call(int state, Request req, Response<?> res) {
-			call(state, req, res, null);
+		public void call(int state, boolean restful, Request req, Response<?> res) {
+			call(state, restful, req, res, null);
 		}
 
 		@Override
-		public void call(int state, Request req, Response<?> res, Throwable e) {
+		public void call(int state, boolean restful, Request req, Response<?> res, Throwable e) {
 			// BodyなしのHttpHeaderでのエラーメッセージを送信.
 			if(e != null) {
 				res.setStatus(state, e.getMessage());
 			} else {
 				res.setStatus(state);
 			}
-			ResponseUtil.send((AbstractResponse<?>)res);
+			// RESTfulでの処理結果.
+			if(restful) {
+				// 空のJSON返却.
+				res.setContentType("application/json");
+				ResponseUtil.send((AbstractResponse<?>)res);
+			} else {
+				// 空のHTML返却.
+				res.setContentType("text/html");
+				ResponseUtil.send((AbstractResponse<?>)res);
+			}
 		}
 	}
 

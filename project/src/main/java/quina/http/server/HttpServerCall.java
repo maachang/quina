@@ -146,7 +146,9 @@ public class HttpServerCall extends NioServerCall {
 		Response<?> res;
 		Params params;
 		RegisterComponent comp;
-		ComponentType ctype;
+		String url;
+		String[] urls;
+		boolean restfulFlg = false;
 		final byte[] tmpBuf = (byte[])o;
 		final HttpElement hem = (HttpElement)em;
 		while(true) {
@@ -187,20 +189,22 @@ public class HttpServerCall extends NioServerCall {
 				}
 				try {
 					// urlを取得.
-					String url = req.getUrl();
+					url = req.getUrl();
 					// urlを[/]でパース.
-					String[] urls = ComponentManager.getUrls(url);
+					urls = ComponentManager.getUrls(url);
 					// URLに対するコンテンツ取得.
 					comp = Quina.router().get(url, urls);
 					url = null;
 					// コンポーネントが取得された場合.
 					if(comp != null) {
+						// コンポーネントタイプを取得.
+						final ComponentType ctype = comp.getType();
+						// RESTfulか取得.
+						restfulFlg = ctype.isRESTful();
 						// レスポンスを取得.
 						res = hem.getResponse();
 						// Elementにレスポンスがない場合.
 						if(res == null) {
-							// コンポーネントタイプを取得.
-							ctype = comp.getType();
 							// このコンポーネントは同期コンポーネントの場合.
 							if(ctype.isSync()) {
 								res = new SyncResponse(hem, mimeTypes);
@@ -237,14 +241,15 @@ public class HttpServerCall extends NioServerCall {
 						comp.call(req.getMethod(), req, res);
 					} else {
 						// エラー404返却.
-						sendError(404, req, defaultRespones(hem, mimeTypes), null);
+						sendError(404, restfulFlg, req, defaultRespones(hem, mimeTypes), null);
 					}
 				} catch(QuinaException qe) {
 					// QuinaExceptionの場合は、そのステータスを踏襲する.
-					sendError(qe.getStatus(), req, defaultRespones(hem, mimeTypes), qe);
+					sendError(qe.getStatus(), restfulFlg, req, defaultRespones(hem, mimeTypes), qe);
 				} catch(Exception e) {
 					// その他例外の場合は５００エラー.
-					sendError(500, req, defaultRespones(hem, mimeTypes), e);
+					sendError(500, restfulFlg, req, defaultRespones(hem, mimeTypes), e);
+					//e.printStackTrace();
 				}
 				// 処理終了.
 				return true;
@@ -287,7 +292,7 @@ public class HttpServerCall extends NioServerCall {
 	}
 
 	// HttpErrorを送信.
-	private static final void sendError(int state, Request req, Response<?> res, Throwable e) {
+	private static final void sendError(int state, boolean restfulFlg, Request req, Response<?> res, Throwable e) {
 		// レスポンス情報をリセットして、デフォルトレスポンスに変換する.
 		final Response<?> response;
 		// 指定レスポンスがDefaultResponseの場合はリセット.
@@ -301,10 +306,10 @@ public class HttpServerCall extends NioServerCall {
 		// エラー実行.
 		if(e == null) {
 			Quina.router().getError()
-				.call(state, req, response);
+				.call(state, restfulFlg, req, response);
 		} else {
 			Quina.router().getError()
-				.call(state, req, response, e);
+				.call(state, restfulFlg, req, response, e);
 		}
 	}
 }

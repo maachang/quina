@@ -10,13 +10,14 @@ import quina.http.response.RESTfulResponse;
 /**
  * RESTfulzメソッドPatch専用のComponent.
  */
-public interface RESTfulPatch extends Component {
+public abstract class RESTfulPatch extends AbstractValidationComponent<RESTfulPatch>
+	implements Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	default ComponentType getType() {
+	public ComponentType getType() {
 		return ComponentType.RESTfulPatch;
 	}
 
@@ -27,12 +28,12 @@ public interface RESTfulPatch extends Component {
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response<?> res) {
+	public void call(Method method, Request req, Response<?> res) {
 		if(method != Method.PATCH) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		patch(req, (RESTfulResponse)res, req.getParams());
+		patch(req, (RESTfulResponse)res, execute(req));
 
 	}
 
@@ -42,5 +43,5 @@ public interface RESTfulPatch extends Component {
 	 * @param res HttpResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public void patch(Request req, RESTfulResponse res, Params params);
+	public abstract void patch(Request req, RESTfulResponse res, Params params);
 }
