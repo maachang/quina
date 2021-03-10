@@ -119,6 +119,7 @@ public final class EtagManager {
 	 */
 	protected boolean setResponse(String path, Request req, Response<?> res) {
 		// ここでは２つの処理を実施します.
+		//
 		// 1) Requestに設定されているEtagと比較する.
 		// 2) (1)でEtagが存在しない、比較が一致しない場合はEtagの付与をResponseに行い返却する.
 		// 3) (1)でRequestのEtagが一致した場合はキャッシュが有効をResponseに設定して返却する.
@@ -130,14 +131,12 @@ public final class EtagManager {
 			res.setCacheMode(true);
 			// リクエストにキャッシュされたEtag情報が設定されている場合.
 			final String reqEtag = req.getHeader().getString("If-None-Match");
-			if(reqEtag != null) {
-				// サーバー側のEtagと一致する場合.
-				if(reqEtag.equals(etag)) {
-					// 一致する場合はキャッシュデータとしてレスポンス設定して返却する.
-					res.setStatus(HttpStatus.NotModified);
-					// キャッシュ一致を通知.
-					return true;
-				}
+			// サーバー側のEtagと一致する場合.
+			if(reqEtag != null && etag.equals(reqEtag)) {
+				// 一致する場合はキャッシュデータとしてレスポンス設定して返却する.
+				res.setStatus(HttpStatus.NotModified);
+				// キャッシュ一致を通知.
+				return true;
 			}
 			// サーバー側のEtagと一致しない場合はレスポンスにEtagをセット.
 			res.getHeader().put("Etag", etag);

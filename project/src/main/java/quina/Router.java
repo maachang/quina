@@ -3,6 +3,7 @@ package quina;
 import quina.component.Component;
 import quina.component.ComponentManager;
 import quina.component.ErrorComponent;
+import quina.component.EtagManager;
 import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
 
@@ -14,7 +15,7 @@ public class Router {
 	private String path = "/";
 
 	// コンポーネントマネージャ.
-	private ComponentManager manager = new ComponentManager();
+	private final ComponentManager manager = new ComponentManager();
 
 	/**
 	 * パスのマッピング.
@@ -34,7 +35,8 @@ public class Router {
 	}
 
 	/**
-	 * URLが見つからない場合に実行するコンポーネントを設定します.
+	 * 指定URLでコンポーネントが見つからなかった場合に
+	 * 実行されるコンポーネントを設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
@@ -55,7 +57,6 @@ public class Router {
 
 	/**
 	 * 対象コンポーネントとルートを紐付けます.
-	 *
 	 * @param path コンポーネント実行するURLのパスを設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
@@ -95,6 +96,14 @@ public class Router {
 	 */
 	public ErrorComponent getError() {
 		return manager.getError();
+	}
+
+	/**
+	 * Etag管理オブジェクトを取得.
+	 * @return EtagManager Etag管理オブジェクトが返却されます.
+	 */
+	public EtagManager getEtagManager() {
+		return manager.getEtagManagerInfo().getEtagManager();
 	}
 
 	/**

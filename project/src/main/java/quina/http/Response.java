@@ -31,6 +31,12 @@ public interface Response<T> extends Closeable {
 	public String getMessage();
 
 	/**
+	 * コンテンツタイプが設定されているかチェック.
+	 * @return boolean trueの場合コンテンツタイプは設定されています.
+	 */
+	public boolean isContentType();
+
+	/**
 	 * コンテンツタイプを取得.
 	 * @return String コンテンツタイプが返却されます.
 	 */

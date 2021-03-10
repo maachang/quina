@@ -98,6 +98,18 @@ public abstract class AbstractResponse<T> implements Response<T>{
 	}
 
 	/**
+	 * コンテンツタイプが設定されているかチェック.
+	 * @return boolean trueの場合コンテンツタイプは設定されています.
+	 */
+	@Override
+	public boolean isContentType() {
+		if(contentType == null || contentType.isEmpty()) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
 	 * コンテンツタイプを取得.
 	 * @return String コンテンツタイプが返却されます.
 	 */

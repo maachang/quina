@@ -146,7 +146,7 @@ public interface TypesKeyValue<K, V> {
 		if(ret == null) {
 			return null;
 		}
-		return String.valueOf(n);
+		return String.valueOf(ret);
 	}
 
 	/**

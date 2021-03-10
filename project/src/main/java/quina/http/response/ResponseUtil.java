@@ -216,7 +216,7 @@ public final class ResponseUtil {
 			if(len == -1L) {
 				throw new HttpException(HttpStatus.NotFound);
 			// Content-Typeがヘッダに設定されてない場合.
-			} else if(res.getContentType() == null) {
+			} else if(!res.isContentType()) {
 				// 拡張子からMimeTypeを取得してセット.
 				String extension = getExtension(name);
 				if(extension != null) {

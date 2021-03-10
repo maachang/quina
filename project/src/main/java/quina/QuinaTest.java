@@ -1,5 +1,6 @@
 package quina;
 
+import quina.component.FileComponent;
 import quina.component.RESTfulGetSync;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
@@ -39,6 +40,7 @@ public class QuinaTest {
 	public void startTest() {
 		final Quina quina = Quina.get();
 
+		// ルーターを取得.
 		quina.getRouter()
 
 		// http://127.0.0.1:3333/
@@ -49,11 +51,14 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
 		.route("/hoge/moge/${id}/a/${name}/", (RESTfulGetSync)(req, res, params) -> {
 			return new BinarySearchMap<String, Object>("params", params);
-		});
+		})
+
+		// http://127.0.0.1:3333/public/*
+		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));
 
 		// quinaを開始して、終了まで待機する.
 		quina.start().waitToExit();
 
-		System.out.println("exitQuinaTest.");
+		System.out.println("## exit QuinaTest.");
 	}
 }
