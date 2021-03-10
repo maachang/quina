@@ -6,19 +6,77 @@ import quina.util.Alphabet;
  * ValidateCheckType.
  */
 enum VCheckType {
+	/**
+	 * 提議なし.
+	 */
 	None("none", 0),
+	/**
+	 * 比較の反転.
+	 */
 	Not("not", 0),
+	/**
+	 * NULLでない場合エラー.
+	 */
 	Null("null", 0),
+	/**
+	 * 日付フォーマットでない場合エラー.
+	 */
 	Date("date", 0),
+	/**
+	 * 時間フォーマットでない場合エラー.
+	 */
 	Time("time", 0),
+	/**
+	 * 郵便番号でない場合エラー.
+	 */
 	Zip("zip", 0),
+	/**
+	 * 電話番号でない場合エラー.
+	 */
 	Tel("tel", 0),
+	/**
+	 * IPアドレスでない場合エラー.
+	 */
 	Ipv4("ipv4", 0),
+	/**
+	 * URLでない場合エラー.
+	 */
 	Url("url", 0),
+	/**
+	 * EMAILでない場合エラー.
+	 */
 	Email("email", 0),
+	/**
+	 * 比較元 < パラメータ でエラー.
+	 */
+	LT("lt", 1),
+	/**
+	 * 比較元 <= パラメータ でエラー.
+	 */
+	LE("le", 1),
+	/**
+	 * 比較元 > パラメータ でエラー.
+	 */
+	GT("gt", 1),
+	/**
+	 * 比較元 >= パラメータ でエラー.
+	 */
+	GE("ge", 1),
+	/**
+	 * 比較元 >= パラメータ でエラー.
+	 */
 	Min("min", 1),
+	/**
+	 * 比較元 <= パラメータ でエラー.
+	 */
 	Max("max", 1),
+	/**
+	 * 比較元 >= パラメータ AND 比較元 <= パラメータ でエラー.
+	 */
 	Range("range", 2),
+	/**
+	 * 条件が設定されてない場合にデフォルト値を設定.
+	 */
 	Default("default", 1);
 
 	// 名前.
@@ -79,6 +137,24 @@ enum VCheckType {
 			return Url;
 		} else if(Alphabet.eq("email", value)) {
 			return Email;
+		} else if(Alphabet.eq("lt", value)) {
+			return LT;
+		} else if(Alphabet.eq("<", value)) {
+			return LT;
+		} else if(Alphabet.eq("le", value)) {
+			return LE;
+		} else if(Alphabet.eq("<=", value)) {
+			return LE;
+		} else if(Alphabet.eq("gt", value)) {
+			return GT;
+		} else if(Alphabet.eq(">", value)) {
+			return GT;
+		} else if(Alphabet.eq("ge", value)) {
+			return GE;
+		} else if(Alphabet.eq(">=", value)) {
+			return GE;
+		} else if(Alphabet.eq("max", value)) {
+			return Max;
 		} else if(Alphabet.eq("min", value)) {
 			return Min;
 		} else if(Alphabet.eq("max", value)) {

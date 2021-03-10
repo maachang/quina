@@ -10,9 +10,9 @@ import quina.util.DateUtil;
 import quina.util.StringUtil;
 
 /**
- * Validateチェック要素群.
+ * １つのValidateチェック要素群.
  */
-final class VCheckList {
+final class VCheckElements {
 	/**
 	 * Validateチェック要素.
 	 */
@@ -66,7 +66,7 @@ final class VCheckList {
 	 * @param vtype このValidateの変換型情報を設定します.
 	 * @param validate validateチェック条件を設定します.
 	 */
-	public VCheckList(VType vtype, String validate) {
+	public VCheckElements(VType vtype, String validate) {
 		analysis(list, vtype, validate);
 	}
 
@@ -79,7 +79,7 @@ final class VCheckList {
 		}
 		// 情報をカット.
 		List<String> list = new ArrayList<String>();
-		StringUtil.cutString(list, true, false, validate, " 　\t_|");
+		StringUtil.cutString(list, true, false, validate, " 　\t_|(),");
 		if (list.size() == 0) {
 			out.clear();
 			return;
@@ -100,7 +100,7 @@ final class VCheckList {
 			} else if(vc == VCheckType.None) {
 				// 解析終了.
 				return;
-			// "not"提議の場合.
+			// "not"定義の場合.
 			} else if(vc.equals(VCheckType.Not)) {
 				// NotフラグをONにする.
 				notFlag = true;
@@ -145,7 +145,7 @@ final class VCheckList {
 			case None:
 			case Not: continue; // 何もしない.
 			case Null:
-				value = isNull(em, column, value);
+				value = isNull(em, vtype, column, value);
 				break;
 			case Date:
 				value = date(em, column, value);
@@ -168,17 +168,29 @@ final class VCheckList {
 			case Email:
 				value = email(em, column, value);
 				break;
+			case LT:
+				value = min(em, true, vtype, column, value);
+				break;
+			case LE:
+				value = min(em, false, vtype, column, value);
+				break;
+			case GT:
+				value = max(em, true, vtype, column, value);
+				break;
+			case GE:
+				value = max(em, false, vtype, column, value);
+				break;
 			case Min:
-				value = min(em, vtype, column, value);
+				value = min(em, true, vtype, column, value);
 				break;
 			case Max:
-				value = max(em, vtype, column, value);
+				value = max(em, true, vtype, column, value);
 				break;
 			case Range:
 				value = range(em, vtype, column, value);
 				break;
 			case Default:
-				value = defaultValue(em, column, value);
+				value = defaultValue(em, vtype, column, value);
 			}
 		}
 		return value;
@@ -190,8 +202,15 @@ final class VCheckList {
 	}
 
 	// null.
-	private static final Object isNull(VCheckElement em, String column, Object value) {
-		if ((value == null) == em.isNot()) {
+	private static final Object isNull(VCheckElement em, VType vtype, String column, Object value) {
+		boolean res;
+		if(VType.String.equals(vtype)) {
+			// 文字列の場合はnullか空の場合はデフォルト定義.
+			res = (value == null || value.toString().isEmpty());
+		} else {
+			res = (value == null);
+		}
+		if (res == em.isNot()) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is" + notOut(em) + " null");
 		}
@@ -239,7 +258,7 @@ final class VCheckList {
 
 	// min [number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object min(VCheckElement em, VType vtype, String column, Object value) {
+	private static final Object min(VCheckElement em, boolean eq, VType vtype, String column, Object value) {
 		if (value == null) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is null.");
@@ -247,7 +266,8 @@ final class VCheckList {
 		Comparable s = (Comparable)VType.convert(vtype, column, value);
 		Comparable d = (Comparable)em.getArgs()[0];
 		// valueの方が大きい場合はエラー.
-		if((s.compareTo(d) >= 0) == em.isNot()) {
+ 		if((eq && (s.compareTo(d) >= 0) == em.isNot()) ||
+ 			(!eq && (s.compareTo(d) > 0) == em.isNot())) {
 			throw new ValidateException(400,
 				"Length of '" + column + "' is out of condition: min(" + d + ")");
 		}
@@ -256,7 +276,7 @@ final class VCheckList {
 
 	// max [number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object max(VCheckElement em, VType vtype, String column, Object value) {
+	private static final Object max(VCheckElement em, boolean eq, VType vtype, String column, Object value) {
 		if (value == null) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is null.");
@@ -264,7 +284,8 @@ final class VCheckList {
 		Comparable s = (Comparable)VType.convert(vtype, column, value);
 		Comparable d = (Comparable)em.getArgs()[0];
 		// valueの方が小さい場合はエラー.
-		if((s.compareTo(d) <= 0) == em.isNot()) {
+		if((eq && (s.compareTo(d) <= 0) == em.isNot()) ||
+			(!eq && (s.compareTo(d) < 0) == em.isNot())) {
 			throw new ValidateException(400,
 				"Length of '" + column + "' is out of condition: max(" + d + ")");
 		}
@@ -290,8 +311,13 @@ final class VCheckList {
 	}
 
 	// default [value].
-	private static final Object defaultValue(VCheckElement em, String column, Object value) {
-		if(value == null) {
+	private static final Object defaultValue(VCheckElement em, VType vtype, String column, Object value) {
+		if(VType.String.equals(vtype)) {
+			// 文字列の場合はnullか空の場合はデフォルト定義.
+			if(value == null || value.toString().isEmpty()) {
+				return em.getArgs()[0];
+			}
+		} else if(value == null) {
 			return em.getArgs()[0];
 		}
 		return value;

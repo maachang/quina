@@ -11,7 +11,7 @@ final class VElement {
 	private String column;
 	private String headerColumn;
 	private VType type;
-	private VCheckList vlist;
+	private VCheckElements vlist;
 
 	/**
 	 * コンストラクタ.
@@ -30,7 +30,7 @@ final class VElement {
 	 * @param validate
 	 */
 	public VElement(String column, VType type, String validate) {
-		VCheckList lst = new VCheckList(type, validate);
+		VCheckElements lst = new VCheckElements(type, validate);
 		this.column = headerColumnNames(column);
 		this.type = type;
 		this.vlist = lst;
@@ -105,7 +105,7 @@ final class VElement {
 	 * VCheckListを取得.
 	 * @return
 	 */
-	public VCheckList getVCheckList() {
+	public VCheckElements getVCheckList() {
 		return vlist;
 	}
 }
