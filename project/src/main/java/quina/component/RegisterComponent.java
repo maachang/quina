@@ -6,6 +6,7 @@ import quina.http.HttpRequest;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.validate.Validation;
 
 /**
  * ComponentManagerに登録済みのコンポーネント.
@@ -23,19 +24,25 @@ public class RegisterComponent implements Component {
 	private Component component;
 	// ラスト情報がアスタリスクか判別フラグ.
 	private boolean lastAsterrisk;
+	// validation.
+	private Validation validation;
 
 	/**
 	 * コンストラクタ.
 	 * @param url 登録対象のURLを設定します.
+	 * @param urlParam Urlパラメータ位置情報を設定します.
+	 * @parm validation Validationを設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 */
-	protected RegisterComponent(String url, Object[] urlParam, Component component) {
+	protected RegisterComponent(String url, Object[] urlParam,
+		Validation validation, Component component) {
 		this.url = url;
 		this.urlSlashCount = countSlash(url);
 		this.urlParam = urlParam;
 		this.useUrlParam = useUrlParam(urlParam);
 		this.component = component;
 		this.lastAsterrisk = url.endsWith("/*");
+		this.validation = validation;
 	}
 
 
@@ -197,6 +204,14 @@ public class RegisterComponent implements Component {
 		ComponentManager.toSpace(out, spacePos)
 			.append("lastAsterrisk: ").append(lastAsterrisk).append("\n");
 		return out;
+	}
+
+	/**
+	 * Validationを取得.
+	 * @return Validation Validationが返却されます.
+	 */
+	public Validation getValidation() {
+		return validation;
 	}
 
 	@Override

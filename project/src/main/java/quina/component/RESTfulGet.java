@@ -10,14 +10,13 @@ import quina.http.response.RESTfulResponse;
 /**
  * RESTfulzメソッドGet専用のComponent.
  */
-public abstract class RESTfulGet extends AbstractValidationComponent<RESTfulGet>
-	implements Component {
+public interface RESTfulGet extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	public ComponentType getType() {
+	default ComponentType getType() {
 		return ComponentType.RESTfulGet;
 	}
 
@@ -28,12 +27,12 @@ public abstract class RESTfulGet extends AbstractValidationComponent<RESTfulGet>
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.GET) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		get(req, (RESTfulResponse)res, execute(req));
+		get(req, (RESTfulResponse)res, req.getParams());
 
 	}
 

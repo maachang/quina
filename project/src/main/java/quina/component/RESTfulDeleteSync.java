@@ -11,14 +11,13 @@ import quina.http.response.SyncResponse;
 /**
  * [同期]RESTfulzメソッドDelete専用のComponent.
  */
-public abstract class RESTfulDeleteSync extends AbstractValidationComponent<RESTfulDeleteSync>
-	implements Component {
+public interface RESTfulDeleteSync extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	public ComponentType getType() {
+	default ComponentType getType() {
 		return ComponentType.RESTfulDeleteSync;
 	}
 
@@ -29,13 +28,13 @@ public abstract class RESTfulDeleteSync extends AbstractValidationComponent<REST
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.DELETE) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
 		ResponseUtil.sendJSON((SyncResponse)res,
-			delete(req, (SyncResponse)res, execute(req)));
+			delete(req, (SyncResponse)res, req.getParams()));
 	}
 
 	/**

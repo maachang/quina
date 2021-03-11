@@ -10,14 +10,13 @@ import quina.http.response.RESTfulResponse;
 /**
  * RESTfulzメソッドPost専用のComponent.
  */
-public abstract class RESTfulPost extends AbstractValidationComponent<RESTfulPost>
-	implements Component {
+public interface RESTfulPost extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	public ComponentType getType() {
+	default ComponentType getType() {
 		return ComponentType.RESTfulPost;
 	}
 
@@ -28,12 +27,12 @@ public abstract class RESTfulPost extends AbstractValidationComponent<RESTfulPos
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.POST) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		post(req, (RESTfulResponse)res, execute(req));
+		post(req, (RESTfulResponse)res, req.getParams());
 
 	}
 

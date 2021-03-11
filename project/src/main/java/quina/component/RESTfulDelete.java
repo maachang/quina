@@ -10,14 +10,13 @@ import quina.http.response.RESTfulResponse;
 /**
  * RESTfulzメソッドDelete専用のComponent.
  */
-public abstract class RESTfulDelete extends AbstractValidationComponent<RESTfulDelete>
-	implements Component {
+public interface RESTfulDelete extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	public ComponentType getType() {
+	default ComponentType getType() {
 		return ComponentType.RESTfulDelete;
 	}
 
@@ -28,12 +27,12 @@ public abstract class RESTfulDelete extends AbstractValidationComponent<RESTfulD
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.DELETE) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		delete(req, (RESTfulResponse)res, execute(req));
+		delete(req, (RESTfulResponse)res, req.getParams());
 	}
 
 	/**

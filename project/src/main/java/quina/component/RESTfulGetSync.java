@@ -11,14 +11,13 @@ import quina.http.response.SyncResponse;
 /**
  * [同期]RESTfulzメソッドGet専用のComponent.
  */
-public abstract class RESTfulGetSync extends AbstractValidationComponent<RESTfulGetSync>
-	implements Component {
+public interface RESTfulGetSync extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
-	public ComponentType getType() {
+	default ComponentType getType() {
 		return ComponentType.RESTfulGetSync;
 	}
 
@@ -29,13 +28,13 @@ public abstract class RESTfulGetSync extends AbstractValidationComponent<RESTful
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.GET) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
 		ResponseUtil.sendJSON((SyncResponse)res,
-			get(req, (SyncResponse)res, execute(req)));
+			get(req, (SyncResponse)res, req.getParams()));
 	}
 
 	/**

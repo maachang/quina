@@ -2,12 +2,10 @@ package quina;
 
 import quina.component.FileComponent;
 import quina.component.RESTfulGetSync;
-import quina.http.Params;
-import quina.http.Request;
-import quina.http.response.SyncResponse;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
+import quina.validate.Validation;
 
 /**
  * QuinaTest.
@@ -47,22 +45,19 @@ public class QuinaTest {
 		quina.getRouter()
 
 		// http://127.0.0.1:3333/
-		.route("/", new RESTfulGetSync() {
-			@Override
-			public Object get(Request req, SyncResponse res, Params params) {
-				return new ResultJson("hello", "world");
-			}
+		.route("/", (RESTfulGetSync)(req, res, params) -> {
+			return new ResultJson("hello", "world");
 		})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
-		.route("/hoge/moge/${id}/a/${name}/", new RESTfulGetSync() {
-			public Object get(Request req, SyncResponse res, Params params) {
+		.route("/hoge/moge/${id}/a/${name}/",
+			new Validation(
+				"id", "number", ">= 10"
+				,"name", "string", "not null | default 'mo__ge'"
+			),
+			(RESTfulGetSync)(req, res, params) -> {
 				return new ResultJson("params", params);
-			}
-		}.createValidation(
-			"id", "number", ">= 10"
-			,"name", "string", "not null | default 'mo__ge'"
-		))
+			})
 
 		// http://127.0.0.1:3333/public/*
 		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));

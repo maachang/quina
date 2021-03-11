@@ -6,6 +6,7 @@ import quina.component.ErrorComponent;
 import quina.component.EtagManager;
 import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
+import quina.validate.Validation;
 
 /**
  * URLアクセスに対するコンポーネントを管理.
@@ -41,7 +42,18 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router any(Component component) {
-		manager.put(component);
+		return any(null, component);
+	}
+
+	/**
+	 * 指定URLでコンポーネントが見つからなかった場合に
+	 * 実行されるコンポーネントを設定します.
+	 * @param validation Validationを設定します.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router any(Validation validation, Component component) {
+		manager.put(validation, component);
 		return this;
 	}
 
@@ -58,16 +70,28 @@ public class Router {
 	/**
 	 * 対象コンポーネントとルートを紐付けます.
 	 * @param path コンポーネント実行するURLのパスを設定します.
+	 * @param validation 対象のValidationを設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router route(String path, Component component) {
+		return route(path, null, component);
+	}
+
+	/**
+	 * 対象コンポーネントとルートを紐付けます.
+	 * @param path コンポーネント実行するURLのパスを設定します.
+	 * @param validation 対象のValidationを設定します.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router route(String path, Validation validation, Component component) {
 		if(path.startsWith("/")) {
 			path = this.path + path.substring(1);
 		} else {
 			path = this.path + path;
 		}
-		manager.put(path, component);
+		manager.put(path, validation, component);
 		return this;
 	}
 

@@ -7,6 +7,7 @@ import quina.http.response.AbstractResponse;
 import quina.http.response.ResponseUtil;
 import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
+import quina.validate.Validation;
 
 /**
  * コンポーネントを管理するオブジェクト.
@@ -518,10 +519,11 @@ public class ComponentManager {
 	 * @param urls [/]スラッシュで区切られたURLを配列化した内容が設定されます.
 	 * @param pos urlsの開始ポジションを設定します.
 	 * @param urlParam urlParamを設定します.
+	 * @param validation Validationを設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 */
 	private static final void putAnyElement(AnyElement topAnyElement, String url, String[] urls,
-		int pos, Object[] urlParam, Component component) {
+		int pos, Object[] urlParam, Validation validation, Component component) {
 		String path;
 		AnyElement em;
 		AnyElement now = topAnyElement;
@@ -552,7 +554,7 @@ public class ComponentManager {
 			now = em;
 		}
 		// 最後の条件に対してAnyComponentをセット.
-		RegisterComponent cmp = new RegisterComponent(url, urlParam, component);
+		RegisterComponent cmp = new RegisterComponent(url, urlParam, validation, component);
 		now.setAnyComponent(cmp);
 	}
 
@@ -592,23 +594,25 @@ public class ComponentManager {
 
 	/**
 	 * 指定URLの条件が存在しない場合の実行コンポーネントをセット.
+	 * @param validation 対象のValidationを設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 */
-	public void put(Component component) {
+	public void put(Validation validation, Component component) {
 		if(component instanceof RegisterComponent) {
 			component = ((RegisterComponent)component).getComponent();
 		}
-		notFoundUrlComponent = new RegisterComponent("/*", null, component);
+		notFoundUrlComponent = new RegisterComponent("/*", null, validation, component);
 	}
 
 	/**
 	 * 指定URLに対してコンポーネントを登録.
 	 * @param url 対象のURLを設定します.
+	 * @param validation 対象のValidationを設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 * @return boolean [true]の場合はstaticなURLとして
 	 *                 [false]の場合はanyなURLとして登録されました.
 	 */
-	public boolean put(String url, Component component) {
+	public boolean put(String url, Validation validation, Component component) {
 		if(url == null || url.length() == 0 || component == null) {
 			if(url == null || url.length() == 0) {
 				throw new QuinaException("url is not set.");
@@ -635,7 +639,7 @@ public class ComponentManager {
 			}
 			// staticコンポーネント管理に追加.
 			component = fileComponentByAppendEtagComponent(component);
-			staticComponent.put(url, new RegisterComponent(url, null, component));
+			staticComponent.put(url, new RegisterComponent(url, null, validation, component));
 			return true;
 		}
 		// urlにurlParamsの条件に対してnullセット.
@@ -651,7 +655,7 @@ public class ComponentManager {
 		out[0] = null;
 		// anyコンポーネント管理に追加.
 		component = fileComponentByAppendEtagComponent(component);
-		putAnyElement(now, url, urls, 0, urlParam, component);
+		putAnyElement(now, url, urls, 0, urlParam, validation, component);
 		return false;
 	}
 

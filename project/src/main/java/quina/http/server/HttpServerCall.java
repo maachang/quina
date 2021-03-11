@@ -26,6 +26,7 @@ import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
 import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.server.NioServerCall;
+import quina.validate.Validation;
 
 /**
  * Httpサーバコール.
@@ -146,6 +147,7 @@ public class HttpServerCall extends NioServerCall {
 		Response<?> res;
 		Params params;
 		RegisterComponent comp;
+		Validation validation;
 		String url;
 		String[] urls;
 		boolean restfulFlg = false;
@@ -236,6 +238,11 @@ public class HttpServerCall extends NioServerCall {
 						// パラメータが存在しない場合は空のパラメータをセット.
 						} else {
 							req.setParams(new Params(0));
+						}
+						// validationが存在する場合はValidation処理.
+						if((validation = comp.getValidation()) != null) {
+							// validation実行.
+							validation.execute(req, req.getParams());
 						}
 						// コンポーネント実行.
 						comp.call(req.getMethod(), req, res);
