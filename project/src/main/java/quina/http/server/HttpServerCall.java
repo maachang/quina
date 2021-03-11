@@ -242,7 +242,9 @@ public class HttpServerCall extends NioServerCall {
 						// validationが存在する場合はValidation処理.
 						if((validation = comp.getValidation()) != null) {
 							// validation実行.
-							validation.execute(req, req.getParams());
+							params = validation.execute(req, req.getParams());
+							// 新しく生成されたパラメータを再セット.
+							req.setParams(params);
 						}
 						// コンポーネント実行.
 						comp.call(req.getMethod(), req, res);

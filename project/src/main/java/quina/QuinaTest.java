@@ -53,7 +53,7 @@ public class QuinaTest {
 		.route("/hoge/moge/${id}/a/${name}/",
 			new Validation(
 				"id", "number", ">= 10"
-				,"name", "string", "not null | default 'mo__ge'"
+				,"name", "string", "default 'mo_|_ge'"
 			),
 			(RESTfulGetSync)(req, res, params) -> {
 				return new ResultJson("params", params);

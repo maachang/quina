@@ -110,7 +110,14 @@ final class VCheckElements {
 				notFlag = false;
 				// Validateチェックタイプのパラメータが1個の場合.
 			} else if(vc.getArgsLength() == 1) {
-				v1 = VType.convert(type, list.get(++pos));
+				// 正規表現の場合.
+				if(vc.equals(VCheckType.EXP)) {
+					// 正規表現コンパイル.
+					v1 = Pattern.compile(list.get(++pos));
+				} else {
+					// 正規表現以外の場合は型に合わせたデータ変換.
+					v1 = VType.convert(type, list.get(++pos));
+				}
 				out.add(new VCheckElement(vc, notFlag, v1));
 				v1 = null;
 				notFlag = false;
@@ -168,6 +175,9 @@ final class VCheckElements {
 			case Email:
 				value = email(em, column, value);
 				break;
+			case EXP:
+				value = exp(em, column, value);
+				break;
 			case LT:
 				value = min(em, true, vtype, column, value);
 				break;
@@ -210,7 +220,7 @@ final class VCheckElements {
 		} else {
 			res = (value == null);
 		}
-		if (res == em.isNot()) {
+		if (res == !em.isNot()) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is" + notOut(em) + " null");
 		}
@@ -254,6 +264,16 @@ final class VCheckElements {
 	// email.
 	private static final Object email(VCheckElement em, String column, Object value) {
 		return exp(EMAIL_EXP, em, column, value, " is not a email format.");
+	}
+
+	// exp.
+	private static final Object exp(VCheckElement em, String column, Object value) {
+		if (value == null) {
+			throw new ValidateException(400,
+				"The value of '" + column + "' is null.");
+		}
+		final Pattern exp = (Pattern)em.getArgs()[0];
+		return exp(exp, em, column, value, " is not a exp('" + exp + "') format.");
 	}
 
 	// min [number].
@@ -323,7 +343,7 @@ final class VCheckElements {
 		return value;
 	}
 
-	// exp.
+	// 予約正規表現.
 	private static final Pattern DATE_EXP = Pattern
 		.compile("^\\d{2,4}\\/([1][0-2]|[0][1-9]|[1-9])\\/([3][0-1]|[1-2][0-9]|[0][1-9]|[1-9])$");
 	private static final Pattern TIME_EXP = Pattern

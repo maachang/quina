@@ -7,7 +7,7 @@ import quina.util.Alphabet;
  */
 enum VCheckType {
 	/**
-	 * 提議なし.
+	 * 定義なし.
 	 */
 	None("none", 0),
 	/**
@@ -15,7 +15,7 @@ enum VCheckType {
 	 */
 	Not("not", 0),
 	/**
-	 * NULLでない場合エラー.
+	 * NULL(文字列の場合は空)の場合エラー.
 	 */
 	Null("null", 0),
 	/**
@@ -46,6 +46,10 @@ enum VCheckType {
 	 * EMAILでない場合エラー.
 	 */
 	Email("email", 0),
+	/**
+	 * 指定正規表現と不一致でエラー.
+	 */
+	EXP("exp", 1),
 	/**
 	 * 比較元 < パラメータ でエラー.
 	 */
@@ -119,7 +123,7 @@ enum VCheckType {
 	public static final VCheckType getStringByVCheckType(String value) {
 		if(Alphabet.eq("none", value)) {
 			return None;
-		} else if(Alphabet.eq("not", value)) {
+		} else if(Alphabet.eq("not", value) || "!".equals(value)) {
 			return Not;
 		} else if(Alphabet.eq("null", value)) {
 			return Null;
@@ -137,24 +141,16 @@ enum VCheckType {
 			return Url;
 		} else if(Alphabet.eq("email", value)) {
 			return Email;
-		} else if(Alphabet.eq("lt", value)) {
+		} else if(Alphabet.eq("exp", value)) {
+			return EXP;
+		} else if(Alphabet.eq("lt", value) || Alphabet.eq("<", value)) {
 			return LT;
-		} else if(Alphabet.eq("<", value)) {
-			return LT;
-		} else if(Alphabet.eq("le", value)) {
+		} else if(Alphabet.eq("le", value) || Alphabet.eq("<=", value)) {
 			return LE;
-		} else if(Alphabet.eq("<=", value)) {
-			return LE;
-		} else if(Alphabet.eq("gt", value)) {
+		} else if(Alphabet.eq("gt", value) || Alphabet.eq(">", value)) {
 			return GT;
-		} else if(Alphabet.eq(">", value)) {
-			return GT;
-		} else if(Alphabet.eq("ge", value)) {
+		} else if(Alphabet.eq("ge", value) || Alphabet.eq(">=", value)) {
 			return GE;
-		} else if(Alphabet.eq(">=", value)) {
-			return GE;
-		} else if(Alphabet.eq("max", value)) {
-			return Max;
 		} else if(Alphabet.eq("min", value)) {
 			return Min;
 		} else if(Alphabet.eq("max", value)) {
