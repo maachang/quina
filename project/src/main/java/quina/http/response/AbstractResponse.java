@@ -2,6 +2,7 @@ package quina.http.response;
 
 import java.io.IOException;
 
+import quina.component.ComponentType;
 import quina.http.EditMimeTypes;
 import quina.http.Header;
 import quina.http.HttpConstants;
@@ -40,6 +41,23 @@ public abstract class AbstractResponse<T> implements Response<T>{
 	protected boolean crossDomain = HttpServerConstants.isCrossDomainMode();
 	/** 送信済みフラグ. **/
 	protected Bool sendFlag = new Bool(false);
+
+	/**
+	 * レスポンスの内容をセット.
+	 * @param res セット元のResponseを設定します.
+	 */
+	public void setting(AbstractResponse<?> res) {
+		element = res.element;
+		mimeTypes = res.mimeTypes;
+		header = res.header;
+		state = res.state;
+		message = res.message;
+		contentType = res.contentType;
+		charset = res.charset;
+		cacheMode = res.cacheMode;
+		crossDomain = res.crossDomain;
+		sendFlag.set(res.sendFlag.get());
+	}
 
 	/**
 	 * クローズ処理.
@@ -225,6 +243,11 @@ public abstract class AbstractResponse<T> implements Response<T>{
 		return (T)this;
 	}
 
+	/**
+	 * コンポーネントタイプを取得.
+	 * @return ComponentType コンポーネントタイプが返却されます.
+	 */
+	public abstract ComponentType getComponentType();
 
 	/**
 	 * 対象のHTTPヘッダを生成します.

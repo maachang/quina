@@ -6,6 +6,10 @@ import quina.http.HttpRequest;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.response.AbstractResponse;
+import quina.http.response.DefaultResponse;
+import quina.http.response.RESTfulResponse;
+import quina.http.response.SyncResponse;
 import quina.validate.Validation;
 
 /**
@@ -225,6 +229,36 @@ public class RegisterComponent implements Component {
 		if(req instanceof HttpRequest) {
 			((HttpRequest)req).setComponentUrl(url, urlSlashCount);
 		}
+		// 渡されたResponseがコンポーネントで利用可能かチェック.
+		{
+			final AbstractResponse<?> ares = (AbstractResponse<?>)res;
+			final ComponentType rtype = ares.getComponentType();
+			final ComponentType type = component.getType();
+			// コンポーネントタイプとResponseのタイプに属性一致チェックする.
+			final int attributeType = type.getAttributeMatch(rtype);
+			// 不一致の場合.
+			if(attributeType == -1) {
+				switch(type.getAttributeType()) {
+				// コンポーネントタイプが同期系の場合は、同期レスポンス作成.
+				case ComponentConstants.ATTRIBUTE_SYNC:
+					res = new SyncResponse(null, null);
+					break;
+				// コンポーネントタイプがRESTful系の場合は、RESTfulレスポンス作成.
+				case ComponentConstants.ATTRIBUTE_RESTFUL:
+					res = new RESTfulResponse(null, null);
+					break;
+				case ComponentConstants.ATTRIBUTE_NORMAL:
+				case ComponentConstants.ATTRIBUTE_FILE:
+				case ComponentConstants.ATTRIBUTE_ERROR:
+					// それ以外はノーマルタイプのレスポンスを作成.
+					res = new DefaultResponse(null, null);
+					break;
+				}
+				// データセット.
+				((AbstractResponse<?>)res).setting(ares);
+			}
+		}
+		// 実行処理.
 		component.call(method, req, res);
 	}
 

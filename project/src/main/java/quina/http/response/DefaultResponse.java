@@ -2,6 +2,7 @@ package quina.http.response;
 
 import java.io.InputStream;
 
+import quina.component.ComponentType;
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
 import quina.http.Response;
@@ -30,6 +31,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	public DefaultResponse(HttpElement element, MimeTypes mimeTypes) {
 		this.element = element;
 		this.mimeTypes = mimeTypes;
+	}
+
+	/**
+	 * コンポーネントタイプを取得.
+	 * @return ComponentType コンポーネントタイプが返却されます.
+	 */
+	public ComponentType getComponentType() {
+		return ComponentType.NORMAL;
 	}
 
 	/**

@@ -234,46 +234,43 @@ final class VCheckElements {
 				return value;
 			}
 		} catch(Exception e) {}
-		return exp(DATE_EXP, em, column, value, " is not a date format.");
+		return exp(DATE_EXP, em, column, value, "\"" + column + "\" is not a date format.");
 	}
 
 	// time.
 	private static final Object time(VCheckElement em, String column, Object value) {
-		return exp(TIME_EXP, em, column, value, " is not a time format.");
+		return exp(TIME_EXP, em, column, value, "\"" + column + "\" is not a time format.");
 	}
 
 	// zip.
 	private static final Object zip(VCheckElement em, String column, Object value) {
-		return exp(ZIP_EXP, em, column, value, " is not a zip format.");
+		return exp(ZIP_EXP, em, column, value, "\"" + column + "\" is not a zip format.");
 	}
 
 	// tel.
 	private static final Object tel(VCheckElement em, String column, Object value) {
-		return exp(TEL_EXP, em, column, value, " is not a telephone format.");
+		return exp(TEL_EXP, em, column, value, "\"" + column + "\" is not a telephone format.");
 	}
 	// ipv4.
 	private static final Object ipv4(VCheckElement em, String column, Object value) {
-		return exp(IPV4_EXP, em, column, value, " is not in the format of IP address (IPV4).");
+		return exp(IPV4_EXP, em, column, value, "\"" + column +
+			"\" is not in the format of IP address (IPV4).");
 	}
 
 	// url.
 	private static final Object url(VCheckElement em, String column, Object value) {
-		return exp(URL_EXP, em, column, value, " is not a url format.");
+		return exp(URL_EXP, em, column, value, "\"" + column + "\" is not a url format.");
 	}
 
 	// email.
 	private static final Object email(VCheckElement em, String column, Object value) {
-		return exp(EMAIL_EXP, em, column, value, " is not a email format.");
+		return exp(EMAIL_EXP, em, column, value, "\"" + column + "\" is not a email format.");
 	}
 
 	// exp.
 	private static final Object exp(VCheckElement em, String column, Object value) {
-		if (value == null) {
-			throw new ValidateException(400,
-				"The value of '" + column + "' is null.");
-		}
-		final Pattern exp = (Pattern)em.getArgs()[0];
-		return exp(exp, em, column, value, " is not a exp('" + exp + "') format.");
+		return exp((Pattern)em.getArgs()[0], em, column, value,
+			"The contents of \"" + column + "\" do not apply.");
 	}
 
 	// min [number].
@@ -362,10 +359,10 @@ final class VCheckElements {
 		final Matcher mc = p.matcher(StringUtil.parseString(value));
 		if (em.isNot()) {
 			if (mc.find()) {
-				throw new ValidateException(400, column + " " + message + "");
+				throw new ValidateException(400, message);
 			}
 		} else if (!mc.find()) {
-			throw new ValidateException(400, column + " " + message + "");
+			throw new ValidateException(400, message);
 		}
 		return value;
 	}

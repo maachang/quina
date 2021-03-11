@@ -1,5 +1,6 @@
 package quina.http.response;
 
+import quina.component.ComponentType;
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
 import quina.http.Response;
@@ -27,5 +28,13 @@ public class SyncResponse extends AbstractResponse<SyncResponse> {
 	public SyncResponse(HttpElement element, MimeTypes mimeTypes) {
 		this.element = element;
 		this.mimeTypes = mimeTypes;
+	}
+
+	/**
+	 * コンポーネントタイプを取得.
+	 * @return ComponentType コンポーネントタイプが返却されます.
+	 */
+	public ComponentType getComponentType() {
+		return ComponentType.Sync;
 	}
 }

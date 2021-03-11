@@ -18,6 +18,7 @@ import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.response.AbstractResponse;
 import quina.http.response.DefaultResponse;
 import quina.http.response.RESTfulResponse;
 import quina.http.response.SyncResponse;
@@ -305,7 +306,7 @@ public class HttpServerCall extends NioServerCall {
 		// レスポンス情報をリセットして、デフォルトレスポンスに変換する.
 		final Response<?> response;
 		// 指定レスポンスがDefaultResponseの場合はリセット.
-		if(res instanceof DefaultResponse) {
+		if(ComponentType.NORMAL.equals(((AbstractResponse<?>)res).getComponentType())) {
 			response = (DefaultResponse)res;
 			response.reset();
 		// 指定レスポンスがDefaultResponseでない場合は作り直す.
