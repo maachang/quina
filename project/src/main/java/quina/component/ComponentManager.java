@@ -3,8 +3,8 @@ package quina.component;
 import quina.QuinaException;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.response.AbstractResponse;
-import quina.http.response.ResponseUtil;
+import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.ResponseUtil;
 import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
 import quina.validate.Validation;
@@ -46,16 +46,8 @@ public class ComponentManager {
 			} else {
 				res.setStatus(state);
 			}
-			// RESTfulでの処理結果.
-			if(restful) {
-				// 空のJSON返却.
-				res.setContentType("application/json");
-				ResponseUtil.send((AbstractResponse<?>)res);
-			} else {
-				// 空のHTML返却.
-				res.setContentType("text/html");
-				ResponseUtil.send((AbstractResponse<?>)res);
-			}
+			// 空データを送信.
+			ResponseUtil.send((AbstractResponse<?>)res);
 		}
 	}
 
@@ -662,11 +654,9 @@ public class ComponentManager {
 	// コンポーネントがファイルコンポーネントの場合は
 	// Etag管理オブジェクトをセット.
 	private final Component fileComponentByAppendEtagComponent(Component component) {
-		// ファイルコンポーネントに対してEtagManagerを設定.
-		if(component.getType() == ComponentType.FILE) {
-			if(component instanceof FileComponent) {
-				((FileComponent)component).setEtagManager(etagManager);
-			}
+		// ファイル属性コンポーネントに対してEtagManagerを設定.
+		if(component instanceof FileAttributeComponent) {
+			((FileAttributeComponent)component).setEtagManager(etagManager);
 		}
 		return component;
 	}

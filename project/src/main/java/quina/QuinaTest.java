@@ -1,5 +1,6 @@
 package quina;
 
+import quina.component.Component;
 import quina.component.FileComponent;
 import quina.component.RESTfulGetSync;
 import quina.json.ResultJson;
@@ -46,8 +47,8 @@ public class QuinaTest {
 
 		// http://127.0.0.1:3333/
 		.route("/", (RESTfulGetSync)(req, res, params) -> {
-			return new ResultJson("hello", "world");
-		})
+				return new ResultJson("hello", "world");
+			})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
 		.route("/hoge/moge/${id}/a/${name}/",
@@ -58,6 +59,16 @@ public class QuinaTest {
 			(RESTfulGetSync)(req, res, params) -> {
 				return new ResultJson("params", params);
 			})
+
+		// http://127.0.0.1:3333/redirect
+		.route("/redirect", (Component)(method, req, res) -> {
+			res.redirect("https://www.yahoo.co.jp");
+		})
+
+		// http://127.0.0.1:3333/forward
+		.route("/forward", (Component)(method, req, res) -> {
+			res.forward("/hoge/moge/5/a/zzz/");
+		})
 
 		// http://127.0.0.1:3333/public/*
 		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));

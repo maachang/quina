@@ -6,8 +6,8 @@ import quina.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.response.ResponseUtil;
-import quina.http.response.SyncResponse;
+import quina.http.server.response.ResponseUtil;
+import quina.http.server.response.SyncResponse;
 
 /**
  * 同期用コンポーネント.

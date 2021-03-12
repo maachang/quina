@@ -5,8 +5,8 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.response.ResponseUtil;
-import quina.http.response.SyncResponse;
+import quina.http.server.response.ResponseUtil;
+import quina.http.server.response.SyncResponse;
 
 /**
  * [同期]RESTfulzメソッドPost専用のComponent.

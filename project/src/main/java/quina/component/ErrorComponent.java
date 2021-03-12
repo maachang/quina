@@ -18,7 +18,8 @@ public interface ErrorComponent {
 	/**
 	 * HttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
-	 * @param restful RESTfulの処理呼び出しの場合はtrue.
+	 * @param json エラーが発生した呼び出しコンポーネントが
+	 *             [RESFful]の場合は[true]が設定されます.
 	 * @param req HttpRequestを設定します.
 	 * @param res HttpResponseを設定します.
 	 */
@@ -27,7 +28,8 @@ public interface ErrorComponent {
 	/**
 	 * HttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
-	 * @param restful RESTfulの処理呼び出しの場合はtrue.
+	 * @param json エラーが発生した呼び出しコンポーネントが
+	 *             [RESFful]の場合は[true]が設定されます.
 	 * @param req HttpRequestを設定します.
 	 * @param res HttpResponseを設定します.
 	 * @param e 例外を設定します.

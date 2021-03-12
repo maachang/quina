@@ -68,7 +68,8 @@ public class HttpServerService implements QuinaService {
 		ServerSocketChannel server = null;
 		try {
 			// サーバーコール生成.
-			final HttpServerCall call = new HttpServerCall(info.getCustom(), info.getMimeTypes());
+			final HttpServerCall call = new HttpServerCall(
+				info.getCustom(), info.getMimeTypes(), info.isErrorResultJsonMode());
 			// サーバーソケット作成.
 			server = NioUtil.createServerSocketChannel(
 				info.getBindAddress(), info.getBindPort(), info.getBackLog(), info.getServerRecvBuffer());

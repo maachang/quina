@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import quina.Quina;
 import quina.QuinaException;
+import quina.component.ComponentConstants;
 import quina.component.ComponentManager;
 import quina.component.ComponentType;
 import quina.component.RegisterComponent;
@@ -12,16 +13,18 @@ import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpMode;
-import quina.http.HttpRequest;
 import quina.http.Method;
 import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.response.AbstractResponse;
-import quina.http.response.DefaultResponse;
-import quina.http.response.RESTfulResponse;
-import quina.http.response.SyncResponse;
+import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.DefaultResponse;
+import quina.http.server.response.Forward;
+import quina.http.server.response.RESTfulResponse;
+import quina.http.server.response.Redirect;
+import quina.http.server.response.ResponseUtil;
+import quina.http.server.response.SyncResponse;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
@@ -42,14 +45,21 @@ public class HttpServerCall extends NioServerCall {
 	// MimeTypes.
 	private MimeTypes mimeTypes = null;
 
+	// エラー４０４等のレスポンスをJson返却するモード.
+	private boolean defaultResultJsonMode;
+
 	/**
 	 * コンストラクタ.
 	 * @param custom HttpRequestでのBodyの解釈をするオブジェクトを設定します.
 	 * @param mimeTypes mimeTypesを設定します.
+	 * @param defaultResultJsonMode エラー４０４等のレスポンスを
+	 *                              Json返却するモードを設定します.
 	 */
-	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes) {
+	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes,
+		boolean defaultResultJsonMode) {
 		this.custom = custom;
 		this.mimeTypes = mimeTypes;
+		this.defaultResultJsonMode = defaultResultJsonMode;
 	}
 
 	/**
@@ -142,17 +152,9 @@ public class HttpServerCall extends NioServerCall {
 	 * @return boolean trueの場合、正常に処理されました.
 	 */
 	@Override
-	public boolean receive(Object o, NioElement em, byte[] rcvBin)
+	public boolean receive(Object wkObject, NioElement em, byte[] rcvBin)
 		throws IOException {
-		HttpRequest req;
-		Response<?> res;
-		Params params;
-		RegisterComponent comp;
-		Validation validation;
-		String url;
-		String[] urls;
-		boolean restfulFlg = false;
-		final byte[] tmpBuf = (byte[])o;
+		final byte[] tmpBuf = (byte[])wkObject;
 		final HttpElement hem = (HttpElement)em;
 		while(true) {
 			switch(hem.getState()) {
@@ -182,89 +184,123 @@ public class HttpServerCall extends NioServerCall {
 				return true;
 			// 受信完了.
 			case STATE_END_RECV:
-				// requestを取得.
-				req = (HttpRequest)hem.getRequest();
-				// methodがoptionかチェック.
-				if(Method.OPTIONS.equals(req.getMethod())) {
-					// Option送信.
-					sendOptions(hem, req);
-					return true;
-				}
-				try {
-					// urlを取得.
-					url = req.getUrl();
-					// urlを[/]でパース.
-					urls = ComponentManager.getUrls(url);
-					// URLに対するコンテンツ取得.
-					comp = Quina.router().get(url, urls);
-					url = null;
-					// コンポーネントが取得された場合.
-					if(comp != null) {
-						// コンポーネントタイプを取得.
-						final ComponentType ctype = comp.getType();
-						// RESTfulか取得.
-						restfulFlg = ctype.isRESTful();
-						// レスポンスを取得.
-						res = hem.getResponse();
-						// Elementにレスポンスがない場合.
-						if(res == null) {
-							// このコンポーネントは同期コンポーネントの場合.
-							if(ctype.isSync()) {
-								res = new SyncResponse(hem, mimeTypes);
-							// このコンポーネントはRESTful系の場合.
-							} else if(ctype.isRESTful()) {
-								res = new RESTfulResponse(hem, mimeTypes);
-							// デフォルトレスポンス.
-							} else {
-								res = new DefaultResponse(hem, mimeTypes);
-							}
-							// レスポンスをセット.
-							hem.setResponse(res);
-						}
-						// パラメータを取得.
-						params = HttpAnalysis.convertParams(req, custom);
-						// URLパラメータ条件が存在する場合.
-						if(comp.isUrlParam()) {
-							// パラメータが存在しない場合は生成.
-							if(params == null) {
-								params = new Params();
-							}
-							// URLパラメータを解析.
-							comp.getUrlParam(params, urls);
-						}
-						urls = null;
-						// パラメータが存在する場合はリクエストセット.
-						if(params != null) {
-							req.setParams(params);
-						// パラメータが存在しない場合は空のパラメータをセット.
-						} else {
-							req.setParams(new Params(0));
-						}
-						// validationが存在する場合はValidation処理.
-						if((validation = comp.getValidation()) != null) {
-							// validation実行.
-							params = validation.execute(req, req.getParams());
-							// 新しく生成されたパラメータを再セット.
-							req.setParams(params);
-						}
-						// コンポーネント実行.
-						comp.call(req.getMethod(), req, res);
-					} else {
-						// エラー404返却.
-						sendError(404, restfulFlg, req, defaultRespones(hem, mimeTypes), null);
-					}
-				} catch(QuinaException qe) {
-					// QuinaExceptionの場合は、そのステータスを踏襲する.
-					sendError(qe.getStatus(), restfulFlg, req, defaultRespones(hem, mimeTypes), qe);
-				} catch(Exception e) {
-					// その他例外の場合は５００エラー.
-					sendError(500, restfulFlg, req, defaultRespones(hem, mimeTypes), e);
-					//e.printStackTrace();
-				}
+				execComponent(null, (HttpElement)em);
 				// 処理終了.
 				return true;
 			}
 		}
+	}
+
+	/**
+	 * URLを指定してコンポーネントを実行.
+	 * @param em
+	 * @param url
+	 */
+	private final void execComponent(String url, HttpElement em) {
+		String[] urls;
+		Params params;
+		RegisterComponent comp;
+		Validation validation;
+		// requestを取得.
+		HttpServerRequest req = (HttpServerRequest)em.getRequest();
+		// レスポンスはnull.
+		Response<?> res = em.getResponse();
+		// methodがoptionかチェック.
+		if(Method.OPTIONS.equals(req.getMethod())) {
+			// Option送信.
+			sendOptions(em, req);
+		}
+		// エラー４０４等のレスポンスをJson返却するモード.
+		boolean json = defaultResultJsonMode;
+		try {
+			// urlが指定されてない場合はURLを取得.
+			if(url == null) {
+				url = req.getUrl();
+			// URLが存在する場合は作成されたRequestのURLを変更してコピー処理.
+			} else {
+				req = new HttpServerRequest(req, url);
+				em.setRequest(req);
+			}
+			// urlを[/]でパース.
+			urls = ComponentManager.getUrls(url);
+			// URLに対するコンテンツ取得.
+			comp = Quina.router().get(url, urls);
+			url = null;
+			// コンポーネントが取得された場合.
+			if(comp != null) {
+				// コンポーネントタイプを取得.
+				final ComponentType ctype = comp.getType();
+				// RESTfulか取得.
+				json = ctype.isRESTful();
+				// Elementにレスポンスがない場合.
+				if(res == null) {
+					switch(ctype.getAttributeType()) {
+					// このコンポーネントは同期コンポーネントの場合.
+					case ComponentConstants.ATTRIBUTE_SYNC:
+						res = new SyncResponse(em, mimeTypes);
+					// このコンポーネントはRESTful系の場合.
+					case ComponentConstants.ATTRIBUTE_RESTFUL:
+						res = new RESTfulResponse(em, mimeTypes);
+					// デフォルトレスポンス.
+					default:
+						res = new DefaultResponse(em, mimeTypes);
+					}
+					// レスポンスをセット.
+					em.setResponse(res);
+				}
+				// パラメータを取得.
+				params = HttpAnalysis.convertParams(req, custom);
+				// URLパラメータ条件が存在する場合.
+				if(comp.isUrlParam()) {
+					// パラメータが存在しない場合は生成.
+					if(params == null) {
+						params = new Params();
+					}
+					// URLパラメータを解析.
+					comp.getUrlParam(params, urls);
+				}
+				urls = null;
+				// パラメータが存在する場合はリクエストセット.
+				if(params != null) {
+					req.setParams(params);
+				// パラメータが存在しない場合は空のパラメータをセット.
+				} else {
+					req.setParams(new Params(0));
+				}
+				// validationが存在する場合はValidation処理.
+				if((validation = comp.getValidation()) != null) {
+					// validation実行.
+					params = validation.execute(req, req.getParams());
+					// 新しく生成されたパラメータを再セット.
+					req.setParams(params);
+				}
+				// コンポーネント実行.
+				comp.call(req.getMethod(), req, res);
+			} else {
+				// エラー404返却.
+				sendError(404, json, req, defaultRespones(em, mimeTypes), null);
+			}
+		} catch(Forward fwd) {
+			// フォワード処理.
+			sendForward(fwd, em);
+		} catch(Redirect red) {
+			// リダイレクト処理.
+			sendRedirect(red, defaultRespones(em, mimeTypes));
+		} catch(QuinaException qe) {
+			// QuinaExceptionの場合は、そのステータスを踏襲する.
+			sendError(qe.getStatus(), json, req, defaultRespones(em, mimeTypes), qe);
+			// qe.printStackTrace();
+		} catch(Exception e) {
+			// その他例外の場合は５００エラー.
+			sendError(500, json, req, defaultRespones(em, mimeTypes), e);
+			//e.printStackTrace();
+		}
+	}
+
+	// フォワード処理.
+	private final void sendForward(Forward forward, HttpElement em) {
+		// URLを指定して再実行.
+		execComponent(forward.getPath(), em);
 	}
 
 	// デフォルトのResponseを取得.
@@ -278,7 +314,7 @@ public class HttpServerCall extends NioServerCall {
 	}
 
 	// Option送信.
-	private static final void sendOptions(HttpElement em, HttpRequest req) {
+	private static final void sendOptions(HttpElement em, HttpServerRequest req) {
 		try {
 			// optionのデータを取得.
 			final NioSendData options = CreateResponseHeader.createOptionsHeader(true, false);
@@ -301,25 +337,34 @@ public class HttpServerCall extends NioServerCall {
 		}
 	}
 
+	// リダイレクト送信.
+	private static final void sendRedirect(Redirect redirect, Response<?> res) {
+		// HTTPステータスを設定.
+		res.setStatus(redirect.getHttpStatus());
+		// リダイレクト先を設定.
+		res.getHeader().put("Location", redirect.getLocation());
+		// 0バイトデータを設定.
+		ResponseUtil.send((AbstractResponse<?>)res);
+	}
+
 	// HttpErrorを送信.
-	private static final void sendError(int state, boolean restfulFlg, Request req, Response<?> res, Throwable e) {
-		// レスポンス情報をリセットして、デフォルトレスポンスに変換する.
-		final Response<?> response;
-		// 指定レスポンスがDefaultResponseの場合はリセット.
-		if(ComponentType.NORMAL.equals(((AbstractResponse<?>)res).getComponentType())) {
-			response = (DefaultResponse)res;
-			response.reset();
-		// 指定レスポンスがDefaultResponseでない場合は作り直す.
+	private static final void sendError(
+		int state, boolean json, Request req, Response<?> res, Throwable e) {
+		// json返却の場合.
+		if(json) {
+			// JSON返却条件を設定.
+			res.setContentType("application/json");
 		} else {
-			response = new DefaultResponse(res);
+			// HTML返却条件を設定.
+			res.setContentType("text/html");
 		}
 		// エラー実行.
 		if(e == null) {
 			Quina.router().getError()
-				.call(state, restfulFlg, req, response);
+				.call(state, json, req, res);
 		} else {
 			Quina.router().getError()
-				.call(state, restfulFlg, req, response, e);
+				.call(state, json, req, res, e);
 		}
 	}
 }

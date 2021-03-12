@@ -2,14 +2,14 @@ package quina.component;
 
 import java.util.Map;
 
-import quina.http.HttpRequest;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.response.AbstractResponse;
-import quina.http.response.DefaultResponse;
-import quina.http.response.RESTfulResponse;
-import quina.http.response.SyncResponse;
+import quina.http.server.HttpServerRequest;
+import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.DefaultResponse;
+import quina.http.server.response.RESTfulResponse;
+import quina.http.server.response.SyncResponse;
 import quina.validate.Validation;
 
 /**
@@ -226,8 +226,8 @@ public class RegisterComponent implements Component {
 	@Override
 	public void call(Method method, Request req, Response<?> res) {
 		// HttpServerRequestの場合は、コンポーネントURLを設定.
-		if(req instanceof HttpRequest) {
-			((HttpRequest)req).setComponentUrl(url, urlSlashCount);
+		if(req instanceof HttpServerRequest) {
+			((HttpServerRequest)req).setComponentUrl(url, urlSlashCount);
 		}
 		// 渡されたResponseがコンポーネントで利用可能かチェック.
 		{
@@ -247,9 +247,7 @@ public class RegisterComponent implements Component {
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
 					res = new RESTfulResponse(null, null);
 					break;
-				case ComponentConstants.ATTRIBUTE_NORMAL:
-				case ComponentConstants.ATTRIBUTE_FILE:
-				case ComponentConstants.ATTRIBUTE_ERROR:
+				default:
 					// それ以外はノーマルタイプのレスポンスを作成.
 					res = new DefaultResponse(null, null);
 					break;

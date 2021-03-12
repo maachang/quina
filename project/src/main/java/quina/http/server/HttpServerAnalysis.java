@@ -7,7 +7,6 @@ import quina.http.HttpElement;
 import quina.http.HttpElementState;
 import quina.http.HttpException;
 import quina.http.HttpIndexHeaders;
-import quina.http.HttpRequest;
 import quina.http.HttpStatus;
 import quina.http.Method;
 import quina.net.nio.tcp.NioBuffer;
@@ -148,7 +147,7 @@ public class HttpServerAnalysis {
 				element.setState(HttpElementState.STATE_END_RECV);
 			}
 			// HttpRequestを生成.
-			HttpRequest r = new HttpRequest(
+			HttpServerRequest r = new HttpServerRequest(
 				element, method, url, version, contentLength,
 				indexHeader);
 			// Http要素にリクエストをセット.

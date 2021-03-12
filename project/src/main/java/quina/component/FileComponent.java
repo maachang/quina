@@ -4,15 +4,15 @@ import quina.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.response.AbstractResponse;
-import quina.http.response.ResponseUtil;
+import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.ResponseUtil;
 import quina.util.FileUtil;
 import quina.util.StringUtil;
 
 /**
  * ファイルコンポーネント.
  */
-public class FileComponent implements Component {
+public class FileComponent implements FileAttributeComponent {
 	// ターゲットディレクトリ.
 	protected String targetDir = null;
 
@@ -147,17 +147,14 @@ public class FileComponent implements Component {
 		return targetDir + target;
 	}
 
-	/**
-	 * EtagManagerを設定.
-	 * @param etagManager EtagManagerを設定します.
-	 */
-	protected void setEtagManager(EtagManager etagManager) {
+	@Override
+	public void setEtagManager(EtagManager etagManager) {
 		this.etagManager = etagManager;
 	}
 
 	@Override
-	public ComponentType getType() {
-		return ComponentType.FILE;
+	public EtagManager getEtagManager() {
+		return this.etagManager;
 	}
 
 	@Override
