@@ -79,17 +79,17 @@ public class HttpServerRequest implements Request {
 	 * @param url 変更するURLを設定します.
 	 */
 	public HttpServerRequest(HttpServerRequest src, String url) {
-		method = src.method;
-		componentUrl = src.componentUrl;
-		componentSlashCount = src.componentSlashCount;
-		baseUrl = url;
-		url = HttpAnalysis.getUrl(url);
-		version = src.version;
-		contentLength = src.contentLength;
-		header = src.header;
-		element = src.element;
-		params = src.params;
-		readHttpBodyFlag = src.readHttpBodyFlag;
+		this.method = src.method;
+		this.componentUrl = src.componentUrl;
+		this.componentSlashCount = src.componentSlashCount;
+		this.baseUrl = url;
+		this.url = HttpAnalysis.getUrl(url);
+		this.version = src.version;
+		this.contentLength = src.contentLength;
+		this.header = src.header;
+		this.element = src.element;
+		this.params = src.params;
+		this.readHttpBodyFlag = src.readHttpBodyFlag;
 	}
 
 	@Override

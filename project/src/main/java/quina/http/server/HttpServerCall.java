@@ -238,9 +238,11 @@ public class HttpServerCall extends NioServerCall {
 					// このコンポーネントは同期コンポーネントの場合.
 					case ComponentConstants.ATTRIBUTE_SYNC:
 						res = new SyncResponse(em, mimeTypes);
+						break;
 					// このコンポーネントはRESTful系の場合.
 					case ComponentConstants.ATTRIBUTE_RESTFUL:
 						res = new RESTfulResponse(em, mimeTypes);
+						break;
 					// デフォルトレスポンス.
 					default:
 						res = new DefaultResponse(em, mimeTypes);
