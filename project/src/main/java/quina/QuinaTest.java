@@ -74,7 +74,7 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/promise
 		.route("/promise", (Component)(method, req, res) -> {
 			// promiseテスト.
-			System.out.println("0: thread: " + Thread.currentThread().getId());
+			//System.out.println("0: thread: " + Thread.currentThread().getId());
 			new Promise("hoge")
 				.then((action, value) -> {
 					//System.out.println("1: thread: " + Thread.currentThread().getId());
