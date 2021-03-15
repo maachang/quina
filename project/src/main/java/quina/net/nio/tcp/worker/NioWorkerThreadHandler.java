@@ -43,5 +43,5 @@ public interface NioWorkerThreadHandler {
 	 * ここで、ワーカーがプーリング化したい場合は、その実装を行う.
 	 * @param em 利用済みのワーカー要素が返却されます.
 	 */
-	public void endWorkerElement(NioWorkerElement em);
+	public void endWorkerElement(WorkerElement em);
 }

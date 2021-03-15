@@ -22,7 +22,7 @@ public class NioWorkerThread extends Thread {
 	private final NioWorkerThreadHandler handle;
 
 	// Nioワーカー要素キュー.
-	private final Queue<NioWorkerElement> queue;
+	private final Queue<WorkerElement> queue;
 
 	// wait管理.
 	private final Wait wait;
@@ -44,7 +44,7 @@ public class NioWorkerThread extends Thread {
 	public NioWorkerThread(int no, NioWorkerThreadHandler handle) {
 		this.no = no;
 		this.handle = handle;
-		this.queue = new ConcurrentLinkedQueue<NioWorkerElement>();
+		this.queue = new ConcurrentLinkedQueue<WorkerElement>();
 		this.wait = new Wait();
 	}
 
@@ -62,7 +62,7 @@ public class NioWorkerThread extends Thread {
 	 * @param em 登録するワーカを設定します.
 	 * @throws IOException
 	 */
-	public void push(NioWorkerElement em) {
+	public void push(WorkerElement em) {
 		queue.offer(em);
 		wait.signal();
 	}
@@ -187,7 +187,7 @@ public class NioWorkerThread extends Thread {
 	protected final ThreadDeath execute() {
 		int id = this.no;
 		Object o = null;
-		NioWorkerElement wem = null;
+		WorkerElement wem = null;
 		ThreadDeath ret = null;
 		boolean endFlag = false;
 

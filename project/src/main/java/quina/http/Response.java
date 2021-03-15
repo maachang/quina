@@ -27,6 +27,12 @@ public interface Response<T> extends Closeable {
 	public HttpStatus getStatus();
 
 	/**
+	 * Httpステータスを取得.
+	 * @return int Httpステータスが返却されます.
+	 */
+	public int getStatusNo();
+
+	/**
 	 * Httpステータスのメッセージを取得.
 	 * @return String Httpステータスメッセージが返却されます.
 	 */

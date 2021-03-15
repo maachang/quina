@@ -39,7 +39,7 @@ import quina.net.nio.tcp.NioException;
  * // プーリングマネージャに登録.
  * nioMan.push(em, rem);
  */
-public class NioReceiveWorkerElement implements NioWorkerElement {
+public class NioReceiveWorkerElement implements WorkerElement {
 	private NioCall call;
 	private NioElement element;
 	private byte[] recvBinary;

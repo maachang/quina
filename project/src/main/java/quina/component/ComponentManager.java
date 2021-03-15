@@ -666,7 +666,11 @@ public class ComponentManager {
 	 * @param component 対象のコンポーネントを設定します.
 	 */
 	public void putError(ErrorComponent component) {
-		errorComponent = component;
+		if(component == null) {
+			errorComponent = DefaultErrorComponent.getInstance();
+		} else {
+			errorComponent = component;
+		}
 	}
 
 	/**

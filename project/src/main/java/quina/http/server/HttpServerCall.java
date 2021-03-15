@@ -3,7 +3,6 @@ package quina.http.server;
 import java.io.IOException;
 
 import quina.Quina;
-import quina.QuinaException;
 import quina.component.ComponentConstants;
 import quina.component.ComponentManager;
 import quina.component.ComponentType;
@@ -28,6 +27,7 @@ import quina.http.server.response.SyncResponse;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
+import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.server.NioServerCall;
 import quina.validate.Validation;
@@ -280,39 +280,27 @@ public class HttpServerCall extends NioServerCall {
 				comp.call(req.getMethod(), req, res);
 			} else {
 				// エラー404返却.
-				sendError(404, json, req, defaultRespones(em, mimeTypes), null);
+				if(res == null) {
+					res = new DefaultResponse(em, mimeTypes);
+				} else {
+					res = DefaultResponse.newResponse(res);
+				}
+				res.setStatus(404);
+				sendError(json, req, res, null);
 			}
 		} catch(Forward fwd) {
 			// フォワード処理.
 			sendForward(fwd, em);
 		} catch(Redirect red) {
 			// リダイレクト処理.
-			sendRedirect(red, defaultRespones(em, mimeTypes));
-		} catch(QuinaException qe) {
-			// QuinaExceptionの場合は、そのステータスを踏襲する.
-			sendError(qe.getStatus(), json, req, defaultRespones(em, mimeTypes), qe);
-			// qe.printStackTrace();
+			res = defaultResponse(em, mimeTypes, res);
+			sendRedirect(red, res);
 		} catch(Exception e) {
-			// その他例外の場合は５００エラー.
-			sendError(500, json, req, defaultRespones(em, mimeTypes), e);
+			// エラー返却.
+			res = defaultResponse(em, mimeTypes, res);
+			sendError(json, req, res, e);
 			//e.printStackTrace();
 		}
-	}
-
-	// フォワード処理.
-	private final void sendForward(Forward forward, HttpElement em) {
-		// URLを指定して再実行.
-		execComponent(forward.getPath(), em);
-	}
-
-	// デフォルトのResponseを取得.
-	private static final Response<?> defaultRespones(HttpElement em, MimeTypes mimeTypes) {
-		Response<?> res = em.getResponse();
-		if(res == null) {
-			res = new DefaultResponse(em, mimeTypes);
-			em.setResponse(res);
-		}
-		return res;
 	}
 
 	// Option送信.
@@ -339,8 +327,127 @@ public class HttpServerCall extends NioServerCall {
 		}
 	}
 
-	// リダイレクト送信.
-	private static final void sendRedirect(Redirect redirect, Response<?> res) {
+	/**
+	 * デフォルトレスポンスに作り変える.
+	 * @param res
+	 * @return
+	 */
+	public static final Response<?> defaultResponse(Response<?> res) {
+		return (Response<?>)DefaultResponse.newResponse(res);
+	}
+
+	/**
+	 * デフォルトレスポンスに作り変える.
+	 * @param em
+	 * @param mimeTypes
+	 * @return
+	 */
+	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes) {
+		Response<?> res = new DefaultResponse(em, mimeTypes);
+		em.setResponse(res);
+		return res;
+	}
+
+	/**
+	 * デフォルトレスポンスに作り変える.
+	 * @param em
+	 * @param mimeTypes
+	 * @param res
+	 * @return
+	 */
+	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+		if(res == null) {
+			res = new DefaultResponse(em, mimeTypes);
+			em.setResponse(res);
+			return res;
+		} else {
+			return (Response<?>)DefaultResponse.newResponse(res);
+		}
+	}
+
+	/**
+	 * RESTfulレスポンスに作り変える.
+	 * @param res
+	 * @return
+	 */
+	public static final Response<?> restfulResponse(Response<?> res) {
+		return (Response<?>)RESTfulResponse.newResponse(res);
+	}
+
+	/**
+	 * RESTfulレスポンスに作り変える.
+	 * @param em
+	 * @param mimeTypes
+	 * @return
+	 */
+	public static final Response<?> restfulResponse(HttpElement em, MimeTypes mimeTypes) {
+		Response<?> res = new RESTfulResponse(em, mimeTypes);
+		em.setResponse(res);
+		return res;
+	}
+
+	/**
+	 * RESTfulレスポンスに作り変える.
+	 * @param em
+	 * @param mimeTypes
+	 * @param res
+	 * @return
+	 */
+	public static final Response<?> restfulResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+		if(res == null) {
+			res = new RESTfulResponse(em, mimeTypes);
+			em.setResponse(res);
+			return res;
+		} else {
+			return (Response<?>)RESTfulResponse.newResponse(res);
+		}
+	}
+
+	/**
+	 * 同期レスポンスに作り変える.
+	 * @param res
+	 * @return
+	 */
+	public static final Response<?> syncResponse(Response<?> res) {
+		return (Response<?>)SyncResponse.newResponse(res);
+	}
+
+	/**
+	 * 同期レスポンスに作り変える.
+	 * @param em
+	 * @param mimeTypes
+	 * @return
+	 */
+	public static final Response<?> syncResponse(HttpElement em, MimeTypes mimeTypes) {
+		Response<?> res = new SyncResponse(em, mimeTypes);
+		em.setResponse(res);
+		return res;
+	}
+
+	/**
+	 * 同期レスポンスに作り変える.
+	 * @param em
+	 * @param mimeTypes
+	 * @param res
+	 * @return
+	 */
+	public static final Response<?> syncResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+		if(res == null) {
+			res = new SyncResponse(em, mimeTypes);
+			em.setResponse(res);
+			return res;
+		} else {
+			return (Response<?>)SyncResponse.newResponse(res);
+		}
+	}
+
+
+	/**
+	 * リダイレクト送信.
+	 * @param redirect
+	 * @param res
+	 */
+	public static final void sendRedirect(Redirect redirect, Response<?> res) {
 		// HTTPステータスを設定.
 		res.setStatus(redirect.getHttpStatus());
 		// リダイレクト先を設定.
@@ -349,9 +456,52 @@ public class HttpServerCall extends NioServerCall {
 		ResponseUtil.send((AbstractResponse<?>)res);
 	}
 
-	// HttpErrorを送信.
-	private static final void sendError(
-		int state, boolean json, Request req, Response<?> res, Throwable e) {
+	/**
+	 * フォワード処理.
+	 * @param forward フォワードオブジェクトを設定します.
+	 * @param Response HttpResponseを設定します.
+	 */
+	public final void sendForward(Forward forward, Response<?> res) {
+		sendForward(forward, ((AbstractResponse<?>)res).getElement());
+	}
+
+	/**
+	 * フォワード処理.
+	 * @param forward フォワードオブジェクトを設定します.
+	 * @param em Http要素を設定します.
+	 */
+	public final void sendForward(Forward forward, HttpElement em) {
+		// URLを指定して再実行.
+		execComponent(forward.getPath(), em);
+	}
+
+	/**
+	 * HttpErrorを送信.
+	 * @param req HttpRequestを設定します.
+	 * @param res httpResponseを設置します.
+	 */
+	public static final void sendError(Request req, Response<?> res) {
+		sendError(((AbstractResponse<?>)res).getComponentType().isRESTful(), req, res, null);
+	}
+
+	/**
+	 * HttpErrorを送信.
+	 * @param req HttpRequestを設定します.
+	 * @param res httpResponseを設置します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(Request req, Response<?> res, Throwable e) {
+		sendError(((AbstractResponse<?>)res).getComponentType().isRESTful(), req, res, e);
+	}
+
+	/**
+	 * HttpErrorを送信.
+	 * @param json [true]の場合はjson形式でエラー返却します.
+	 * @param req HttpRequestを設定します.
+	 * @param res httpResponseを設置します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(boolean json, Request req, Response<?> res, Throwable e) {
 		// json返却の場合.
 		if(json) {
 			// JSON返却条件を設定.
@@ -362,11 +512,25 @@ public class HttpServerCall extends NioServerCall {
 		}
 		// エラー実行.
 		if(e == null) {
+			// ステータスが４００未満の場合.
+			if(res.getStatusNo() < 400) {
+				// エラー５００をセット.
+				res.setStatus(500);
+			}
+			// エラー出力.
 			Quina.router().getError()
-				.call(state, json, req, res);
+				.call(res.getStatusNo(), json, req, res);
 		} else {
+			// Nio例外の場合.
+			if(e instanceof NioException) {
+				NioException ne = (NioException)e;
+				res.setStatus(ne.getStatus(), ne.getMessage());
+			// それ以外の例外の場合.
+			} else {
+				res.setStatus(500, e.getMessage());
+			}
 			Quina.router().getError()
-				.call(state, json, req, res, e);
+				.call(res.getStatusNo(), json, req, res, e);
 		}
 	}
 }

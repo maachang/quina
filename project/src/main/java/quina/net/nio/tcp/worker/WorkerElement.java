@@ -6,7 +6,7 @@ import java.io.Closeable;
  * Nioワーカ要素.
  * NioWorkerThreadで実行されるワーカー要素をです.
  */
-public interface NioWorkerElement extends Closeable {
+public interface WorkerElement extends Closeable {
 	/**
 	 * ワーカー要素を破棄.
 	 */
@@ -14,7 +14,7 @@ public interface NioWorkerElement extends Closeable {
 
 	/**
 	 * ワーカー要素が既に破棄されているかチェック.
-	 * @return
+	 * @return boolean [true]の場合は既に破棄されています.
 	 */
 	public boolean isDestroy();
 

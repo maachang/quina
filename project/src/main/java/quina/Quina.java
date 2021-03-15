@@ -1,11 +1,14 @@
 package quina;
 
 import quina.component.EtagManagerInfo;
+import quina.http.server.HttpServerCall;
 import quina.http.server.HttpServerInfo;
 import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
+import quina.net.nio.tcp.worker.NioWorkerThreadManager;
+import quina.net.nio.tcp.worker.WorkerElement;
 import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
@@ -48,6 +51,9 @@ public class Quina {
 
 	// 実行引数管理.
 	private Args args;
+
+	// 実行中のワーカースレッドマネージャ.
+	private NioWorkerThreadManager workerManager;
 
 	// コンストラクタ.
 	private Quina() {
@@ -274,6 +280,8 @@ public class Quina {
 			httpWorkerService.waitToStartup();
 			httpServerService.startService();
 			httpServerService.waitToStartup();
+			// ワーカースレッドマネージャを取得.
+			workerManager = httpWorkerService.getNioWorkerThreadManager();
 			return this;
 		} catch(QuinaException qe) {
 			try {
@@ -338,6 +346,7 @@ public class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina stop() {
+		workerManager = null;
 		// 基本サービスを停止.
 		// 最初にサーバ停止で、次にワーカー停止.
 		httpServerService.stopService();
@@ -410,6 +419,30 @@ public class Quina {
 	 */
 	public Args getArgs() {
 		return args;
+	}
+
+	/**
+	 * ワーカー要素を登録します.
+	 * @param em Worker要素を設定します.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public Quina registerWorker(WorkerElement em) {
+		try {
+			workerManager.push(em);
+		} catch(QuinaException qe) {
+			throw qe;
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+		return this;
+	}
+
+	/**
+	 * HttpServerCallを取得.
+	 * @return HttpServerCall HttpServerCallが返却されます.
+	 */
+	public HttpServerCall getHttpServerCall() {
+		return httpServerService.getHttpServerCall();
 	}
 
 	/**

@@ -180,4 +180,17 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 		ResponseUtil.sendJSON(this, value, charset);
 		return this;
 	}
+
+	/**
+	 * 新しいデフォルトのResponseを取得.
+	 * @param response レスポンスを設定します.
+	 * @return Response<?> 新しいレスポンスが返却されます.
+	 */
+	public static final Response<?> newResponse(Response<?> response) {
+		final AbstractResponse<?> res = (AbstractResponse<?>)response;
+		final HttpElement em = res.getElement();
+		response = new DefaultResponse(em, res.getMimeTypes());
+		em.setResponse(response);
+		return response;
+	}
 }

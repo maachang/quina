@@ -8,8 +8,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class NioWorkerPoolingManager {
 	private int manageLength;
-	private Queue<NioWorkerElement> pooling =
-		new ConcurrentLinkedQueue<NioWorkerElement>();
+	private Queue<WorkerElement> pooling =
+		new ConcurrentLinkedQueue<WorkerElement>();
 	/**
 	 * コンストラクタ.
 	 */
@@ -34,7 +34,7 @@ public class NioWorkerPoolingManager {
 	 * プーリングオブジェクトをクリア.
 	 */
 	public void clear() {
-		NioWorkerElement c;
+		WorkerElement c;
 		while((c = pooling.poll()) != null) {
 			try {
 				c.close();
@@ -46,7 +46,7 @@ public class NioWorkerPoolingManager {
 	 * プーリングオブジェクトを取得.
 	 * @return NioWorkerElement プーリングオブジェクトが返却されます.
 	 */
-	public NioWorkerElement poll() {
+	public WorkerElement poll() {
 		return pooling.poll();
 	}
 
@@ -55,7 +55,7 @@ public class NioWorkerPoolingManager {
 	 * @param o プーリングさせるオブジェクトを設定します.
 	 * @return boolean trueの場合、プーリング正しくされました.
 	 */
-	public boolean offer(NioWorkerElement o) {
+	public boolean offer(WorkerElement o) {
 		if(pooling.size() >= manageLength || o == null) {
 			return false;
 		}

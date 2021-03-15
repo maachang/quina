@@ -170,7 +170,7 @@ public class NioWorkerThreadManager {
 	 * @param wem Nioワーカー要素を設定します.
 	 * @return int 割り当てられたワーカーNoが返却されます.
 	 */
-	public int push(NioWorkerElement wem) {
+	public int push(WorkerElement wem) {
 		return push(null, wem);
 	}
 
@@ -180,7 +180,7 @@ public class NioWorkerThreadManager {
 	 * @param wem Nioワーカー要素を設定します.
 	 * @return int 割り当てられたワーカーNoが返却されます.
 	 */
-	public int push(NioElement em, NioWorkerElement wem) {
+	public int push(NioElement em, WorkerElement wem) {
 		// nio要素に登録されたワーカーNoを取得.
 		int no = em == null ?
 			NioElement.NON_WORKER_NO :

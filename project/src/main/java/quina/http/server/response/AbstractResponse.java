@@ -103,6 +103,17 @@ public abstract class AbstractResponse<T> implements Response<T>{
 	}
 
 	/**
+	 * Httpステータスを取得.
+	 * @return int Httpステータスが返却されます.
+	 */
+	public int getStatusNo() {
+		if(state == null) {
+			return 200;
+		}
+		return state.getState();
+	}
+
+	/**
 	 * Httpステータスのメッセージを取得.
 	 * @return String Httpステータスメッセージが返却されます.
 	 */
@@ -241,6 +252,22 @@ public abstract class AbstractResponse<T> implements Response<T>{
 	public T setCrossDomain(boolean mode) {
 		this.crossDomain = mode;
 		return (T)this;
+	}
+
+	/**
+	 * HttpElementを取得.
+	 * @return HttpElement HttpElement を取得します.
+	 */
+	public HttpElement getElement() {
+		return element;
+	}
+
+	/**
+	 * MimeTypesを取得.
+	 * @return MimeTypes MimeTypesが返却されます.
+	 */
+	public MimeTypes getMimeTypes() {
+		return mimeTypes;
 	}
 
 	/**

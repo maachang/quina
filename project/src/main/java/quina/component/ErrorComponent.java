@@ -2,6 +2,7 @@ package quina.component;
 
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.response.AbstractResponse;
 
 /**
  * HTTPエラー発生時のコンポーネント.
@@ -13,6 +14,49 @@ public interface ErrorComponent {
 	 */
 	default ComponentType getType() {
 		return ComponentType.ERROR;
+	}
+
+	/**
+	 * HttpError処理を実行.
+	 * @param state HTTPステータスを設定します.
+	 * @param req HttpRequestを設定します.
+	 * @param res HttpResponseを設定します.
+	 */
+	default void call(int state, Request req, Response<?> res) {
+		final boolean json = ((AbstractResponse<?>)res).getComponentType().isRESTful();
+		if(res.isContentType()) {
+			// json返却の場合.
+			if(json) {
+				// JSON返却条件を設定.
+				res.setContentType("application/json");
+			} else {
+				// HTML返却条件を設定.
+				res.setContentType("text/html");
+			}
+		}
+		call(state, json, req, res);
+	}
+
+	/**
+	 * HttpError処理を実行.
+	 * @param state HTTPステータスを設定します.
+	 * @param req HttpRequestを設定します.
+	 * @param res HttpResponseを設定します.
+	 * @param e 例外を設定します.
+	 */
+	default void call(int state, Request req, Response<?> res, Throwable e) {
+		final boolean json = ((AbstractResponse<?>)res).getComponentType().isRESTful();
+		if(res.isContentType()) {
+			// json返却の場合.
+			if(json) {
+				// JSON返却条件を設定.
+				res.setContentType("application/json");
+			} else {
+				// HTML返却条件を設定.
+				res.setContentType("text/html");
+			}
+		}
+		call(state, json, req, res, e);
 	}
 
 	/**

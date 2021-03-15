@@ -6,6 +6,7 @@ import quina.component.RESTfulGetSync;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
+import quina.promise.Promise;
 import quina.validate.Validation;
 
 /**
@@ -68,6 +69,34 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/forward
 		.route("/forward", (Component)(method, req, res) -> {
 			res.forward("/hoge/moge/5/a/zzz/");
+		})
+
+		// http://127.0.0.1:3333/promise
+		.route("/promise", (Component)(method, req, res) -> {
+			// promiseテスト.
+			System.out.println("0: thread: " + Thread.currentThread().getId());
+			new Promise("hoge")
+				.then((action, value) -> {
+					//System.out.println("1: thread: " + Thread.currentThread().getId());
+					action.resolve(value + " moge");
+				})
+				.then((action, value) -> {
+					//System.out.println("2: thread: " + Thread.currentThread().getId());
+					action.getResponse().setContentType("text/html");
+					//throw new Exception("error");
+					action.resolve(value);
+				})
+				.error((action, error) -> {
+					//System.out.println("3: thread: " + Thread.currentThread().getId());
+					//System.out.println("3: error: " + error);
+					action.sendError(error);
+				})
+				.then((action, value) -> {
+					//System.out.println("4: thread: " + Thread.currentThread().getId());
+					//throw new Exception("error");
+					action.send("success: " + value);
+				})
+				.start(req, res);
 		})
 
 		// http://127.0.0.1:3333/public/*

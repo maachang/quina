@@ -7,7 +7,7 @@ import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.client.NioClientCall;
 import quina.net.nio.tcp.server.NioServerCall;
 import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerElement;
+import quina.net.nio.tcp.worker.WorkerElement;
 import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.net.nio.tcp.worker.NioWorkerThreadHandler;
 
@@ -134,7 +134,7 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	 * @param em 終了予定のワーカーオブジェクトが設定されます.
 	 */
 	@Override
-	public void endWorkerElement(NioWorkerElement em) {
+	public void endWorkerElement(WorkerElement em) {
 		// 対象要素が「nio受信用ワーカ要素」の場合.
 		if(em instanceof NioReceiveWorkerElement) {
 			// プーリングにセット.

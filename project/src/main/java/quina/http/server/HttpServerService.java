@@ -8,6 +8,7 @@ import quina.QuinaService;
 import quina.http.worker.HttpWorkerService;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerCore;
+import quina.util.AtomicObject;
 import quina.util.Flag;
 
 /**
@@ -16,6 +17,9 @@ import quina.util.Flag;
 public class HttpServerService implements QuinaService {
 	// Nioサーバコア.
 	private NioServerCore core;
+
+	// HttpServerCall.
+	private final AtomicObject<HttpServerCall> httpServerCall = new AtomicObject<HttpServerCall>();
 
 	// HttpServer定義.
 	private HttpServerInfo info = new HttpServerInfo();
@@ -68,7 +72,7 @@ public class HttpServerService implements QuinaService {
 		ServerSocketChannel server = null;
 		try {
 			// サーバーコール生成.
-			final HttpServerCall call = new HttpServerCall(
+			HttpServerCall c = new HttpServerCall(
 				info.getCustom(), info.getMimeTypes(), info.isErrorResultJsonMode());
 			// サーバーソケット作成.
 			server = NioUtil.createServerSocketChannel(
@@ -76,8 +80,10 @@ public class HttpServerService implements QuinaService {
 			// サーバーコア生成.
 			this.core = new NioServerCore(info.getByteBufferLength(), info.getSendBuffer(),
 				info.getRecvBuffer(), info.isKeepAlive(), info.isTcpNoDeley(),
-				server, call, httpWorkerService.getServerPoolingManager(),
+				server, c, httpWorkerService.getServerPoolingManager(),
 				httpWorkerService.getNioWorkerThreadManager());
+			// サーバーコールを設定.
+			httpServerCall.set(c);
 			// サーバスレッド開始.
 			this.core.startThread();
 		} catch(QuinaException qe) {
@@ -142,5 +148,13 @@ public class HttpServerService implements QuinaService {
 	@Override
 	public synchronized QuinaInfo getInfo() {
 		return info;
+	}
+
+	/**
+	 * HttpServerCallを取得.
+	 * @return
+	 */
+	public HttpServerCall getHttpServerCall() {
+		return httpServerCall.get();
 	}
 }

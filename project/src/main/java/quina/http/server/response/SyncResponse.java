@@ -37,4 +37,17 @@ public class SyncResponse extends AbstractResponse<SyncResponse> {
 	public ComponentType getComponentType() {
 		return ComponentType.Sync;
 	}
+
+	/**
+	 * 新しいデフォルトのResponseを取得.
+	 * @param response レスポンスを設定します.
+	 * @return Response<?> 新しいレスポンスが返却されます.
+	 */
+	public static final Response<?> newResponse(Response<?> response) {
+		final AbstractResponse<?> res = (AbstractResponse<?>)response;
+		final HttpElement em = res.getElement();
+		response = new SyncResponse(em, res.getMimeTypes());
+		em.setResponse(response);
+		return response;
+	}
 }
