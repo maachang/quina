@@ -12,9 +12,7 @@ public interface Component {
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
-	default ComponentType getType() {
-		return ComponentType.NORMAL;
-	}
+	public ComponentType getType();
 
 	/**
 	 * コンポーネント実行処理.

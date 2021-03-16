@@ -2,7 +2,10 @@ package quina.http.server.response;
 
 import java.io.InputStream;
 
+import quina.Quina;
+import quina.QuinaException;
 import quina.http.HttpConstants;
+import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpSendChunked;
 import quina.http.HttpSendChunkedInputStreamData;
@@ -60,9 +63,9 @@ public final class ResponseUtil {
 	 * @param datas 送信データを設定します
 	 */
 	public static final void sendData(AbstractResponse<?> res, NioSendData... datas) {
-		// 既に送信済みの場合はエラー.
-		if(res.sendFlag.setToGetBefore(true)) {
-			throw new HttpException("It has already been sent.");
+		if(res.execSendDataFlag.setToGetBefore(true)) {
+			// １度SendData呼び出しの場合は処理しない.
+			return;
 		}
 		try {
 			// 送信データをセット.
@@ -70,13 +73,16 @@ public final class ResponseUtil {
 			// 送信開始.
 			res.element.startWrite();
 		} catch(Exception e) {
-			// 例外の場合は要素をクローズして終了.
+			// 例外の場合は要素とResponseをクローズして終了.
 			try {
 				res.element.close();
 			} catch(Exception ee) {}
 			try {
 				res.close();
 			} catch(Exception ee) {}
+			if(e instanceof QuinaException) {
+				throw (QuinaException)e;
+			}
 			throw new HttpException(e);
 		}
 	}
@@ -264,25 +270,16 @@ public final class ResponseUtil {
 	 * 別のコンポーネントに対してフォワードします
 	 * @param path フォワード先のコンポーネントパスを設定します.
 	 */
-	public static final void forward(String path) {
-		throw new Forward(path);
+	public static final void forward(HttpElement em, String path) {
+		Quina.get().getHttpServerCall().sendForward(em, path);
 	}
 
 	/**
 	 * リダイレクト処理.
 	 * @param url リダイレクト先のURLを設定します.
 	 */
-	public static final void redirect(String url) {
-		throw new Redirect(url);
-	}
-
-	/**
-	 * リダイレクト処理.
-	 * @param status Httpステータスを設定します.
-	 * @param url リダイレクト先のURLを設定します.
-	 */
-	public static final void redirect(int status, String url) {
-		throw new Redirect(status, url);
+	public static final void redirect(AbstractResponse<?> res, String url) {
+		redirect(res, HttpStatus.MovedPermanently, url);
 	}
 
 	/**
@@ -290,7 +287,21 @@ public final class ResponseUtil {
 	 * @param status Httpステータスを設定します.
 	 * @param url リダイレクト先のURLを設定します.
 	 */
-	public static final void redirect(HttpStatus status, String url) {
-		throw new Redirect(status, url);
+	public static final void redirect(AbstractResponse<?> res, int status, String url) {
+		redirect(res, HttpStatus.getHttpStatus(status), url);
+	}
+
+	/**
+	 * リダイレクト処理.
+	 * @param status Httpステータスを設定します.
+	 * @param url リダイレクト先のURLを設定します.
+	 */
+	public static final void redirect(AbstractResponse<?> res, HttpStatus status, String url) {
+		// HTTPステータスを設定.
+		res.setStatus(status);
+		// リダイレクト先を設定.
+		res.getHeader().put("Location", url);
+		// 0バイトデータを設定.
+		ResponseUtil.send((AbstractResponse<?>)res);
 	}
 }

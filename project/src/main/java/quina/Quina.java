@@ -384,7 +384,7 @@ public class Quina {
 	 * 全てのQuinaサービスが停止完了するまで待機.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public Quina waitToExit() {
+	public Quina waitTo() {
 		// シャットダウンマネージャが開始されていない場合.
 		if(!shutdownManager.getInfo().isStart()) {
 			// シャットダウンマネージャを開始.

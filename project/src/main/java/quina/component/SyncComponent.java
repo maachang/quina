@@ -12,7 +12,7 @@ import quina.http.server.response.SyncResponse;
 /**
  * 同期用コンポーネント.
  */
-public interface ComponentSync extends Component {
+public interface SyncComponent extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
@@ -61,10 +61,10 @@ public interface ComponentSync extends Component {
 	}
 
 	/**
-	 * GETメソッド用実行.
+	 * コール実行.
 	 * @param req HttpRequestが設定されます.
 	 * @param res SyncResponseが設定されます.
-	 * @return Object 返却するRESTfulオブジェクトを設定します.
+	 * @return Object 返却するオブジェクトを設定します.
 	 */
 	public Object call(Request req, SyncResponse res);
 

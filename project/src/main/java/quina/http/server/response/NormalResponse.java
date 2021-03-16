@@ -2,6 +2,7 @@ package quina.http.server.response;
 
 import java.io.InputStream;
 
+import quina.QuinaException;
 import quina.component.ComponentType;
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
@@ -10,14 +11,14 @@ import quina.http.Response;
 /**
  * 標準的なレスポンス.
  */
-public class DefaultResponse extends AbstractResponse<DefaultResponse> {
+public class NormalResponse extends AbstractResponse<NormalResponse> {
 
 	/***
 	 * コンストラクタ.
 	 * @param res レスポンスオブジェクトを設定します.
 	 */
 	@SuppressWarnings("rawtypes")
-	public DefaultResponse(Response<?> res) {
+	public NormalResponse(Response<?> res) {
 		AbstractResponse r = (AbstractResponse)res;
 		this.element = r.element;
 		this.mimeTypes = r.mimeTypes;
@@ -28,7 +29,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param element Http要素を設定します.
 	 * @param mimeTypes MimeType群を設定します.
 	 */
-	public DefaultResponse(HttpElement element, MimeTypes mimeTypes) {
+	public NormalResponse(HttpElement element, MimeTypes mimeTypes) {
 		this.element = element;
 		this.mimeTypes = mimeTypes;
 	}
@@ -45,8 +46,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * 送信処理.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send() {
-		ResponseUtil.send(this);
+	public NormalResponse send() {
+		startSend();
+		try {
+			ResponseUtil.send(this);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -55,7 +62,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param value 送信データを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(byte[] value) {
+	public NormalResponse send(byte[] value) {
 		return send(value, null);
 	}
 
@@ -65,8 +72,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param charset 文字コードを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(byte[] value, String charset) {
-		ResponseUtil.send(this, value, charset);
+	public NormalResponse send(byte[] value, String charset) {
+		startSend();
+		try {
+			ResponseUtil.send(this, value, charset);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -75,7 +88,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param value 送信データを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(InputStream value) {
+	public NormalResponse send(InputStream value) {
 		return send(value, -1L, null);
 	}
 
@@ -85,7 +98,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param length 対象の送信データ長を設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(InputStream value, long length) {
+	public NormalResponse send(InputStream value, long length) {
 		return send(value, length, null);
 	}
 
@@ -95,7 +108,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param length 対象の送信データ長を設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(InputStream value, int length) {
+	public NormalResponse send(InputStream value, int length) {
 		return send(value, (long)length, null);
 	}
 
@@ -106,7 +119,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param charset 変換文字コードが設定されます.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(InputStream value, int length, String charset) {
+	public NormalResponse send(InputStream value, int length, String charset) {
 		return send(value, (long)length, charset);
 	}
 
@@ -117,8 +130,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param charset 文字コードを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(InputStream value, long length, String charset) {
-		ResponseUtil.send(this, value, length, charset);
+	public NormalResponse send(InputStream value, long length, String charset) {
+		startSend();
+		try {
+			ResponseUtil.send(this, value, length, charset);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -127,7 +146,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param value 送信データを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(String value) {
+	public NormalResponse send(String value) {
 		return send(value, null);
 	}
 
@@ -137,8 +156,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param charset 変換対象の文字コードが設定されます.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse send(String value, String charset) {
-		ResponseUtil.send(this, value, charset);
+	public NormalResponse send(String value, String charset) {
+		startSend();
+		try {
+			ResponseUtil.send(this, value, charset);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -147,7 +172,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param name 送信するファイル名を設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse sendFile(String name) {
+	public NormalResponse sendFile(String name) {
 		return sendFile(name, null);
 	}
 
@@ -157,8 +182,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param charset 変換対象の文字コードが設定されます.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse sendFile(String name, String charset) {
-		ResponseUtil.sendFile(this, name, charset);
+	public NormalResponse sendFile(String name, String charset) {
+		startSend();
+		try {
+			ResponseUtil.sendFile(this, name, charset);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -167,7 +198,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param json 送信するJSONオブジェクトを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse sendJSON(Object value) {
+	public NormalResponse sendJSON(Object value) {
 		return sendJSON(value, null);
 	}
 
@@ -176,8 +207,14 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	 * @param json 送信するJSONオブジェクトを設定します.
 	 * @return DefaultResponse Responseオブジェクトが返却されます.
 	 */
-	public DefaultResponse sendJSON(Object value, String charset) {
-		ResponseUtil.sendJSON(this, value, charset);
+	public NormalResponse sendJSON(Object value, String charset) {
+		startSend();
+		try {
+			ResponseUtil.sendJSON(this, value, charset);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -189,7 +226,7 @@ public class DefaultResponse extends AbstractResponse<DefaultResponse> {
 	public static final Response<?> newResponse(Response<?> response) {
 		final AbstractResponse<?> res = (AbstractResponse<?>)response;
 		final HttpElement em = res.getElement();
-		response = new DefaultResponse(em, res.getMimeTypes());
+		response = new NormalResponse(em, res.getMimeTypes());
 		em.setResponse(response);
 		return response;
 	}

@@ -3,8 +3,6 @@ package quina.http;
 import java.io.Closeable;
 import java.io.IOException;
 
-import quina.http.server.response.ResponseUtil;
-
 /**
  * Httpレスポンス.
  */
@@ -149,38 +147,33 @@ public interface Response<T> extends Closeable {
 	 */
 	public boolean isCrossDomain();
 
-
 	/**
 	 * リダイレクト処理.
 	 * @param url リダイレクト先のURLを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
 	 */
-	default void redirect(String url) {
-		ResponseUtil.redirect(url);
-	}
-
-	/**
-	 * リダイレクト処理.
-	 * @param status Httpステータスを設定します.
-	 * @param url リダイレクト先のURLを設定します.
-	 */
-	default void redirect(int status, String url) {
-		ResponseUtil.redirect(status, url);
-	}
+	public T redirect(String url);
 
 	/**
 	 * リダイレクト処理.
 	 * @param status Httpステータスを設定します.
 	 * @param url リダイレクト先のURLを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
 	 */
-	default void redirect(HttpStatus status, String url) {
-		ResponseUtil.redirect(status, url);
-	}
+	public T redirect(int status, String url);
+
+	/**
+	 * リダイレクト処理.
+	 * @param status Httpステータスを設定します.
+	 * @param url リダイレクト先のURLを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	public T redirect(HttpStatus status, String url);
 
 	/**
 	 * 指定したコンポーネントにフォワードします.
 	 * @param path フォワード先のコンポーネントパスを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
 	 */
-	default void forward(String path) {
-		ResponseUtil.forward(path);
-	}
+	public T forward(String path);
 }

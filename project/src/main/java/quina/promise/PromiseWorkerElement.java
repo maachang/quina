@@ -10,11 +10,11 @@ import quina.util.AtomicObject;
  */
 final class PromiseWorkerElement implements WorkerElement {
 	// then()呼び出し.
-	protected static final int MODE_THEN = 1;
+	protected static final int MODE_THEN = 0x01;
 	// error()呼び出し.
-	protected static final int MODE_ERROR = 2;
+	protected static final int MODE_ERROR = 0x02;
 	// allways()呼び出し.
-	protected static final int MODE_ALLWAYS = 3;
+	protected static final int MODE_ALLWAYS = 0x03;
 
 	/**
 	 * 呼び出しモード.
@@ -126,14 +126,17 @@ final class PromiseWorkerElement implements WorkerElement {
 	 */
 	@Override
 	public boolean call(Object o) {
-		// レスポンスを送信済みの場合は処理終了.
-		if(action.isSend()) {
+		final Object v = param.get();
+		param.set(null);
+		// レスポンス送信済みの場合は処理終了.
+		if(action.isExitSend()) {
 			return true;
 		}
+		// 実行処理.
 		try {
-			final Object v = param.get();
-			param.set(null);
 			call.call(action, v);
+			// 今回の処理で送信済みの場合も処理終了.
+			action.isExitSend();
 		} catch(Exception e) {
 			// エラーの場合リジェクト.
 			action.reject(e);

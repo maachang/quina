@@ -1,24 +1,22 @@
 package quina.promise;
 
-import java.io.InputStream;
-
 import quina.Quina;
 import quina.QuinaException;
-import quina.http.HttpStatus;
+import quina.http.AbstractHttpSendFurnishing;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerCall;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.Forward;
-import quina.http.server.response.Redirect;
-import quina.http.server.response.ResponseUtil;
+import quina.net.nio.tcp.Wait;
+import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
 
 /**
  * PromiseAction.
+ *
+ * Promiseの中核処理.
  */
-public class PromiseAction {
+public class PromiseAction extends AbstractHttpSendFurnishing<PromiseAction> {
 	// Promise実行ワーカーリスト.
 	private ObjectList<PromiseWorkerElement> list =
 		new ObjectList<PromiseWorkerElement>();
@@ -26,17 +24,23 @@ public class PromiseAction {
 	// 初期実行パラメータ.
 	private Object initParam;
 
-	// Httpリクエスト.
-	private Request request;
-
-	// Httpレスポンス.
-	private AbstractResponse<?> response;
-
 	// 前回実行されたワーカー要素.
-	private PromiseWorkerElement before;
+	private final AtomicObject<PromiseWorkerElement> before =
+		new AtomicObject<PromiseWorkerElement>();
 
-	// 送信処理フラグ.
-	private final Flag sendFlag = new Flag(false);
+	// promiseステータス.
+	private final AtomicObject<PromiseStatus> status =
+		new AtomicObject<PromiseStatus>(PromiseStatus.None);
+
+	// finallyToで返却される情報.
+	private final AtomicObject<Object> lastValue =
+		new AtomicObject<Object>(null);
+
+	// promise終了フラグ.
+	private final Flag exitPromiseFlag = new Flag(false);
+
+	// waitオブジェクト.
+	private final Wait waitObject = new Wait();
 
 	/**
 	 * コンストラクタ.
@@ -75,6 +79,47 @@ public class PromiseAction {
 			PromiseWorkerElement.MODE_ALLWAYS, call));
 	}
 
+	// PromiseActionかReponse経由で送信処理済みの場合.
+	protected boolean isActionOrResponseSend() {
+		// この処理ではexitPromiseは呼び出さない.
+		return isSend() || response.isSend();
+	}
+
+	// 既に送信済みの場合、Promiseの終了を行う.
+	protected boolean isExitSend() {
+		try {
+			if(isActionOrResponseSend()) {
+				// 今回が最後になるので、最終処理判断条件を設定.
+				exitPromise();
+				return true;
+			}
+		} catch(Exception e) {
+		}
+		return exitPromiseFlag.get();
+	}
+
+	// promiseの終了処理.
+	protected void exitPromise() {
+		if(!exitPromiseFlag.setToGetBefore(true)) {
+			setLastStatus();
+			waitObject.signal();
+		}
+	}
+
+	// 最終非同期処理判断が正常結果か異常結果か判別.
+	protected void setLastStatus() {
+		PromiseWorkerElement em = before.get();
+		if(em != null) {
+			if((em.getCallMode() & PromiseWorkerElement.MODE_THEN) != 0) {
+				// 正常.
+				status.set(PromiseStatus.Fulfilled);
+			} else {
+				// 異常.
+				status.set(PromiseStatus.Rejected);
+			}
+		}
+	}
+
 	/**
 	 * 次の正常処理を実行します.
 	 * @param no 対象の項番を設定します.
@@ -82,15 +127,28 @@ public class PromiseAction {
 	 * @return boolean [true]の場合次の実行処理が登録できました.
 	 */
 	protected boolean resolve(int no, Object value) {
+		// 送信処理が行われている場合.
+		if(!isExitPromise() && isActionOrResponseSend()) {
+			// 送信済みの場合はlastValueに設定して終了処理.
+			lastValue.set(value);
+			exitPromise();
+			return false;
+		}
+		// 利用可能なthen()追加の実行処理を取得.
+		PromiseWorkerElement em;
 		final int len = list.size();
 		for(int i = no; i < len; i ++) {
-			if((list.get(i).getCallMode() & PromiseWorkerElement.MODE_THEN) != 0) {
-				before = list.get(i);
-				before.setParam(value);
-				Quina.get().registerWorker(before);
+			em = list.get(i);
+			if((em.getCallMode() & PromiseWorkerElement.MODE_THEN) != 0) {
+				em.setParam(value);
+				before.set(em);
+				Quina.get().registerWorker(em);
 				return true;
 			}
 		}
+		// promiseの終了の場合はlastValueに設定して終了処理
+		lastValue.set(value);
+		exitPromise();
 		return false;
 	}
 
@@ -101,15 +159,28 @@ public class PromiseAction {
 	 * @return boolean [true]の場合次の実行処理が登録できました.
 	 */
 	protected boolean reject(int no, Object value) {
+		// 送信処理が行われている場合.
+		if(!isExitPromise() && isActionOrResponseSend()) {
+			// 送信済みの場合はlastValueに設定して終了処理
+			lastValue.set(value);
+			exitPromise();
+			return false;
+		}
+		// 利用可能なerror()追加の実行処理を取得.
+		PromiseWorkerElement em;
 		final int len = list.size();
 		for(int i = no; i < len; i ++) {
-			if((list.get(i).getCallMode() & PromiseWorkerElement.MODE_ERROR) != 0) {
-				before = list.get(i);
-				before.setParam(value);
-				Quina.get().registerWorker(before);
+			em = list.get(i);
+			if((em.getCallMode() & PromiseWorkerElement.MODE_ERROR) != 0) {
+				em.setParam(value);
+				before.set(em);
+				Quina.get().registerWorker(em);
 				return true;
 			}
 		}
+		// promiseの終了の場合はlastValueに設定して終了処理.
+		lastValue.set(value);
+		exitPromise();
 		return false;
 	}
 
@@ -127,10 +198,11 @@ public class PromiseAction {
 	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
 	 */
 	public PromiseAction resolve(Object value) {
-		if(before == null) {
+		final PromiseWorkerElement b = before.get();
+		if(b == null) {
 			resolve(0, value);
 		} else {
-			resolve(before.getNo() + 1, value);
+			resolve(b.getNo() + 1, value);
 		}
 		return this;
 	}
@@ -142,10 +214,11 @@ public class PromiseAction {
 	 */
 	public PromiseAction reject(Object value) {
 		boolean res;
-		if(before == null) {
+		final PromiseWorkerElement b = before.get();
+		if(b == null) {
 			res = reject(0, value);
 		} else {
-			res = reject(before.getNo() + 1, value);
+			res = reject(b.getNo() + 1, value);
 		}
 		// 最終処理の場合.
 		if(!res) {
@@ -164,295 +237,42 @@ public class PromiseAction {
 		// リクエスト、レスポンスが設定されていない場合.
 		if(req == null || res == null) {
 			throw new QuinaException("Request and response are not set.");
+		// 同期コンポーネントの場合は、Promiseは利用出来ない.
+		//} else if(((AbstractResponse<?>)res).getComponentType().isSync()) {
+		//	throw new QuinaException(
+		//		"Promises are not available when the component is in sync mode.");
 		}
 		this.request = req;
 		this.response = (AbstractResponse<?>)res;
-		resolve(initParam);
+		this.status.set(PromiseStatus.Pending);
+		Object o = initParam;
+		initParam = null;
+		resolve(o);
 		return this;
 	}
 
 	/**
-	 * HttpRequestを取得.
-	 * @return Request HttpRequestが返却されます.
+	 * 処理終了まで待機する.
+	 * @return Object 処理結果が返却されます.
 	 */
-	public Request getRequest() {
-		return request;
+	protected Object waitTo() {
+		waitObject.await();
+		return lastValue.put(null);
 	}
 
 	/**
-	 * レスポンスオブジェクトを設定します.
-	 * @return Response<?> HttpResponseが返却されます.
+	 * Promiseが終了しているかチェック.
+	 * @return boolean trueの場合は終了しています.
 	 */
-	public Response<?> getResponse() {
-		return response;
+	protected boolean isExitPromise() {
+		return exitPromiseFlag.get();
 	}
 
 	/**
-	 * 送信処理が呼び出されたかチェック.
-	 * @return boolean trueの場合、送信処理が呼び出されました.
+	 * 現在のPromiseステータスを取得.
+	 * @return PromiseStatus Promiseステータスが返却されます.
 	 */
-	protected boolean isSend() {
-		return sendFlag.get();
-	}
-
-	// 送信済みかチェック.
-	private final void confirmSend() {
-		if(sendFlag.setToGetBefore(true)) {
-			throw new QuinaException("The transmission process has already been performed.");
-		}
-	}
-
-	/**
-	 * 送信処理.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send() {
-		confirmSend();
-		ResponseUtil.send(response);
-		return this;
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(byte[] value) {
-		return send(value, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @param charset 文字コードを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(byte[] value, String charset) {
-		confirmSend();
-		ResponseUtil.send(response, value, charset);
-		return this;
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(InputStream value) {
-		return send(value, -1L, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @param length 対象の送信データ長を設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(InputStream value, long length) {
-		return send(value, length, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @param length 対象の送信データ長を設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(InputStream value, int length) {
-		return send(value, (long)length, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @param length 対象の送信データ長を設定します.
-	 * @param charset 変換文字コードが設定されます.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(InputStream value, int length, String charset) {
-		return send(value, (long)length, charset);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @param length 対象の送信データ長を設定します.
-	 * @param charset 文字コードを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(InputStream value, long length, String charset) {
-		confirmSend();
-		ResponseUtil.send(response, value, length, charset);
-		return this;
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(String value) {
-		return send(value, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param value 送信データを設定します.
-	 * @param charset 変換対象の文字コードが設定されます.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction send(String value, String charset) {
-		confirmSend();
-		ResponseUtil.send(response, value, charset);
-		return this;
-	}
-
-	/**
-	 * 送信処理.
-	 * @param name 送信するファイル名を設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendFile(String name) {
-		return sendFile(name, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param name 送信するファイル名を設定します.
-	 * @param charset 変換対象の文字コードが設定されます.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendFile(String name, String charset) {
-		confirmSend();
-		ResponseUtil.sendFile(response, name, charset);
-		return this;
-	}
-
-	/**
-	 * 送信処理.
-	 * @param json 送信するJSONオブジェクトを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendJSON(Object value) {
-		return sendJSON(value, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param json 送信するJSONオブジェクトを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendJSON(Object value, String charset) {
-		confirmSend();
-		ResponseUtil.sendJSON(response, value, charset);
-		return this;
-	}
-
-	/**
-	 * フォワード処理.
-	 * @param path フォワード先のパスを設定します.
-	 */
-	public void forward(String path) {
-		throw new Forward(path);
-	}
-
-	/**
-	 * リダイレクト処理.
-	 * @param url リダイレクトURLを設定します.
-	 */
-	public void redirect(String url) {
-		throw new Redirect(url);
-	}
-
-	/**
-	 * リダイレクト処理.
-	 * @param status HTTPステータスを設定します.
-	 * @param url リダイレクトURLを設定します.
-	 */
-	public void redirect(int status, String url) {
-		throw new Redirect(status, url);
-	}
-
-	/**
-	 * リダイレクト処理.
-	 * @param status HTTPステータスを設定します.
-	 * @param url リダイレクトURLを設定します.
-	 */
-	public void redirect(HttpStatus status, String url) {
-		throw new Redirect(status, url);
-	}
-
-	/**
-	 * エラー送信.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendError() {
-		return sendError(-1, null);
-	}
-
-	/**
-	 * エラー送信.
-	 * @param status Httpステータスを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendError(int status) {
-		return sendError(status, null);
-	}
-
-	/**
-	 * エラー送信.
-	 * @param value エラーデータを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendError(Object value) {
-		return sendError(-1, value);
-	}
-
-	/**
-	 * エラー送信.
-	 * @param status Httpステータスを設定します.
-	 * @param value エラーデータを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	public PromiseAction sendError(int status, Object value) {
-		// 送信済みにセット.
-		sendFlag.set(true);
-		// ステータスが指定されてない場合は500エラー.
-		int state = status;
-		if(status < 0) {
-			state = 500;
-		}
-		// フォワード処理の場合.
-		if(value != null && value instanceof Forward) {
-			// フォワード処理.
-			Quina.get().getHttpServerCall().sendForward(
-				(Forward)value, response.getElement());
-			return this;
-		}
-		// エラー送信ではDefaultレスポンスに変換して送信.
-		response = (AbstractResponse<?>)HttpServerCall.defaultResponse(response);
-		// エラーが存在しない場合.
-		if(value == null) {
-			// エラー返却.
-			response.setStatus(state);
-			HttpServerCall.sendError(request, response);
-		} else if(value instanceof Throwable) {
-			// リダイレクト.
-			if(value instanceof Redirect) {
-				HttpServerCall.sendRedirect((Redirect)value, response);
-			// エラー処理.
-			} else {
-				HttpServerCall.sendError(request, response, (Throwable)value);
-			}
-		// 文字列の場合.
-		} else if(value instanceof String) {
-			response.setStatus(state, value.toString());
-			HttpServerCall.sendError(request, response);
-		// その他オブジェクトの場合.
-		} else {
-			response.setStatus(state);
-			HttpServerCall.sendError(request, response);
-		}
-		return this;
+	protected PromiseStatus getPromiseStatus() {
+		return this.status.get();
 	}
 }

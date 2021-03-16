@@ -2,11 +2,13 @@ package quina.http.server.response;
 
 import java.io.IOException;
 
+import quina.QuinaException;
 import quina.component.ComponentType;
 import quina.http.EditMimeTypes;
 import quina.http.Header;
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
+import quina.http.HttpException;
 import quina.http.HttpSendHeader;
 import quina.http.HttpStatus;
 import quina.http.MimeTypes;
@@ -41,6 +43,8 @@ public abstract class AbstractResponse<T> implements Response<T>{
 	protected boolean crossDomain = HttpServerConstants.isCrossDomainMode();
 	/** 送信済みフラグ. **/
 	protected Bool sendFlag = new Bool(false);
+	/** SendData処理フラグ. **/
+	protected Bool execSendDataFlag = new Bool(false);
 
 	/**
 	 * レスポンスの内容をセット.
@@ -57,6 +61,19 @@ public abstract class AbstractResponse<T> implements Response<T>{
 		cacheMode = res.cacheMode;
 		crossDomain = res.crossDomain;
 		sendFlag.set(res.sendFlag.get());
+		execSendDataFlag.set(res.execSendDataFlag.get());
+	}
+
+	// 送信が開始された場合に呼び出します.
+	protected void startSend() {
+		if(sendFlag.setToGetBefore(true)) {
+			throw new HttpException("The send process has already been called.");
+		}
+	}
+
+	// 送信エラーで送信キャンセルされた場合.
+	protected void cancelSend() {
+		sendFlag.set(false);
 	}
 
 	/**
@@ -268,6 +285,73 @@ public abstract class AbstractResponse<T> implements Response<T>{
 	 */
 	public MimeTypes getMimeTypes() {
 		return mimeTypes;
+	}
+
+	/**
+	 * 送信処理が行われているかチェック.
+	 * @return boolean trueの場合送信されています.
+	 */
+	public boolean isSend() {
+		return sendFlag.get();
+	}
+
+	/**
+	 * リダイレクト処理.
+	 * @param url リダイレクト先のURLを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	public T redirect(String url) {
+		startSend();
+		try {
+			ResponseUtil.redirect(this, url);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
+		return (T)this;
+	}
+
+	/**
+	 * リダイレクト処理.
+	 * @param status Httpステータスを設定します.
+	 * @param url リダイレクト先のURLを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	public T redirect(int status, String url) {
+		startSend();
+		try {
+			ResponseUtil.redirect(this, status, url);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
+		return (T)this;
+	}
+
+	/**
+	 * リダイレクト処理.
+	 * @param status Httpステータスを設定します.
+	 * @param url リダイレクト先のURLを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	public T redirect(HttpStatus status, String url) {
+		startSend();
+		try {
+			ResponseUtil.redirect(this, status, url);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
+		return (T)this;
+	}
+
+	/**
+	 * 指定したコンポーネントにフォワードします.
+	 * @param path フォワード先のコンポーネントパスを設定します.
+	 */
+	public T forward(String path) {
+		ResponseUtil.forward(element, path);
+		return (T)this;
 	}
 
 	/**

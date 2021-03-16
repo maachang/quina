@@ -7,7 +7,7 @@ import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.HttpServerRequest;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.DefaultResponse;
+import quina.http.server.response.NormalResponse;
 import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.SyncResponse;
 import quina.validate.Validation;
@@ -249,7 +249,7 @@ public class RegisterComponent implements Component {
 					break;
 				default:
 					// それ以外はノーマルタイプのレスポンスを作成.
-					res = new DefaultResponse(null, null);
+					res = new NormalResponse(null, null);
 					break;
 				}
 				// データセット.

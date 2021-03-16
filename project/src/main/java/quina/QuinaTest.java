@@ -1,8 +1,9 @@
 package quina;
 
-import quina.component.Component;
 import quina.component.FileComponent;
+import quina.component.NormalComponent;
 import quina.component.RESTfulGetSync;
+import quina.component.SyncComponent;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
@@ -48,8 +49,8 @@ public class QuinaTest {
 
 		// http://127.0.0.1:3333/
 		.route("/", (RESTfulGetSync)(req, res, params) -> {
-				return new ResultJson("hello", "world");
-			})
+			return new ResultJson("hello", "world");
+		})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
 		.route("/hoge/moge/${id}/a/${name}/",
@@ -59,23 +60,23 @@ public class QuinaTest {
 			),
 			(RESTfulGetSync)(req, res, params) -> {
 				return new ResultJson("params", params);
-			})
+		})
 
 		// http://127.0.0.1:3333/redirect
-		.route("/redirect", (Component)(method, req, res) -> {
+		.route("/redirect", (NormalComponent)(req, res) -> {
 			res.redirect("https://www.yahoo.co.jp");
 		})
 
 		// http://127.0.0.1:3333/forward
-		.route("/forward", (Component)(method, req, res) -> {
+		.route("/forward", (NormalComponent)(req, res) -> {
 			res.forward("/hoge/moge/5/a/zzz/");
 		})
 
 		// http://127.0.0.1:3333/promise
-		.route("/promise", (Component)(method, req, res) -> {
+		.route("/promise", (SyncComponent)(req, res) -> {
 			// promiseテスト.
 			//System.out.println("0: thread: " + Thread.currentThread().getId());
-			new Promise("hoge")
+			Object o = new Promise("hoge")
 				.then((action, value) -> {
 					//System.out.println("1: thread: " + Thread.currentThread().getId());
 					action.resolve(value + " moge");
@@ -94,16 +95,19 @@ public class QuinaTest {
 				.then((action, value) -> {
 					//System.out.println("4: thread: " + Thread.currentThread().getId());
 					//throw new Exception("error");
-					action.send("success: " + value);
+					//action.send("success: " + value);
+					action.resolve(value);
 				})
-				.start(req, res);
+				.start(req, res)
+				.waitTo();
+			return "successPromise: " + o;
 		})
 
 		// http://127.0.0.1:3333/public/*
 		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));
 
 		// quinaを開始して、終了まで待機する.
-		quina.start().waitToExit();
+		quina.start().waitTo();
 
 		System.out.println("## exit QuinaTest.");
 	}

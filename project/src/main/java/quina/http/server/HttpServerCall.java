@@ -18,11 +18,8 @@ import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.DefaultResponse;
-import quina.http.server.response.Forward;
+import quina.http.server.response.NormalResponse;
 import quina.http.server.response.RESTfulResponse;
-import quina.http.server.response.Redirect;
-import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 import quina.logger.Log;
 import quina.logger.LogFactory;
@@ -245,7 +242,7 @@ public class HttpServerCall extends NioServerCall {
 						break;
 					// デフォルトレスポンス.
 					default:
-						res = new DefaultResponse(em, mimeTypes);
+						res = new NormalResponse(em, mimeTypes);
 					}
 					// レスポンスをセット.
 					em.setResponse(res);
@@ -281,20 +278,13 @@ public class HttpServerCall extends NioServerCall {
 			} else {
 				// エラー404返却.
 				if(res == null) {
-					res = new DefaultResponse(em, mimeTypes);
+					res = new NormalResponse(em, mimeTypes);
 				} else {
-					res = DefaultResponse.newResponse(res);
+					res = NormalResponse.newResponse(res);
 				}
 				res.setStatus(404);
 				sendError(json, req, res, null);
 			}
-		} catch(Forward fwd) {
-			// フォワード処理.
-			sendForward(fwd, em);
-		} catch(Redirect red) {
-			// リダイレクト処理.
-			res = defaultResponse(em, mimeTypes, res);
-			sendRedirect(red, res);
 		} catch(Exception e) {
 			// エラー返却.
 			res = defaultResponse(em, mimeTypes, res);
@@ -333,7 +323,7 @@ public class HttpServerCall extends NioServerCall {
 	 * @return
 	 */
 	public static final Response<?> defaultResponse(Response<?> res) {
-		return (Response<?>)DefaultResponse.newResponse(res);
+		return (Response<?>)NormalResponse.newResponse(res);
 	}
 
 	/**
@@ -343,7 +333,7 @@ public class HttpServerCall extends NioServerCall {
 	 * @return
 	 */
 	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes) {
-		Response<?> res = new DefaultResponse(em, mimeTypes);
+		Response<?> res = new NormalResponse(em, mimeTypes);
 		em.setResponse(res);
 		return res;
 	}
@@ -357,11 +347,11 @@ public class HttpServerCall extends NioServerCall {
 	 */
 	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
 		if(res == null) {
-			res = new DefaultResponse(em, mimeTypes);
+			res = new NormalResponse(em, mimeTypes);
 			em.setResponse(res);
 			return res;
 		} else {
-			return (Response<?>)DefaultResponse.newResponse(res);
+			return (Response<?>)NormalResponse.newResponse(res);
 		}
 	}
 
@@ -380,7 +370,7 @@ public class HttpServerCall extends NioServerCall {
 	 * @param mimeTypes
 	 * @return
 	 */
-	public static final Response<?> restfulResponse(HttpElement em, MimeTypes mimeTypes) {
+	public static final Response<?> RESTfulResponse(HttpElement em, MimeTypes mimeTypes) {
 		Response<?> res = new RESTfulResponse(em, mimeTypes);
 		em.setResponse(res);
 		return res;
@@ -393,7 +383,7 @@ public class HttpServerCall extends NioServerCall {
 	 * @param res
 	 * @return
 	 */
-	public static final Response<?> restfulResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+	public static final Response<?> RESTfulResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
 		if(res == null) {
 			res = new RESTfulResponse(em, mimeTypes);
 			em.setResponse(res);
@@ -441,38 +431,14 @@ public class HttpServerCall extends NioServerCall {
 		}
 	}
 
-
-	/**
-	 * リダイレクト送信.
-	 * @param redirect
-	 * @param res
-	 */
-	public static final void sendRedirect(Redirect redirect, Response<?> res) {
-		// HTTPステータスを設定.
-		res.setStatus(redirect.getHttpStatus());
-		// リダイレクト先を設定.
-		res.getHeader().put("Location", redirect.getLocation());
-		// 0バイトデータを設定.
-		ResponseUtil.send((AbstractResponse<?>)res);
-	}
-
 	/**
 	 * フォワード処理.
-	 * @param forward フォワードオブジェクトを設定します.
-	 * @param Response HttpResponseを設定します.
-	 */
-	public final void sendForward(Forward forward, Response<?> res) {
-		sendForward(forward, ((AbstractResponse<?>)res).getElement());
-	}
-
-	/**
-	 * フォワード処理.
-	 * @param forward フォワードオブジェクトを設定します.
 	 * @param em Http要素を設定します.
+	 * @param path フォワード先のパスを設定します.
 	 */
-	public final void sendForward(Forward forward, HttpElement em) {
+	public final void sendForward(HttpElement em, String path) {
 		// URLを指定して再実行.
-		execComponent(forward.getPath(), em);
+		execComponent(path, em);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package quina.http.server.response;
 
+import quina.QuinaException;
 import quina.component.ComponentType;
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
@@ -43,7 +44,13 @@ public class RESTfulResponse extends AbstractResponse<RESTfulResponse> {
 	 * @return RESTfulResponse Responseオブジェクトが返却されます.
 	 */
 	public RESTfulResponse send() {
-		ResponseUtil.send(this);
+		startSend();
+		try {
+			ResponseUtil.send(this);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
@@ -62,7 +69,13 @@ public class RESTfulResponse extends AbstractResponse<RESTfulResponse> {
 	 * @return RESTfulResponse Responseオブジェクトが返却されます.
 	 */
 	public RESTfulResponse send(Object value, String charset) {
-		ResponseUtil.sendJSON(this, value, charset);
+		startSend();
+		try {
+			ResponseUtil.sendJSON(this, value, charset);
+		} catch(QuinaException qe) {
+			cancelSend();
+			throw qe;
+		}
 		return this;
 	}
 
