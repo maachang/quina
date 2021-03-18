@@ -5,10 +5,6 @@ package quina.promise;
  */
 public enum PromiseStatus {
 	/**
-	 * 未起動.
-	 */
-	None(PromiseStatus.NONE, "none"),
-	/**
 	 * 保留.
 	 */
 	Pending(PromiseStatus.PENDING, "pending"),
@@ -21,14 +17,12 @@ public enum PromiseStatus {
 	 */
 	Rejected(PromiseStatus.REJECTED, "rejected");
 
-	// 未起動ステータス番号.
-	private static final int NONE = 0;
 	// 保留ステータス番号.
-	private static final int PENDING = 1;
+	private static final int PENDING = 0;
 	// 成功ステータス番号.
-	private static final int FULFILLED = 2;
+	private static final int FULFILLED = 1;
 	// 失敗ステータス番号.
-	private static final int REJECTED = 3;
+	private static final int REJECTED = 2;
 
 	private int status;
 	private String name;
@@ -71,7 +65,6 @@ public enum PromiseStatus {
 	 */
 	public static final PromiseStatus getPromiseStatus(int status) {
 		switch(status) {
-		case NONE : return None;
 		case PENDING: return Pending;
 		case FULFILLED: return Fulfilled;
 		case REJECTED: return Rejected;

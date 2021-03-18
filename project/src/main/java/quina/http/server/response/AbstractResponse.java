@@ -64,15 +64,31 @@ public abstract class AbstractResponse<T> implements Response<T>{
 		execSendDataFlag.set(res.execSendDataFlag.get());
 	}
 
-	// 送信が開始された場合に呼び出します.
-	protected void startSend() {
-		if(sendFlag.setToGetBefore(true)) {
-			throw new HttpException("The send process has already been called.");
+	/**
+	 * 送信が開始された場合に呼び出します.
+	 */
+	public void startSend() {
+		startSend(true);
+	}
+
+	/**
+	 * 送信が開始された場合に呼び出します.
+	 * @param checkMode trueの場合、既に送信フラグがtrueの場合はエラーが返却されます.
+	 */
+	public void startSend(boolean checkMode) {
+		if(checkMode) {
+			if(sendFlag.setToGetBefore(true)) {
+				throw new HttpException("The send process has already been called.");
+			}
+		} else {
+			sendFlag.set(true);
 		}
 	}
 
-	// 送信エラーで送信キャンセルされた場合.
-	protected void cancelSend() {
+	/**
+	 * 送信エラーで送信キャンセルされた場合.
+	 */
+	public void cancelSend() {
 		sendFlag.set(false);
 	}
 

@@ -3,7 +3,6 @@ package quina;
 import quina.component.FileComponent;
 import quina.component.NormalComponent;
 import quina.component.RESTfulGetSync;
-import quina.component.SyncComponent;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
@@ -73,34 +72,45 @@ public class QuinaTest {
 		})
 
 		// http://127.0.0.1:3333/promise
-		.route("/promise", (SyncComponent)(req, res) -> {
+		.route("/promise", (NormalComponent)(req, res) -> {
 			// promiseテスト.
 			//System.out.println("0: thread: " + Thread.currentThread().getId());
-			Object o = new Promise("hoge")
+			Promise p = new Promise((action) -> {
+				//System.out.println("init: " + action.getStatus());
+				action.resolve("abc");
+			})
 				.then((action, value) -> {
+					//System.out.println("1): " + action.getStatus());
 					//System.out.println("1: thread: " + Thread.currentThread().getId());
 					action.resolve(value + " moge");
 				})
 				.then((action, value) -> {
+					//System.out.println("2): " + action.getStatus());
 					//System.out.println("2: thread: " + Thread.currentThread().getId());
 					action.getResponse().setContentType("text/html");
+					//action.send("" + value);
 					//throw new Exception("error");
 					action.resolve(value);
+					//action.end(value);
 				})
 				.error((action, error) -> {
+					//System.out.println("3): " + action.getStatus());
 					//System.out.println("3: thread: " + Thread.currentThread().getId());
 					//System.out.println("3: error: " + error);
 					action.sendError(error);
 				})
 				.then((action, value) -> {
+					//System.out.println("4): " + action.getStatus());
 					//System.out.println("4: thread: " + Thread.currentThread().getId());
 					//throw new Exception("error");
 					//action.send("success: " + value);
+					value = value + " xxx";
 					action.resolve(value);
 				})
-				.start(req, res)
-				.waitTo();
-			return "successPromise: " + o;
+				.start(req, res);
+				Object o = p.waitTo();
+				//System.out.println("o: " + o);
+				res.send("" + o);
 		})
 
 		// http://127.0.0.1:3333/public/*

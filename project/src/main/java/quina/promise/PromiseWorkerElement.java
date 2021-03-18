@@ -128,15 +128,9 @@ final class PromiseWorkerElement implements WorkerElement {
 	public boolean call(Object o) {
 		final Object v = param.get();
 		param.set(null);
-		// レスポンス送信済みの場合は処理終了.
-		if(action.isExitSend()) {
-			return true;
-		}
 		// 実行処理.
 		try {
 			call.call(action, v);
-			// 今回の処理で送信済みの場合も処理終了.
-			action.isExitSend();
 		} catch(Exception e) {
 			// エラーの場合リジェクト.
 			action.reject(e);

@@ -3,10 +3,9 @@ package quina.http;
 import java.io.InputStream;
 
 import quina.QuinaException;
-import quina.http.server.HttpServerCall;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
-import quina.util.Flag;
 
 /**
  * Http送信実装提供.
@@ -18,9 +17,6 @@ public abstract class AbstractHttpSendFurnishing<T> {
 
 	// HttpResponse.
 	protected AbstractResponse<?> response;
-
-	// 送信処理フラグ.
-	private final Flag sendFlag = new Flag(false);
 
 	/**
 	 * HttpRequestを取得.
@@ -43,19 +39,17 @@ public abstract class AbstractHttpSendFurnishing<T> {
 	 * @return boolean trueの場合、送信処理が呼び出されました.
 	 */
 	public boolean isSend() {
-		return sendFlag.get();
+		return response.isSend();
 	}
 
 	// 送信済みかチェック.
 	protected final void confirmSend() {
-		if(sendFlag.setToGetBefore(true)) {
-			throw new QuinaException("The transmission process has already been performed.");
-		}
+		response.startSend();
 	}
 
 	// 送信処理フラグをキャンセル.
 	protected final void cancelSend() {
-		sendFlag.set(false);
+		response.cancelSend();
 	}
 
 	/**
@@ -320,7 +314,7 @@ public abstract class AbstractHttpSendFurnishing<T> {
 	 */
 	public T sendError(int status, Object value) {
 		// 送信済みにセット.
-		sendFlag.set(true);
+		response.startSend(false);
 		try {
 			// ステータスが指定されてない場合は500エラー.
 			int state = status;
@@ -328,23 +322,23 @@ public abstract class AbstractHttpSendFurnishing<T> {
 				state = 500;
 			}
 			// エラー送信ではDefaultレスポンスに変換して送信.
-			response = (AbstractResponse<?>)HttpServerCall.defaultResponse(response);
+			response = (AbstractResponse<?>)HttpServerUtil.defaultResponse(response);
 			// エラーが存在しない場合.
 			if(value == null) {
 				// エラー返却.
 				response.setStatus(state);
-				HttpServerCall.sendError(request, response);
+				HttpServerUtil.sendError(request, response);
 			} else if(value instanceof Throwable) {
 				// エラー処理.
-				HttpServerCall.sendError(request, response, (Throwable)value);
+				HttpServerUtil.sendError(request, response, (Throwable)value);
 			// 文字列の場合.
 			} else if(value instanceof String) {
 				response.setStatus(state, value.toString());
-				HttpServerCall.sendError(request, response);
+				HttpServerUtil.sendError(request, response);
 			// その他オブジェクトの場合.
 			} else {
 				response.setStatus(state);
-				HttpServerCall.sendError(request, response);
+				HttpServerUtil.sendError(request, response);
 			}
 		} catch(Exception e) {
 			// HttpElementをクローズ.
