@@ -130,7 +130,22 @@ final class PromiseWorkerElement implements WorkerElement {
 		param.set(null);
 		// 実行処理.
 		try {
+			// コール実行前のresolveやreject
+			// 呼び出し累計回数を取得.
+			final long count = action.getResolveRejectCount();
 			call.call(action, v);
+			// resolveやrejectが呼ばれてない場合は
+			// 強制的にresolve呼び出し.
+			if(count == action.getResolveRejectCount()) {
+				// 最後に呼ばれた処理がerrorの場合はreject実行.
+				if(action.getBeforeCallMode() == MODE_ERROR ||
+					v instanceof Throwable) {
+					action.reject(v);
+				// それ以外は空のresolve実行.
+				} else {
+					action.resolve();
+				}
+			}
 		} catch(Exception e) {
 			// エラーの場合リジェクト.
 			action.reject(e);

@@ -7,6 +7,7 @@ import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
 import quina.net.nio.tcp.Wait;
+import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
@@ -31,6 +32,10 @@ public class PromiseAction
 
 	// waitオブジェクト.
 	private Wait waitObject = null;
+
+	// resolveやreject呼び出し回数管理.
+	private final AtomicNumber64 resolveRejectCounter =
+		new AtomicNumber64(0L);
 
 	// 前回実行されたワーカー要素.
 	private final AtomicObject<PromiseWorkerElement> before =
@@ -218,6 +223,8 @@ public class PromiseAction
 	 */
 	protected boolean resolve(int no, Object value) {
 		checkStartPromise();
+		// resolveが呼び出された.
+		resolveRejectCounter.inc();
 		// 送信処理が行われている場合.
 		if(isExitPromise()) {
 			// 送信済みの場合はlastValueに設定して終了処理.
@@ -255,6 +262,8 @@ public class PromiseAction
 	 */
 	protected boolean reject(int no, Object value) {
 		checkStartPromise();
+		// rejectが呼び出された.
+		resolveRejectCounter.inc();
 		// 送信処理が行われている場合.
 		if(isExitPromise()) {
 			// 送信済みの場合はlastValueに設定して終了処理
@@ -322,10 +331,10 @@ public class PromiseAction
 		} else {
 			res = reject(b.getNo() + 1, value);
 		}
-		// 最終処理の場合.
-		if(!res) {
-			sendError(value);
-		}
+		// 最終処理の場合でデータ送信をしていない場合.
+		//if(!res && !response.isSend()) {
+		//	sendError(value);
+		//}
 		return this;
 	}
 
@@ -338,6 +347,8 @@ public class PromiseAction
 	 */
 	public PromiseAction exit(Object value) {
 		checkStartPromise();
+		// exitが呼び出された.
+		resolveRejectCounter.inc();
 		// promise終了の場合はlastValueに設定.
 		setLastValue(value);
 		// valueが例外系の場合.
@@ -434,6 +445,26 @@ public class PromiseAction
 		}
 		// 終了済みの場合は[true].
 		return isExitPromise();
+	}
+
+	/**
+	 * resolveやrejectやendが呼ばれた累計回数を取得.
+	 * @return long 累計回数が返却されます.
+	 */
+	protected long getResolveRejectCount() {
+		return resolveRejectCounter.get();
+	}
+
+	/**
+	 * 直近で呼び出されたコールモードを取得.
+	 * @return
+	 */
+	protected int getBeforeCallMode() {
+		PromiseWorkerElement em = before.get();
+		if(em == null) {
+			return 0;
+		}
+		return em.getCallMode();
 	}
 
 	/**

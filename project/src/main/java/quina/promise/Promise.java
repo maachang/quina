@@ -107,29 +107,28 @@ public class Promise {
 		// 既に実行されている場合は例外返却.
 		checkStartPromiseList(list, len);
 		// 新しいPromiseを生成して、そこで登録されたPromise群を実行.
-		Promise ret = new Promise((action) -> {
+		return new Promise((action) -> {
 			int i;
 			// 既に実行されている場合は例外返却.
 			checkStartPromiseList(list, len);
-			// 非同期実行.
+			// 設定されたPromise群を順次実行.
 			for(i = 0; i < len; i ++) {
 				list[i].start(action.getRequest(), action.getResponse());
 			}
 			final Object[] params = new Object[len];
 			// 実行されたPromise群の待機.
 			for(i = 0; i < len; i ++) {
-				// 待機結果をリスト取得.
+				// それぞれの処理結果を取得.
 				params[i] = list[i].waitTo();
 				// reject条件を検知した場合はリジェクト内容を返却.
 				if(list[i].getStatus() == PromiseStatus.Rejected) {
-					action.reject(list[i]);
+					action.reject(params[i]);
 					return;
 				}
 			}
 			// 全てが正常な場合はリスト返却.
 			action.resolve(params);
 		});
-		return ret;
 	}
 
 	/**
@@ -197,8 +196,9 @@ public class Promise {
 				// 終了まで待機して、対象Promiseが終了している場合は
 				// その内容を返却する.
 				if(p.action.waitTo(null, -1L)) {
-					if(p.getStatus() == PromiseStatus.Fulfilled) {
+					if(p.isExit() && p.getStatus() == PromiseStatus.Fulfilled) {
 						action.resolve(p.waitTo());
+						break;
 					}
 				}
 			}
@@ -242,10 +242,13 @@ public class Promise {
 				// 終了まで待機して、対象Promiseが終了している場合は
 				// その内容を返却する.
 				if(p.action.waitTo(null, -1L)) {
-					if(p.getStatus() == PromiseStatus.Fulfilled) {
-						action.resolve(p.waitTo());
-					} else {
-						action.reject(p.waitTo());
+					if(p.isExit()) {
+						if(p.getStatus() == PromiseStatus.Fulfilled) {
+							action.resolve(p.waitTo());
+						} else {
+							action.reject(p.waitTo());
+						}
+						break;
 					}
 				}
 			}

@@ -31,8 +31,8 @@ final class PromiseFromEndWorkerElement implements WorkerElement {
 	protected PromiseFromEndWorkerElement(
 		PromiseAction action, PromiseFromEndCall call) {
 		this.action = action;
-		this.destroyFlag = false;
 		this.call = call;
+		this.destroyFlag = false;
 	}
 
 	/**
@@ -68,7 +68,15 @@ final class PromiseFromEndWorkerElement implements WorkerElement {
 	public boolean call(Object o) {
 		// 実行処理.
 		try {
+			// コール実行前のresolveやreject
+			// 呼び出し累計回数を取得.
+			final long count = action.getResolveRejectCount();
 			call.call(action);
+			// resolveやrejectが呼ばれてない場合は
+			// 強制的に空のresolve呼び出し.
+			if(count == action.getResolveRejectCount()) {
+				action.resolve();
+			}
 		} catch(Exception e) {
 			// エラーの場合リジェクト.
 			action.reject(e);

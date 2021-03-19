@@ -113,6 +113,43 @@ public class QuinaTest {
 				res.send("" + o);
 		})
 
+		// http://127.0.0.1:3333/promise2
+		.route("/promise2", (NormalComponent)(req, res) -> {
+			Promise a = new Promise((action) -> {
+				action.resolve("hoge");
+			});
+
+			Promise b = new Promise((action) -> {
+				action.reject("moge");
+			});
+
+			Promise c = new Promise((action) -> {
+				action.resolve("abc");
+			});
+
+			Promise.all(a, b, c)
+			.then((action, value) -> {
+				Object[] lst = (Object[])value;
+				int len = lst.length;
+				StringBuilder buf = new StringBuilder("success: ");
+				for(int i = 0; i < len; i ++) {
+					if(i != 0) {
+						buf.append(", ");
+					}
+					buf.append("[").append(i+1).append("] ").append(lst[i]);
+				}
+				action.getResponse().setContentType("text/html");
+				res.send(buf.toString());
+				//action.resolve();
+			})
+			.error((action, error) -> {
+				action.getResponse().setContentType("text/html");
+				res.send("error: " + error);
+				//action.reject(null);
+			})
+			.start(req, res).waitTo();
+		})
+
 		// http://127.0.0.1:3333/public/*
 		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));
 
