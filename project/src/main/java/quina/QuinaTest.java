@@ -74,47 +74,32 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/promise
 		.route("/promise", (NormalComponent)(req, res) -> {
 			// promiseテスト.
-			//System.out.println("0: thread: " + Thread.currentThread().getId());
 			Promise p = new Promise((action) -> {
-				//System.out.println("init: " + action.getStatus());
 				action.resolve("abc");
 			})
-				.then((action, value) -> {
-					//System.out.println("1): " + action.getStatus());
-					//System.out.println("1: thread: " + Thread.currentThread().getId());
-					action.resolve(value + " moge");
-				})
-				.then((action, value) -> {
-					//System.out.println("2): " + action.getStatus());
-					//System.out.println("2: thread: " + Thread.currentThread().getId());
-					action.getResponse().setContentType("text/html");
-					//action.send("" + value);
-					//throw new Exception("error");
-					action.resolve(value);
-					//action.end(value);
-				})
-				.error((action, error) -> {
-					//System.out.println("3): " + action.getStatus());
-					//System.out.println("3: thread: " + Thread.currentThread().getId());
-					//System.out.println("3: error: " + error);
-					action.sendError(error);
-				})
-				.then((action, value) -> {
-					//System.out.println("4): " + action.getStatus());
-					//System.out.println("4: thread: " + Thread.currentThread().getId());
-					//throw new Exception("error");
-					//action.send("success: " + value);
-					value = value + " xxx";
-					action.resolve(value);
-				})
-				.start(req, res);
-				Object o = p.waitTo();
-				//System.out.println("o: " + o);
-				res.send("" + o);
+			.then((action, value) -> {
+				action.resolve(value + " moge");
+			})
+			.then((action, value) -> {
+				action.getResponse().setContentType("text/html");
+				action.resolve(value);
+			})
+			.error((action, error) -> {
+				action.sendError(error);
+			})
+			.then((action, value) -> {
+				value = value + " xxx";
+				action.resolve(value);
+			})
+			.start(req, res);
+			// 処理結果を同期取得.
+			Object o = p.waitTo();
+			res.send("" + o);
 		})
 
 		// http://127.0.0.1:3333/promise2
 		.route("/promise2", (NormalComponent)(req, res) -> {
+			// Promise.allのテスト.
 			Promise a = new Promise((action) -> {
 				action.resolve("hoge");
 			});
@@ -127,6 +112,7 @@ public class QuinaTest {
 				action.resolve("abc");
 			});
 
+			// allで処理を行う.
 			Promise.all(a, b, c)
 			.then((action, value) -> {
 				Object[] lst = (Object[])value;
@@ -140,12 +126,10 @@ public class QuinaTest {
 				}
 				action.getResponse().setContentType("text/html");
 				res.send(buf.toString());
-				//action.resolve();
 			})
 			.error((action, error) -> {
+				System.out.println("error");
 				action.getResponse().setContentType("text/html");
-				res.send("error: " + error);
-				//action.reject(null);
 			})
 			.start(req, res).waitTo();
 		})

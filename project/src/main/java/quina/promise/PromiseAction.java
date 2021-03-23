@@ -225,14 +225,6 @@ public class PromiseAction
 		checkStartPromise();
 		// resolveが呼び出された.
 		resolveRejectCounter.inc();
-		// 送信処理が行われている場合.
-		if(isExitPromise()) {
-			// 送信済みの場合はlastValueに設定して終了処理.
-			setLastValue(value);
-			// success返却.
-			exitPromise(PromiseStatus.Fulfilled);
-			return false;
-		}
 		// 利用可能なthen()追加の実行処理を取得.
 		PromiseWorkerElement em;
 		final int len = list.size();
@@ -264,14 +256,6 @@ public class PromiseAction
 		checkStartPromise();
 		// rejectが呼び出された.
 		resolveRejectCounter.inc();
-		// 送信処理が行われている場合.
-		if(isExitPromise()) {
-			// 送信済みの場合はlastValueに設定して終了処理
-			setLastValue(value);
-			// reject.
-			exitPromise(PromiseStatus.Rejected);
-			return false;
-		}
 		// 利用可能なerror()追加の実行処理を取得.
 		PromiseWorkerElement em;
 		final int len = list.size();
@@ -324,17 +308,12 @@ public class PromiseAction
 	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
 	 */
 	public PromiseAction reject(Object value) {
-		boolean res;
 		final PromiseWorkerElement b = before.get();
 		if(b == null) {
-			res = reject(0, value);
+			reject(0, value);
 		} else {
-			res = reject(b.getNo() + 1, value);
+			reject(b.getNo() + 1, value);
 		}
-		// 最終処理の場合でデータ送信をしていない場合.
-		//if(!res && !response.isSend()) {
-		//	sendError(value);
-		//}
 		return this;
 	}
 

@@ -11,7 +11,7 @@ public class NioWorkerConstants {
 
 	/** デフォルトのワーカースレッド数. **/
 	public static final int DEF_WORKER_THREAD_LENGTH =
-		java.lang.Runtime.getRuntime().availableProcessors() << 1;
+		(int)(java.lang.Runtime.getRuntime().availableProcessors() * 1.5);
 
 	/** 最大ワーカースレッド数. **/
 	public static final int MAX_WORKER_THREAD_LENGTH = 32768;

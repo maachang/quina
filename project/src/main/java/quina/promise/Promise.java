@@ -150,11 +150,12 @@ public class Promise {
 			for(i = 0; i < len; i ++) {
 				list[i].start(action.getRequest(), action.getResponse());
 			}
-			final Object[] params = new Object[len];
+			final PromiseElement[] params = new PromiseElement[len];
 			// 実行されたPromise群の待機.
 			for(i = 0; i < len; i ++) {
 				// 待機結果をリスト取得.
-				params[i] = list[i].waitTo();
+				params[i] = new PromiseElement(
+					list[i].getStatus(), list[i].waitTo());
 			}
 			// 処理結果群を次の非同期処理に提供.
 			action.resolve(params);
