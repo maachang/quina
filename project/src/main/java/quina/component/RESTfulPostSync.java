@@ -13,6 +13,11 @@ import quina.http.server.response.SyncResponse;
  */
 public interface RESTfulPostSync extends Component {
 	/**
+	 * 送信なしを示すオブジェクト.
+	 */
+	public static final Object NOSEND = SyncResponse.NOSEND;
+
+	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
@@ -33,8 +38,14 @@ public interface RESTfulPostSync extends Component {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		ResponseUtil.sendJSON((SyncResponse)res,
-			post(req, (SyncResponse)res, req.getParams()));
+		final Object o = post(req, (SyncResponse)res, req.getParams());
+		// 送信なしを示す場合.
+		if(NOSEND == o) {
+			return;
+		// 返却内容が存在する場合.
+		} else {
+			ResponseUtil.sendJSON((SyncResponse)res, o);
+		}
 	}
 
 	/**

@@ -13,6 +13,11 @@ import quina.http.server.response.SyncResponse;
  */
 public interface RESTfulSync extends Component {
 	/**
+	 * 送信なしを示すオブジェクト.
+	 */
+	public static final Object NOSEND = SyncResponse.NOSEND;
+
+	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
@@ -29,7 +34,7 @@ public interface RESTfulSync extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
-		Object o = null;
+		final Object o;
 		final SyncResponse sres = (SyncResponse)res;
 		switch(method) {
 		case GET: o = get(req, sres, req.getParams()); break;
@@ -39,8 +44,13 @@ public interface RESTfulSync extends Component {
 		case PATCH: o = patch(req, sres, req.getParams()); break;
 		default: throw new HttpException(405, "Unsupported HTTP method: " + method.getName());
 		}
-		ResponseUtil.sendJSON((SyncResponse)res, o);
-
+		// 送信なしを示す場合.
+		if(NOSEND == o) {
+			return;
+		// 返却内容が存在する場合.
+		} else {
+			ResponseUtil.sendJSON((SyncResponse)res, o);
+		}
 	}
 
 	/**

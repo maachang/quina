@@ -3,11 +3,14 @@ package quina.http;
 import java.io.Closeable;
 import java.io.IOException;
 
+import quina.http.furnishing.BaseSendResponse;
+
 /**
  * Httpレスポンス.
  */
 @SuppressWarnings("unchecked")
-public interface Response<T> extends Closeable {
+public interface Response<T>
+	extends BaseSendResponse<T>, Closeable {
 	/**
 	 * レスポンスをクリア.
 	 */
@@ -146,34 +149,4 @@ public interface Response<T> extends Closeable {
 	 * @return boolean trueの場合クロスドメインを許可します.
 	 */
 	public boolean isCrossDomain();
-
-	/**
-	 * リダイレクト処理.
-	 * @param url リダイレクト先のURLを設定します.
-	 * @return Response レスポンスオブジェクトが返却されます.
-	 */
-	public T redirect(String url);
-
-	/**
-	 * リダイレクト処理.
-	 * @param status Httpステータスを設定します.
-	 * @param url リダイレクト先のURLを設定します.
-	 * @return Response レスポンスオブジェクトが返却されます.
-	 */
-	public T redirect(int status, String url);
-
-	/**
-	 * リダイレクト処理.
-	 * @param status Httpステータスを設定します.
-	 * @param url リダイレクト先のURLを設定します.
-	 * @return Response レスポンスオブジェクトが返却されます.
-	 */
-	public T redirect(HttpStatus status, String url);
-
-	/**
-	 * 指定したコンポーネントにフォワードします.
-	 * @param path フォワード先のコンポーネントパスを設定します.
-	 * @return Response レスポンスオブジェクトが返却されます.
-	 */
-	public T forward(String path);
 }

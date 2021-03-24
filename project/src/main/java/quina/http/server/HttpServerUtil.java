@@ -9,7 +9,6 @@ import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.NormalResponse;
 import quina.http.server.response.RESTfulResponse;
-import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.NioSendData;

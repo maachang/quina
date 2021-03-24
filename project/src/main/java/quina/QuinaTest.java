@@ -74,14 +74,13 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/promise
 		.route("/promise", (NormalComponent)(req, res) -> {
 			// promiseテスト.
-			Promise p = new Promise((action) -> {
+			new Promise((action) -> {
 				action.resolve("abc");
 			})
 			.then((action, value) -> {
 				action.resolve(value + " moge");
 			})
 			.then((action, value) -> {
-				action.getResponse().setContentType("text/html");
 				action.resolve(value);
 			})
 			.error((action, error) -> {
@@ -89,12 +88,10 @@ public class QuinaTest {
 			})
 			.then((action, value) -> {
 				value = value + " xxx";
-				action.resolve(value);
+				action.getResponse().setContentType("text/html");
+				action.send("" + value);
 			})
-			.start(req, res);
-			// 処理結果を同期取得.
-			Object o = p.waitTo();
-			res.send("" + o);
+			.start(res);
 		})
 
 		// http://127.0.0.1:3333/promise2
@@ -125,13 +122,13 @@ public class QuinaTest {
 					buf.append("[").append(i+1).append("] ").append(lst[i]);
 				}
 				action.getResponse().setContentType("text/html");
-				res.send(buf.toString());
+				action.send(buf.toString());
 			})
 			.error((action, error) -> {
-				System.out.println("error");
 				action.getResponse().setContentType("text/html");
+				action.sendError(error);
 			})
-			.start(req, res).waitTo();
+			.start(res);
 		})
 
 		// http://127.0.0.1:3333/public/*

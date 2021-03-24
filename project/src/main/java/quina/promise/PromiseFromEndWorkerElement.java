@@ -16,7 +16,7 @@ final class PromiseFromEndWorkerElement implements WorkerElement {
 	/**
 	 * PromiseAction情報.
 	 */
-	private PromiseAction action;
+	private AbstractPromiseAction<?> action;
 
 	/**
 	 * 実行情報.
@@ -29,7 +29,7 @@ final class PromiseFromEndWorkerElement implements WorkerElement {
 	 * @param call 実行対象のコールオブジェクトを設定します.
 	 */
 	protected PromiseFromEndWorkerElement(
-		PromiseAction action, PromiseFromEndCall call) {
+		AbstractPromiseAction<?> action, PromiseFromEndCall call) {
 		this.action = action;
 		this.call = call;
 		this.destroyFlag = false;

@@ -47,6 +47,23 @@ public class Validation {
 	}
 
 	/**
+	 * Validation生成.
+	 * @param args パラメータの検証条件を設定します.
+	 */
+	public static final Validation ins(Object... args) {
+		return new Validation(args);
+	}
+
+	/**
+	 * Validation生成.
+	 * @param args パラメータの検証条件を設定します.
+	 */
+	public static final Validation getInstance(Object... args) {
+		return new Validation(args);
+	}
+
+
+	/**
 	 * 検証処理を実行.
 	 * @param req HTTPリクエストを設定します.
 	 * @param params HTTPパラメータを設定します.

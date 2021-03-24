@@ -9,6 +9,11 @@ import quina.http.Response;
  * 同期用のレスポンス.
  */
 public class SyncResponse extends AbstractResponse<SyncResponse> {
+	/**
+	 * 送信なしを示すオブジェクト.
+	 */
+	public static final Object NOSEND = new Object();
+
 	/***
 	 * コンストラクタ.
 	 * @param res レスポンスオブジェクトを設定します.

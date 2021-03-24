@@ -14,6 +14,11 @@ import quina.http.server.response.SyncResponse;
  */
 public interface SyncComponent extends Component {
 	/**
+	 * 送信なしを示すオブジェクト.
+	 */
+	public static final Object NOSEND = SyncResponse.NOSEND;
+
+	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
@@ -31,8 +36,11 @@ public interface SyncComponent extends Component {
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
 		final Object ret = call(req, (SyncResponse)res);
+		// 送信なしを示す場合.
+		if(NOSEND == ret) {
+			return;
 		// 返却内容が空の場合.
-		if(ret == null) {
+		} else if(ret == null) {
 			// 空の返却.
 			ResponseUtil.send((SyncResponse)res);
 		// 返却条件がバイナリの場合.

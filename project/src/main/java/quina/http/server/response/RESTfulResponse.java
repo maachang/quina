@@ -1,15 +1,21 @@
 package quina.http.server.response;
 
-import quina.QuinaException;
 import quina.component.ComponentType;
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
 import quina.http.Response;
+import quina.http.furnishing.EmptySendResponse;
+import quina.http.furnishing.ErrorSendResponse;
+import quina.http.furnishing.JsonSendResponse;
 
 /**
  * RESTful用のレスポンス.
  */
-public class RESTfulResponse extends AbstractResponse<RESTfulResponse> {
+public class RESTfulResponse extends AbstractResponse<RESTfulResponse>
+	implements EmptySendResponse<RESTfulResponse>,
+		JsonSendResponse<RESTfulResponse>,
+		ErrorSendResponse<RESTfulResponse> {
+
 	/***
 	 * コンストラクタ.
 	 * @param res レスポンスオブジェクトを設定します.
@@ -40,46 +46,6 @@ public class RESTfulResponse extends AbstractResponse<RESTfulResponse> {
 	}
 
 	/**
-	 * 空の情報を送信処理.
-	 * @return RESTfulResponse Responseオブジェクトが返却されます.
-	 */
-	public RESTfulResponse send() {
-		startSend();
-		try {
-			ResponseUtil.send(this);
-		} catch(QuinaException qe) {
-			cancelSend();
-			throw qe;
-		}
-		return this;
-	}
-
-	/**
-	 * 送信処理.
-	 * @param json 送信するJSONオブジェクトを設定します.
-	 * @return RESTfulResponse Responseオブジェクトが返却されます.
-	 */
-	public RESTfulResponse send(Object value) {
-		return send(value, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param json 送信するJSONオブジェクトを設定します.
-	 * @return RESTfulResponse Responseオブジェクトが返却されます.
-	 */
-	public RESTfulResponse send(Object value, String charset) {
-		startSend();
-		try {
-			ResponseUtil.sendJSON(this, value, charset);
-		} catch(QuinaException qe) {
-			cancelSend();
-			throw qe;
-		}
-		return this;
-	}
-
-	/**
 	 * 新しいデフォルトのResponseを取得.
 	 * @param response レスポンスを設定します.
 	 * @return Response<?> 新しいレスポンスが返却されます.
@@ -90,5 +56,14 @@ public class RESTfulResponse extends AbstractResponse<RESTfulResponse> {
 		response = new RESTfulResponse(em, res.getMimeTypes());
 		em.setResponse(response);
 		return response;
+	}
+
+	/**
+	 * 送信処理.
+	 * @return RESTfulResponse オブジェクトが返却されます.
+	 */
+	public RESTfulResponse send() {
+		setContentType(JsonSendResponse.JSON_CONTENT_TYPE);
+		return EmptySendResponse.super.send();
 	}
 }

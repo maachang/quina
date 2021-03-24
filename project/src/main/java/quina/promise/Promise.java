@@ -2,7 +2,6 @@ package quina.promise;
 
 import quina.Quina;
 import quina.QuinaException;
-import quina.http.Request;
 import quina.http.Response;
 import quina.net.nio.tcp.Wait;
 
@@ -26,7 +25,7 @@ import quina.net.nio.tcp.Wait;
  * promise.exception((action, error) -> {
  *   action.sendError(error);
  * });
- * promise.start(request, response);
+ * promise.start(response);
  *
  * 基本的にはコールバック地獄を回避するための
  * "最低限"のPromise実装を提供します.
@@ -39,11 +38,11 @@ import quina.net.nio.tcp.Wait;
  *
  * Quina.getRouter().route("/promiseSync",
  * (SyncComponent)(request, response) -> {
- *   Promise p = new Promise("abc")
+ *   Promise p = Promise.ins("abc")
  *     .then((action, value) -> {
  *       action.resolve(value + " def");
  *   })
- *   .start(request, response);
+ *   .start(response);
  *   return p.waitTo();
  * })
  * .start()
@@ -53,13 +52,13 @@ public class Promise {
 	// 初期起動用コール.
 	protected PromiseFromEndWorkerElement firstCall = null;
 	// promiseアクション.
-	protected PromiseAction action;
+	protected AbstractPromiseAction<?> action;
 
 	/**
 	 * コンストラクタ.
 	 */
 	public Promise() {
-		this.action = new PromiseAction(null);
+		this.action = new AbstractPromiseAction<>(null);
 	}
 
 	/**
@@ -67,7 +66,7 @@ public class Promise {
 	 * @param param パラメータを設定します.
 	 */
 	public Promise(Object param) {
-		this.action = new PromiseAction(param);
+		this.action = new AbstractPromiseAction<>(param);
 	}
 
 	/**
@@ -75,8 +74,54 @@ public class Promise {
 	 * @param call 初期実行処理を設定します.
 	 */
 	public Promise(PromiseFromEndCall call) {
-		this.action = new PromiseAction(null);
+		this.action = new AbstractPromiseAction<>(null);
 		this.firstCall = new PromiseFromEndWorkerElement(this.action, call);
+	}
+
+	/**
+	 * Promise生成.
+	 */
+	public static final Promise ins() {
+		return new Promise();
+	}
+
+	/**
+	 * Promise生成.
+	 * @param param パラメータを設定します.
+	 */
+	public static final Promise ins(Object param) {
+		return new Promise(param);
+	}
+
+	/**
+	 * Promise生成.
+	 * @param call 初期実行処理を設定します.
+	 */
+	public static final Promise ins(PromiseFromEndCall call) {
+		return new Promise(call);
+	}
+
+	/**
+	 * Promise生成.
+	 */
+	public static final Promise getInstance() {
+		return new Promise();
+	}
+
+	/**
+	 * Promise生成.
+	 * @param param パラメータを設定します.
+	 */
+	public static final Promise getInstance(Object param) {
+		return new Promise(param);
+	}
+
+	/**
+	 * Promise生成.
+	 * @param call 初期実行処理を設定します.
+	 */
+	public static final Promise getInstance(PromiseFromEndCall call) {
+		return new Promise(call);
 	}
 
 	// Promiseが開始している場合はエラー出力.
@@ -113,7 +158,7 @@ public class Promise {
 			checkStartPromiseList(list, len);
 			// 設定されたPromise群を順次実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getRequest(), action.getResponse());
+				list[i].start(action.getResponse());
 			}
 			final Object[] params = new Object[len];
 			// 実行されたPromise群の待機.
@@ -148,7 +193,7 @@ public class Promise {
 			checkStartPromiseList(list, len);
 			// 非同期実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getRequest(), action.getResponse());
+				list[i].start(action.getResponse());
 			}
 			final PromiseElement[] params = new PromiseElement[len];
 			// 実行されたPromise群の待機.
@@ -189,7 +234,7 @@ public class Promise {
 			p = null;
 			// 非同期実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getRequest(), action.getResponse());
+				list[i].start(action.getResponse());
 			}
 			// 終了したものを対象として返却.
 			for(i = 0; i < len; i ++) {
@@ -235,7 +280,7 @@ public class Promise {
 			p = null;
 			// 非同期実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getRequest(), action.getResponse());
+				list[i].start(action.getResponse());
 			}
 			// 終了したものを対象として返却.
 			for(i = 0; i < len; i ++) {
@@ -314,24 +359,45 @@ public class Promise {
 
 	/**
 	 * Promiseを開始.
-	 * @param req HttpRequestを設定します.
-	 * @param res HttpResponseを設定します.
+	 * こちらでの呼び出しの場合は[action.send(...)]系の処理が実行出来ません.
 	 * @return Promise Promiseオブジェクトが返却されます.
 	 */
-	public Promise start(Request req, Response<?> res) {
+	public Promise start() {
 		// 初期実行が定義されている場合.
 		if(firstCall != null) {
 			// actionを自動実行させずに起動.
-			action.start(false, req, res);
+			action.start(false);
 			// firstCallのワーカー実行.
 			Quina.get().registerWorker(firstCall);
 		// 初期実行が定義されていない場合.
 		} else {
 			// actionを自動実行で起動.
-			action.start(true, req, res);
+			action.start(true);
 		}
 		return this;
 	}
+
+	/**
+	 * Promiseを開始.
+	 * こちらでの呼び出しの場合は[action.send(...)]系の処理が実行可能です.
+	 * @param res HttpResponseを設定します.
+	 * @return Promise Promiseオブジェクトが返却されます.
+	 */
+	public Promise start(Response<?> res) {
+		// 初期実行が定義されている場合.
+		if(firstCall != null) {
+			// actionを自動実行させずに起動.
+			action.start(false, res);
+			// firstCallのワーカー実行.
+			Quina.get().registerWorker(firstCall);
+		// 初期実行が定義されていない場合.
+		} else {
+			// actionを自動実行で起動.
+			action.start(true, res);
+		}
+		return this;
+	}
+
 
 	/**
 	 * Promise処理終了まで待機する.
