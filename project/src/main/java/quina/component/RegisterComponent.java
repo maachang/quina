@@ -7,9 +7,9 @@ import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.HttpServerRequest;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
-import quina.http.server.response.RESTfulResponse;
-import quina.http.server.response.SyncResponse;
+import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.RESTfulResponseImpl;
+import quina.http.server.response.SyncResponseImpl;
 import quina.validate.Validation;
 
 /**
@@ -241,15 +241,15 @@ public class RegisterComponent implements Component {
 				switch(type.getAttributeType()) {
 				// コンポーネントタイプが同期系の場合は、同期レスポンス作成.
 				case ComponentConstants.ATTRIBUTE_SYNC:
-					res = new SyncResponse(null, null);
+					res = new SyncResponseImpl(null, null);
 					break;
 				// コンポーネントタイプがRESTful系の場合は、RESTfulレスポンス作成.
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
-					res = new RESTfulResponse(null, null);
+					res = new RESTfulResponseImpl(null, null);
 					break;
 				default:
 					// それ以外はノーマルタイプのレスポンスを作成.
-					res = new NormalResponse(null, null);
+					res = new NormalResponseImpl(null, null);
 					break;
 				}
 				// データセット.

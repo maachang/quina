@@ -52,13 +52,13 @@ public class Promise {
 	// 初期起動用コール.
 	protected PromiseFromEndWorkerElement firstCall = null;
 	// promiseアクション.
-	protected AbstractPromiseAction<?> action;
+	protected PromiseActionImpl<?> action;
 
 	/**
 	 * コンストラクタ.
 	 */
 	public Promise() {
-		this.action = new AbstractPromiseAction<>(null);
+		this.action = new PromiseActionImpl<>(null);
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class Promise {
 	 * @param param パラメータを設定します.
 	 */
 	public Promise(Object param) {
-		this.action = new AbstractPromiseAction<>(param);
+		this.action = new PromiseActionImpl<>(param);
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class Promise {
 	 * @param call 初期実行処理を設定します.
 	 */
 	public Promise(PromiseFromEndCall call) {
-		this.action = new AbstractPromiseAction<>(null);
+		this.action = new PromiseActionImpl<>(null);
 		this.firstCall = new PromiseFromEndWorkerElement(this.action, call);
 	}
 

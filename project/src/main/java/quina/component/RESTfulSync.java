@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 
@@ -35,7 +36,7 @@ public interface RESTfulSync extends Component {
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
 		final Object o;
-		final SyncResponse sres = (SyncResponse)res;
+		final SyncResponse<?> sres = (SyncResponse<?>)res;
 		switch(method) {
 		case GET: o = get(req, sres, req.getParams()); break;
 		case POST: o = post(req, sres, req.getParams()); break;
@@ -49,7 +50,7 @@ public interface RESTfulSync extends Component {
 			return;
 		// 返却内容が存在する場合.
 		} else {
-			ResponseUtil.sendJSON((SyncResponse)res, o);
+			ResponseUtil.sendJSON((AbstractResponse<?>)res, o);
 		}
 	}
 
@@ -60,7 +61,7 @@ public interface RESTfulSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	default Object get(Request req, SyncResponse res, Params params) {
+	default Object get(Request req, SyncResponse<?> res, Params params) {
 		throw new HttpException(405,
 			"The specified method: GET cannot be used for this URL.");
 	}
@@ -72,7 +73,7 @@ public interface RESTfulSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	default Object post(Request req, SyncResponse res, Params params) {
+	default Object post(Request req, SyncResponse<?> res, Params params) {
 		throw new HttpException(405,
 			"The specified method: POST cannot be used for this URL.");
 	}
@@ -84,7 +85,7 @@ public interface RESTfulSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	default Object delete(Request req, SyncResponse res, Params params) {
+	default Object delete(Request req, SyncResponse<?> res, Params params) {
 		throw new HttpException(405,
 			"The specified method: DELETE cannot be used for this URL.");
 	}
@@ -96,7 +97,7 @@ public interface RESTfulSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	default Object put(Request req, SyncResponse res, Params params) {
+	default Object put(Request req, SyncResponse<?> res, Params params) {
 		throw new HttpException(405,
 			"The specified method: PUT cannot be used for this URL.");
 	}
@@ -108,7 +109,7 @@ public interface RESTfulSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	default Object patch(Request req, SyncResponse res, Params params) {
+	default Object patch(Request req, SyncResponse<?> res, Params params) {
 		throw new HttpException(405,
 			"The specified method: PATCH cannot be used for this URL.");
 	}

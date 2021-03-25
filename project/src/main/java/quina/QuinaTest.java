@@ -74,7 +74,7 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/promise
 		.route("/promise", (NormalComponent)(req, res) -> {
 			// promiseテスト.
-			new Promise((action) -> {
+			Promise p = new Promise((action) -> {
 				action.resolve("abc");
 			})
 			.then((action, value) -> {
@@ -88,10 +88,15 @@ public class QuinaTest {
 			})
 			.then((action, value) -> {
 				value = value + " xxx";
-				action.getResponse().setContentType("text/html");
-				action.send("" + value);
-			})
-			.start(res);
+//				res.setContentType("text/html");
+//				action.send("" + value);
+				//Thread.sleep(10000L);
+				action.resolve(value);
+			});
+			Object o = p.start(res).waitTo();
+			//System.out.println("o: " + o);
+			res.setContentType("text/html");
+			res.send("" + o);
 		})
 
 		// http://127.0.0.1:3333/promise2

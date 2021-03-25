@@ -14,6 +14,7 @@ import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
 import quina.shutdown.ShutdownManagerInfo;
 import quina.util.Args;
+import quina.util.AtomicObject;
 import quina.util.FileUtil;
 import quina.util.StringUtil;
 import quina.util.collection.BinarySearchMap;
@@ -53,7 +54,8 @@ public class Quina {
 	private Args args;
 
 	// 実行中のワーカースレッドマネージャ.
-	private NioWorkerThreadManager workerManager;
+	private final AtomicObject<NioWorkerThreadManager> workerManager =
+		new AtomicObject<NioWorkerThreadManager>();
 
 	// コンストラクタ.
 	private Quina() {
@@ -281,7 +283,8 @@ public class Quina {
 			httpServerService.startService();
 			httpServerService.waitToStartup();
 			// ワーカースレッドマネージャを取得.
-			workerManager = httpWorkerService.getNioWorkerThreadManager();
+			workerManager.set(
+				httpWorkerService.getNioWorkerThreadManager());
 			return this;
 		} catch(QuinaException qe) {
 			try {
@@ -346,7 +349,6 @@ public class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina stop() {
-		workerManager = null;
 		// 基本サービスを停止.
 		// 最初にサーバ停止で、次にワーカー停止.
 		httpServerService.stopService();
@@ -427,14 +429,32 @@ public class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina registerWorker(WorkerElement em) {
+		final NioWorkerThreadManager man = workerManager.get();
+		// 開始していない場合.
+		if(man == null) {
+			throw new QuinaException("Quina has not started.");
+		}
 		try {
-			workerManager.push(em);
+			man.push(em);
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
 		}
 		return this;
+	}
+
+	/**
+	 * ワーカースレッドが停止状態かチェック.
+	 * @return boolean trueの場合停止しています.
+	 */
+	public boolean isStopWorker() {
+		final NioWorkerThreadManager man = workerManager.get();
+		// 開始していない場合.
+		if(man == null) {
+			return true;
+		}
+		return man.isStopCall();
 	}
 
 	/**

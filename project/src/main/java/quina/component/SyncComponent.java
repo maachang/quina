@@ -6,6 +6,7 @@ import quina.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 
@@ -35,22 +36,22 @@ public interface SyncComponent extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
-		final Object ret = call(req, (SyncResponse)res);
+		final Object ret = call(req, (SyncResponse<?>)res);
 		// 送信なしを示す場合.
 		if(NOSEND == ret) {
 			return;
 		// 返却内容が空の場合.
 		} else if(ret == null) {
 			// 空の返却.
-			ResponseUtil.send((SyncResponse)res);
+			ResponseUtil.send((AbstractResponse<?>)res);
 		// 返却条件がバイナリの場合.
 		} else if(ret instanceof byte[]) {
 			// バイナリ送信.
-			ResponseUtil.send((SyncResponse)res, (byte[])ret);
+			ResponseUtil.send((AbstractResponse<?>)res, (byte[])ret);
 		// 返却条件が文字列の場合.
 		} else if(ret instanceof String) {
 			// 文字列送信.
-			ResponseUtil.send((SyncResponse)res, (String)ret);
+			ResponseUtil.send((AbstractResponse<?>)res, (String)ret);
 		// 返却条件がファイルオブジェクトの場合.
 		} else if(ret instanceof File) {
 			// ファイル送信.
@@ -60,11 +61,11 @@ public interface SyncComponent extends Component {
 			} catch(Exception e) {
 				throw new QuinaException(e);
 			}
-			ResponseUtil.sendFile((SyncResponse)res, name);
+			ResponseUtil.sendFile((AbstractResponse<?>)res, name);
 		// 返却条件が上記以外の場合.
 		} else {
 			// JSON返却.
-			ResponseUtil.sendJSON((SyncResponse)res, ret);
+			ResponseUtil.sendJSON((AbstractResponse<?>)res, ret);
 		}
 	}
 
@@ -74,6 +75,6 @@ public interface SyncComponent extends Component {
 	 * @param res SyncResponseが設定されます.
 	 * @return Object 返却するオブジェクトを設定します.
 	 */
-	public Object call(Request req, SyncResponse res);
+	public Object call(Request req, SyncResponse<?> res);
 
 }

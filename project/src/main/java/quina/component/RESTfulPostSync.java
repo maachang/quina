@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 
@@ -38,13 +39,13 @@ public interface RESTfulPostSync extends Component {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		final Object o = post(req, (SyncResponse)res, req.getParams());
+		final Object o = post(req, (SyncResponse<?>)res, req.getParams());
 		// 送信なしを示す場合.
 		if(NOSEND == o) {
 			return;
 		// 返却内容が存在する場合.
 		} else {
-			ResponseUtil.sendJSON((SyncResponse)res, o);
+			ResponseUtil.sendJSON((AbstractResponse<?>)res, o);
 		}
 	}
 
@@ -55,5 +56,5 @@ public interface RESTfulPostSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public abstract Object post(Request req, SyncResponse res, Params params);
+	public abstract Object post(Request req, SyncResponse<?> res, Params params);
 }

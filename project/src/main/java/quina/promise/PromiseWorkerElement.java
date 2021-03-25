@@ -37,7 +37,7 @@ final class PromiseWorkerElement implements WorkerElement {
 	/**
 	 * PromiseAction情報.
 	 */
-	private AbstractPromiseAction<?> action;
+	private PromiseActionImpl<?> action;
 
 	/**
 	 * 実行情報.
@@ -59,7 +59,7 @@ final class PromiseWorkerElement implements WorkerElement {
 	 * @param call 実行対象のコールオブジェクトを設定します.
 	 */
 	protected PromiseWorkerElement(
-		AbstractPromiseAction<?> action, int no, int callMode, PromiseCall call) {
+		PromiseActionImpl<?> action, int no, int callMode, PromiseCall call) {
 		this.action = action;
 		this.no = no;
 		this.callMode = callMode;

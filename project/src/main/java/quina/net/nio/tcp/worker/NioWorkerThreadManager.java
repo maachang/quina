@@ -1,5 +1,6 @@
 package quina.net.nio.tcp.worker;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
 import quina.net.nio.tcp.NioElement;
 
@@ -12,6 +13,12 @@ public class NioWorkerThreadManager {
 
 	// 次のワーカースレッド割当ID.
 	private final Number32 nextWorkerId = new Number32(0);
+
+	// 開始処理実行フラグ.
+	private final Bool startFlag = new Bool(false);
+
+	// 停止処理実行フラグ.
+	private final Bool stopFlag = new Bool(false);
 
 	/**
 	 * コンストラクタ.
@@ -45,6 +52,7 @@ public class NioWorkerThreadManager {
 	 * ワーカースレッドを開始.
 	 */
 	public void startThread() {
+		startFlag.set(true);
 		final int len = threads.length;
 		for(int  i = 0; i < len; i ++) {
 			threads[i].startThread();
@@ -55,10 +63,27 @@ public class NioWorkerThreadManager {
 	 * ワーカースレッドを全終了.
 	 */
 	public void stopThread() {
+		stopFlag.set(true);
 		final int len = threads.length;
 		for(int i = 0; i < len; i ++) {
 			threads[i].stopThread();
 		}
+	}
+
+	/**
+	 * startThreadが実行されたかチェック.
+	 * @return boolean trueの場合startThreadが呼び出さてます.
+	 */
+	public boolean isStartCall() {
+		return startFlag.get();
+	}
+
+	/**
+	 * stopThreadが実行されたかチェック.
+	 * @return boolean trueの場合stopThreadが呼び出さてます.
+	 */
+	public boolean isStopCall() {
+		return stopFlag.get();
 	}
 
 	/**
@@ -220,5 +245,14 @@ public class NioWorkerThreadManager {
 	 */
 	public int size() {
 		return threads.length;
+	}
+
+	/**
+	 * 指定番号のNioWorkerThreadを取得.
+	 * @param no ワーカースレッド番号を設定します.
+	 * @return NioWorkerThread NioWorkerThreadが返却されます.
+	 */
+	public NioWorkerThread getWorkerThread(int no) {
+		return threads[no];
 	}
 }

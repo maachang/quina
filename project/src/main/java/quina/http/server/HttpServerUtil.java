@@ -7,9 +7,9 @@ import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
-import quina.http.server.response.RESTfulResponse;
-import quina.http.server.response.SyncResponse;
+import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.RESTfulResponseImpl;
+import quina.http.server.response.SyncResponseImpl;
 import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.NioSendData;
 
@@ -25,7 +25,7 @@ public final class HttpServerUtil {
 	 * @return
 	 */
 	public static final Response<?> defaultResponse(Response<?> res) {
-		return (Response<?>)NormalResponse.newResponse(res);
+		return (Response<?>)NormalResponseImpl.newResponse(res);
 	}
 
 	/**
@@ -35,7 +35,7 @@ public final class HttpServerUtil {
 	 * @return
 	 */
 	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes) {
-		Response<?> res = new NormalResponse(em, mimeTypes);
+		Response<?> res = new NormalResponseImpl(em, mimeTypes);
 		em.setResponse(res);
 		return res;
 	}
@@ -47,13 +47,14 @@ public final class HttpServerUtil {
 	 * @param res
 	 * @return
 	 */
-	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+	public static final Response<?> defaultResponse(
+		HttpElement em, MimeTypes mimeTypes, Response<?> res) {
 		if(res == null) {
-			res = new NormalResponse(em, mimeTypes);
+			res = new NormalResponseImpl(em, mimeTypes);
 			em.setResponse(res);
 			return res;
 		} else {
-			return (Response<?>)NormalResponse.newResponse(res);
+			return (Response<?>)NormalResponseImpl.newResponse(res);
 		}
 	}
 
@@ -63,7 +64,7 @@ public final class HttpServerUtil {
 	 * @return
 	 */
 	public static final Response<?> RESTfulResponse(Response<?> res) {
-		return (Response<?>)RESTfulResponse.newResponse(res);
+		return (Response<?>)RESTfulResponseImpl.newResponse(res);
 	}
 
 	/**
@@ -73,7 +74,7 @@ public final class HttpServerUtil {
 	 * @return
 	 */
 	public static final Response<?> RESTfulResponse(HttpElement em, MimeTypes mimeTypes) {
-		Response<?> res = new RESTfulResponse(em, mimeTypes);
+		Response<?> res = new RESTfulResponseImpl(em, mimeTypes);
 		em.setResponse(res);
 		return res;
 	}
@@ -85,13 +86,14 @@ public final class HttpServerUtil {
 	 * @param res
 	 * @return
 	 */
-	public static final Response<?> RESTfulResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+	public static final Response<?> RESTfulResponse(
+		HttpElement em, MimeTypes mimeTypes, Response<?> res) {
 		if(res == null) {
-			res = new RESTfulResponse(em, mimeTypes);
+			res = new RESTfulResponseImpl(em, mimeTypes);
 			em.setResponse(res);
 			return res;
 		} else {
-			return (Response<?>)RESTfulResponse.newResponse(res);
+			return (Response<?>)RESTfulResponseImpl.newResponse(res);
 		}
 	}
 
@@ -101,7 +103,7 @@ public final class HttpServerUtil {
 	 * @return
 	 */
 	public static final Response<?> syncResponse(Response<?> res) {
-		return (Response<?>)SyncResponse.newResponse(res);
+		return (Response<?>)SyncResponseImpl.newResponse(res);
 	}
 
 	/**
@@ -111,7 +113,7 @@ public final class HttpServerUtil {
 	 * @return
 	 */
 	public static final Response<?> syncResponse(HttpElement em, MimeTypes mimeTypes) {
-		Response<?> res = new SyncResponse(em, mimeTypes);
+		Response<?> res = new SyncResponseImpl(em, mimeTypes);
 		em.setResponse(res);
 		return res;
 	}
@@ -123,13 +125,14 @@ public final class HttpServerUtil {
 	 * @param res
 	 * @return
 	 */
-	public static final Response<?> syncResponse(HttpElement em, MimeTypes mimeTypes, Response<?> res) {
+	public static final Response<?> syncResponse(
+		HttpElement em, MimeTypes mimeTypes, Response<?> res) {
 		if(res == null) {
-			res = new SyncResponse(em, mimeTypes);
+			res = new SyncResponseImpl(em, mimeTypes);
 			em.setResponse(res);
 			return res;
 		} else {
-			return (Response<?>)SyncResponse.newResponse(res);
+			return (Response<?>)SyncResponseImpl.newResponse(res);
 		}
 	}
 

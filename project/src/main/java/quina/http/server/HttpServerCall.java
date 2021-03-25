@@ -15,9 +15,9 @@ import quina.http.Method;
 import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Response;
-import quina.http.server.response.NormalResponse;
-import quina.http.server.response.RESTfulResponse;
-import quina.http.server.response.SyncResponse;
+import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.RESTfulResponseImpl;
+import quina.http.server.response.SyncResponseImpl;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
@@ -230,15 +230,15 @@ public class HttpServerCall extends NioServerCall {
 					switch(ctype.getAttributeType()) {
 					// このコンポーネントは同期コンポーネントの場合.
 					case ComponentConstants.ATTRIBUTE_SYNC:
-						res = new SyncResponse(em, mimeTypes);
+						res = new SyncResponseImpl(em, mimeTypes);
 						break;
 					// このコンポーネントはRESTful系の場合.
 					case ComponentConstants.ATTRIBUTE_RESTFUL:
-						res = new RESTfulResponse(em, mimeTypes);
+						res = new RESTfulResponseImpl(em, mimeTypes);
 						break;
 					// デフォルトレスポンス.
 					default:
-						res = new NormalResponse(em, mimeTypes);
+						res = new NormalResponseImpl(em, mimeTypes);
 					}
 					// レスポンスをセット.
 					em.setResponse(res);
@@ -274,9 +274,9 @@ public class HttpServerCall extends NioServerCall {
 			} else {
 				// エラー404返却.
 				if(res == null) {
-					res = new NormalResponse(em, mimeTypes);
+					res = new NormalResponseImpl(em, mimeTypes);
 				} else {
-					res = NormalResponse.newResponse(res);
+					res = NormalResponseImpl.newResponse(res);
 				}
 				res.setStatus(404);
 				HttpServerUtil.sendError(json, req, res, null);

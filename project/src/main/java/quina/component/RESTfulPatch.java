@@ -32,7 +32,7 @@ public interface RESTfulPatch extends Component {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		patch(req, (RESTfulResponse)res, req.getParams());
+		patch(req, (RESTfulResponse<?>)res, req.getParams());
 
 	}
 
@@ -42,5 +42,5 @@ public interface RESTfulPatch extends Component {
 	 * @param res HttpResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public abstract void patch(Request req, RESTfulResponse res, Params params);
+	public abstract void patch(Request req, RESTfulResponse<?> res, Params params);
 }
