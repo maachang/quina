@@ -274,14 +274,14 @@ public class Quina {
 			final int len = quinaServiceManager.size();
 			for(int i = 0; i < len; i ++) {
 				(qs = quinaServiceManager.get(i)).startService();
-				qs.waitToStartup();
+				qs.awaitStartup();
 			}
 			// 基本サービスを起動.
 			// ワーカー起動で、最後にサーバー起動.
 			httpWorkerService.startService();
-			httpWorkerService.waitToStartup();
+			httpWorkerService.awaitStartup();
 			httpServerService.startService();
-			httpServerService.waitToStartup();
+			httpServerService.awaitStartup();
 			// ワーカースレッドマネージャを取得.
 			workerManager.set(
 				httpWorkerService.getNioWorkerThreadManager());
@@ -336,7 +336,7 @@ public class Quina {
 	 * 全てのQuinaサービスが起動済みになるまで待機.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public Quina waitToStarted() {
+	public Quina awaitStarted() {
 		// 全てのQuinaサービスが起動済みになるまで待機.
 		while(!isExit()) {
 			QuinaUtil.sleep(50L);
@@ -352,15 +352,15 @@ public class Quina {
 		// 基本サービスを停止.
 		// 最初にサーバ停止で、次にワーカー停止.
 		httpServerService.stopService();
-		httpServerService.waitToExit();
+		httpServerService.awaitExit();
 		httpWorkerService.stopService();
-		httpWorkerService.waitToExit();
+		httpWorkerService.awaitExit();
 		// 登録されたサービスを後ろから停止.
 		QuinaService qs;
 		final int len = quinaServiceManager.size();
 		for(int i = len - 1; i >= 0; i ++) {
 			(qs = quinaServiceManager.get(i)).stopService();
-			qs.waitToExit();
+			qs.awaitExit();
 		}
 		return this;
 	}
@@ -386,7 +386,7 @@ public class Quina {
 	 * 全てのQuinaサービスが停止完了するまで待機.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public Quina waitTo() {
+	public Quina await() {
 		// シャットダウンマネージャが開始されていない場合.
 		if(!shutdownManager.getInfo().isStart()) {
 			// シャットダウンマネージャを開始.
@@ -458,7 +458,7 @@ public class Quina {
 	}
 
 	/**
-	 * HttpServerCallを取得.
+	 * 登録されているHttpServerCallを取得.
 	 * @return HttpServerCall HttpServerCallが返却されます.
 	 */
 	public HttpServerCall getHttpServerCall() {

@@ -43,10 +43,10 @@ import quina.net.nio.tcp.Wait;
  *       action.resolve(value + " def");
  *   })
  *   .start(response);
- *   return p.waitTo();
+ *   return p.await();
  * })
  * .start()
- * .waitTo();
+ * .await();
  */
 public class Promise {
 	// 初期起動用コール.
@@ -164,7 +164,7 @@ public class Promise {
 			// 実行されたPromise群の待機.
 			for(i = 0; i < len; i ++) {
 				// それぞれの処理結果を取得.
-				params[i] = list[i].waitTo();
+				params[i] = list[i].await();
 				// reject条件を検知した場合はリジェクト内容を返却.
 				if(list[i].getStatus() == PromiseStatus.Rejected) {
 					action.reject(params[i]);
@@ -200,7 +200,7 @@ public class Promise {
 			for(i = 0; i < len; i ++) {
 				// 待機結果をリスト取得.
 				params[i] = new PromiseElement(
-					list[i].getStatus(), list[i].waitTo());
+					list[i].getStatus(), list[i].await());
 			}
 			// 処理結果群を次の非同期処理に提供.
 			action.resolve(params);
@@ -241,9 +241,9 @@ public class Promise {
 				p = list[i];
 				// 終了まで待機して、対象Promiseが終了している場合は
 				// その内容を返却する.
-				if(p.action.waitTo(null, -1L)) {
+				if(p.action.await(null, -1L)) {
 					if(p.isExit() && p.getStatus() == PromiseStatus.Fulfilled) {
-						action.resolve(p.waitTo());
+						action.resolve(p.await());
 						break;
 					}
 				}
@@ -287,12 +287,12 @@ public class Promise {
 				p = list[i];
 				// 終了まで待機して、対象Promiseが終了している場合は
 				// その内容を返却する.
-				if(p.action.waitTo(null, -1L)) {
+				if(p.action.await(null, -1L)) {
 					if(p.isExit()) {
 						if(p.getStatus() == PromiseStatus.Fulfilled) {
-							action.resolve(p.waitTo());
+							action.resolve(p.await());
 						} else {
-							action.reject(p.waitTo());
+							action.reject(p.await());
 						}
 						break;
 					}
@@ -403,8 +403,8 @@ public class Promise {
 	 * Promise処理終了まで待機する.
 	 * @return Object 処理結果が返却されます.
 	 */
-	public Object waitTo() {
-		return action.waitTo();
+	public Object await() {
+		return action.await();
 	}
 
 	/**

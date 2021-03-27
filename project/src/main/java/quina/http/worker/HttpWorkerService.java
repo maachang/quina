@@ -88,9 +88,9 @@ public class HttpWorkerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized boolean waitToStartup(long timeout) {
+	public synchronized boolean awaitStartup(long timeout) {
 		if(manager != null) {
-			return manager.waitToStartup(timeout);
+			return manager.awaitStartup(timeout);
 		}
 		return false;
 	}
@@ -121,9 +121,9 @@ public class HttpWorkerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized boolean waitToExit(long timeout) {
+	public synchronized boolean awaitExit(long timeout) {
 		if(manager != null) {
-			if(manager.waitToExit(timeout)) {
+			if(manager.awaitExit(timeout)) {
 				manager = null;
 				return true;
 			}

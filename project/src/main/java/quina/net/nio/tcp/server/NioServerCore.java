@@ -172,8 +172,8 @@ public class NioServerCore extends Thread {
 	 * スレッド開始完了まで待機.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToStartup() {
-		return waitToStartup(-1L);
+	public boolean awaitStartup() {
+		return awaitStartup(-1L);
 	}
 
 	/**
@@ -182,16 +182,16 @@ public class NioServerCore extends Thread {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToStartup(long timeout) {
-		return NioUtil.waitTo(timeout, startupFlag);
+	public boolean awaitStartup(long timeout) {
+		return NioUtil.await(timeout, startupFlag);
 	}
 
 	/**
 	 * スレッド終了まで待機.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToExit() {
-		return waitToExit(-1L);
+	public boolean awaitExit() {
+		return awaitExit(-1L);
 	}
 
 	/**
@@ -200,8 +200,8 @@ public class NioServerCore extends Thread {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToExit(long timeout) {
-		return NioUtil.waitTo(timeout, exitFlag);
+	public boolean awaitExit(long timeout) {
+		return NioUtil.await(timeout, exitFlag);
 	}
 
 	/**

@@ -123,8 +123,8 @@ public class NioWorkerThread extends Thread {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToStartup() {
-		return NioUtil.waitTo(-1L, startThreadFlag);
+	public boolean awaitStartup() {
+		return NioUtil.await(-1L, startThreadFlag);
 	}
 
 	/**
@@ -133,16 +133,16 @@ public class NioWorkerThread extends Thread {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToStartup(long timeout) {
-		return NioUtil.waitTo(timeout, startThreadFlag);
+	public boolean awaitStartup(long timeout) {
+		return NioUtil.await(timeout, startThreadFlag);
 	}
 
 	/**
 	 * スレッド終了まで待機.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToExit() {
-		return NioUtil.waitTo(-1L, endThreadFlag);
+	public boolean awaitExit() {
+		return NioUtil.await(-1L, endThreadFlag);
 	}
 
 	/**
@@ -151,8 +151,8 @@ public class NioWorkerThread extends Thread {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToExit(long timeout) {
-		return NioUtil.waitTo(timeout, endThreadFlag);
+	public boolean awaitExit(long timeout) {
+		return NioUtil.await(timeout, endThreadFlag);
 	}
 
 	/**

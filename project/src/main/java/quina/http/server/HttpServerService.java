@@ -110,9 +110,9 @@ public class HttpServerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized boolean waitToStartup(long timeout) {
+	public synchronized boolean awaitStartup(long timeout) {
 		if(core != null) {
-			return core.waitToStartup();
+			return core.awaitStartup();
 		}
 		return true;
 	}
@@ -135,9 +135,9 @@ public class HttpServerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized boolean waitToExit(long timeout) {
+	public synchronized boolean awaitExit(long timeout) {
 		if(core != null) {
-			if(core.waitToExit()) {
+			if(core.awaitExit()) {
 				core = null;
 				return true;
 			}

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import quina.QuinaException;
 import quina.json.Json;
+import quina.util.Alphabet;
 import quina.util.BooleanUtil;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
@@ -13,7 +14,7 @@ import quina.util.StringUtil;
 /**
  * Validateタイプ.
  */
-public enum VType {
+public enum VT {
 	String(1, "string"),
 	Boolean(2, "boolean"),
 	Number(10, "number"),
@@ -27,13 +28,13 @@ public enum VType {
 	private int type;
 	private String name;
 
-	private VType(int type, String name) {
+	private VT(int type, String name) {
 		this.type = type;
 		this.name = name;
 	}
 
 	/**
-	 * タイプを取得.
+	 * タイプのIDを取得.
 	 * @return
 	 */
 	public int getType() {
@@ -58,24 +59,24 @@ public enum VType {
 	 * @param type 文字列を設定します.
 	 * @return VType VTypeが返却されます.
 	 */
-	public static final VType getStringByVType(String type) {
-		if ("string".equals(type)) {
+	public static final VT getStringByVType(String type) {
+		if (Alphabet.eqArray(type, "str", "string") != -1) {
 			return String;
-		} else if ("number".equals(type)) {
+		} else if (Alphabet.eqArray(type, "num", "number") != -1) {
 			return Number;
-		} else if ("int".equals(type) || "integer".equals(type)) {
+		} else if (Alphabet.eqArray(type, "int", "integer") != -1) {
 			return Integer;
-		} else if ("long".equals(type)) {
+		} else if (Alphabet.eq(type, "long")) {
 			return Long;
-		} else if ("float".equals(type) || "double".equals(type)) {
+		} else if (Alphabet.eqArray(type, "float", "double") != -1) {
 			return Float;
-		} else if ("date".equals(type)) {
+		} else if (Alphabet.eq(type, "date")) {
 			return Date;
-		} else if ("bool".equals(type) || "boolean".equals(type)) {
+		} else if (Alphabet.eqArray(type, "bool", "boolean") != -1) {
 			return Boolean;
-		} else if ("map".equals(type)) {
+		} else if (Alphabet.eq(type, "map")) {
 			return Map;
-		} else if ("array".equals(type) || "list".equals(type)) {
+		} else if (Alphabet.eqArray(type, "array", "list") != -1) {
 			return List;
 		} else {
 			return String;
@@ -88,7 +89,7 @@ public enum VType {
 	 * @param value 変換対象のvalueを設定します.
 	 * @return Object 変換結果が返却されます.
 	 */
-	public static final Object convert(VType type, Object value) {
+	public static final Object convert(VT type, Object value) {
 		return convert(type, null, value);
 	}
 
@@ -99,7 +100,7 @@ public enum VType {
 	 * @param value 変換対象のvalueを設定します.
 	 * @return Object 変換結果が返却されます.
 	 */
-	public static final Object convert(VType type, String column, Object value) {
+	public static final Object convert(VT type, String column, Object value) {
 		try {
 			if (value == null) {
 				value = null;

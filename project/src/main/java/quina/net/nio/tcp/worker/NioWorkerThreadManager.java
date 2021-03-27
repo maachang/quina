@@ -115,7 +115,7 @@ public class NioWorkerThreadManager {
 	}
 
 	// 開始・終了完了待機処理.
-	private static final boolean waitTo(
+	private static final boolean await(
 		NioWorkerThread[] threads, boolean startup, long timeout) {
 		int i;
 		int count;
@@ -158,8 +158,8 @@ public class NioWorkerThreadManager {
 	 * スレッド開始完了まで待機.
 	 * @return boolean [true]の場合、正しく完了しました.
 	 */
-	public boolean waitToStartup() {
-		return waitTo(threads, true, -1L);
+	public boolean awaitStartup() {
+		return await(threads, true, -1L);
 	}
 
 	/**
@@ -168,16 +168,16 @@ public class NioWorkerThreadManager {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく完了しました.
 	 */
-	public boolean waitToStartup(long timeout) {
-		return waitTo(threads, true, timeout);
+	public boolean awaitStartup(long timeout) {
+		return await(threads, true, timeout);
 	}
 
 	/**
 	 * スレッド終了まで待機.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToExit() {
-		return waitTo(threads, false, -1L);
+	public boolean awaitExit() {
+		return await(threads, false, -1L);
 	}
 
 	/**
@@ -186,8 +186,8 @@ public class NioWorkerThreadManager {
 	 *                0以下を設定した場合、無限に待ちます.
 	 * @return boolean [true]の場合、正しく終了しました.
 	 */
-	public boolean waitToExit(long timeout) {
-		return waitTo(threads, false, timeout);
+	public boolean awaitExit(long timeout) {
+		return await(threads, false, timeout);
 	}
 
 	/**

@@ -44,11 +44,11 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	protected final AtomicObject<PromiseStatus> status =
 		new AtomicObject<PromiseStatus>(PromiseStatus.Pending);
 
-	// waitToで返却される情報.
+	// awaitで返却される情報.
 	protected final AtomicObject<Object> lastValue =
 		new AtomicObject<Object>(null);
 
-	// waitToで返却される情報が設定されたかフラグ設定.
+	// awaitで返却される情報が設定されたかフラグ設定.
 	protected final Flag lastValueFlag = new Flag(false);
 
 	// promise開始フラグ.
@@ -200,7 +200,7 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 					// エラーは無視.
 				}
 			}
-			// waitToの解除.
+			// awaitの解除.
 			if(waitAllFlag) {
 				// waitAllFlagが[true]の場合はsignalAll呼び出し.
 				waitObject.signalAll();
@@ -403,11 +403,11 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	 * 処理終了まで待機する.
 	 * @return Object 処理結果が返却されます.
 	 */
-	protected Object waitTo() {
+	protected Object await() {
 		// Promiseが終了していない場合.
 		if(!exitPromiseFlag.get()) {
 			// await待機.
-			// ワーカースレッドが停止した場合はwaitToを取りやめる.
+			// ワーカースレッドが停止した場合はawaitを取りやめる.
 			while(!(waitObject.await(100L) ||
 				Quina.get().isStopWorker()));
 			// 終了した時の返信パラメータをセット.
@@ -424,7 +424,7 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	 * @param time 待機時間をミリ秒で設定します.
 	 * @return boolean trueの場合、処理は終了しています.
 	 */
-	protected boolean waitTo(Object[] out, long time) {
+	protected boolean await(Object[] out, long time) {
 		// Promiseが終了していない場合.
 		if(!exitPromiseFlag.get()) {
 			// 待機処理を実施.

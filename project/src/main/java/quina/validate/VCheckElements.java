@@ -66,12 +66,12 @@ final class VCheckElements {
 	 * @param vtype このValidateの変換型情報を設定します.
 	 * @param validate validateチェック条件を設定します.
 	 */
-	public VCheckElements(VType vtype, String validate) {
+	public VCheckElements(VT vtype, String validate) {
 		analysis(list, vtype, validate);
 	}
 
 	// Validateチェック条件を解析.
-	private static final void analysis(List<VCheckElement> out, VType type, String validate) {
+	private static final void analysis(List<VCheckElement> out, VT type, String validate) {
 		if (!StringUtil.useString(validate) || Alphabet.eq("none", validate)) {
 			// 条件が空か"none"の場合はチェックしない.
 			out.clear();
@@ -116,15 +116,15 @@ final class VCheckElements {
 					v1 = Pattern.compile(list.get(++pos));
 				} else {
 					// 正規表現以外の場合は型に合わせたデータ変換.
-					v1 = VType.convert(type, list.get(++pos));
+					v1 = VT.convert(type, list.get(++pos));
 				}
 				out.add(new VCheckElement(vc, notFlag, v1));
 				v1 = null;
 				notFlag = false;
 			// Validateチェックタイプのパラメータが2個の場合.
 			} else if(vc.getArgsLength() == 2) {
-				v1 = VType.convert(type, list.get(++pos));
-				v2 = VType.convert(type, list.get(++pos));
+				v1 = VT.convert(type, list.get(++pos));
+				v2 = VT.convert(type, list.get(++pos));
 				out.add(new VCheckElement(vc, notFlag, v1, v2));
 				v1 = null; v2 = null;
 				notFlag = false;
@@ -143,7 +143,7 @@ final class VCheckElements {
 	 * @param value
 	 * @return
 	 */
-	public Object check(VType vtype, String column, Object value) {
+	public Object check(VT vtype, String column, Object value) {
 		VCheckElement em;
 		final int len = list.size();
 		for(int i = 0; i < len; i ++) {
@@ -212,9 +212,9 @@ final class VCheckElements {
 	}
 
 	// null.
-	private static final Object isNull(VCheckElement em, VType vtype, String column, Object value) {
+	private static final Object isNull(VCheckElement em, VT vtype, String column, Object value) {
 		boolean res;
-		if(VType.String.equals(vtype)) {
+		if(VT.String.equals(vtype)) {
 			// 文字列の場合はnullか空の場合はデフォルト定義.
 			res = (value == null || value.toString().isEmpty());
 		} else {
@@ -275,12 +275,12 @@ final class VCheckElements {
 
 	// min [number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object min(VCheckElement em, boolean eq, VType vtype, String column, Object value) {
+	private static final Object min(VCheckElement em, boolean eq, VT vtype, String column, Object value) {
 		if (value == null) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is null.");
 		}
-		Comparable s = (Comparable)VType.convert(vtype, column, value);
+		Comparable s = (Comparable)VT.convert(vtype, column, value);
 		Comparable d = (Comparable)em.getArgs()[0];
 		// valueの方が大きい場合はエラー.
  		if((eq && (s.compareTo(d) >= 0) == em.isNot()) ||
@@ -293,12 +293,12 @@ final class VCheckElements {
 
 	// max [number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object max(VCheckElement em, boolean eq, VType vtype, String column, Object value) {
+	private static final Object max(VCheckElement em, boolean eq, VT vtype, String column, Object value) {
 		if (value == null) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is null.");
 		}
-		Comparable s = (Comparable)VType.convert(vtype, column, value);
+		Comparable s = (Comparable)VT.convert(vtype, column, value);
 		Comparable d = (Comparable)em.getArgs()[0];
 		// valueの方が小さい場合はエラー.
 		if((eq && (s.compareTo(d) <= 0) == em.isNot()) ||
@@ -311,12 +311,12 @@ final class VCheckElements {
 
 	// range [number number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object range(VCheckElement em, VType vtype, String column, Object value) {
+	private static final Object range(VCheckElement em, VT vtype, String column, Object value) {
 		if (value == null) {
 			throw new ValidateException(400,
 				"The value of '" + column + "' is null.");
 		}
-		Comparable s = (Comparable)VType.convert(vtype, column, value);
+		Comparable s = (Comparable)VT.convert(vtype, column, value);
 		Comparable d1 = (Comparable)em.getArgs()[0];
 		Comparable d2 = (Comparable)em.getArgs()[1];
 		// valueが範囲外の場合はエラー.
@@ -328,8 +328,8 @@ final class VCheckElements {
 	}
 
 	// default [value].
-	private static final Object defaultValue(VCheckElement em, VType vtype, String column, Object value) {
-		if(VType.String.equals(vtype)) {
+	private static final Object defaultValue(VCheckElement em, VT vtype, String column, Object value) {
+		if(VT.String.equals(vtype)) {
 			// 文字列の場合はnullか空の場合はデフォルト定義.
 			if(value == null || value.toString().isEmpty()) {
 				return em.getArgs()[0];

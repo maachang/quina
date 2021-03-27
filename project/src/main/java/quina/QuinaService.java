@@ -47,8 +47,8 @@ public interface QuinaService {
 	 * サービスが起動完了するまで待機します.
 	 * @return boolean [true]の場合、正しくサービスの起動完了が確認されました.
 	 */
-	default boolean waitToStartup() {
-		return waitToStartup(-1L);
+	default boolean awaitStartup() {
+		return awaitStartup(-1L);
 	}
 
 	/**
@@ -57,7 +57,7 @@ public interface QuinaService {
 	 *                0以下を設定した場合は、無限に待ちます.
 	 * @return boolean [true]の場合、正しくサービスの起動完了が確認されました.
 	 */
-	default boolean waitToStartup(long timeout) {
+	default boolean awaitStartup(long timeout) {
 		return true;
 	}
 
@@ -78,8 +78,8 @@ public interface QuinaService {
 	 * サービスの終了が完了するまで待機します.
 	 * @return boolean [true]の場合、正しくサービス終了が完了しました.
 	 */
-	default boolean waitToExit() {
-		return waitToExit(-1L);
+	default boolean awaitExit() {
+		return awaitExit(-1L);
 	}
 
 	/**
@@ -88,7 +88,7 @@ public interface QuinaService {
 	 *                0以下を設定した場合は、無限に待ちます.
 	 * @return boolean [true]の場合、正しくサービス終了が完了しました.
 	 */
-	default boolean waitToExit(long timeout) {
+	default boolean awaitExit(long timeout) {
 		return true;
 	}
 }

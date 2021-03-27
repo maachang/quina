@@ -1,26 +1,56 @@
 package quina.net.nio.tcp;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.util.AtomicNumber;
 
 /**
  * Atomicにデータ受信を行うためのNio受信用バッファ.
  */
 public class NioAsyncBuffer {
+	// データ管理.
 	private final Queue<byte[]> buffer = new ConcurrentLinkedQueue<byte[]>();
+	// 現在のデータ長.
 	private final AtomicNumber bufferLength = new AtomicNumber(0);
+	// 現在読み込み中のバイナリ情報.
 	private byte[] topBuffer = null;
 
+	// OutputStream利用時のクローズ処理呼び出しフラグ.
+	private final Bool isCloseOutputStream = new Bool(false);
+
+	// クローズ処理実行フラグ.
+	private final Bool closeFlag = new Bool(false);
+
 	/**
-	 * データクリア.
+	 * クローズ処理.
 	 */
-	public void clear() {
+	public void close() {
+		isCloseOutputStream.set(true);
+		closeFlag.set(true);
 		topBuffer = null;
 		buffer.clear();
 		bufferLength.set(0);
+	}
+
+	/**
+	 * クローズしたかチェック.
+	 * @return boolean trueの場合、クローズしています.
+	 */
+	public boolean isClose() {
+		return closeFlag.get();
+	}
+
+	// クローズ確認.
+	protected void checkClose() {
+		if(closeFlag.get()) {
+			throw new NioException("It's already closed.");
+		}
 	}
 
 	/**
@@ -29,6 +59,7 @@ public class NioAsyncBuffer {
 	 * @return
 	 */
 	public int size() {
+		checkClose();
 		return bufferLength.get();
 	}
 
@@ -38,6 +69,7 @@ public class NioAsyncBuffer {
 	 * @param buf
 	 */
 	public void write(ByteBuffer buf) {
+		checkClose();
 		final int bufLen = buf.remaining();
 		if (bufLen <= 0) {
 			return;
@@ -75,6 +107,7 @@ public class NioAsyncBuffer {
 	 * @param len
 	 */
 	public void write(byte[] b, int off, int len) {
+		checkClose();
 		final byte[] bin = new byte[len];
 		System.arraycopy(b, off, bin, 0, len);
 		buffer.offer(bin);
@@ -111,11 +144,11 @@ public class NioAsyncBuffer {
 	 * @return
 	 */
 	public int read(byte[] b, int off, int len) {
+		checkClose();
 		int bufLen, etcLen;
 		int ret = 0;
 		byte[] etcBuf;
 		byte[] buf = null;
-
 		// 前回読み込み中のTOPデータが存在する場合.
 		buf = topBuffer;
 		topBuffer = null;
@@ -170,6 +203,7 @@ public class NioAsyncBuffer {
 	 * @return
 	 */
 	public int skip(int len) {
+		checkClose();
 		int bufLen, etcLen;
 		int ret = 0;
 		byte[] etcBuf;
@@ -234,6 +268,7 @@ public class NioAsyncBuffer {
 	 * @return
 	 */
 	public int indexOf(byte[] index, int pos) {
+		checkClose();
 		int i, j, bufLen, startPos, off;
 		int bp, np;
 		int cnt = 0;
@@ -329,5 +364,267 @@ public class NioAsyncBuffer {
 			off = 0;
 		}
 		return -1;
+	}
+
+	/**
+	 * InputStreamを取得.
+	 * @return InputStream InputStreamが返却されます.
+	 * @throws IOException
+	 */
+	public InputStream getInputStream() throws IOException {
+		return new AsyncBufferInputStream(this);
+	}
+
+	/**
+	 * OutputStreamを取得.
+	 * @return OutputStreamが返却されます.
+	 * @throws IOException
+	 */
+	public OutputStream getOutputStream() throws IOException {
+		return new AsyncBufferOutputStream(this);
+	}
+
+	// InputStream.
+	private static final class AsyncBufferInputStream extends InputStream {
+		private NioAsyncBuffer buffer;
+		/**
+		 * コンストラクタ.
+		 * @param buffer 対象のByteArrayBufferを設定します.
+		 * @exception IOException I/O例外.
+		 */
+		public AsyncBufferInputStream(NioAsyncBuffer buffer)
+			throws IOException {
+			if(buffer == null) {
+				throw new NullPointerException();
+			} else if(buffer.isClose()) {
+				throw new IOException("NioAsyncBuffer is already closed.");
+			}
+			this.buffer = buffer;
+		}
+
+		/**
+		 * 情報クローズ.
+		 *
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public void close() throws IOException {
+			this.buffer = null;
+		}
+
+		// クローズ確認.
+		private void checkClose() {
+			if(this.buffer == null || this.buffer.closeFlag.get()) {
+				throw new NioException("It's already closed.");
+			}
+		}
+
+		// read() 用のバイナリ.
+		private final byte[] b1 = new byte[1];
+
+		/**
+		 * 情報の取得.
+		 *
+		 * @return int １バイトのバイナリの内容が返却されます.
+		 *             -1 の場合 EOF に達しました.
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public int read() throws IOException {
+			checkClose();
+			byte[] b = b1;
+			int res = this.buffer.read(b, 0, 1);
+			if(res <= 0) {
+				if(this.buffer.isCloseOutputStream.get()) {
+					return -1;
+				}
+				return 0;
+			}
+			return (b[0] & 0x000000ff);
+		}
+
+		/**
+		 * 情報の取得.
+		 *
+		 * @param buf
+		 *            対象のバッファ情報を設定します.
+		 * @return int 取得された情報長が返却されます.
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public int read(byte b[]) throws IOException {
+			checkClose();
+			final int res = this.buffer.read(b, 0, b.length);
+			if(res <= 0) {
+				if(this.buffer.isCloseOutputStream.get()) {
+					return -1;
+				}
+				return 0;
+			}
+			return res;
+		}
+
+		/**
+		 * 情報の取得.
+		 *
+		 * @param buf
+		 *            対象のバッファ情報を設定します.
+		 * @param off
+		 *            対象のオフセット値を設定します.
+		 * @param len
+		 *            対象の長さを設定します.
+		 * @return int 取得された情報長が返却されます.
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public int read(byte b[], int off, int len)
+			throws IOException {
+			checkClose();
+			final int res = this.buffer.read(b, off, len);
+			if(res <= 0) {
+				if(this.buffer.isCloseOutputStream.get()) {
+					return -1;
+				}
+				return 0;
+			}
+			return res;
+		}
+
+		/**
+		 * データスキップ.
+		 *
+		 * @parma len スキップするデータ長を設定します.
+		 * @return long 実際にスキップされた数が返却されます.
+		 *             [-1L]が返却された場合、オブジェクトはクローズしています.
+		 */
+		@Override
+		public long skip(long n) throws IOException {
+			checkClose();
+			final long res = this.skip(n);
+			if(res <= 0L) {
+				if(this.buffer.isCloseOutputStream.get()) {
+					return -1L;
+				}
+				return 0L;
+			}
+			return res;
+		}
+
+		/**
+		 * 読み取り可能なデータ数を取得.
+		 * @return int 読み取り可能データ数が返却されます.
+		 */
+		@Override
+		public int available() throws IOException {
+			checkClose();
+			return this.buffer.size();
+		}
+	}
+
+	// OutputStream.
+	private static final class AsyncBufferOutputStream extends OutputStream {
+		private NioAsyncBuffer buffer;
+
+		/**
+		 * コンストラクタ.
+		 * @param buffer 対象のByteArrayBufferを設定します.
+		 * @exception IOException I/O例外.
+		 */
+		public AsyncBufferOutputStream(NioAsyncBuffer buffer)
+			throws IOException {
+			if(buffer == null) {
+				throw new NullPointerException();
+			} else if(buffer.isClose()) {
+				throw new IOException("NioAsyncBuffer is already closed.");
+			}
+			this.buffer = buffer;
+		}
+
+		/**
+		 * 情報クローズ.
+		 *
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public void close() throws IOException {
+			if(this.buffer != null) {
+				this.buffer.isCloseOutputStream.set(true);
+			}
+			this.buffer = null;
+		}
+
+		// クローズ確認.
+		private void checkClose() {
+			if(this.buffer == null || this.buffer.closeFlag.get()) {
+				throw new NioException("It's already closed.");
+			}
+		}
+
+		/**
+		 * フラッシュ.
+		 *
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public void flush() throws IOException {
+			checkClose();
+		}
+
+		// read() 用のバイナリ.
+		private final byte[] b1 = new byte[1];
+
+		/**
+		 * データセット.
+		 *
+		 * @param b
+		 *            対象のバイナリ情報を設定します.
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public void write(int b) throws IOException {
+			checkClose();
+			b1[0] = (byte)b;
+			this.buffer.write(b1);
+		}
+
+		/**
+		 * データセット.
+		 *
+		 * @param bin
+		 *            対象のバイナリを設定します.
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public void write(byte[] bin) throws IOException {
+			checkClose();
+			this.buffer.write(bin, 0, bin.length);
+		}
+
+		/**
+		 * データセット.
+		 *
+		 * @param bin
+		 *            対象のバイナリを設定します.
+		 * @param off
+		 *            対象のオフセット値を設定します.
+		 * @param len
+		 *            対象のデータ長を設定します.
+		 * @exception IOException
+		 *                例外.
+		 */
+		@Override
+		public void write(byte[] bin, int off, int len)
+			throws IOException {
+			checkClose();
+			this.buffer.write(bin, off, len);
+		}
 	}
 }

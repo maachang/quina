@@ -342,7 +342,7 @@ public final class NioUtil {
 	 * @param flg 判別するフラグオブジェクトを設定します.
 	 * @return boolean [false]の場合、タイムアウトが発生しました.
 	 */
-	public static final boolean waitTo(long timeout, Flag flg) {
+	public static final boolean await(long timeout, Flag flg) {
 		if(!flg.get()) {
 			long first = -1L;
 			if(timeout > 0L) {
@@ -366,7 +366,7 @@ public final class NioUtil {
 	 * @param flg 判別するフラグオブジェクトを設定します.
 	 * @return boolean [false]の場合、タイムアウトが発生しました.
 	 */
-	public static final boolean waitTo(long timeout, Bool flg) {
+	public static final boolean await(long timeout, Bool flg) {
 		if(!flg.get()) {
 			long first = -1L;
 			if(timeout > 0L) {

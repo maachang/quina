@@ -7,6 +7,7 @@ import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
 import quina.promise.Promise;
+import quina.validate.VT;
 import quina.validate.Validation;
 
 /**
@@ -54,8 +55,8 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
 		.route("/hoge/moge/${id}/a/${name}/",
 			new Validation(
-				"id", "number", ">= 10"
-				,"name", "string", "default 'mo_|_ge'"
+				"id", VT.Number, ">= 10"
+				,"name", VT.String, "default 'mo_|_ge'"
 			),
 			(RESTfulGetSync)(req, res, params) -> {
 				return new ResultJson("params", params);
@@ -93,7 +94,7 @@ public class QuinaTest {
 				//Thread.sleep(10000L);
 				action.resolve(value);
 			});
-			Object o = p.start(res).waitTo();
+			Object o = p.start(res).await();
 			//System.out.println("o: " + o);
 			res.setContentType("text/html");
 			res.send("" + o);
@@ -140,7 +141,7 @@ public class QuinaTest {
 		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));
 
 		// quinaを開始して、終了まで待機する.
-		quina.start().waitTo();
+		quina.start().await();
 
 		System.out.println("## exit QuinaTest.");
 	}
