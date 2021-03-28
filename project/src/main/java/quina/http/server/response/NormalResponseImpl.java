@@ -8,8 +8,8 @@ import quina.http.Response;
 /**
  * 標準的なレスポンス実装.
  */
-public class NormalResponseImpl extends AbstractResponse<NormalResponseImpl>
-	implements NormalResponse<NormalResponseImpl> {
+public class NormalResponseImpl extends AbstractResponse<NormalResponse>
+	implements NormalResponse {
 
 	/***
 	 * コンストラクタ.

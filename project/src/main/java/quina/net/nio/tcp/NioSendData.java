@@ -47,4 +47,10 @@ public interface NioSendData extends Closeable {
 	 * @return boolean true の場合空です.
 	 */
 	public boolean isEmpty();
+
+	/**
+	 * 送信完了かチェック.
+	 * @return boolean true の場合送信完了です.
+	 */
+	public boolean isSendEnd();
 }

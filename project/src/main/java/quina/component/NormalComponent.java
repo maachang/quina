@@ -26,7 +26,7 @@ public interface NormalComponent extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
-		call(req, (NormalResponse<?>)res);
+		call(req, (NormalResponse)res);
 	}
 
 	/**
@@ -34,5 +34,5 @@ public interface NormalComponent extends Component {
 	 * @param req HttpRequestが設定されます.
 	 * @param res NormalResponseが設定されます.
 	 */
-	public void call(Request req, NormalResponse<?> res);
+	public void call(Request req, NormalResponse res);
 }

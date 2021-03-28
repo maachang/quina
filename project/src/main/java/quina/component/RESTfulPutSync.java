@@ -39,7 +39,7 @@ public interface RESTfulPutSync extends Component {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		final Object o = put(req, (SyncResponse<?>)res, req.getParams());
+		final Object o = put(req, (SyncResponse)res, req.getParams());
 		// 送信なしを示す場合.
 		if(NOSEND == o) {
 			return;
@@ -56,5 +56,5 @@ public interface RESTfulPutSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public abstract Object put(Request req, SyncResponse<?> res, Params params);
+	public abstract Object put(Request req, SyncResponse res, Params params);
 }

@@ -72,4 +72,14 @@ abstract class AbstractNioSendData implements NioSendData {
 		check();
 		return remaining() == 0L;
 	}
+
+	/**
+	 * 送信完了かチェック.
+	 * @return boolean true の場合送信完了です.
+	 */
+	@Override
+	public boolean isSendEnd() {
+		check();
+		return remaining() == 0L;
+	}
 }

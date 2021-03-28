@@ -10,12 +10,12 @@ import quina.http.furnishing.JsonSendResponse;
 /**
  * RESTful用のレスポンス.
  */
-public interface RESTfulResponse<T> extends
-	Response<T>,
-	BaseSendResponse<T>,
-	EmptySendResponse<T>,
-	JsonSendResponse<T>,
-	ErrorSendResponse<T> {
+public interface RESTfulResponse extends
+	Response<RESTfulResponse>,
+	BaseSendResponse<RESTfulResponse>,
+	EmptySendResponse<RESTfulResponse>,
+	JsonSendResponse<RESTfulResponse>,
+	ErrorSendResponse<RESTfulResponse> {
 
 	/**
 	 * コンポーネントタイプを取得.
@@ -29,7 +29,7 @@ public interface RESTfulResponse<T> extends
 	 * 送信処理.
 	 * @return T オブジェクトが返却されます.
 	 */
-	default T send() {
+	default RESTfulResponse send() {
 		setContentType(JsonSendResponse.JSON_CONTENT_TYPE);
 		return EmptySendResponse.super.send();
 	}

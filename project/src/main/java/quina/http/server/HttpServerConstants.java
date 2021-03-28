@@ -2,6 +2,7 @@ package quina.http.server;
 
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.net.nio.tcp.NioConstants;
 
 /**
  * HttpServer用定義.
@@ -12,11 +13,14 @@ public class HttpServerConstants {
 	// HttpResponseのNoCacheのデフォルトモード.
 	private static final boolean DEF_NO_CACHE_MODE = true;
 
+	// デフォルトのgzip圧縮モード.
+	private static final boolean DEF_GZIP_MODE = false;
+
 	// [Browser]でのCrossDomain対応のデフォルト値.
 	private static final boolean DEF_CROSS_DOMAIN_MODE = true;
 
 	// チャング送信での１つの塊のバッファサイズデフォルト値.
-	private static final int DEF_SEND_CHUNKED_BUFFER_LENGTH = 4096;
+	private static final int DEF_SEND_CHUNKED_BUFFER_LENGTH = NioConstants.getBufferSize();
 
 	// サーバーソケットのバインドポート番号.
 	private static final int DEF_BIND_SERVER_SOCKET_PORT = 3333;
@@ -26,6 +30,9 @@ public class HttpServerConstants {
 
 	// HttpResponseのNoCacheのモード.
 	private static final Bool noCacheMode = new Bool(DEF_NO_CACHE_MODE);
+
+	// GZIP圧縮モード.
+	private static final Bool gzipMode = new Bool(DEF_GZIP_MODE);
 
 	// [Browser]でのCrossDomain対応のモード.
 	private static final Bool crossDomainMode = new Bool(DEF_CROSS_DOMAIN_MODE);
@@ -55,6 +62,22 @@ public class HttpServerConstants {
 	 */
 	public static final void setNoCacheMode(boolean mode) {
 		noCacheMode.set(mode);
+	}
+
+	/**
+	 * デフォルトのレスポンスGZIP圧縮モードを取得.
+	 * @return [true]の場合Requestが許可する場合、GZIP圧縮します.
+	 */
+	public static final boolean isGzipMode() {
+		return gzipMode.get();
+	}
+
+	/**
+	 * デフォルトのレスポンスGZIP圧縮モードをするか設定.
+	 * @param mode [true]の場合Requestが許可する場合、GZIP圧縮定義となります.
+	 */
+	public static final void setGzipMode(boolean mode) {
+		gzipMode.set(mode);
 	}
 
 	/**

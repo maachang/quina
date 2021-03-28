@@ -76,8 +76,7 @@ public class NioAsyncBuffer {
 		}
 		final byte[] bin = new byte[bufLen];
 		buf.get(bin);
-		buffer.offer(bin);
-		bufferLength.add(bin.length);
+		writeDirect(bin);
 	}
 
 	/**
@@ -110,8 +109,13 @@ public class NioAsyncBuffer {
 		checkClose();
 		final byte[] bin = new byte[len];
 		System.arraycopy(b, off, bin, 0, len);
-		buffer.offer(bin);
-		bufferLength.add(bin.length);
+		writeDirect(bin);
+	}
+
+	// 直接書き込み.
+	protected void writeDirect(byte[] b) {
+		buffer.offer(b);
+		bufferLength.add(b.length);
 	}
 
 	/**
@@ -381,7 +385,17 @@ public class NioAsyncBuffer {
 	 * @throws IOException
 	 */
 	public OutputStream getOutputStream() throws IOException {
-		return new AsyncBufferOutputStream(this);
+		return new AsyncBufferOutputStream(this, -1);
+	}
+
+	/**
+	 * OutputStreamを取得.
+	 * @param len １度に出力するバッファ長を設定します.
+	 * @return OutputStreamが返却されます.
+	 * @throws IOException
+	 */
+	public OutputStream getOutputStream(int len) throws IOException {
+		return new AsyncBufferOutputStream(this, len);
 	}
 
 	// InputStream.
@@ -413,11 +427,21 @@ public class NioAsyncBuffer {
 			this.buffer = null;
 		}
 
-		// クローズ確認.
-		private void checkClose() {
-			if(this.buffer == null || this.buffer.closeFlag.get()) {
+		// クローズ済みかチェック.
+		private boolean isClose(NioAsyncBuffer buf) {
+			if(buf == null || buf.isClose()) {
+				return true;
+			}
+			return false;
+		}
+
+		// クローズされてる場合は例外.
+		private NioAsyncBuffer checkClose() {
+			final NioAsyncBuffer buf = buffer;
+			if(isClose(buf)) {
 				throw new NioException("It's already closed.");
 			}
+			return buf;
 		}
 
 		// read() 用のバイナリ.
@@ -433,11 +457,11 @@ public class NioAsyncBuffer {
 		 */
 		@Override
 		public int read() throws IOException {
-			checkClose();
+			final NioAsyncBuffer buf = checkClose();
 			byte[] b = b1;
-			int res = this.buffer.read(b, 0, 1);
-			if(res <= 0) {
-				if(this.buffer.isCloseOutputStream.get()) {
+			int res = buf.read(b, 0, 1);
+			if(res == 0) {
+				if(buf.isCloseOutputStream.get()) {
 					return -1;
 				}
 				return 0;
@@ -456,10 +480,10 @@ public class NioAsyncBuffer {
 		 */
 		@Override
 		public int read(byte b[]) throws IOException {
-			checkClose();
-			final int res = this.buffer.read(b, 0, b.length);
-			if(res <= 0) {
-				if(this.buffer.isCloseOutputStream.get()) {
+			final NioAsyncBuffer buf = checkClose();
+			final int res = buf.read(b, 0, b.length);
+			if(res == 0) {
+				if(buf.isCloseOutputStream.get()) {
 					return -1;
 				}
 				return 0;
@@ -483,10 +507,10 @@ public class NioAsyncBuffer {
 		@Override
 		public int read(byte b[], int off, int len)
 			throws IOException {
-			checkClose();
-			final int res = this.buffer.read(b, off, len);
-			if(res <= 0) {
-				if(this.buffer.isCloseOutputStream.get()) {
+			final NioAsyncBuffer buf = checkClose();
+			final int res = buf.read(b, off, len);
+			if(res == 0) {
+				if(buf.isCloseOutputStream.get()) {
 					return -1;
 				}
 				return 0;
@@ -503,10 +527,10 @@ public class NioAsyncBuffer {
 		 */
 		@Override
 		public long skip(long n) throws IOException {
-			checkClose();
-			final long res = this.skip(n);
-			if(res <= 0L) {
-				if(this.buffer.isCloseOutputStream.get()) {
+			final NioAsyncBuffer buf = checkClose();
+			final long res = buf.skip((int)n);
+			if(res == 0L) {
+				if(buf.isCloseOutputStream.get()) {
 					return -1L;
 				}
 				return 0L;
@@ -520,28 +544,35 @@ public class NioAsyncBuffer {
 		 */
 		@Override
 		public int available() throws IOException {
-			checkClose();
-			return this.buffer.size();
+			final NioAsyncBuffer buf = checkClose();
+			return buf.size();
 		}
 	}
 
 	// OutputStream.
 	private static final class AsyncBufferOutputStream extends OutputStream {
 		private NioAsyncBuffer buffer;
+		private final byte[] outBuffer;
+		private int position;
 
 		/**
 		 * コンストラクタ.
 		 * @param buffer 対象のByteArrayBufferを設定します.
+		 * @param outBufferLen 出力バッファ長を設定します.
 		 * @exception IOException I/O例外.
 		 */
-		public AsyncBufferOutputStream(NioAsyncBuffer buffer)
+		public AsyncBufferOutputStream(NioAsyncBuffer buffer, int outBufferLen)
 			throws IOException {
 			if(buffer == null) {
 				throw new NullPointerException();
 			} else if(buffer.isClose()) {
 				throw new IOException("NioAsyncBuffer is already closed.");
 			}
+			if(outBufferLen < NioConstants.getBufferSize()) {
+				outBufferLen = NioConstants.getBufferSize();
+			}
 			this.buffer = buffer;
+			this.outBuffer = new byte[outBufferLen];
 		}
 
 		/**
@@ -553,16 +584,19 @@ public class NioAsyncBuffer {
 		@Override
 		public void close() throws IOException {
 			if(this.buffer != null) {
+				this.flush();
 				this.buffer.isCloseOutputStream.set(true);
 			}
 			this.buffer = null;
 		}
 
 		// クローズ確認.
-		private void checkClose() {
-			if(this.buffer == null || this.buffer.closeFlag.get()) {
+		private NioAsyncBuffer checkClose() {
+			NioAsyncBuffer buf = buffer;
+			if(buf == null || buf.isClose()) {
 				throw new NioException("It's already closed.");
 			}
+			return buf;
 		}
 
 		/**
@@ -573,11 +607,12 @@ public class NioAsyncBuffer {
 		 */
 		@Override
 		public void flush() throws IOException {
-			checkClose();
+			final NioAsyncBuffer buf = checkClose();
+			if(position > 0) {
+				buf.write(outBuffer, 0, position);
+				position = 0;
+			}
 		}
-
-		// read() 用のバイナリ.
-		private final byte[] b1 = new byte[1];
 
 		/**
 		 * データセット.
@@ -590,8 +625,10 @@ public class NioAsyncBuffer {
 		@Override
 		public void write(int b) throws IOException {
 			checkClose();
-			b1[0] = (byte)b;
-			this.buffer.write(b1);
+			if(outBuffer.length <= position) {
+				flush();
+			}
+			outBuffer[position ++] = (byte)b;
 		}
 
 		/**
@@ -604,8 +641,7 @@ public class NioAsyncBuffer {
 		 */
 		@Override
 		public void write(byte[] bin) throws IOException {
-			checkClose();
-			this.buffer.write(bin, 0, bin.length);
+			write(bin, 0, bin.length);
 		}
 
 		/**
@@ -623,8 +659,19 @@ public class NioAsyncBuffer {
 		@Override
 		public void write(byte[] bin, int off, int len)
 			throws IOException {
+			int wlen;
 			checkClose();
-			this.buffer.write(bin, off, len);
+			final int outBufferLen = outBuffer.length;
+			while(outBufferLen <= len + position) {
+				wlen = outBufferLen - position;
+				System.arraycopy(bin, off, outBuffer, position, wlen);
+				position += wlen;
+				flush();
+				off += wlen;
+				len -= wlen;
+			}
+			System.arraycopy(bin, off, outBuffer, position, len);
+			position += len;
 		}
 	}
 }

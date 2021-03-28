@@ -282,6 +282,9 @@ public class HttpServerCall extends NioServerCall {
 				HttpServerUtil.sendError(json, req, res, null);
 			}
 		} catch(Exception e) {
+			if(LOG.isErrorEnabled()) {
+				LOG.error("error (url: " + url + ")", e);
+			}
 			// エラー返却.
 			res = HttpServerUtil.defaultResponse(em, mimeTypes, res);
 			HttpServerUtil.sendError(json, req, res, e);

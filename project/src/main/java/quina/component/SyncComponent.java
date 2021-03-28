@@ -36,7 +36,7 @@ public interface SyncComponent extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
-		final Object ret = call(req, (SyncResponse<?>)res);
+		final Object ret = call(req, (SyncResponse)res);
 		// 送信なしを示す場合.
 		if(NOSEND == ret) {
 			return;
@@ -75,6 +75,6 @@ public interface SyncComponent extends Component {
 	 * @param res SyncResponseが設定されます.
 	 * @return Object 返却するオブジェクトを設定します.
 	 */
-	public Object call(Request req, SyncResponse<?> res);
+	public Object call(Request req, SyncResponse res);
 
 }

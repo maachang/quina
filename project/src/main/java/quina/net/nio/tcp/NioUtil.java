@@ -234,7 +234,7 @@ public final class NioUtil {
 		while (in != null && buf.hasRemaining()) {
 			len = in.read(buf);
 			// 終端を検知.
-			if (len == -1) {
+			if (len < 0) {
 				// 現在の sendData をクローズして次の情報を取得.
 				em.removeSendData();
 				try {

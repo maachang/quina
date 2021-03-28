@@ -61,6 +61,22 @@ public final class Json {
 		return old;
 	}
 
+	// StringBuilderを内包するJsonBuilder.
+	private static final class StringJsonBuilder implements JsonBuilder {
+		private StringBuilder buf = new StringBuilder();
+		@Override
+		public JsonBuilder append(String s) {
+			buf.append(s);
+			return this;
+		}
+		@Override
+		public String toString() {
+			String ret = buf.toString();
+			buf = null;
+			return ret;
+		}
+	}
+
 	/**
 	 * JSON変換.
 	 *
@@ -69,7 +85,18 @@ public final class Json {
 	 * @return String 変換されたJSON情報が返されます.
 	 */
 	public static final String encode(final Object target) {
-		final StringBuilder buf = new StringBuilder();
+		return encode(new StringJsonBuilder(), target);
+	}
+
+	/**
+	 * JSON変換.
+	 *
+	 * @param buf JsonBuilderを設定します.
+	 * @param target
+	 *            対象のターゲットオブジェクトを設定します.
+	 * @return String 変換されたJSON情報が返されます.
+	 */
+	public static final String encode(JsonBuilder buf, final Object target) {
 		_encode(buf, target, target);
 		return buf.toString();
 	}
@@ -133,7 +160,7 @@ public final class Json {
 
 	/** [encodeJSON]jsonコンバート. **/
 	private static final void _encode(
-		final StringBuilder buf, final Object base, final Object target) {
+		final JsonBuilder buf, final Object base, final Object target) {
 		final CustomJsonIO conv = convertJsonIO.get();
 		if (target == null) {
 			buf.append(conv.nullToString());
@@ -168,7 +195,7 @@ public final class Json {
 
 	/** [encodeJSON]jsonMapコンバート. **/
 	private static final void encodeJsonMap(
-		final StringBuilder buf, final Object base, final Map map) {
+		final JsonBuilder buf, final Object base, final Map map) {
 		String key;
 		Object value;
 		boolean flg = false;
@@ -192,7 +219,7 @@ public final class Json {
 
 	/** [encodeJSON]jsonListコンバート. **/
 	private static final void encodeJsonList(
-		final StringBuilder buf, final Object base, final List list) {
+		final JsonBuilder buf, final Object base, final List list) {
 		Object value;
 		boolean flg = false;
 		final List lst = (List) list;
@@ -213,7 +240,7 @@ public final class Json {
 
 	/** [encodeJSON]json配列コンバート. **/
 	private static final void encodeJsonArray(
-		final StringBuilder buf, final Object base, final Object list) {
+		final JsonBuilder buf, final Object base, final Object list) {
 		Object value;
 		boolean flg = false;
 		final int len = Array.getLength(list);

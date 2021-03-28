@@ -13,15 +13,15 @@ import quina.http.furnishing.MemorySendResponse;
 /**
  * 標準的なレスポンス.
  */
-public interface NormalResponse<T> extends
-	Response<T>,
-	BaseSendResponse<T>,
-	EmptySendResponse<T>,
-	MemorySendResponse<T>,
-	JsonSendResponse<T>,
-	InputStreamSendResponse<T>,
-	FileSendResponse<T>,
-	ErrorSendResponse<T> {
+public interface NormalResponse extends
+	Response<NormalResponse>,
+	BaseSendResponse<NormalResponse>,
+	EmptySendResponse<NormalResponse>,
+	MemorySendResponse<NormalResponse>,
+	JsonSendResponse<NormalResponse>,
+	InputStreamSendResponse<NormalResponse>,
+	FileSendResponse<NormalResponse>,
+	ErrorSendResponse<NormalResponse> {
 
 	/**
 	 * コンポーネントタイプを取得.

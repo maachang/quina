@@ -32,7 +32,7 @@ public interface RESTfulPut extends Component {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
 		}
-		put(req, (RESTfulResponse<?>)res, req.getParams());
+		put(req, (RESTfulResponse)res, req.getParams());
 	}
 
 	/**
@@ -41,5 +41,5 @@ public interface RESTfulPut extends Component {
 	 * @param res RESTfulResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public abstract void put(Request req, RESTfulResponse<?> res, Params params);
+	public abstract void put(Request req, RESTfulResponse res, Params params);
 }

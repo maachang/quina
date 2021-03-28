@@ -2,6 +2,7 @@ package quina;
 
 import quina.component.FileComponent;
 import quina.component.NormalComponent;
+import quina.component.RESTfulGet;
 import quina.component.RESTfulGetSync;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
@@ -50,6 +51,11 @@ public class QuinaTest {
 		// http://127.0.0.1:3333/
 		.route("/", (RESTfulGetSync)(req, res, params) -> {
 			return new ResultJson("hello", "world");
+		})
+
+		// http://127.0.0.1:3333/largeJson
+		.route("/largeJson", (RESTfulGet)(req, res, params) -> {
+			res.setGzip(true).sendLargeJSON(new ResultJson("hello", "world"));
 		})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/

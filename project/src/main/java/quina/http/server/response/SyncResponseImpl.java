@@ -8,8 +8,8 @@ import quina.http.Response;
 /**
  * 同期用のレスポンス実装.
  */
-public class SyncResponseImpl extends AbstractResponse<SyncResponseImpl>
-	implements SyncResponse<SyncResponseImpl> {
+public class SyncResponseImpl extends AbstractResponse<SyncResponse>
+	implements SyncResponse {
 
 	/***
 	 * コンストラクタ.

@@ -8,8 +8,8 @@ import quina.http.Response;
 /**
  * RESTful用のレスポンス実装.
  */
-public class RESTfulResponseImpl extends AbstractResponse<RESTfulResponseImpl>
-	implements RESTfulResponse<RESTfulResponseImpl> {
+public class RESTfulResponseImpl extends AbstractResponse<RESTfulResponse>
+	implements RESTfulResponse {
 
 	/***
 	 * コンストラクタ.

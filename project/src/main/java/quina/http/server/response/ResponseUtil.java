@@ -1,17 +1,23 @@
 package quina.http.server.response;
 
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.zip.GZIPOutputStream;
 
 import quina.Quina;
 import quina.QuinaException;
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
 import quina.http.HttpException;
-import quina.http.HttpSendChunked;
-import quina.http.HttpSendChunkedInputStreamData;
+import quina.http.HttpSendChunkedData;
 import quina.http.HttpStatus;
 import quina.http.server.HttpServerConstants;
 import quina.json.Json;
+import quina.json.JsonBuilder;
+import quina.net.nio.tcp.NioAsyncBuffer;
 import quina.net.nio.tcp.NioSendBinaryListData;
 import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.NioSendFileData;
@@ -99,6 +105,47 @@ public final class ResponseUtil {
 		return charset;
 	}
 
+	/** GZIPが許可されているかチェック + レスポンスヘッダに付与. **/
+	private static final boolean isGzip(AbstractResponse<?> res) {
+		// リクエストヘッダにGZIPが許可されていない場合は処理しない.
+		String n = res.getRequest().getHeader().get("accept-encoding");
+		if (n == null || n.indexOf("gzip") == -1) {
+			return false;
+		}
+		// レスポンスでGZIP圧縮が許可されている場合.
+		if(res.isGzip()) {
+			// レスポンスヘッダにGZIP圧縮の条件をセット.
+			res.getHeader().put("Content-Encoding", "gzip");
+			return true;
+		}
+		return false;
+	}
+
+	/** バイナリをGZIP圧縮. **/
+	private static final byte[] pressGzip(byte[] body) {
+		ByteArrayOutputStream bo = null;
+		try {
+			bo = new ByteArrayOutputStream();
+			final GZIPOutputStream go = new GZIPOutputStream(bo);
+			go.write(body);
+			go.flush();
+			go.finish();
+			go.close();
+			byte[] ret = bo.toByteArray();
+			bo.close();
+			bo = null;
+			return ret;
+		} catch(Exception e) {
+			throw new HttpException(e);
+		} finally {
+			if(bo != null) {
+				try {
+					bo.close();
+				} catch(Exception e) {}
+			}
+		}
+	}
+
 	/**
 	 * 送信処理.
 	 * @param res 対象のレスポンスオブジェクトを設定します.
@@ -110,9 +157,7 @@ public final class ResponseUtil {
 
 	/**
 	 * 送信処理.
-	 * @param sendFlag 送信フラグを設定します.
 	 * @param res 対象のレスポンスオブジェクトを設定します.
-	 * @param element NioElementを設定します.
 	 * @param value 送信データを設定します.
 	 */
 	public static final void send(AbstractResponse<?> res, byte[] value) {
@@ -123,12 +168,15 @@ public final class ResponseUtil {
 	 * 送信処理.
 	 * @param sendFlag 送信フラグを設定します.
 	 * @param res 対象のレスポンスオブジェクトを設定します.
-	 * @param element NioElementを設定します.
 	 * @param value 送信データを設定します.
 	 * @param charset 文字コードを設定します.
 	 */
 	public static final void send(AbstractResponse<?> res, byte[] value, String charset) {
 		charset = getCharset(res, charset);
+		// gzipが許可されている場合.
+		if(isGzip(res)) {
+			value = pressGzip(value);
+		}
 		// ヘッダデータを作成.
 		final NioSendBinaryListData data = (NioSendBinaryListData)res.createHeader(
 			value.length, charset);
@@ -161,10 +209,9 @@ public final class ResponseUtil {
 		if(length < 0L) {
 			// チャング送信.
 			length = -1L;
-			value = new HttpSendChunked(
-				HttpServerConstants.getSendChunkedBufferLength(), value);
 			res.getHeader().put("Transfer-Encoding", "chunked");
-			sendBody = new HttpSendChunkedInputStreamData(value);
+			sendBody = new HttpSendChunkedData(
+				HttpServerConstants.getSendChunkedBufferLength(), value);
 		} else {
 			sendBody = new NioSendInputStreamData(value, length);
 		}
@@ -244,7 +291,7 @@ public final class ResponseUtil {
 	}
 
 	/**
-	 * 送信処理.
+	 * JSON用送信処理.
 	 * @param res 対象のレスポンスオブジェクトを設定します.
 	 * @param json 送信するJSONオブジェクトを設定します.
 	 */
@@ -253,9 +300,10 @@ public final class ResponseUtil {
 	}
 
 	/**
-	 * 送信処理.
+	 * JSON用送信処理.
 	 * @param res 対象のレスポンスオブジェクトを設定します.
 	 * @param json 送信するJSONオブジェクトを設定します.
+	 * @param charset 変換対象の文字コードが設定されます.
 	 */
 	public static final void sendJSON(AbstractResponse<?> res, Object value, String charset) {
 		charset = getCharset(res, charset);
@@ -264,6 +312,94 @@ public final class ResponseUtil {
 			res.setContentType("application/json");
 		}
 		send(res, json, charset);
+	}
+
+	/**
+	 * OutputStreamを使った送信処理を実施します.
+	 * @param res 対象のレスポンスオブジェクトを設定します.
+	 * @param charset 変換対象の文字コードが設定されます.
+	 * @return OutputStream OutputStreamが返却されます.
+	 */
+	public static final OutputStream sendOutInStream(AbstractResponse<?> res, String charset) {
+		try {
+			// 非同期バッファを生成.
+			NioAsyncBuffer buf = new NioAsyncBuffer();
+			// gzipが許可されてる場合、ヘッダにセット.
+			boolean gzip = isGzip(res);
+			// TransferEncodingをchunkedで、InputStream送信.
+			send(res, buf.getInputStream(), -1, charset);
+			// gzipが許可されている場合はOutputStreamはGZIP圧縮版で処理.
+			if(gzip) {
+				return new GZIPOutputStream(buf.getOutputStream());
+			}
+			// gzipが許可されていない場合は通常のOutputStreamで処理.
+			return buf.getOutputStream();
+		} catch(HttpException he) {
+			throw he;
+		} catch(Exception e) {
+			throw new HttpException(e);
+		}
+	}
+
+	// OutputStreamを内包するJsonBuilder.
+	private static final class OutputStreamJsonBuilder implements JsonBuilder {
+		private BufferedWriter buf = null;
+		public OutputStreamJsonBuilder(OutputStream out, String charset) {
+			try {
+				buf = new BufferedWriter(new OutputStreamWriter(out, charset));
+			} catch(Exception e) {
+				throw new HttpException(e);
+			}
+		}
+		@Override
+		public JsonBuilder append(String s) {
+			try {
+				buf.write(s);
+			} catch(Exception e) {
+				throw new HttpException(e);
+			}
+			return this;
+		}
+		@Override
+		public String toString() {
+			if(buf != null) {
+				try {
+					buf.flush();
+					buf.close();
+				} catch(Exception e) {}
+				buf = null;
+			}
+			// 文字列は空返却.
+			return "";
+		}
+	}
+
+	/**
+	 * 大きめのJSON送信処理.
+	 * @param res 対象のレスポンスオブジェクトを設定します.
+	 * @param json 送信するJSONオブジェクトを設定します.
+	 */
+	public static final void sendLargeJSON(AbstractResponse<?> res, Object value) {
+		sendLargeJSON(res, value, null);
+	}
+
+	/**
+	 * 大きめのJSON送信処理.
+	 * @param res 対象のレスポンスオブジェクトを設定します.
+	 * @param json 送信するJSONオブジェクトを設定します.
+	 * @param charset 変換対象の文字コードが設定されます.
+	 */
+	public static final void sendLargeJSON(AbstractResponse<?> res, Object value, String charset) {
+		charset = getCharset(res, charset);
+		// コンテンツタイプが設定されていない場合.
+		if(res.contentType == null) {
+			// json設定.
+			res.setContentType("application/json");
+		}
+		// sendOutInStreamでOutputStreamを取得して、都度JSON変換しながら返却処理.
+		Json.encode(
+			new OutputStreamJsonBuilder(
+				sendOutInStream(res, charset), charset), value);
 	}
 
 	/**

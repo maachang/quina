@@ -10,9 +10,9 @@ import quina.net.nio.tcp.NioSendData;
 /**
  * HttpChunked送信用のInputStream送信
  */
-public class HttpSendChunkedInputStreamData implements NioSendData {
-	/** InputStream. **/
-	private InputStream in = null;
+public class HttpSendChunkedData implements NioSendData {
+	/** HttpSendChunked. **/
+	private HttpSendChunked in = null;
 	/** テンポラリバイナリ. **/
 	private byte[] tmpBuf = null;
 	/** 送信完了フラグ. **/
@@ -24,8 +24,8 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 	 * コンストラクタ.
 	 * @param in InputStreamを設定します.
 	 */
-	public HttpSendChunkedInputStreamData(InputStream in) {
-		this.in = in;
+	public HttpSendChunkedData(int bufLen, InputStream in) {
+		this.in = new HttpSendChunked(bufLen, in);
 		this.endSendFlag = false;
 		this.closeFlag = false;
 	}
@@ -38,15 +38,11 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 	public void close() throws IOException {
 		closeFlag = true;
 		if(in != null) {
-			try {
-				in.close();
-			} catch(Exception e) {}
-			in = null;
+			in.close();
 		}
 		tmpBuf = null;
 		endSendFlag = false;
 	}
-
 
 	/**
 	 * 処理前チェック.
@@ -65,7 +61,8 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 	@Override
 	public NioSendData copy() {
 		check();
-		throw new NioException("InputStream transmissions cannot be duplicated.");
+		throw new NioException(
+			"InputStream transmissions cannot be duplicated.");
 	}
 
 	/**
@@ -77,10 +74,11 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 	@Override
 	public int read(ByteBuffer buf) {
 		check();
-		if(!buf.hasRemaining()) {
+		if(endSendFlag) {
+			return -1;
+		} else if(!buf.hasRemaining()) {
 			return 0;
-		}
-		if(tmpBuf == null) {
+		} else if(tmpBuf == null) {
 			tmpBuf = new byte[buf.capacity()];
 		}
 		int sendLen = buf.remaining();
@@ -94,8 +92,11 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 			if(len <= 0) {
 				if(len < 0) {
 					endSendFlag = true;
+					return -1;
 				}
 				return len;
+			} else if(in.isEof()) {
+				endSendFlag = true;
 			}
 			buf.put(tmpBuf, 0, len);
 			return len;
@@ -105,14 +106,17 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 	}
 
 	/**
-	 * NioSendData全体のデータ長を取得.
-	 * @return long NioSendData全体のデータ長が返却されます.
+	 * NioSendDataで現在読み込み可能なデータ長を取得.
+	 * @return long NioSendDataで現在読み込み可能なデータ長が返却されます.
 	 */
 	@Override
 	public long length() {
 		check();
 		try {
-			return (long)in.available();
+			if(endSendFlag) {
+				return 0L;
+			}
+			return (long)in.length();
 		} catch(Exception e) {
 			throw new NioException(e);
 		}
@@ -144,6 +148,16 @@ public class HttpSendChunkedInputStreamData implements NioSendData {
 	 */
 	@Override
 	public boolean isEmpty() {
+		check();
+		return endSendFlag;
+	}
+
+	/**
+	 * 送信完了かチェック.
+	 * @return boolean true の場合送信完了です.
+	 */
+	@Override
+	public boolean isSendEnd() {
 		check();
 		return endSendFlag;
 	}

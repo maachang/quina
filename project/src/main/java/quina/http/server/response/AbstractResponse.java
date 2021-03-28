@@ -41,6 +41,8 @@ public abstract class AbstractResponse<T>
 	protected String charset = HttpConstants.getCharset();
 	/** キャッシュモード. **/
 	protected boolean cacheMode = !HttpServerConstants.isNoCacheMode();
+	/** gzip圧縮モード. **/
+	protected boolean gzipMode = HttpServerConstants.isGzipMode();
 	/** クロスドメインモード. **/
 	protected boolean crossDomain = HttpServerConstants.isCrossDomainMode();
 	/** 送信済みフラグ. **/
@@ -61,6 +63,7 @@ public abstract class AbstractResponse<T>
 		contentType = res.contentType;
 		charset = res.charset;
 		cacheMode = res.cacheMode;
+		gzipMode = res.gzipMode;
 		crossDomain = res.crossDomain;
 		sendFlag.set(res.sendFlag.get());
 		execSendDataFlag.set(res.execSendDataFlag.get());
@@ -108,6 +111,7 @@ public abstract class AbstractResponse<T>
 		contentType = null;
 		charset = null;
 		cacheMode = !HttpServerConstants.isNoCacheMode();
+		gzipMode = HttpServerConstants.isGzipMode();
 		crossDomain = HttpServerConstants.isCrossDomainMode();
 	}
 
@@ -122,6 +126,7 @@ public abstract class AbstractResponse<T>
 		contentType = null;
 		charset = HttpConstants.getCharset();
 		cacheMode = !HttpServerConstants.isNoCacheMode();
+		gzipMode = HttpServerConstants.isGzipMode();
 		crossDomain = HttpServerConstants.isCrossDomainMode();
 	}
 
@@ -141,6 +146,7 @@ public abstract class AbstractResponse<T>
 	 * Httpステータスを取得.
 	 * @return int Httpステータスが返却されます.
 	 */
+	@Override
 	public int getStatusNo() {
 		if(state == null) {
 			return 200;
@@ -152,6 +158,7 @@ public abstract class AbstractResponse<T>
 	 * Httpステータスのメッセージを取得.
 	 * @return String Httpステータスメッセージが返却されます.
 	 */
+	@Override
 	public String getMessage() {
 		if(message != null && !message.isEmpty()) {
 			return message;
@@ -207,9 +214,19 @@ public abstract class AbstractResponse<T>
 	}
 
 	/**
+	 * gzip圧縮モードを取得.
+	 * @return boolean trueの場合Requestで許可されている場合はGZIP圧縮して返却します.
+	 */
+	@Override
+	public boolean isGzip() {
+		return gzipMode;
+	}
+
+	/**
 	 * クロスドメインを許可するか取得.
 	 * @return boolean trueの場合クロスドメインを許可します.
 	 */
+	@Override
 	public boolean isCrossDomain() {
 		return crossDomain;
 	}
@@ -242,6 +259,7 @@ public abstract class AbstractResponse<T>
 	 * @param msg 対象のHttpステータスメッセージを設定します.
 	 * @return T レスポンスオブジェクトが返却されます.
 	 */
+	@Override
 	public T setMessage(String msg) {
 		this.message = msg;
 		return (T)this;
@@ -274,8 +292,20 @@ public abstract class AbstractResponse<T>
 	 * @param mode tureの場合キャッシュモードがONになります.
 	 * @return T レスポンスオブジェクトが返却されます.
 	 */
+	@Override
 	public T setCacheMode(boolean mode) {
-		this.cacheMode = mode;
+		this.cacheMode = !mode;
+		return (T)this;
+	}
+
+	/**
+	 * gzip圧縮モードをセット.
+	 * @param mode trueの場合Requestで許可されている場合はGZIP圧縮して返却します.
+	 * @return T レスポンスオブジェクトが返却されます.
+	 */
+	@Override
+	public T setGzip(boolean mode) {
+		this.gzipMode = mode;
 		return (T)this;
 	}
 
@@ -284,6 +314,7 @@ public abstract class AbstractResponse<T>
 	 * @param mode trueの場合クロスドメインを許可します.
 	 * @return T レスポンスオブジェクトが返却されます.
 	 */
+	@Override
 	public T setCrossDomain(boolean mode) {
 		this.crossDomain = mode;
 		return (T)this;
@@ -293,6 +324,7 @@ public abstract class AbstractResponse<T>
 	 * HttpRequestを取得.
 	 * @return Request HttpRequestが返却されます.
 	 */
+	@Override
 	public Request getRequest() {
 		return element.getRequest();
 	}
@@ -301,6 +333,7 @@ public abstract class AbstractResponse<T>
 	 * レスポンスオブジェクトを設定します.
 	 * @return Response<?> HttpResponseが返却されます.
 	 */
+	@Override
 	public Response<?> getResponse() {
 		return this;
 	}
@@ -325,6 +358,7 @@ public abstract class AbstractResponse<T>
 	 * 送信処理が行われているかチェック.
 	 * @return boolean trueの場合送信されています.
 	 */
+	@Override
 	public boolean isSend() {
 		return sendFlag.get();
 	}
@@ -333,6 +367,7 @@ public abstract class AbstractResponse<T>
 	 * 送信処理系メソッド[send(..)]が実行可能かチェック.
 	 * @return boolean trueの場合、送信処理系メソッド[send(..)]の実行は可能です.
 	 */
+	@Override
 	public boolean isCallSendMethod() {
 		return true;
 	}

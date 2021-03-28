@@ -7,9 +7,9 @@ import quina.http.furnishing.BaseSendResponse;
 /**
  * 同期用のレスポンス.
  */
-public interface SyncResponse<T> extends
-	Response<T>,
-	BaseSendResponse<T> {
+public interface SyncResponse extends
+	Response<SyncResponse>,
+	BaseSendResponse<SyncResponse> {
 	/**
 	 * 送信なしを示すオブジェクト.
 	 */

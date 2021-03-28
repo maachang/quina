@@ -138,6 +138,19 @@ public interface Response<T>
 	public boolean isCacheMode();
 
 	/**
+	 * gzip圧縮モードをセット.
+	 * @param mode trueの場合Requestで許可されている場合はGZIP圧縮して返却します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	public T setGzip(boolean mode);
+
+	/**
+	 * gzip圧縮モードを取得.
+	 * @return boolean trueの場合Requestで許可されている場合はGZIP圧縮して返却します.
+	 */
+	public boolean isGzip();
+
+	/**
 	 * クロスドメインを許可するかセット.
 	 * @param mode trueの場合クロスドメインを許可します.
 	 * @return Response レスポンスオブジェクトが返却されます.
