@@ -1,8 +1,8 @@
 package quina;
 
 import quina.json.Json;
+import quina.util.EnvCache;
 import quina.util.FileUtil;
-import quina.util.StringUtil;
 import quina.util.collection.BinarySearchMap;
 
 /**
@@ -78,7 +78,7 @@ public final class QuinaUtil {
 			dir += "/";
 		}
 		// 環境変数が定義されている場合は置き換える.
-		dir = StringUtil.envPath(configDir);
+		dir = EnvCache.path(configDir);
 		// コンフィグファイルが存在するかチェック.
 		int len = JSON_CONFIG_EXTENSION.length;
 		String fileName = null;

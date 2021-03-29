@@ -40,8 +40,13 @@ public class HttpSendChunked {
 		if(bufLen < NioConstants.getBufferSize()) {
 			bufLen = NioConstants.getBufferSize();
 		}
+		// ヘッダ最大長を取得.
 		int cheadLen = chunkedHeadLength(bufLen);
+		// フッタ長を取得.
 		int endLinesLen = HttpConstants.END_LINE_LENGTH * 2;
+		// 設定されたチャンクバッファ長から、ヘッダ・フッタサイズを減らす.
+		bufLen = bufLen - (cheadLen + endLinesLen);
+		// データセット.
 		this.chunkedHeadLength = cheadLen;
 		this.buf = new byte[bufLen + cheadLen + endLinesLen];
 		this.in = (in instanceof FileInputStream) ? new BufferedInputStream(in) : in;

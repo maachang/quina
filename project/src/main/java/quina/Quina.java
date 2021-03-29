@@ -15,8 +15,8 @@ import quina.shutdown.ShutdownManager;
 import quina.shutdown.ShutdownManagerInfo;
 import quina.util.Args;
 import quina.util.AtomicObject;
+import quina.util.EnvCache;
 import quina.util.FileUtil;
-import quina.util.StringUtil;
 import quina.util.collection.BinarySearchMap;
 import quina.util.collection.ObjectList;
 
@@ -122,7 +122,7 @@ public class Quina {
 		check(true);
 		try {
 			configDir = FileUtil.getFullPath(
-				StringUtil.envPath(configDir));
+				EnvCache.path(configDir));
 			if(!configDir.endsWith("/")) {
 				configDir = configDir + "/";
 			}
