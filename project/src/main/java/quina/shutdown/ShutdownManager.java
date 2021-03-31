@@ -215,6 +215,13 @@ public class ShutdownManager {
 		 * 実行処理.
 		 */
 		public void run() {
+			runCall();
+		}
+
+		/**
+		 * 実行処理.
+		 */
+		public void runCall() {
 			final int retry = info.getRetry();
 			final ShutdownCallManager cman = info.getCallManager();
 			while(!stopFlag) {
@@ -222,7 +229,7 @@ public class ShutdownManager {
 					// シャットダウンコネクションを検知した場合.
 					if(checkShutdown(retry)) {
 						// コールマネージャを実行.
-						cman.run();
+						cman.runCall();
 						stopFlag = true;
 						// このスレッドも終わらせる.
 						return;

@@ -338,6 +338,13 @@ public class ShutdownManagerInfo {
 		 * シャットダウン実行.
 		 */
 		public void run() {
+			runCall();
+		}
+
+		/**
+		 * シャットダウン実行.
+		 */
+		protected void runCall() {
 			ShutdownCall c;
 			List<ShutdownCall> clist = null;
 			synchronized(sync) {
