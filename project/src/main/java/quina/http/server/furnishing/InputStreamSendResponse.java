@@ -1,4 +1,4 @@
-package quina.http.furnishing;
+package quina.http.server.furnishing;
 
 import java.io.InputStream;
 

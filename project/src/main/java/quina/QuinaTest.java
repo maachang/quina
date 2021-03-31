@@ -91,30 +91,34 @@ public class QuinaTest {
 				action.resolve(value);
 			})
 			.error((action, error) -> {
-				action.sendError(error);
+				res.setContentType("text/html");
+				res.sendError(error);
 			})
 			.then((action, value) -> {
 				value = value + " xxx";
-//				res.setContentType("text/html");
-//				action.send("" + value);
-				//Thread.sleep(10000L);
-				action.resolve(value);
+				res.setContentType("text/html");
+				res.send("" + value);
+				//action.resolve(value);
 			});
-			Object o = p.start(res).await();
+			p.start();
+			/*
+			Object o = p.start().await();
 			//System.out.println("o: " + o);
 			res.setContentType("text/html");
 			res.send("" + o);
+			*/
 		})
 
-		// http://127.0.0.1:3333/promise2
-		.route("/promise2", (NormalComponent)(req, res) -> {
+		// http://127.0.0.1:3333/promiseAll
+		.route("/promiseAll", (NormalComponent)(req, res) -> {
 			// Promise.allのテスト.
 			Promise a = new Promise((action) -> {
 				action.resolve("hoge");
 			});
 
 			Promise b = new Promise((action) -> {
-				action.reject("moge");
+				//action.reject("moge");
+				action.resolve("moge");
 			});
 
 			Promise c = new Promise((action) -> {
@@ -133,14 +137,14 @@ public class QuinaTest {
 					}
 					buf.append("[").append(i+1).append("] ").append(lst[i]);
 				}
-				action.getResponse().setContentType("text/html");
-				action.send(buf.toString());
+				res.setContentType("text/html");
+				res.send(buf.toString());
 			})
 			.error((action, error) -> {
-				action.getResponse().setContentType("text/html");
-				action.sendError(error);
+				res.setContentType("text/html");
+				res.sendError(error);
 			})
-			.start(res);
+			.start();
 		})
 
 		// http://127.0.0.1:3333/public/*

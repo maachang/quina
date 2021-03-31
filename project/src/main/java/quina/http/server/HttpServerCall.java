@@ -21,6 +21,7 @@ import quina.http.server.response.SyncResponseImpl;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
+import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.server.NioServerCall;
 import quina.validate.Validation;
 
@@ -282,13 +283,41 @@ public class HttpServerCall extends NioServerCall {
 				HttpServerUtil.sendError(json, req, res, null);
 			}
 		} catch(Exception e) {
-			if(LOG.isErrorEnabled()) {
-				LOG.error("error (url: " + url + ")", e);
+			// ワーニング以上のログ通知が認められてる場合.
+			if(LOG.isWarnEnabled()) {
+				int status = -1;
+				boolean noErrorFlag = false;
+				// NioExceptionで、ステータスが５００以下の場合は
+				// エラー表示なし.
+				if(e instanceof NioException) {
+					if((status = ((NioException)e).getStatus()) > 500) {
+						noErrorFlag = true;
+					}
+				// それ以外の例外の場合はエラー表示.
+				} else {
+					noErrorFlag = true;
+				}
+				// エラー表示の場合.
+				if(noErrorFlag && LOG.isErrorEnabled()) {
+					if(status >= 0) {
+						LOG.error("# error (status: "
+							+ status + " url: \"" + req.getUrl() + "\").", e);
+					} else {
+						LOG.error("# error (url: \"" + req.getUrl() + "\").", e);
+					}
+				// ワーニング表示の場合.
+				} else if(LOG.isWarnEnabled()) {
+					if(status >= 0) {
+						LOG.warn("# warning (status: "
+							+ status + " url: \"" + req.getUrl() + "\").");
+					} else {
+						LOG.warn("# warning (url: \"" + req.getUrl() + "\").");
+					}
+				}
 			}
 			// エラー返却.
 			res = HttpServerUtil.defaultResponse(em, mimeTypes, res);
 			HttpServerUtil.sendError(json, req, res, e);
-			//e.printStackTrace();
 		}
 	}
 }

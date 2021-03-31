@@ -3,7 +3,7 @@ package quina.http;
 import java.io.Closeable;
 import java.io.IOException;
 
-import quina.http.furnishing.BaseSendResponse;
+import quina.http.server.furnishing.BaseSendResponse;
 
 /**
  * Httpレスポンス.

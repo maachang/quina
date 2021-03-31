@@ -1,20 +1,17 @@
 package quina.promise;
 
-import java.io.IOException;
-
-import quina.net.nio.tcp.worker.WorkerElement;
 import quina.util.AtomicObject;
 
 /**
  * Promiseワーカー要素.
  */
-final class PromiseWorkerElement implements WorkerElement {
+final class PromiseWorker implements PromiseWorkerCall {
 	// then()呼び出し.
 	protected static final int MODE_THEN = 0x01;
 	// error()呼び出し.
 	protected static final int MODE_ERROR = 0x02;
 	// allways()呼び出し.
-	protected static final int MODE_ALLWAYS = 0x03;
+	protected static final int MODE_ANY = 0x03;
 
 	/**
 	 * 呼び出しモード.
@@ -30,14 +27,9 @@ final class PromiseWorkerElement implements WorkerElement {
 	private int no;
 
 	/**
-	 * 破棄呼び出しフラグ.
-	 */
-	private boolean destroyFlag;
-
-	/**
 	 * PromiseAction情報.
 	 */
-	private PromiseActionImpl<?> action;
+	private PromiseActionImpl action;
 
 	/**
 	 * 実行情報.
@@ -58,41 +50,12 @@ final class PromiseWorkerElement implements WorkerElement {
 	 *                 [2]の場合はallway()呼び出し.
 	 * @param call 実行対象のコールオブジェクトを設定します.
 	 */
-	protected PromiseWorkerElement(
-		PromiseActionImpl<?> action, int no, int callMode, PromiseCall call) {
+	protected PromiseWorker(
+		PromiseActionImpl action, int no, int callMode, PromiseCall call) {
 		this.action = action;
 		this.no = no;
 		this.callMode = callMode;
-		this.destroyFlag = false;
 		this.call = call;
-	}
-
-	/**
-	 * クローズ処理.
-	 * @exception IOException IO例外.
-	 */
-	@Override
-	public void close() throws IOException {
-		this.action = null;
-		this.call = null;
-		destroy();
-	}
-
-	/**
-	 * オブジェクト破棄.
-	 */
-	@Override
-	public void destroy() {
-		destroyFlag = true;
-	}
-
-	/**
-	 * 破棄されたかチェック.
-	 * @return boolean trueの場合、破棄されています.
-	 */
-	@Override
-	public boolean isDestroy() {
-		return destroyFlag;
 	}
 
 	/**
@@ -121,11 +84,9 @@ final class PromiseWorkerElement implements WorkerElement {
 
 	/**
 	 * ワーカースレッドでの実行処理.
-	 * @param o ワーカーIDが設定されます.
-	 * @return trueの場合正常に処理されました.
 	 */
 	@Override
-	public boolean call(Object o) {
+	public void call() {
 		final Object v = param.get();
 		param.set(null);
 		// 実行処理.
@@ -149,6 +110,5 @@ final class PromiseWorkerElement implements WorkerElement {
 			// エラーの場合リジェクト.
 			action.reject(e);
 		}
-		return true;
 	}
 }

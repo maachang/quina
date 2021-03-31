@@ -1,17 +1,14 @@
 package quina.promise;
 
-import quina.Quina;
 import quina.QuinaException;
-import quina.http.Response;
 import quina.net.nio.tcp.Wait;
+import quina.util.AtomicNumber;
+import quina.util.Flag;
 
 /**
  * Quina専用のPromise処理.
  *
  * ベースはjavascriptのPromiseを模倣した形での実装ですが、最低限の実装です.
- * また基本的には、この処理はQuina.get().start() を呼び出さないと利用出来ません.
- *
- * 利用方法としてはQuinaでのComponentオブジェクト実行内で利用が想定されています.
  *
  * 使い方はこんな感じです.
  * Promise promise = new Promise("hoge");
@@ -25,7 +22,7 @@ import quina.net.nio.tcp.Wait;
  * promise.exception((action, error) -> {
  *   action.sendError(error);
  * });
- * promise.start(response);
+ * promise.start();
  *
  * 基本的にはコールバック地獄を回避するための
  * "最低限"のPromise実装を提供します.
@@ -42,7 +39,7 @@ import quina.net.nio.tcp.Wait;
  *     .then((action, value) -> {
  *       action.resolve(value + " def");
  *   })
- *   .start(response);
+ *   .start();
  *   return p.await();
  * })
  * .start()
@@ -50,15 +47,15 @@ import quina.net.nio.tcp.Wait;
  */
 public class Promise {
 	// 初期起動用コール.
-	protected PromiseFromEndWorkerElement firstCall = null;
+	protected PromiseFromEndWorker firstCall = null;
 	// promiseアクション.
-	protected PromiseActionImpl<?> action;
+	protected PromiseActionImpl action;
 
 	/**
 	 * コンストラクタ.
 	 */
 	public Promise() {
-		this.action = new PromiseActionImpl<>(null);
+		this.action = new PromiseActionImpl(null);
 	}
 
 	/**
@@ -66,7 +63,7 @@ public class Promise {
 	 * @param param パラメータを設定します.
 	 */
 	public Promise(Object param) {
-		this.action = new PromiseActionImpl<>(param);
+		this.action = new PromiseActionImpl(param);
 	}
 
 	/**
@@ -74,54 +71,8 @@ public class Promise {
 	 * @param call 初期実行処理を設定します.
 	 */
 	public Promise(PromiseFromEndCall call) {
-		this.action = new PromiseActionImpl<>(null);
-		this.firstCall = new PromiseFromEndWorkerElement(this.action, call);
-	}
-
-	/**
-	 * Promise生成.
-	 */
-	public static final Promise ins() {
-		return new Promise();
-	}
-
-	/**
-	 * Promise生成.
-	 * @param param パラメータを設定します.
-	 */
-	public static final Promise ins(Object param) {
-		return new Promise(param);
-	}
-
-	/**
-	 * Promise生成.
-	 * @param call 初期実行処理を設定します.
-	 */
-	public static final Promise ins(PromiseFromEndCall call) {
-		return new Promise(call);
-	}
-
-	/**
-	 * Promise生成.
-	 */
-	public static final Promise getInstance() {
-		return new Promise();
-	}
-
-	/**
-	 * Promise生成.
-	 * @param param パラメータを設定します.
-	 */
-	public static final Promise getInstance(Object param) {
-		return new Promise(param);
-	}
-
-	/**
-	 * Promise生成.
-	 * @param call 初期実行処理を設定します.
-	 */
-	public static final Promise getInstance(PromiseFromEndCall call) {
-		return new Promise(call);
+		this.action = new PromiseActionImpl(null);
+		this.firstCall = new PromiseFromEndWorker(this.action, call);
 	}
 
 	// Promiseが開始している場合はエラー出力.
@@ -158,7 +109,7 @@ public class Promise {
 			checkStartPromiseList(list, len);
 			// 設定されたPromise群を順次実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getResponse());
+				list[i].start();
 			}
 			final Object[] params = new Object[len];
 			// 実行されたPromise群の待機.
@@ -193,13 +144,13 @@ public class Promise {
 			checkStartPromiseList(list, len);
 			// 非同期実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getResponse());
+				list[i].start();
 			}
-			final PromiseElement[] params = new PromiseElement[len];
+			final PromiseValue[] params = new PromiseValue[len];
 			// 実行されたPromise群の待機.
 			for(i = 0; i < len; i ++) {
 				// 待機結果をリスト取得.
-				params[i] = new PromiseElement(
+				params[i] = new PromiseValue(
 					list[i].getStatus(), list[i].await());
 			}
 			// 処理結果群を次の非同期処理に提供.
@@ -218,38 +169,31 @@ public class Promise {
 		final int len = list.length;
 		// 既に実行されている場合は例外返却.
 		checkStartPromiseList(list, len);
+		final AnyCallback anyCallback = new AnyCallback(len);
 		// 新しいPromiseを生成して、そこで登録されたPromise群を実行.
 		Promise ret = new Promise((action) -> {
 			int i;
-			Promise p;
-			// waitオブジェクト.
-			final Wait w = new Wait();
 			// 既に実行されている場合は例外返却.
-			for(i = 0; i < len; i ++) {
-				checkStartPromise(p = list[i]);
-				// 共通のWaitオブジェクトを設定して、登録された複数のPrimiseの内
-				// 一番最初に処理完了した場合にその他も停止させる.
-				p.action.setWaitObject(true, w);
-			}
-			p = null;
-			// 非同期実行.
-			for(i = 0; i < len; i ++) {
-				list[i].start(action.getResponse());
-			}
-			// 終了したものを対象として返却.
+			checkStartPromiseList(list, len);
+			// Anyコールバックでの非同期実行.
+			Promise p;
 			for(i = 0; i < len; i ++) {
 				p = list[i];
-				// 終了まで待機して、対象Promiseが終了している場合は
-				// その内容を返却する.
-				if(p.action.await(null, -1L)) {
-					if(p.isExit() && p.getStatus() == PromiseStatus.Fulfilled) {
-						action.resolve(p.await());
-						break;
-					}
-				}
+				// anyCallbackをセット.
+				p.action.setAwaitCall(anyCallback);
+				// anyCallbackで管理してるWaitオブジェクトをsignalAllで定義.
+				p.action.setWaitObject(anyCallback.getWait());
+				// 非同期実行.
+				list[i].start();
 			}
-			// 返却可能なresolve条件が存在しない場合.
-			throw new QuinaException("No Promise in Promise.any was resolved.");
+			// anyCallbackが正常終了、もしくは全部エラー終了の場合
+			// awaitが解かれるので待機する.
+			list[0].await();
+			// 全てがエラー終了の場合.
+			if(!anyCallback.isSuccess()) {
+				// 返却可能なresolve条件が存在しない場合.
+				throw new QuinaException("No Promise in Promise.any was resolved.");
+			}
 		});
 		return ret;
 	}
@@ -275,12 +219,12 @@ public class Promise {
 				checkStartPromise(p = list[i]);
 				// 共通のWaitオブジェクトを設定して、登録された複数のPrimiseの内
 				// 一番最初に処理完了した場合にその他も停止させる.
-				p.action.setWaitObject(true, w);
+				p.action.setWaitObject(w);
 			}
 			p = null;
 			// 非同期実行.
 			for(i = 0; i < len; i ++) {
-				list[i].start(action.getResponse());
+				list[i].start();
 			}
 			// 終了したものを対象として返却.
 			for(i = 0; i < len; i ++) {
@@ -342,8 +286,8 @@ public class Promise {
 	 * @param call 実行処理を設定します.
 	 * @return Promise Promiseオブジェクトが返却されます.
 	 */
-	public Promise allways(PromiseCall call) {
-		action.allways(call);
+	public Promise any(PromiseCall call) {
+		action.any(call);
 		return this;
 	}
 
@@ -352,8 +296,8 @@ public class Promise {
 	 * @param call Promise終了呼び出しコールを設定します.
 	 * @return Promise Promiseオブジェクトが返却されます.
 	 */
-	public Promise finalyTo(PromiseFromEndCall call) {
-		action.finalyTo(call);
+	public Promise finalize(PromiseFromEndCall call) {
+		action.finalize(call);
 		return this;
 	}
 
@@ -368,7 +312,7 @@ public class Promise {
 			// actionを自動実行させずに起動.
 			action.start(false);
 			// firstCallのワーカー実行.
-			Quina.get().registerWorker(firstCall);
+			PromiseWorkerManager.getInstance().push(firstCall);
 		// 初期実行が定義されていない場合.
 		} else {
 			// actionを自動実行で起動.
@@ -376,28 +320,6 @@ public class Promise {
 		}
 		return this;
 	}
-
-	/**
-	 * Promiseを開始.
-	 * こちらでの呼び出しの場合は[action.send(...)]系の処理が実行可能です.
-	 * @param res HttpResponseを設定します.
-	 * @return Promise Promiseオブジェクトが返却されます.
-	 */
-	public Promise start(Response<?> res) {
-		// 初期実行が定義されている場合.
-		if(firstCall != null) {
-			// actionを自動実行させずに起動.
-			action.start(false, res);
-			// firstCallのワーカー実行.
-			Quina.get().registerWorker(firstCall);
-		// 初期実行が定義されていない場合.
-		} else {
-			// actionを自動実行で起動.
-			action.start(true, res);
-		}
-		return this;
-	}
-
 
 	/**
 	 * Promise処理終了まで待機する.
@@ -429,5 +351,67 @@ public class Promise {
 	 */
 	public PromiseStatus getStatus() {
 		return action.getStatus();
+	}
+
+	// any用の処理終了コールバック.
+	private static final class AnyCallback implements PromiseAwaitCall {
+		private final int allAnyPromiseLength;
+		private final Wait waitObject = new Wait();
+		private final Flag successFlag = new Flag(false);
+		private final AtomicNumber rejectCounter = new AtomicNumber(0);
+
+		/**
+		 * コンストラクタ.
+		 * @param len Anyで実施するPromiseの数を設定します.
+		 */
+		public AnyCallback(int len) {
+			allAnyPromiseLength = len;
+		}
+
+		@Override
+		public void call(PromiseActionImpl action, PromiseStatus status, Object value) {
+			// 正常終了の場合.
+			// 初めての正常終了のみresolve実行.
+			if(status == PromiseStatus.Fulfilled &&
+				!successFlag.setToGetBefore(true)) {
+				// 正常処理.
+				action.resolve(value);
+				// 待機処理終了.
+				waitObject.signalAll();
+			// 正常終了でない場合.
+			} else {
+				// リジェクトカウンターをセット.
+				rejectCounter.inc();
+				// 全てが失敗の場合.
+				if(rejectCounter.get() >= allAnyPromiseLength) {
+					// 待機処理終了.
+					waitObject.signalAll();
+				}
+			}
+		}
+
+		/**
+		 * anyで設定されたPromise群の一斉Waitを取得.
+		 * action.setWaitObject(thisObject.getWait())の感じで設定します.
+		 * thisObject = このオブジェクト.
+		 *
+		 * @return Wait Anyに対する処理停止用のWaitオブジェクトが返却されます.
+		 *              この処理はanyにおいて以下のようにanyで定義します.
+		 *              // anyCallbackをセット.
+		 *              p.action.setAwaitCall(anyCallback);
+		 *              // anyCallbackで管理してるWaitオブジェクトをsignalAllで定義.
+		 *              p.action.setWaitObject(anyCallback.getWait());
+		 */
+		public Wait getWait() {
+			return waitObject;
+		}
+
+		/**
+		 * 処理結果が正常終了の場合は trueが返却されます.
+		 * @return boolean 正常の場合 trueが返却されます.
+		 */
+		public boolean isSuccess() {
+			return successFlag.get();
+		}
 	}
 }

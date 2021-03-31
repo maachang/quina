@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import quina.util.EnvCache;
+import quina.util.Env;
 
 /**
  * ログ定義要素.
@@ -294,7 +294,7 @@ public class LogDefineElement {
 	public LogDefineElement setDirectory(String directory) {
 		checkFinalized();
 		if(directory != null && !directory.isEmpty()) {
-			this.directory = EnvCache.path(directory);
+			this.directory = Env.path(directory);
 		}
 		return this;
 	}

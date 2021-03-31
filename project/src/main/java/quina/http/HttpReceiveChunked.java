@@ -103,7 +103,8 @@ public final class HttpReceiveChunked {
 					break;
 				// １つの塊が４バイトを超える長さの場合はエラーにする.
 				} else if(p > lengthBuffer.length) {
-					throw new HttpException("ありえないchunked-bodyLengthの長さ: " + p);
+					throw new HttpException(
+						"Impossible chunked-body Length length: " + p);
 				}
 				// 受信バッファから、chunkedBodyLength + ¥r¥nまでを読み込む.
 				nioBuffer.read(lengthBuffer, 0, p);
@@ -144,7 +145,8 @@ public final class HttpReceiveChunked {
 				// chunkedBodyの終端(¥r¥n)が存在するかチェック.
 				p = nioBuffer.indexOf(HttpConstants.END_LINE);
 				if(p != 0) {
-					throw new HttpException("chunked-endの位置が不正");
+					throw new HttpException(
+						"The position of chunked-end is incorrect.");
 				}
 				// ¥r¥nを読み飛ばす.
 				nioBuffer.skip(HttpConstants.END_LINE_LENGTH);

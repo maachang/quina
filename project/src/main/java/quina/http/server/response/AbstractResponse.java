@@ -13,9 +13,9 @@ import quina.http.HttpStatus;
 import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.furnishing.BaseSendResponse;
 import quina.http.server.CreateResponseHeader;
 import quina.http.server.HttpServerConstants;
+import quina.http.server.furnishing.BaseSendResponse;
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioSendData;
 

@@ -2,10 +2,10 @@ package quina.http.server.response;
 
 import quina.component.ComponentType;
 import quina.http.Response;
-import quina.http.furnishing.BaseSendResponse;
-import quina.http.furnishing.EmptySendResponse;
-import quina.http.furnishing.ErrorSendResponse;
-import quina.http.furnishing.JsonSendResponse;
+import quina.http.server.furnishing.BaseSendResponse;
+import quina.http.server.furnishing.EmptySendResponse;
+import quina.http.server.furnishing.ErrorSendResponse;
+import quina.http.server.furnishing.JsonSendResponse;
 
 /**
  * RESTful用のレスポンス.

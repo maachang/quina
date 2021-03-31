@@ -1,7 +1,7 @@
 package quina;
 
 import quina.json.Json;
-import quina.util.EnvCache;
+import quina.util.Env;
 import quina.util.FileUtil;
 import quina.util.collection.BinarySearchMap;
 
@@ -34,6 +34,52 @@ public final class QuinaUtil {
 	public static final void setSpace(StringBuilder buf, int space) {
 		for(int i = 0; i < space; i ++) {
 			buf.append(" ");
+		}
+	}
+
+	/**
+	 * コンフィグディレクトリ名を取得.
+	 * @return String コンフィグディレクトリ名が返却されます.
+	 */
+	public static final String getConfigDirectory() {
+		try {
+			String ret;
+			String[] check;
+			// システムプロパティから取得.
+			check = new String[] {
+				"quina.config.dir",
+				"quina.config.directory",
+				"quina.config.folder",
+				"quina.config",
+				"config.dir",
+				"config.directory",
+				"config.folder",
+				"config"
+			};
+			for(int i = 0; i < check.length; i ++) {
+				ret = System.getProperty(check[i]);
+				if(ret != null) {
+					return FileUtil.getFullPath(ret);
+				}
+			}
+			// 環境変数から取得.
+			ret = System.getenv("QUINA_CONFIG");
+			if(ret != null) {
+				return FileUtil.getFullPath(ret);
+			}
+			// ディレクトリが存在する場合.
+			check = new String[] {
+				"./conf/",
+				"./config/"
+			};
+			for(int i = 0; i < check.length; i ++) {
+				if(FileUtil.isDir(check[i])) {
+					return FileUtil.getFullPath(check[i]);
+				}
+			}
+			return null;
+		} catch(Exception e) {
+			throw new QuinaException(e);
 		}
 	}
 
@@ -73,18 +119,18 @@ public final class QuinaUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static final BinarySearchMap<String, Object> loadJson(String configDir, String name) {
-		String dir = configDir;
-		if(!dir.endsWith("/")) {
-			dir += "/";
+		configDir = getDir(configDir);
+		if(!configDir.endsWith("/")) {
+			configDir += "/";
 		}
 		// 環境変数が定義されている場合は置き換える.
-		dir = EnvCache.path(configDir);
+		configDir = Env.path(configDir);
 		// コンフィグファイルが存在するかチェック.
 		int len = JSON_CONFIG_EXTENSION.length;
 		String fileName = null;
 		for(int i = 0; i < len; i ++) {
 			if(FileUtil.isFile(name + JSON_CONFIG_EXTENSION[i])) {
-				fileName = dir + name + JSON_CONFIG_EXTENSION[i];
+				fileName = configDir + name + JSON_CONFIG_EXTENSION[i];
 				break;
 			}
 		}
@@ -106,4 +152,22 @@ public final class QuinaUtil {
 		}
 	}
 
+	// ディレクトリ名を取得.
+	private static final String getDir(String dir) {
+		// ディレクトリ名が存在していない場合.
+		if(dir == null || dir.isEmpty()) {
+			try {
+				// 該当するコンフィグディレクトリを探す.
+				dir = QuinaUtil.getConfigDirectory();
+			} catch(Exception e) {
+			}
+			// 取得できなかった場合はカレントディレクトリを対象とする.
+			if(dir == null) {
+				try {
+					dir = FileUtil.getFullPath("./");
+				} catch(Exception e) {}
+			}
+		}
+		return dir;
+	}
 }

@@ -34,9 +34,9 @@ public class NioWorkerThreadManager {
 	 * @param handle ワーカースレッドハンドラーを設定します.
 	 */
 	public NioWorkerThreadManager(int len, NioWorkerThreadHandler handle) {
-		if(len < NioWorkerConstants.MIN_WORKER_THREAD_LENGTH) {
+		if(NioWorkerConstants.MIN_WORKER_THREAD_LENGTH > len) {
 			len = NioWorkerConstants.MIN_WORKER_THREAD_LENGTH;
-		} else if(len > NioWorkerConstants.MAX_WORKER_THREAD_LENGTH) {
+		} else if(NioWorkerConstants.MAX_WORKER_THREAD_LENGTH < len) {
 			len = NioWorkerConstants.MAX_WORKER_THREAD_LENGTH;
 		}
 		if(handle != null) {

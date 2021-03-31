@@ -6,7 +6,7 @@ import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
-import quina.util.EnvCache;
+import quina.util.Env;
 import quina.util.FileUtil;
 
 /**
@@ -49,7 +49,7 @@ public class FileComponent implements FileAttributeComponent {
 			throw new QuinaException("Target directory is not set.");
 		}
 		try {
-			dir = FileUtil.getFullPath(EnvCache.path(dir));
+			dir = FileUtil.getFullPath(Env.path(dir));
 			if(!dir.endsWith("/")) {
 				dir += "/";
 			}

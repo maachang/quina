@@ -2,7 +2,7 @@ package quina.http.server.response;
 
 import quina.component.ComponentType;
 import quina.http.Response;
-import quina.http.furnishing.BaseSendResponse;
+import quina.http.server.furnishing.BaseSendResponse;
 
 /**
  * 同期用のレスポンス.

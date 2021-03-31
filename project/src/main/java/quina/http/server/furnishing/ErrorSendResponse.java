@@ -1,4 +1,4 @@
-package quina.http.furnishing;
+package quina.http.server.furnishing;
 
 import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;

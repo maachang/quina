@@ -10,6 +10,6 @@ public interface PromiseCall {
 	 * @param value パラメータが設定されます.
 	 * @throws Exception 例外.
 	 */
-	public void call(PromiseAction<?> action, Object value)
+	public void call(PromiseAction action, Object value)
 		throws Exception;
 }

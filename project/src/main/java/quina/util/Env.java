@@ -1,38 +1,50 @@
 package quina.util;
 
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import quina.util.collection.ObjectList;
+import quina.util.collection.TypesKeyValue;
 
 /**
- * 環境変数キャッシュ.
+ * 環境変数の取得管理.
  */
-public class EnvCache {
-	private static final ThreadLocal<Map<String, String>> cache = new ThreadLocal<Map<String, String>>();
+public class Env implements TypesKeyValue<String, String> {
+	private static final Env INST = new Env();
 
-	private static final Map<String, String> getCache() {
-		Map<String, String> ret = cache.get();
-		if (ret == null) {
-			ret = new WeakHashMap<String, String>();
-			cache.set(ret);
-		}
-		return ret;
+	/**
+	 * インスタンス情報を取得.
+	 * @return Env インスタンスが返却されます.
+	 */
+	public static final Env getInstance() {
+		return INST;
 	}
 
 	/**
 	 * 指定名の環境変数内容を取得.
-	 *
-	 * @param name
-	 *            取得対象の環境変数名を設定します.
-	 * @return String
+	 * @param name 取得対象の環境変数名を設定します.
+	 * @return String 環境変数が返却されます.
 	 */
-	public static final String get(String name) {
-		final Map<String, String> c = getCache();
-		String ret = c.get(name);
+	public static final String env(String name) {
+		return INST.get(name);
+	}
+
+	// 1度取得した内容はキャッシュする.
+	private final Map<String, String> cache =
+		new ConcurrentHashMap<String, String>();
+
+	/**
+	 * 指定名の環境変数内容を取得.
+	 * @param name 取得対象の環境変数名を設定します.
+	 * @return String 環境変数が返却されます.
+	 */
+	@Override
+	public final String get(Object name) {
+		String key = "" + name;
+		String ret = cache.get(key);
 		if (ret == null) {
-			ret = System.getenv(name);
-			c.put(name, ret);
+			ret = System.getenv(key);
+			cache.put(key, ret);
 		}
 		return ret;
 	}
@@ -96,6 +108,7 @@ public class EnvCache {
 		int first = 0;
 		int s, e;
 		len = posList.size();
+		final Env env = Env.getInstance();
 		final StringBuilder buf = new StringBuilder();
 		for(int i = 0; i < len; i ++) {
 			plst = posList.get(i);
@@ -116,7 +129,7 @@ public class EnvCache {
 			// 環境変数名.
 			envSrc = path.substring(start + 1, e);
 			// 環境変数名を変換.
-			envDest = get(envSrc);
+			envDest = env.get(envSrc);
 			buf.append(path.substring(first, s));
 			if(envDest != null) {
 				// 取得した環境変数をセット.

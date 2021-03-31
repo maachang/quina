@@ -5,7 +5,7 @@ package quina.promise;
  *
  * Promiseのステータスと返却Value情報を持ちます.
  */
-public class PromiseElement {
+public class PromiseValue {
 	private PromiseStatus status;
 	private Object value;
 
@@ -14,7 +14,7 @@ public class PromiseElement {
 	 * @param status ステータスを設定します.
 	 * @param value Valueを設定します.
 	 */
-	protected PromiseElement(PromiseStatus status, Object value) {
+	protected PromiseValue(PromiseStatus status, Object value) {
 		this.status = status;
 		this.value = value;
 	}

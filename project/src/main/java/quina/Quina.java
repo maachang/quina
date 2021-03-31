@@ -9,13 +9,14 @@ import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 import quina.net.nio.tcp.worker.WorkerElement;
+import quina.promise.PromiseWorkerManager;
 import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
 import quina.shutdown.ShutdownManagerInfo;
 import quina.util.Args;
 import quina.util.AtomicObject;
-import quina.util.EnvCache;
+import quina.util.Env;
 import quina.util.FileUtil;
 import quina.util.collection.BinarySearchMap;
 import quina.util.collection.ObjectList;
@@ -31,7 +32,7 @@ public class Quina {
 	private static final String DEFAULT_TOKEN = "@aniuq";
 
 	// コンフィグディレクトリ.
-	private String configDir = QuinaConstants.DEFAULT_CONFIG_DIRECTORY;
+	private String configDir = null;
 
 	// ルータオブジェクト.
 	private final Router router;
@@ -121,12 +122,15 @@ public class Quina {
 	public Quina setConfigDirectory(String configDir) {
 		check(true);
 		try {
-			configDir = FileUtil.getFullPath(
-				EnvCache.path(configDir));
-			if(!configDir.endsWith("/")) {
-				configDir = configDir + "/";
+			if(configDir == null || configDir.isEmpty()) {
+				this.configDir = null;
+			} else {
+				configDir = FileUtil.getFullPath(Env.path(configDir));
+				if(!configDir.endsWith("/")) {
+					configDir = configDir + "/";
+				}
+				this.configDir = configDir;
 			}
-			this.configDir = configDir;
 		} catch(Exception e) {
 			throw new QuinaException(e);
 		}
@@ -156,18 +160,20 @@ public class Quina {
 	 */
 	public Quina loadConfig(String configDir) {
 		check(true);
-		if(configDir != null && !configDir.isEmpty()) {
-			setConfigDirectory(configDir);
-		}
+		// コンフィグディレクトリを設定.
+		setConfigDirectory(configDir);
+		configDir = getConfigDirectory();
 		// ログのコンフィグ定義.
-		loadLogConfig(this.configDir);
+		loadLogConfig(configDir);
+		// Promiseワーカーのコンフィグ設定.
+		PromiseWorkerManager.getInstance().getConfig().loadConfig(configDir);
 		// シャットダウンマネージャのコンフィグ定義.
-		loadShutdownManagerConfig(this.configDir);
+		loadShutdownManagerConfig(configDir);
 		// Etagマネージャのコンフィグ定義.
-		loadEtagManagerConfig(this.configDir);
+		loadEtagManagerConfig(configDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
-		httpWorkerService.readConfig(this.configDir);
-		httpServerService.readConfig(this.configDir);
+		httpWorkerService.readConfig(configDir);
+		httpServerService.readConfig(configDir);
 		// 登録サービスのコンフィグ情報を読み込む.
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {

@@ -1,10 +1,6 @@
 package quina.promise;
 
-import quina.Quina;
 import quina.QuinaException;
-import quina.http.Request;
-import quina.http.Response;
-import quina.http.server.response.AbstractResponse;
 import quina.net.nio.tcp.Wait;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
@@ -14,11 +10,10 @@ import quina.util.collection.ObjectList;
 /**
  * Promiseアクション実装.
  */
-@SuppressWarnings("unchecked")
-class PromiseActionImpl<T> implements PromiseAction<T> {
+class PromiseActionImpl implements PromiseAction {
 	// Promise実行ワーカーリスト.
-	protected ObjectList<PromiseWorkerElement> list =
-		new ObjectList<PromiseWorkerElement>();
+	protected ObjectList<PromiseWorker> list =
+		new ObjectList<PromiseWorker>();
 
 	// 初期実行パラメータ.
 	protected Object initParam;
@@ -32,20 +27,23 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	// waitオブジェクト.
 	protected Wait waitObject = null;
 
+	// waitオブジェクトの代わりのコールバック.
+	protected PromiseAwaitCall awaitCall = null;
+
 	// resolveやreject呼び出し回数管理.
 	protected final AtomicNumber64 resolveRejectCounter =
 		new AtomicNumber64(0L);
 
 	// 前回実行されたワーカー要素.
-	protected final AtomicObject<PromiseWorkerElement> before =
-		new AtomicObject<PromiseWorkerElement>();
+	protected final AtomicObject<PromiseWorker> before =
+		new AtomicObject<PromiseWorker>();
 
 	// promiseステータス.
 	protected final AtomicObject<PromiseStatus> status =
 		new AtomicObject<PromiseStatus>(PromiseStatus.Pending);
 
 	// awaitで返却される情報.
-	protected final AtomicObject<Object> lastValue =
+	protected final AtomicObject<Object> resultAwaitValue =
 		new AtomicObject<Object>(null);
 
 	// awaitで返却される情報が設定されたかフラグ設定.
@@ -56,9 +54,6 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 
 	// promise終了フラグ.
 	protected final Flag exitPromiseFlag = new Flag(false);
-
-	// レスポンスオブジェクト.
-	protected Response<?> response = null;
 
 	/**
 	 * コンストラクタ.
@@ -95,8 +90,8 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 				"The call object for normal execution has not been set.");
 		}
 		checkNotStartPromise();
-		list.add(new PromiseWorkerElement(this, list.size(),
-			PromiseWorkerElement.MODE_THEN, call));
+		list.add(new PromiseWorker(this, list.size(),
+			PromiseWorker.MODE_THEN, call));
 	}
 
 	/**
@@ -110,28 +105,28 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 				"The call object for executing the abnormal system has not been set.");
 		}
 		checkNotStartPromise();
-		list.add(new PromiseWorkerElement(this, list.size(),
-			PromiseWorkerElement.MODE_ERROR, call));
+		list.add(new PromiseWorker(this, list.size(),
+			PromiseWorker.MODE_ERROR, call));
 	}
 
 	/**
 	 * 正常系、異常系に関係なく呼び出される処理を設定します.
 	 * @param call 実行処理を設定します.
 	 */
-	protected void allways(PromiseCall call) {
+	protected void any(PromiseCall call) {
 		if(call == null) {
 			throw new QuinaException("The call object for execution has not been set.");
 		}
 		checkNotStartPromise();
-		list.add(new PromiseWorkerElement(this, list.size(),
-			PromiseWorkerElement.MODE_ALLWAYS, call));
+		list.add(new PromiseWorker(this, list.size(),
+			PromiseWorker.MODE_ANY, call));
 	}
 
 	/**
 	 * 最後に必ず呼び出される処理を設定します.
 	 * @param call Promise終了呼び出しコールを設定します.
 	 */
-	protected void finalyTo(PromiseFromEndCall call) {
+	protected void finalize(PromiseFromEndCall call) {
 		if(call == null) {
 			throw new QuinaException("The call object for execution has not been set.");
 		}
@@ -163,9 +158,9 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 
 	// 最終非同期処理のステータスを抽出して設定します.
 	protected boolean setLastStatusByLastPromise() {
-		PromiseWorkerElement em = before.get();
+		PromiseWorker em = before.get();
 		if(em != null) {
-			if((em.getCallMode() & PromiseWorkerElement.MODE_THEN) != 0) {
+			if((em.getCallMode() & PromiseWorker.MODE_THEN) != 0) {
 				// success.
 				status.set(PromiseStatus.Fulfilled);
 				return true;
@@ -196,12 +191,18 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 			if(endCall != null) {
 				try {
 					endCall.call(this);
-				} catch(Exception e) {
+				} catch(Throwable e) {
 					// エラーは無視.
 				}
 			}
+			// awaitコールバックが設定されている場合.
+			if(awaitCall != null) {
+				// コールバック実行.
+				Object value = resultAwaitValue.get();
+				resultAwaitValue.set(null);
+				awaitCall.call(this, status.get(), value);
 			// awaitの解除.
-			if(waitAllFlag) {
+			} else if(waitAllFlag) {
 				// waitAllFlagが[true]の場合はsignalAll呼び出し.
 				waitObject.signalAll();
 			} else {
@@ -213,7 +214,7 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 
 	// 送信済みの場合はlastValueに設定して終了処理.
 	protected void setLastValue(Object value) {
-		lastValue.set(value);
+		resultAwaitValue.set(value);
 		lastValueFlag.set(true);
 	}
 
@@ -228,16 +229,22 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 		// resolveが呼び出された.
 		resolveRejectCounter.inc();
 		// 利用可能なthen()追加の実行処理を取得.
-		PromiseWorkerElement em;
+		PromiseWorker em;
 		final int len = list.size();
 		for(int i = no; i < len; i ++) {
 			em = list.get(i);
-			if((em.getCallMode() & PromiseWorkerElement.MODE_THEN) != 0) {
-				em.setParam(value);
+			if((em.getCallMode() & PromiseWorker.MODE_THEN) != 0) {
+				// anyの呼び出しの場合はPromiseValueでステータス付与する.
+				if(em.getCallMode() == PromiseWorker.MODE_ANY) {
+					em.setParam(new PromiseValue(PromiseStatus.Fulfilled, value));
+				} else {
+					em.setParam(value);
+				}
+				// 今回の条件としてセット.
 				before.set(em);
 				// successステータス設定.
 				status.set(PromiseStatus.Fulfilled);
-				Quina.get().registerWorker(em);
+				PromiseWorkerManager.getInstance().push(em);
 				return true;
 			}
 		}
@@ -259,16 +266,22 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 		// rejectが呼び出された.
 		resolveRejectCounter.inc();
 		// 利用可能なerror()追加の実行処理を取得.
-		PromiseWorkerElement em;
+		PromiseWorker em;
 		final int len = list.size();
 		for(int i = no; i < len; i ++) {
 			em = list.get(i);
-			if((em.getCallMode() & PromiseWorkerElement.MODE_ERROR) != 0) {
-				em.setParam(value);
+			if((em.getCallMode() & PromiseWorker.MODE_ERROR) != 0) {
+				// anyの呼び出しの場合はPromiseValueでステータス付与する.
+				if(em.getCallMode() == PromiseWorker.MODE_ANY) {
+					em.setParam(new PromiseValue(PromiseStatus.Rejected, value));
+				} else {
+					em.setParam(value);
+				}
+				// 今回の条件としてセット.
 				before.set(em);
 				// reject.
 				status.set(PromiseStatus.Rejected);
-				Quina.get().registerWorker(em);
+				PromiseWorkerManager.getInstance().push(em);
 				return true;
 			}
 		}
@@ -281,10 +294,10 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 
 	/**
 	 * 次の正常処理を実行します.
-	 * @return T オブジェクトが返却されます.
+	 * @return PromiseAction オブジェクトが返却されます.
 	 */
 	@Override
-	public T resolve() {
+	public PromiseAction resolve() {
 		return resolve(null);
 	}
 
@@ -292,34 +305,34 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	 * 次の正常処理を実行します.
 	 * この処理を呼び出すと次のthen()やallways()を実行します.
 	 * @param value 実行引数を設定します.
-	 * @return T オブジェクトが返却されます.
+	 * @return PromiseAction オブジェクトが返却されます.
 	 */
 	@Override
-	public T resolve(Object value) {
-		final PromiseWorkerElement b = before.get();
+	public PromiseAction resolve(Object value) {
+		final PromiseWorker b = before.get();
 		if(b == null) {
 			resolve(0, value);
 		} else {
 			resolve(b.getNo() + 1, value);
 		}
-		return (T)this;
+		return this;
 	}
 
 	/**
 	 * 次の異常系処理を実行します.
 	 * この処理を呼び出すと次のerror()やallways()を実行します.
 	 * @param value 実行引数を設定します.
-	 * @return T オブジェクトが返却されます.
+	 * @return PromiseAction オブジェクトが返却されます.
 	 */
 	@Override
-	public T reject(Object value) {
-		final PromiseWorkerElement b = before.get();
+	public PromiseAction reject(Object value) {
+		final PromiseWorker b = before.get();
 		if(b == null) {
 			reject(0, value);
 		} else {
 			reject(b.getNo() + 1, value);
 		}
-		return (T)this;
+		return this;
 	}
 
 	/**
@@ -327,10 +340,10 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	 * この処理を呼び出すと次のthen()やerror()やallways()で
 	 * 定義された内容を無視してPromiseを終わらせます.
 	 * @param value 実行引数を設定します.
-	 * @return T オブジェクトが返却されます.
+	 * @return PromiseAction オブジェクトが返却されます.
 	 */
 	@Override
-	public T exit(Object value) {
+	public PromiseAction exit(Object value) {
 		checkStartPromise();
 		// exitが呼び出された.
 		resolveRejectCounter.inc();
@@ -340,53 +353,46 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 		if(value instanceof Throwable) {
 			// エラー返却.
 			exitPromise(PromiseStatus.Rejected);
-			return (T)this;
+			return this;
 		}
 		// success返却.
 		exitPromise(PromiseStatus.Fulfilled);
-		return (T)this;
+		return this;
+	}
+
+	/**
+	 * 処理が終了した時のコールバック処理を設定します.
+	 * @param awaitCall 処理が終了した時のコールバック処理を設定します.
+	 */
+	protected void setAwaitCall(PromiseAwaitCall awaitCall) {
+		checkNotStartPromise();
+		this.awaitCall = awaitCall;
 	}
 
 	/**
 	 * Waitオブジェクトを設定.
-	 * @param waitAllFlag [true]の場合、waitObject.signalAll()を呼び出します.
 	 * @param waitObject Waitオブジェクトを設定します.
 	 */
-	protected void setWaitObject(boolean waitAllFlag, Wait waitObject) {
+	protected void setWaitObject(Wait waitObject) {
 		checkNotStartPromise();
-		this.waitAllFlag = waitAllFlag;
+		this.waitAllFlag = true;
 		this.waitObject = waitObject;
-	}
-
-	/**
-	 * Promiseを開始.
-	 * こちらでの呼び出しの場合は[action.send(...)]系の処理が実行可能です.
-	 * @param execFlag trueの場合、スタート時にresolve実行が行われます.
-	 * @param res HttpResponseを設定します.
-	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
-	 */
-	protected T start(boolean execFlag, Response<?> res) {
-		// レスポンスが設定されていない場合.
-		if(res == null) {
-			throw new QuinaException("Response are not set.");
-		}
-		this.response = (AbstractResponse<?>)res;
-		return start(execFlag);
 	}
 
 	/**
 	 * Promiseを開始.
 	 * こちらでの呼び出しの場合は[action.send(...)]系の処理が実行出来ません.
 	 * @param execFlag trueの場合、スタート時にresolve実行が行われます.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return PromiseAction PromiseActionオブジェクトが返却されます.
 	 */
-	protected T start(boolean execFlag) {
+	protected PromiseAction start(boolean execFlag) {
 		// 既に開始済みの場合.
 		if(startPromiseFlag.setToGetBefore(true)) {
 			throw new QuinaException("Promise has already started.");
 		}
 		// waitオブジェクトが設定されていない場合は生成.
-		if(waitObject == null) {
+		if(awaitCall == null && waitObject == null) {
+			this.waitAllFlag = false;
 			this.waitObject = new Wait();
 		}
 		// スタート時にresolve実行させる場合.
@@ -396,7 +402,7 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 			initParam = null;
 			resolve(o);
 		}
-		return (T)this;
+		return this;
 	}
 
 	/**
@@ -406,16 +412,20 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	protected Object await() {
 		// Promiseが終了していない場合.
 		if(!exitPromiseFlag.get()) {
+			// waitObjectが存在しない場合は処理しない.
+			if(waitObject == null) {
+				return null;
+			}
 			// await待機.
 			// ワーカースレッドが停止した場合はawaitを取りやめる.
 			while(!(waitObject.await(100L) ||
-				Quina.get().isStopWorker()));
+				PromiseWorkerManager.getInstance().isStopCall()));
 			// 終了した時の返信パラメータをセット.
-			return lastValue.put(null);
+			return resultAwaitValue.put(null);
 		}
 		// 既にPromiseが終了した場合.
 		// 終了した時の返信パラメータをセット.
-		return lastValue.put(null);
+		return resultAwaitValue.put(null);
 	}
 
 	/**
@@ -427,18 +437,21 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	protected boolean await(Object[] out, long time) {
 		// Promiseが終了していない場合.
 		if(!exitPromiseFlag.get()) {
+			// waitObjectが存在しない場合は処理しない.
+			if(waitObject == null) {
+				return isExitPromise();
 			// 待機処理を実施.
-			if(waitObject.await(time)) {
+			} else if(waitObject.await(time)) {
 				if(out != null) {
 					// 終了した時の返信パラメータをセット.
-					out[0] = lastValue.put(null);
+					out[0] = resultAwaitValue.put(null);
 				}
 			}
 		// 既にPromiseが終了した場合.
 		} else if(lastValueFlag.get()) {
 			if(out != null) {
 				// 終了した時の返信パラメータをセット.
-				out[0] = lastValue.put(null);
+				out[0] = resultAwaitValue.put(null);
 			}
 		}
 		// 終了済みの場合は[true].
@@ -458,7 +471,7 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	 * @return
 	 */
 	protected int getBeforeCallMode() {
-		PromiseWorkerElement em = before.get();
+		PromiseWorker em = before.get();
 		if(em == null) {
 			return 0;
 		}
@@ -472,20 +485,5 @@ class PromiseActionImpl<T> implements PromiseAction<T> {
 	@Override
 	public PromiseStatus getStatus() {
 		return status.get();
-	}
-
-	@Override
-	public Request getRequest() {
-		return response.getRequest();
-	}
-
-	@Override
-	public Response<?> getResponse() {
-		return response;
-	}
-
-	@Override
-	public boolean isCallSendMethod() {
-		return response != null;
 	}
 }

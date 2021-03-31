@@ -9,6 +9,6 @@ public interface PromiseFromEndCall {
 	 * @param action PromiseActionを設定します.
 	 * @throws Exception 例外.
 	 */
-	public void call(PromiseAction<?> action)
+	public void call(PromiseAction action)
 		throws Exception;
 }
