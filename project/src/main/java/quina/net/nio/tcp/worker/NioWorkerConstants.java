@@ -7,11 +7,11 @@ import quina.net.nio.tcp.NioAtomicValues.Number32;
  */
 public class NioWorkerConstants {
 	/** 最小ワーカースレッド数. **/
-	public static final int MIN_WORKER_THREAD_LENGTH = 4;
+	public static final int MIN_WORKER_THREAD_LENGTH = 8;
 
 	/** デフォルトのワーカースレッド数. **/
 	public static final int DEF_WORKER_THREAD_LENGTH =
-		(int)(java.lang.Runtime.getRuntime().availableProcessors() * 1.5);
+		(int)(java.lang.Runtime.getRuntime().availableProcessors() * 4);
 
 	/** 最大ワーカースレッド数. **/
 	public static final int MAX_WORKER_THREAD_LENGTH = 32768;
@@ -26,7 +26,7 @@ public class NioWorkerConstants {
 	public static final int MAX_POOLING_MANAGE_LENGTH = 65535;
 
 	// デフォルトのワーカースレッド数.
-	// 認識されたCPUコア数の1.5倍のワーカー数が初期値で指定されます.
+	// 認識されたCPUスレッド数の4倍のワーカー数が初期値で指定されます.
 	private static final Number32 workerThreadLength =
 		new Number32(DEF_WORKER_THREAD_LENGTH);
 
