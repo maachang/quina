@@ -309,10 +309,12 @@ public class Promise {
 	public Promise start() {
 		// 初期実行が定義されている場合.
 		if(firstCall != null) {
+			final PromiseWorkerCall call = firstCall;
+			firstCall = null;
 			// actionを自動実行させずに起動.
 			action.start(false);
 			// firstCallのワーカー実行.
-			PromiseWorkerManager.getInstance().push(firstCall);
+			PromiseWorkerManager.getInstance().push(call);
 		// 初期実行が定義されていない場合.
 		} else {
 			// actionを自動実行で起動.
