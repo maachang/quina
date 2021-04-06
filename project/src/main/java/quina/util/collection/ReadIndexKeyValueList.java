@@ -3,7 +3,7 @@ package quina.util.collection;
 /**
  * 読み込み用IndexMap.
  */
-public interface ReadIndexMap<K, V> extends TypesKeyValue<K, V> {
+public interface ReadIndexKeyValueList<K, V> extends TypesKeyValue<K, V> {
 	/**
 	 * データ確認.
 	 * @param key

@@ -28,6 +28,15 @@ public interface RESTfulPostSync extends Component {
 	}
 
 	/**
+	 * 対応HTTPメソッド定義を取得.
+	 * @return int このコンポーネントが対応するHTTPメソッド定義が返却されます.
+	 */
+	@Override
+	default int getMethod() {
+		return ComponentConstants.HTTP_METHOD_POST;
+	}
+
+	/**
 	 * コンポーネント実行処理.
 	 * @param method HTTPメソッドが設定されます.
 	 * @param req HttpRequestが設定されます.

@@ -6,6 +6,7 @@ import quina.component.ErrorComponent;
 import quina.component.EtagManager;
 import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
+import quina.http.Method;
 import quina.validate.Validation;
 
 /**
@@ -98,20 +99,22 @@ public class Router {
 	/**
 	 * 指定URLに対するコンポーネントを取得.
 	 * @param url urlを設定します.
+	 * @param method HttpMethodを設定します.
 	 * @return RegisterComponent 登録コンポーネントが返却されます.
 	 */
-	public RegisterComponent get(String url) {
-		return manager.get(url);
+	public RegisterComponent get(String url, Method method) {
+		return manager.get(url, method);
 	}
 
 	/**
 	 * 指定URLに対するコンポーネントを取得.
 	 * @param url urlを設定します.
 	 * @param urls [/]で配列化されたURLを設定します.
+	 * @param method HttpMethodを設定します.
 	 * @return RegisterComponent 登録コンポーネントが返却されます.
 	 */
-	public RegisterComponent get(String url, String[] urls) {
-		return manager.get(url, urls);
+	public RegisterComponent get(String url, String[] urls, Method method) {
+		return manager.get(url, urls, method);
 	}
 
 	/**

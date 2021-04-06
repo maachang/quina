@@ -16,8 +16,21 @@ interface FileAttributeComponent extends Component {
 	 */
 	public EtagManager getEtagManager();
 
+	/**
+	 * コンポーネントタイプを取得.
+	 * @return ComponentType コンポーネントタイプが返却されます.
+	 */
 	@Override
 	default ComponentType getType() {
 		return ComponentType.FILE;
+	}
+
+	/**
+	 * 対応HTTPメソッド定義を取得.
+	 * @return int このコンポーネントが対応するHTTPメソッド定義が返却されます.
+	 */
+	@Override
+	default int getMethod() {
+		return ComponentConstants.HTTP_METHOD_ALL;
 	}
 }

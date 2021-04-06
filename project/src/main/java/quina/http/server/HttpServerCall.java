@@ -190,6 +190,20 @@ public class HttpServerCall extends NioServerCall {
 	 * @param url
 	 */
 	public final void execComponent(String url, HttpElement em) {
+		execComponent(url, em, defaultResultJsonMode, mimeTypes, custom);
+	}
+
+	/**
+	 * URLを指定してコンポーネントを実行.
+	 * @param em Httpy要素を設定します.
+	 * @param url URLを設定します.
+	 * @param json デフォルトのエラー返信がJSONの場合trueを設定します.
+	 * @param mime MimeTypesを設定します.
+	 * @param custom パラメータ解析のカスタム条件を設定します.
+	 */
+	public static final void execComponent(
+		String url, HttpElement em, boolean json, MimeTypes mime,
+		HttpCustomAnalysisParams custom) {
 		String[] urls;
 		Params params;
 		RegisterComponent comp;
@@ -204,8 +218,6 @@ public class HttpServerCall extends NioServerCall {
 			HttpServerUtil.sendOptions(em, req);
 			return;
 		}
-		// エラー４０４等のレスポンスをJson返却するモード.
-		boolean json = defaultResultJsonMode;
 		try {
 			// urlが指定されてない場合はURLを取得.
 			if(url == null) {
@@ -218,70 +230,70 @@ public class HttpServerCall extends NioServerCall {
 			// urlを[/]でパース.
 			urls = ComponentManager.getUrls(url);
 			// URLに対するコンテンツ取得.
-			comp = Quina.router().get(url, urls);
+			comp = Quina.router().get(url, urls, req.getMethod());
 			url = null;
-			// コンポーネントが取得された場合.
-			if(comp != null) {
-				// コンポーネントタイプを取得.
-				final ComponentType ctype = comp.getType();
-				// RESTfulか取得.
-				json = ctype.isRESTful();
-				// Elementにレスポンスがない場合.
-				if(res == null) {
-					switch(ctype.getAttributeType()) {
-					// このコンポーネントは同期コンポーネントの場合.
-					case ComponentConstants.ATTRIBUTE_SYNC:
-						res = new SyncResponseImpl(em, mimeTypes);
-						break;
-					// このコンポーネントはRESTful系の場合.
-					case ComponentConstants.ATTRIBUTE_RESTFUL:
-						res = new RESTfulResponseImpl(em, mimeTypes);
-						break;
-					// デフォルトレスポンス.
-					default:
-						res = new NormalResponseImpl(em, mimeTypes);
-					}
-					// レスポンスをセット.
-					em.setResponse(res);
-				}
-				// パラメータを取得.
-				params = HttpAnalysis.convertParams(req, custom);
-				// URLパラメータ条件が存在する場合.
-				if(comp.isUrlParam()) {
-					// パラメータが存在しない場合は生成.
-					if(params == null) {
-						params = new Params();
-					}
-					// URLパラメータを解析.
-					comp.getUrlParam(params, urls);
-				}
-				urls = null;
-				// パラメータが存在する場合はリクエストセット.
-				if(params != null) {
-					req.setParams(params);
-				// パラメータが存在しない場合は空のパラメータをセット.
-				} else {
-					req.setParams(new Params(0));
-				}
-				// validationが存在する場合はValidation処理.
-				if((validation = comp.getValidation()) != null) {
-					// validation実行.
-					params = validation.execute(req, req.getParams());
-					// 新しく生成されたパラメータを再セット.
-					req.setParams(params);
-				}
-				// コンポーネント実行.
-				comp.call(req.getMethod(), req, res);
-			} else {
+			// コンポーネントが取得できない場合.
+			if(comp == null) {
 				// エラー404返却.
 				if(res == null) {
-					res = new NormalResponseImpl(em, mimeTypes);
+					res = new NormalResponseImpl(em, mime);
 				} else {
 					res = NormalResponseImpl.newResponse(res);
 				}
 				res.setStatus(404);
 				HttpServerUtil.sendError(json, req, res, null);
+				return;
 			}
+			// コンポーネントタイプを取得.
+			final ComponentType ctype = comp.getType();
+			// RESTfulか取得.
+			json = ctype.isRESTful();
+			// Elementにレスポンスがない場合.
+			if(res == null) {
+				switch(ctype.getAttributeType()) {
+				// このコンポーネントは同期コンポーネントの場合.
+				case ComponentConstants.ATTRIBUTE_SYNC:
+					res = new SyncResponseImpl(em, mime);
+					break;
+				// このコンポーネントはRESTful系の場合.
+				case ComponentConstants.ATTRIBUTE_RESTFUL:
+					res = new RESTfulResponseImpl(em, mime);
+					break;
+				// デフォルトレスポンス.
+				default:
+					res = new NormalResponseImpl(em, mime);
+				}
+				// レスポンスをセット.
+				em.setResponse(res);
+			}
+			// パラメータを取得.
+			params = HttpAnalysis.convertParams(req, custom);
+			// URLパラメータ条件が存在する場合.
+			if(comp.isUrlParam()) {
+				// パラメータが存在しない場合は生成.
+				if(params == null) {
+					params = new Params();
+				}
+				// URLパラメータを解析.
+				comp.getUrlParam(params, urls);
+			}
+			urls = null;
+			// パラメータが存在する場合はリクエストセット.
+			if(params != null) {
+				req.setParams(params);
+			// パラメータが存在しない場合は空のパラメータをセット.
+			} else {
+				req.setParams(new Params(0));
+			}
+			// validationが存在する場合はValidation処理.
+			if((validation = comp.getValidation()) != null) {
+				// validation実行.
+				params = validation.execute(req, req.getParams());
+				// 新しく生成されたパラメータを再セット.
+				req.setParams(params);
+			}
+			// コンポーネント実行.
+			comp.call(req.getMethod(), req, res);
 		} catch(Exception e) {
 			// ワーニング以上のログ通知が認められてる場合.
 			if(LOG.isWarnEnabled()) {
@@ -316,7 +328,7 @@ public class HttpServerCall extends NioServerCall {
 				}
 			}
 			// エラー返却.
-			res = HttpServerUtil.defaultResponse(em, mimeTypes, res);
+			res = HttpServerUtil.defaultResponse(em, mime, res);
 			HttpServerUtil.sendError(json, req, res, e);
 		}
 	}

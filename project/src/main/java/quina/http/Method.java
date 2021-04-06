@@ -6,24 +6,28 @@ import quina.util.Alphabet;
  * Http-Method定義.
  */
 public enum Method {
-	GET("GET", false),
-	POST("POST", true),
-	DELETE("DELETE", true),
-	PUT("PUT", true),
-	PATCH("PATCH", true),
-	OPTIONS("OPTIONS", false),
-	TRACE("TRACE", false),
-	HEAD("HEAD", false);
+	GET("GET", 0x00000001, false),
+	POST("POST", 0x00000002, true),
+	DELETE("DELETE", 0x00000004, true),
+	PUT("PUT", 0x00000008, true),
+	PATCH("PATCH", 0x00000010, true),
+	OPTIONS("OPTIONS", 0x00000100, false),
+	TRACE("TRACE", 0x00000200, false),
+	HEAD("HEAD", 0x00000400, false);
 
 	private String name;
+	private int type;
 	private boolean body;
 
 	/**
 	 * コンストラクタ.
-	 * @param name
+	 * @param name メソッド名を設定します.
+	 * @param type メソッドタイプを設定します.
+	 * @param body body付与が可能な場合はtrueが設定されます.
 	 */
-	private Method(String name, boolean body) {
+	private Method(String name, int type, boolean body) {
 		this.name = name;
+		this.type = type;
 		this.body = body;
 	}
 
@@ -33,6 +37,14 @@ public enum Method {
 	 */
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * メソッドタイプを取得.
+	 * @return
+	 */
+	public int getType() {
+		return type;
 	}
 
 	/**

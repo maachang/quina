@@ -18,7 +18,7 @@ import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
-import quina.util.collection.BinarySearchMap;
+import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
 
 /**
@@ -190,7 +190,7 @@ public class Quina {
 			return;
 		}
 		// log.jsonのコンフィグファイルを取得.
-		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(configDir, "log");
+		IndexMap<String, Object> json = QuinaUtil.loadJson(configDir, "log");
 		if(json == null) {
 			return;
 		}
@@ -206,7 +206,7 @@ public class Quina {
 			return;
 		}
 		// shutdown.jsonのコンフィグファイルを取得.
-		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(configDir, "shutdown");
+		IndexMap<String, Object> json = QuinaUtil.loadJson(configDir, "shutdown");
 		if(json == null) {
 			return;
 		}
@@ -221,7 +221,7 @@ public class Quina {
 			return;
 		}
 		// etag.jsonのコンフィグファイルを取得.
-		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(configDir, "etag");
+		IndexMap<String, Object> json = QuinaUtil.loadJson(configDir, "etag");
 		if(json == null) {
 			return;
 		}

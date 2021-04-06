@@ -191,18 +191,24 @@ public final class FileUtil {
 	 *                例外.
 	 */
 	public static final String getFullPath(String name) throws Exception {
-		File f = new File(name);
-		String s = f.getCanonicalPath();
-		if (s.indexOf("\\") != -1) {
-			s = StringUtil.changeString(s, "\\", "/");
+		char c;
+		name = new File(name).getCanonicalPath();
+		final int len = name.length();
+		StringBuilder buf = new StringBuilder(len + 2);
+		if(!name.startsWith("/")) {
+			buf.append("/");
+		} else if(name.indexOf("\\") == -1) {
+			return name;
 		}
-		if (!s.startsWith("/")) {
-			s = "/" + s;
+		for(int i = 0; i < len; i++) {
+			c = name.charAt(i);
+			if(c == '\\') {
+				buf.append("/");
+			} else {
+				buf.append(c);
+			}
 		}
-		// if( f.isDirectory() ) {
-		// s = s + "/" ;
-		// }
-		return s;
+		return buf.toString();
 	}
 
 	/**

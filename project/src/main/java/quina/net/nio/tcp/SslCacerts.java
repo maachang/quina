@@ -5,17 +5,145 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
+import quina.QuinaException;
 import quina.net.nio.tcp.NioAtomicValues.Bool;
+import quina.util.FileUtil;
 
 /**
  * トラストストアの証明書
  * (SSLの認証局証明書管理ファイル)を取得.
  */
 public class SslCacerts {
+	private static final String CACERTS_FILE = "cacerts";
 	public static final char[] TRUST_PASSWORD = "changeit".toCharArray();
 	private static byte[] cacerts = null;
 	private static final Object sync = new Object();
 	private static final Bool cacertsFlag = new Bool(false);
+
+	// ファイル存在.
+	private static final boolean isFile(String name) {
+		final File file = new File(name);
+		return (file.exists() && !file.isDirectory());
+	}
+
+	// フルパス変換.
+	private static final String getFullPath(String path) {
+		try {
+			char c;
+			path = new File(path).getCanonicalPath();
+			final int len = path.length();
+			StringBuilder buf = new StringBuilder(len + 2);
+			if(!path.startsWith("/")) {
+				buf.append("/");
+			} else if(path.indexOf("\\") == -1) {
+				return path;
+			}
+			for(int i = 0; i < len; i++) {
+				c = path.charAt(i);
+				if(c == '\\') {
+					buf.append("/");
+				} else {
+					buf.append(c);
+				}
+			}
+			return buf.toString();
+		} catch(Exception e) {
+			throw new NioException(e);
+		}
+	}
+
+	// JREの「cacerts」ファイルパスを取得.
+	private static final String getJreCacertsPath() {
+		// JAVA_HOMEが設定されている場合.
+		final String javaHome = System.getenv("JAVA_HOME");
+		if (javaHome != null && !javaHome.isEmpty()) {
+			final String sp = System.getProperty("file.separator");
+			// 通常VMとしてチェック.
+			String ret = new StringBuilder(javaHome)
+				.append(sp).append("jre")
+				.append(sp).append("lib")
+				.append(sp).append("security")
+				.append(sp).append(CACERTS_FILE)
+				.toString();
+			if(isFile(ret)) {
+				return ret;
+			}
+			// graalvmの場合.
+			ret = new StringBuilder(javaHome)
+				.append(sp).append("lib")
+				.append(sp).append("security")
+				.append(sp).append(CACERTS_FILE)
+				.toString();
+			if (isFile(ret)) {
+				return ret;
+			}
+
+		}
+		return null;
+	}
+
+	/**
+	 * コンフィグディレクトリ名を取得.
+	 * @return String コンフィグディレクトリ名が返却されます.
+	 */
+	public static final String getConfigDirectory() {
+		try {
+			String ret;
+			String[] check;
+			// コンフィグシステムプロパティから取得.
+			check = new String[] {
+				"config.dir",
+				"config.directory",
+				"config.folder",
+				"config.path",
+				"config"
+			};
+			for(int i = 0; i < check.length; i ++) {
+				ret = System.getProperty(check[i]);
+				if(ret != null && isFile(ret + "/" + CACERTS_FILE)) {
+					return getFullPath(ret + "/" + CACERTS_FILE);
+				}
+			}
+			// config関連ディレクトリ配下に存在する場合.
+			check = new String[] {
+				"./conf/" + CACERTS_FILE,
+				"./config/" + CACERTS_FILE
+			};
+			for(int i = 0; i < check.length; i ++) {
+				if(FileUtil.isFile(check[i])) {
+					return getFullPath(check[i]);
+				}
+			}
+			// カレントディレクトリに存在する場合.
+			if(FileUtil.isFile("./" + CACERTS_FILE)) {
+				return getFullPath("./" + CACERTS_FILE);
+			}
+			return null;
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+	}
+
+	// システムプロパティから取得.
+	private static final String getCacertsBySystemProperty() {
+		String o;
+		String[] check;
+		// システムプロパティから取得.
+		check = new String[] {
+			"http.cacerts",
+			"net.cacerts",
+			"cacerts"
+		};
+		for(int i = 0; i < check.length; i ++) {
+			o = System.getProperty(check[i]);
+			if(o != null) {
+				if(FileUtil.isFile(o)) {
+					return getFullPath(o);
+				}
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * SSLの認証局証明書管理ファイル[cacerts]の内容を取得.
@@ -26,62 +154,57 @@ public class SslCacerts {
 			synchronized (sync) {
 				if(!cacertsFlag.get()) {
 					InputStream in = null;
-					// カレントパスにあるcacertsを読み込む.
-					if (isFile("./cacerts")) {
+					// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む..
+					String changeitFile = getJreCacertsPath();
+					if (changeitFile != null) {
 						try {
-							in = new BufferedInputStream(
-								new FileInputStream("./cacerts"));
+							in = new BufferedInputStream(new FileInputStream(changeitFile));
 						} catch(Exception e) {
 							in = null;
 						}
 					}
-					// JAVA_HOME環境変数が存在する場合はそちらを優先して読み込む.
-					try {
-						final String javaHome = System.getenv("JAVA_HOME");
-						if (javaHome != null && !javaHome.isEmpty()) {
-							final String sp = System.getProperty("file.separator");
-							// 通常javaで読み込む.
-							String changeitFile = new StringBuilder(javaHome)
-								.append(sp).append("jre")
-								.append(sp).append("lib")
-								.append(sp).append("security")
-								.append(sp).append("cacerts")
-								.toString();
-							if (isFile(changeitFile)) {
-								try {
-									in = new BufferedInputStream(new FileInputStream(changeitFile));
-								} catch(Exception e) {
-									in = null;
-								}
-							}
-							if(in == null) {
-								// graalvmの場合.
-								changeitFile = new StringBuilder(javaHome)
-									.append(sp).append("lib")
-									.append(sp).append("security")
-									.append(sp).append("cacerts")
-									.toString();
-								if (isFile(changeitFile)) {
-									try {
-										in = new BufferedInputStream(new FileInputStream(changeitFile));
-									} catch(Exception ee) {
-										in = null;
-									}
-								}
+					if(in == null) {
+						// configディレクトリを取得.
+						changeitFile = getConfigDirectory();
+						// configディレクトリが存在する場合.
+						if(changeitFile != null) {
+							try {
+								in = new BufferedInputStream(
+									new FileInputStream(changeitFile));
+							} catch(Exception e) {
+								in = null;
 							}
 						}
+					}
+					// configディレクトリが見つからない場合.
+					if(in == null) {
+						// SystemPropertyから取得.
+						changeitFile = getCacertsBySystemProperty();
+						if(changeitFile != null) {
+							try {
+								in = new BufferedInputStream(
+									new FileInputStream(changeitFile));
+							} catch(Exception e) {
+								in = null;
+							}
+						}
+					}
+					// JAVA_HOME環境変数が存在する場合はそちらを優先して読み込む.
+					try {
 						// それでも読み込み失敗の場合は組み込まれたcacertsを読み込む.
 						if(in == null) {
 							try {
 								in = new BufferedInputStream(
-									SslCacerts.class.getResourceAsStream("cacerts"));
+									SslCacerts.class.getResourceAsStream(
+										CACERTS_FILE));
 							} catch(Exception e) {
 								in = null;
 							}
 						}
 						// cacertsが存在しない場合はエラー.
 						if(in == null) {
-							throw new NioException("Failed to load 'cacerts'.");
+							throw new NioException("Failed to load '" +
+								CACERTS_FILE + "' file.");
 						}
 						int len;
 						final byte[] b = new byte[1024];
@@ -111,11 +234,5 @@ public class SslCacerts {
 			}
 		}
 		return cacerts;
-	}
-
-	// ファイル存在.
-	private static final boolean isFile(String name) {
-		final File file = new File(name);
-		return (file.exists() && !file.isDirectory());
 	}
 }

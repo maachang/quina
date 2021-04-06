@@ -17,6 +17,14 @@ public interface ErrorComponent {
 	}
 
 	/**
+	 * 対応HTTPメソッド定義を取得.
+	 * @return int このコンポーネントが対応するHTTPメソッド定義が返却されます.
+	 */
+	default int getMethod() {
+		return ComponentConstants.HTTP_METHOD_ALL;
+	}
+
+	/**
 	 * HttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
 	 * @param req HttpRequestを設定します.

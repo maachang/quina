@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import quina.QuinaUtil;
 import quina.util.BooleanUtil;
 import quina.util.StringUtil;
-import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 
 /**
  * 編集可能なMimeType定義群.
@@ -17,13 +17,13 @@ public class EditMimeTypes implements MimeTypes {
 	public static final String UNKNONW_MIME_TYPE = "application/octet-stream";
 
 	/** 拡張子に対するMimeType定義. **/
-	private final IndexMap<String, String> extensionToMimeTypes = new IndexMap<String, String>();
+	private final IndexKeyValueList<String, String> extensionToMimeTypes = new IndexKeyValueList<String, String>();
 
 	/** 文字コードが付与可能なMimeType定義. **/
-	private final IndexMap<String, Boolean> appendCharsetToMimeTypes = new IndexMap<String, Boolean>();
+	private final IndexKeyValueList<String, Boolean> appendCharsetToMimeTypes = new IndexKeyValueList<String, Boolean>();
 
 	// デフォルト内容の初期化.
-	private static final void init(IndexMap<String, String> mime, IndexMap<String, Boolean> charset) {
+	private static final void init(IndexKeyValueList<String, String> mime, IndexKeyValueList<String, Boolean> charset) {
 		// デフォルトMimeType.
 		mime.put("htm", "text/html");
 		mime.put("html", "text/html");

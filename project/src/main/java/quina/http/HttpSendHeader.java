@@ -8,28 +8,28 @@ import java.util.Set;
 
 import quina.util.collection.AbstractEntryIterator;
 import quina.util.collection.AbstractKeyIterator;
-import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 
 /**
  * Http送信用ヘッダ.
  */
 public class HttpSendHeader implements Header {
-	private IndexMap<String, String> list = new IndexMap<String, String>();
+	private IndexKeyValueList<String, String> list = new IndexKeyValueList<String, String>();
 
 	/**
 	 * コンストラクタ.
 	 */
 	public HttpSendHeader() {
-		list = new IndexMap<String, String>();
+		list = new IndexKeyValueList<String, String>();
 	}
 
 	/**
 	 * コンストラクタ.
 	 * @param list
 	 */
-	public HttpSendHeader(IndexMap<String, String> list) {
+	public HttpSendHeader(IndexKeyValueList<String, String> list) {
 		if (list == null) {
-			list = new IndexMap<String, String>();
+			list = new IndexKeyValueList<String, String>();
 		}
 		this.list = list;
 	}
@@ -39,7 +39,7 @@ public class HttpSendHeader implements Header {
 	 * @param v
 	 */
 	public HttpSendHeader(final Map<String, String> v) {
-		list = new IndexMap<String, String>(v);
+		list = new IndexKeyValueList<String, String>(v);
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class HttpSendHeader implements Header {
 	 * @param args
 	 */
 	public HttpSendHeader(final Object... args) {
-		list = new IndexMap<String, String>(args);
+		list = new IndexKeyValueList<String, String>(args);
 	}
 
 	@Override

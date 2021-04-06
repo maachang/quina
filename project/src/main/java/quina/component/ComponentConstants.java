@@ -1,5 +1,7 @@
 package quina.component;
 
+import quina.http.Method;
+
 /**
  * コンポーネント定義.
  */
@@ -30,4 +32,39 @@ public class ComponentConstants {
 	 * コンポーネント属性: エラーコンポーネントタイプ
 	 */
 	public static final int ATTRIBUTE_ERROR = 0x8000;
+
+	/**
+	 * HTTPメソッド: 全属性.
+	 */
+	public static final int HTTP_METHOD_ALL = Method.GET.getType()
+		| Method.POST.getType()
+		| Method.DELETE.getType()
+		| Method.PUT.getType()
+		| Method.PATCH.getType()
+		;
+
+	/**
+	 * HTTPメソッド: GET.
+	 */
+	public static final int HTTP_METHOD_GET = Method.GET.getType();
+
+	/**
+	 * HTTPメソッド: POST.
+	 */
+	public static final int HTTP_METHOD_POST = Method.POST.getType();
+
+	/**
+	 * HTTPメソッド: DELETE.
+	 */
+	public static final int HTTP_METHOD_DELETE = Method.DELETE.getType();
+
+	/**
+	 * HTTPメソッド: PUT.
+	 */
+	public static final int HTTP_METHOD_PUT = Method.PUT.getType();
+
+	/**
+	 * HTTPメソッド: PATCH.
+	 */
+	public static final int HTTP_METHOD_PATCH = Method.PATCH.getType();
 }

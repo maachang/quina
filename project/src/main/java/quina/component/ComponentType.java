@@ -62,8 +62,8 @@ public enum ComponentType {
 
 	/**
 	 * コンストラクタ.
-	 * @param attributeType 属性を設定します.
-	 * @param type タイプを設定します.
+	 * @param attributeType コンポーネント属性を設定します.
+	 * @param type コンポーネントタイプを設定します.
 	 * @param name 名前を設定します.
 	 */
 	private ComponentType(int attributeType, int type, String name) {

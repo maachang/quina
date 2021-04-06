@@ -3,7 +3,7 @@ package quina.http;
 import java.util.Iterator;
 import java.util.Map;
 
-import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.ObjectList;
 import quina.util.collection.TreeKey;
 
@@ -52,7 +52,7 @@ public class HttpReceiveHeader implements Header {
 	}
 
 	// PutDelete用ヘッダ.
-	private IndexMap<Object, PutDeleteValue> putRemoveHeader;
+	private IndexKeyValueList<Object, PutDeleteValue> putRemoveHeader;
 
 	// HttpIndexHeader.
 	private HttpIndexHeaders httpIndexHeaders;
@@ -79,7 +79,7 @@ public class HttpReceiveHeader implements Header {
 	@Override
 	public void clear() {
 		// httpIndexHeadersの内容を削除としてputRemoveHeaderに登録する.
-		putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+		putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
 		int len = httpIndexHeaders.size();
 		for(int i = 0; i < len; i ++) {
 			putRemoveHeader.put(new TreeKey(httpIndexHeaders.getKey(i)),
@@ -97,7 +97,7 @@ public class HttpReceiveHeader implements Header {
 		String ret;
 		// put及びremove条件が存在しない場合.
 		if(putRemoveHeader == null) {
-			putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
 			ret = httpIndexHeaders.get(key);
 			putRemoveHeader.put(
 				new TreeKey((String)key),
@@ -135,7 +135,7 @@ public class HttpReceiveHeader implements Header {
 				return null;
 			}
 			// 削除情報をセット.
-			putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
 			putRemoveHeader.put(
 				new TreeKey((String)key),
 				new PutDeleteValue(MODE_REMOVE, null)
@@ -191,7 +191,7 @@ public class HttpReceiveHeader implements Header {
 		if(m == null || m.size() == 0) {
 			return;
 		} else if(putRemoveHeader == null) {
-			putRemoveHeader = new IndexMap<Object, PutDeleteValue>();
+			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
 		}
 		Entry<String, String> e;
 		Iterator<?> itr = m.entrySet().iterator();

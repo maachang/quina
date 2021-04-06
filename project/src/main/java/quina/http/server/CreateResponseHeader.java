@@ -11,7 +11,7 @@ import quina.http.HttpStatus;
 import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioSendBinaryListData;
 import quina.net.nio.tcp.NioSendData;
-import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.TreeKey;
 
 /**
@@ -29,7 +29,7 @@ public class CreateResponseHeader {
 	 *
 	 * valueInfo = 実際のHttpHeaderの要素.
 	 */
-	private static final IndexMap<Object, Object[]> RESERVATION_HEADERS;
+	private static final IndexKeyValueList<Object, Object[]> RESERVATION_HEADERS;
 
 	/** Optionsレスポンス[基本]. **/
 	private static final byte[] RESPONSE_OPSIONS_RESPONSE;
@@ -56,7 +56,7 @@ public class CreateResponseHeader {
 		final String serverName = QuinaConstants.SERVER_NAME +
 			"(" + QuinaConstants.SERVER_VERSION + ")";
 		// 予約ヘッダを定義.
-		IndexMap<Object, Object[]> reservationHeaders = new IndexMap<Object, Object[]>();
+		IndexKeyValueList<Object, Object[]> reservationHeaders = new IndexKeyValueList<Object, Object[]>();
 		reservationHeaders.put(new TreeKey("X-Accel-Buffering"),
 				new Object[] {0, "no"});
 		reservationHeaders.put(new TreeKey("Server"),

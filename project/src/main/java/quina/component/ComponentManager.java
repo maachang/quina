@@ -1,11 +1,13 @@
 package quina.component;
 
 import quina.QuinaException;
+import quina.http.HttpException;
+import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
-import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.ObjectList;
 import quina.validate.Validation;
 
@@ -59,6 +61,225 @@ public class ComponentManager {
 		return out;
 	}
 
+	// HTTPメソッド別のコンポーネント管理.
+	protected static final class MethodsComponent {
+		// 全メソッド対応.
+		private RegisterComponent all;
+		// GETメソッド.
+		private RegisterComponent get;
+		// POSTメソッド.
+		private RegisterComponent post;
+		// DELETEメソッド.
+		private RegisterComponent delete;
+		// PUTメソッド.
+		private RegisterComponent put;
+		// PATCHメソッド.
+		private RegisterComponent patch;
+
+		/**
+		 * コンストラクタ.
+		 */
+		public MethodsComponent() {}
+
+		/**
+		 * コンポーネントを設定.
+		 * @param component 対象のコンポーネントを設定します.
+		 */
+		public void setComponent(RegisterComponent component) {
+			int type = component.getMethod();
+			if(type == ComponentConstants.HTTP_METHOD_ALL) {
+				all = component;
+			} else if((type & Method.GET.getType()) != 0) {
+				get = component;
+			} else if((type & Method.POST.getType()) != 0) {
+				post = component;
+			} else if((type & Method.DELETE.getType()) != 0) {
+				delete = component;
+			} else if((type & Method.PUT.getType()) != 0) {
+				put = component;
+			} else if((type & Method.PATCH.getType()) != 0) {
+				patch = component;
+			}
+		}
+
+		/**
+		 * HTTPメソッドに対するコンポーネントを取得します.
+		 * @param method HTTPメソッドを設定します.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent getComponent(Method method) {
+			int type = method.getType();
+			if(type == ComponentConstants.HTTP_METHOD_GET) {
+				return get();
+			} else if(type == ComponentConstants.HTTP_METHOD_POST) {
+				return post();
+			} else if(type == ComponentConstants.HTTP_METHOD_DELETE) {
+				return delete();
+			} else if(type == ComponentConstants.HTTP_METHOD_PUT) {
+				return put();
+			} else if(type == ComponentConstants.HTTP_METHOD_PATCH) {
+				return patch();
+			}
+			throw new HttpException(405,
+				"The specified method: " + method.getName() + " cannot be used for this URL.");
+		}
+
+		/**
+		 * 登録されたコンポーネントが存在するかチェックします.
+		 * @return boolean trueの場合、対象コンポーネントは存在します.
+		 */
+		public boolean isComponent() {
+			return all != null || get != null || post != null
+				|| delete != null || put != null || patch != null;
+		}
+
+		/**
+		 * HTTPメソッドに対する登録されたコンポーネントが存在するかチェックします.
+		 * @param method HTTPメソッドを設定します.
+		 * @return boolean trueの場合、対象コンポーネントは存在します.
+		 */
+		public boolean isComponent(Method method) {
+			int type = method.getType();
+			if(type == ComponentConstants.HTTP_METHOD_ALL) {
+				return all != null;
+			} else if(type == ComponentConstants.HTTP_METHOD_GET) {
+				return get != null;
+			} else if(type == ComponentConstants.HTTP_METHOD_POST) {
+				return post != null;
+			} else if(type == ComponentConstants.HTTP_METHOD_DELETE) {
+				return delete != null;
+			} else if(type == ComponentConstants.HTTP_METHOD_PUT) {
+				return put != null;
+			} else if(type == ComponentConstants.HTTP_METHOD_PATCH) {
+				return patch != null;
+			}
+			return false;
+		}
+
+		/**
+		 * GETメソッドコンポーネントを取得.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent get() {
+			if(get != null) {
+				return get;
+			} else if(all != null) {
+				return all;
+			}
+			throw new HttpException(405,
+				"The specified method: GET cannot be used for this URL.");
+		}
+
+		/**
+		 * POSTメソッドコンポーネントを取得.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent post() {
+			if(post != null) {
+				return post;
+			} else if(all != null) {
+				return all;
+			}
+			throw new HttpException(405,
+				"The specified method: POST cannot be used for this URL.");
+		}
+
+		/**
+		 * DELETEメソッドコンポーネントを取得.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent delete() {
+			if(delete != null) {
+				return delete;
+			} else if(all != null) {
+				return all;
+			}
+			throw new HttpException(405,
+				"The specified method: DELETE cannot be used for this URL.");
+		}
+
+		/**
+		 * PUTメソッドコンポーネントを取得.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent put() {
+			if(put != null) {
+				return put;
+			} else if(all != null) {
+				return all;
+			}
+			throw new HttpException(405,
+				"The specified method: PUT cannot be used for this URL.");
+		}
+
+		/**
+		 * PATCHメソッドコンポーネントを取得.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent patch() {
+			if(patch != null) {
+				return patch;
+			} else if(all != null) {
+				return all;
+			}
+			throw new HttpException(405,
+				"The specified method: PATCH cannot be used for this URL.");
+		}
+
+		/**
+		 * 文字列変換.
+		 * @param out 文字列出力先のStringBuilderを設定します.
+		 * @param spacePos 改行後のスペース入力値を設定します.
+		 * @return StringBuilder
+		 */
+		public StringBuilder toString(StringBuilder out, int spacePos) {
+			spacePos += 1;
+			ComponentManager.toSpace(out, spacePos).append("all: ");
+			if(all == null) {
+				out.append("null\n");
+			} else {
+				out.append("\n");
+				all.toString(out, spacePos);
+			}
+			ComponentManager.toSpace(out, spacePos).append("get: ");
+			if(get == null) {
+				out.append("null\n");
+			} else {
+				out.append("\n");
+				get.toString(out, spacePos);
+			}
+			ComponentManager.toSpace(out, spacePos).append("post: ");
+			if(post == null) {
+				out.append("null\n");
+			} else {
+				out.append("\n");
+				post.toString(out, spacePos);
+			}
+			ComponentManager.toSpace(out, spacePos).append("delete: ");
+			if(delete == null) {
+				out.append("null\n");
+			} else {
+				out.append("\n");
+				delete.toString(out, spacePos);
+			}
+			ComponentManager.toSpace(out, spacePos).append("put: ");
+			if(put == null) {
+				out.append("null\n");
+			} else {
+				out.append("\n");
+				put.toString(out, spacePos);
+			}
+			ComponentManager.toSpace(out, spacePos).append("patch: ");
+			if(patch == null) {
+				out.append("null\n");
+			} else {
+				out.append("\n");
+				patch.toString(out, spacePos);
+			}
+			return out;
+		}
+	}
+
 	// コンポーネントの管理は２種類存在する.
 	// １つは、固定パスに対するコンポーネント管理.
 	//  <例> /a/b/c/d.json
@@ -84,11 +305,11 @@ public class ComponentManager {
 		// 前のAnyElement.
 		private AnyElement parent;
 		// 固定文字のパス条件.
-		private IndexMap<String, AnyElement> staticPaths;
+		private IndexKeyValueList<String, AnyElement> staticPaths;
 		// * や ${...} などのパス条件.
 		private AnyElement anyPath;
-		// 終端パスとする実行コンポーネント.
-		private RegisterComponent anyComponent;
+		// このパスの実行コンポーネント.
+		private MethodsComponent methodsComponent;
 
 		/**
 		 * コンストラクタ.
@@ -124,7 +345,7 @@ public class ComponentManager {
 		 */
 		public AnyElement putStaticPath(String path, AnyElement em) {
 			if(staticPaths == null) {
-				staticPaths = new IndexMap<String, AnyElement>();
+				staticPaths = new IndexKeyValueList<String, AnyElement>();
 			}
 			staticPaths.put(path, em);
 			return this;
@@ -146,7 +367,10 @@ public class ComponentManager {
 		 * @return
 		 */
 		public AnyElement setAnyComponent(RegisterComponent ac) {
-			anyComponent = ac;
+			if(methodsComponent == null) {
+				methodsComponent = new MethodsComponent();
+			}
+			methodsComponent.setComponent(ac);
 			return this;
 		}
 
@@ -171,11 +395,22 @@ public class ComponentManager {
 		}
 
 		/**
-		 * 終端パスとする実行コンポーネントを取得.
-		 * @return
+		 * コンポーネントが存在するかチェック.
+		 * @return boolean trueの場合、コンポーネントは存在します.
 		 */
-		public RegisterComponent getAnyComponent() {
-			return anyComponent;
+		public boolean isComponent(Method method) {
+			return methodsComponent == null ?
+				false : methodsComponent.isComponent(method);
+		}
+
+		/**
+		 * 終端パスとする実行コンポーネントを取得.
+		 * @param method 対象のHTTPメソッドを設定します.
+		 * @return RegisterComponent コンポーネントが返却されます.
+		 */
+		public RegisterComponent getAnyComponent(Method method) {
+			return methodsComponent == null ?
+				null : methodsComponent.getComponent(method);
 		}
 
 		@Override
@@ -199,10 +434,10 @@ public class ComponentManager {
 				.append("anyPath: ").append(anyPath != null).append("\n");
 			ComponentManager.toSpace(out, spacePos)
 				.append("useAnyComponent: [")
-				.append(anyComponent == null ? "Do not have" : "Have got")
+				.append(methodsComponent == null ? "Do not have" : "Have got")
 				.append("]\n");
-			if(anyComponent != null) {
-				anyComponent.toString(out, spacePos);
+			if(methodsComponent != null) {
+				methodsComponent.toString(out, spacePos);
 			}
 			return out;
 		}
@@ -218,6 +453,8 @@ public class ComponentManager {
 	protected static final int URL_PARAM_TYPE_2 = 2;
 	// /aaa/bbb/$id/$password/xxx.json
 	protected static final int URL_PARAM_TYPE_3 = 3;
+	// /aaa/bbb/:id/:password/xxx.json
+	protected static final int URL_PARAM_TYPE_4 = 4;
 
 	/**
 	 * 対象ディレクトリ名のパラメータタイプを取得.
@@ -234,6 +471,8 @@ public class ComponentManager {
 		// /aaa/bbb/$id/$password/xxx.json
 		} else if(dir.startsWith("$")) {
 			return URL_PARAM_TYPE_3;
+		} else if(dir.startsWith(":")) {
+			return URL_PARAM_TYPE_4;
 		// /aaa/bbb/*/$password/xxx.json
 		} else if("*".equals(dir)) {
 			return URL_ASTERRISK;
@@ -246,6 +485,7 @@ public class ComponentManager {
 	 * <例> /aaa/bbb/{id}/{password}/xxx.json
 	 * <例> /aaa/bbb/${id}/${password}/xxx.json
 	 * <例> /aaa/bbb/$id/$password/xxx.json
+	 * <例> /aaa/bbb/:id/:password/xxx.json
 	 *
 	 *      上記の場合[id]と[password]の部分がパラメータとして利用される.
 	 * @param urls "/"で区切られた内容が配列化された情報を設定します.
@@ -274,6 +514,13 @@ public class ComponentManager {
 				break;
 			// /aaa/bbb/$id/$password/xxx.json
 			case URL_PARAM_TYPE_3:
+				// urlパス位置.
+				lst.add(i);
+				// キー名.
+				lst.add(k.substring(1, k.length()).trim());
+				break;
+			// /aaa/bbb/:id/:password/xxx.json
+			case URL_PARAM_TYPE_4:
 				// urlパス位置.
 				lst.add(i);
 				// キー名.
@@ -367,6 +614,13 @@ public class ComponentManager {
 						break;
 					// /aaa/bbb/$id/$password/xxx.json
 					case URL_PARAM_TYPE_3:
+						// urlパス位置.
+						plst.add(pos - 1);
+						// キー名.
+						plst.add(k.substring(1, k.length()).trim());
+						break;
+					// /aaa/bbb/:id/:password/xxx.json
+					case URL_PARAM_TYPE_4:
 						// urlパス位置.
 						plst.add(pos - 1);
 						// キー名.
@@ -489,14 +743,14 @@ public class ComponentManager {
 	 * 遡って検索します.
 	 * @param em getAnyElementメソッドで検索出来なかった時に取得された
 	 *           AnyElementを設定します.
+	 * @param method 対象のHTTPメソッドを設定します.
 	 * @return AnyElement アスタリスクでURL登録されたAnyComponentが存在する
 	 *                    AnyElementが返却されます.
 	 */
-	private static final AnyElement getAnyElementByLastAsterrisk(AnyElement em) {
-		RegisterComponent anyComponent;
+	private static final AnyElement getAnyElementByLastAsterrisk(AnyElement em, Method method) {
 		while(em != null) {
-			if((anyComponent = em.getAnyComponent()) != null &&
-				anyComponent.isLastAsterrisk()) {
+			if(em.isComponent(method) &&
+				em.getAnyComponent(method).isLastAsterrisk()) {
 				return em;
 			}
 			em = em.getParent();
@@ -551,8 +805,8 @@ public class ComponentManager {
 	}
 
 	// 固定パスコンポーネント管理.
-	private final IndexMap<String, RegisterComponent> staticComponent =
-		new IndexMap<String, RegisterComponent>();
+	private final IndexKeyValueList<String, MethodsComponent> staticComponent =
+		new IndexKeyValueList<String, MethodsComponent>();
 
 	// rootの冗長パスコンポーネント管理.
 	private AnyElement rootAnyElement = new AnyElement(0, null);
@@ -624,30 +878,21 @@ public class ComponentManager {
 		outUrlParam = null;
 		// anyUrlの条件が無い場合はstaticで設定する.
 		if(urlParam == null || urlParam.length == 0) {
-			// 対象URLにコンポーネントが登録されている場合.
-			if(staticComponent.containsKey(url)) {
-				throw new QuinaException(
-					"It is a URL that has already been registered: " + url);
-			}
 			// staticコンポーネント管理に追加.
 			component = fileComponentByAppendEtagComponent(component);
-			staticComponent.put(url, new RegisterComponent(url, null, validation, component));
+			MethodsComponent mc = staticComponent.get(url);
+			if(mc == null) {
+				staticComponent.put(url, (mc = new MethodsComponent()));
+			}
+			mc.setComponent(new RegisterComponent(url, null, validation, component));
 			return true;
 		}
 		// urlにurlParamsの条件に対してnullセット.
 		urls = getUrlsByAppendUrlParams(urls, urlParam);
-		AnyElement[] out = new AnyElement[1];
-		AnyElement now = this.rootAnyElement;
-		// 既に登録されている場合はエラー.
-		boolean res = getAnyElement(out, now, urls);
-		if(res && out[0] != null && out[0].getAnyComponent() != null) {
-			throw new QuinaException(
-				"It is a URL that has already been registered: " + url);
-		}
-		out[0] = null;
-		// anyコンポーネント管理に追加.
+		// 対象コンポーネントがFileコンポーネントの場合はEtag管理をセット.
 		component = fileComponentByAppendEtagComponent(component);
-		putAnyElement(now, url, urls, 0, urlParam, validation, component);
+		// anyコンポーネント管理に追加.
+		putAnyElement(this.rootAnyElement, url, urls, 0, urlParam, validation, component);
 		return false;
 	}
 
@@ -676,34 +921,36 @@ public class ComponentManager {
 	/**
 	 * 指定URLに対するコンポーネントを取得.
 	 * @param url urlを設定します.
+	 * @param method 対象のHTTPメソッドを設定します.
 	 * @return Component 実行コンポーネントが返却されます.
 	 */
-	public RegisterComponent get(String url) {
-		return get(url, getUrls(url));
+	public RegisterComponent get(String url, Method method) {
+		return get(url, getUrls(url), method);
 	}
 
 	/**
 	 * 指定URLに対するコンポーネントを取得.
 	 * @param url urlを設定します.
 	 * @param urls [/]で配列化されたURLを設定します.
+	 * @param method 対象のHTTPメソッドを設定します.
 	 * @return Component 実行コンポーネントが返却されます.
 	 */
-	public RegisterComponent get(String url, String[] urls) {
+	public RegisterComponent get(String url, String[] urls, Method method) {
 		// ダイレクトにURL指定でコンポーネント取得.
 		if(staticComponent.containsKey(url)) {
 			// 存在する場合は返却.
-			return staticComponent.get(url);
+			return staticComponent.get(url).getComponent(method);
 		}
-		AnyElement[] out = new AnyElement[1];
-		AnyElement now = this.rootAnyElement;
-		RegisterComponent rcmp = null;
-		boolean res = getAnyElement(out, now, urls);
+		final AnyElement[] out = new AnyElement[1];
+		// any要素を取得.
+		final boolean res = getAnyElement(out, this.rootAnyElement, urls);
 		// 存在しない場合.
-		if(!(res && out[0] != null && (rcmp = out[0].getAnyComponent()) != null)) {
+		RegisterComponent rcmp = null;
+		if(!res || out[0] == null || (rcmp = out[0].getAnyComponent(method)) == null) {
 			// URLの終端がアスタリスクのAnyElementを取得する.
-			out[0] = getAnyElementByLastAsterrisk(out[0]);
+			out[0] = getAnyElementByLastAsterrisk(out[0], method);
 			// 存在しない場合.
-			if(!(out[0] != null && (rcmp = out[0].getAnyComponent()) != null)) {
+			if(out[0] == null || (rcmp = out[0].getAnyComponent(method)) == null) {
 				// 存在しない場合に利用想定されるコンポーネント返却.
 				return notFoundUrlComponent;
 			}

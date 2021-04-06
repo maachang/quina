@@ -175,9 +175,6 @@ public class RegisterComponent implements Component {
 		return lastAsterrisk;
 	}
 
-	// 文字列出力の階段的スペース値.
-	private static final int KAIDAN_SPACE = 1;
-
 	/**
 	 * 文字列変換.
 	 * @param out 文字列出力先のStringBuilderを設定します.
@@ -185,7 +182,7 @@ public class RegisterComponent implements Component {
 	 * @return StringBuilder
 	 */
 	public StringBuilder toString(StringBuilder out, int spacePos) {
-		spacePos += KAIDAN_SPACE;
+		spacePos += 1;
 		ComponentManager.toSpace(out, spacePos)
 			.append("*RegisterComponent\n");
 		ComponentManager.toSpace(out, spacePos)
@@ -221,6 +218,11 @@ public class RegisterComponent implements Component {
 	@Override
 	public ComponentType getType() {
 		return component.getType();
+	}
+
+	@Override
+	public int getMethod() {
+		return component.getMethod();
 	}
 
 	@Override

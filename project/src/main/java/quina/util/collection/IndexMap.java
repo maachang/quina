@@ -1,345 +1,200 @@
 package quina.util.collection;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
-import quina.json.Json;
+import java.util.Set;
 
 /**
- * IndexMapオブジェクト.
+ * バイナリサーチマップ.
  *
- * BinarySearchを使って、データの追加、削除、取得を行います.
+ * IndexMapを内部的に利用.
+ *
+ * IndexMapでは、BinarySearchを使って、データの追加、削除、取得を行います.
  * HashMapと比べると速度は１０倍ぐらいは遅いですが、リソースは
- * List構造のものと同じぐらいしか食わないので、リソースを重視
- * する場合は、こちらを利用することをおすすめします.
+ * Listと同じぐらいしか食わないので、リソースを重視する場合は、
+ * こちらを利用することをおすすめします.
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
-public class IndexMap<K, V> implements ReadIndexMap<K, V> {
-	private final ObjectList<Entry<K, V>> list;
+@SuppressWarnings({"rawtypes", "unchecked"})
+public class IndexMap<K, V> implements AbstractKeyIterator.Base<K>,
+	AbstractEntryIterator.Base<K, V>,
+	Map<K, V>,
+	TypesKeyValue<K, V> {
+
+	private IndexKeyValueList<K, V> list;
 
 	/**
 	 * コンストラクタ.
 	 */
 	public IndexMap() {
-		list = new ObjectList<Entry<K, V>>();
+		list = new IndexKeyValueList<K, V>();
 	}
 
 	/**
 	 * コンストラクタ.
-	 * @param args args.length == 1 で args[0]にMap属性を設定すると、その内容がセットされます.
-	 *     また、 key, value .... で設定することも可能です.
 	 */
-	public IndexMap(final Object... args) {
-		if(args.length == 1) {
-			if(args[0] == null) {
-				list = new ObjectList<Entry<K, V>>();
-			} else if(args[0] instanceof Map) {
-				list = new ObjectList<Entry<K, V>>(((Map)args[0]).size());
-				putAll(args[0]);
-				return;
-			} else if(args[0] instanceof Number) {
-				list = new ObjectList<Entry<K, V>>(((Number)args[0]).intValue());
-				return;
-			} else if(args[0] instanceof String && Json.isNumeric((String)args[0])) {
-				list = new ObjectList<Entry<K, V>>(Integer.parseInt((String)args[0]));
-				return;
-			}
-			throw new IllegalArgumentException("Key and Value need to be set.");
+	public IndexMap(IndexKeyValueList<K, V> list) {
+		if (list == null) {
+			list = new IndexKeyValueList<K, V>();
 		}
-		list = new ObjectList<Entry<K, V>>(args.length >> 1);
-		putAll(args);
+		this.list = list;
 	}
 
 	/**
-	 * データクリア.
+	 * コンストラクタ.
 	 */
-	public final void clear() {
+	public IndexMap(final Map<K, V> v) {
+		list = new IndexKeyValueList<K, V>(v);
+	}
+
+	/**
+	 * コンストラクタ.
+	 */
+	public IndexMap(final Object... args) {
+		list = new IndexKeyValueList<K, V>(args);
+	}
+
+	/**
+	 * IndexMapをセット.
+	 */
+	protected void setIndexMap(IndexKeyValueList<K, V> list) {
+		this.list = list;
+	}
+
+	@Override
+	public void clear() {
 		list.clear();
 	}
 
-	/**
-	 * データセット.
-	 * @param key
-	 * @param value
-	 * @return
-	 */
-	public final V put(final K key, final V value) {
-		if(key == null) {
-			return null;
-		} else if(list.size() == 0) {
-			list.add(new Entry<K, V>(key, value));
+	@Override
+	public V put(K name, V value) {
+		if (name == null) {
 			return null;
 		}
-		int mid, cmp;
-		int low = 0;
-		int high = list.size() - 1;
-		Object[] olst = list.rawArray();
-		mid = -1;
-		while (low <= high) {
-			mid = (low + high) >>> 1;
-			if ((cmp = ((Comparable)((Entry<K, V>)olst[mid]).key).compareTo(key)) < 0) {
-				low = mid + 1;
-			} else if (cmp > 0) {
-				high = mid - 1;
-			} else {
-				// 一致条件が見つかった場合.
-				final Entry<K, V> o = (Entry<K, V>)olst[mid];
-				final Object ret = o.value;
-				o.value = value;
-				return (V)ret;
-			}
-		}
-		// 一致条件が見つからない場合.
-		mid = (((Comparable)((Entry<K, V>)olst[mid]).key).compareTo(key) < 0) ? mid + 1 : mid;
-		list.add(null);
-		final int len = list.size();
-		olst = list.rawArray();
-		System.arraycopy(olst, mid, olst, mid + 1, len - (mid + 1));
-		olst[mid] = new Entry<K, V>(key, value);
-		return null;
+		return list.put(name, value);
 	}
 
-	/**
-	 * 指定データ群の設定.
-	 * @param args args.length == 1 で args[0]にMap属性を設定すると、その内容がセットされます.
-	 *     また、 key, value .... で設定することも可能です.
-	 */
-	public final void putAll(final Object... args) {
-		if (args == null) {
+	public IndexMap putAll(Object... args) {
+		if(args == null || args.length ==0) {
+			return this;
+		}
+		list.putAll(args);
+		return this;
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		if (key == null) {
+			return false;
+		}
+		return list.containsKey((K)key);
+	}
+
+	@Override
+	public V get(Object key) {
+		if (key == null) {
+			return null;
+		}
+		return list.get((K)key);
+	}
+
+	@Override
+	public V remove(Object key) {
+		if (key == null) {
+			return null;
+		}
+		return list.remove((K)key);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return list.size() == 0;
+	}
+
+	@Override
+	public void putAll(Map toMerge) {
+		if (toMerge == null) {
 			return;
-		} else if(args.length == 1) {
-			// mapの場合.
-			if(args[0] instanceof Map) {
-				Map mp = (Map)args[0];
-				if (mp.size() == 0) {
-					return;
+		}
+		Iterator it = toMerge.keySet().iterator();
+		while (it.hasNext()) {
+			Object key = it.next();
+			Object value = toMerge.get(key);
+			if (key != null) {
+				put((K)key, (V)value);
+			}
+		}
+	}
+
+	@Override
+	public boolean containsValue(Object value) {
+		final int len = list.size();
+		if (value == null) {
+			for (int i = 0; i < len; i++) {
+				if (list.valueAt(i) == null) {
+					return true;
 				}
-				K k;
-				final Iterator it = mp.keySet().iterator();
-				while (it.hasNext()) {
-					k = (K)it.next();
-					if(k == null) {
-						continue;
-					}
-					put(k, (V)mp.get(k));
-				}
-			// IndexMapの場合.
-			} else if(args[0] instanceof IndexMap) {
-				int len;
-				IndexMap mp = (IndexMap)args[0];
-				if ((len = mp.size()) == 0) {
-					return;
-				}
-				for(int i = 0; i < len; i ++) {
-					put(keyAt(i), valueAt(i));
-				}
-			} else {
-				throw new IllegalArgumentException("Key and Value need to be set.");
 			}
 		} else {
-			// key, value ... の場合.
-			final int len = args.length;
-			for (int i = 0; i < len; i += 2) {
-				put((K)args[i], (V)args[i + 1]);
-			}
-		}
-		return;
-	}
-
-	/**
-	 * データ取得.
-	 * @param key
-	 * @return
-	 */
-	public final V get(final Object key) {
-		final Entry<K, V> e = getEntry((K)key);
-		if(e == null) {
-			return null;
-		}
-		return e.value;
-	}
-
-	/**
-	 * データ確認.
-	 * @param key
-	 * @return
-	 */
-	public final boolean containsKey(final K key) {
-		return searchKey(key) != -1;
-	}
-
-	/**
-	 * データ削除.
-	 * @param key
-	 * @return
-	 */
-	public final V remove(final K key) {
-		final int no = searchKey(key);
-		if (no != -1) {
-			return (V)list.remove(no);
-		}
-		return null;
-	}
-
-	/**
-	 * データ数を取得.
-	 * @return
-	 */
-	public final int size() {
-		return list.size();
-	}
-
-	/**
-	 * キー名一覧を取得.
-	 * @return
-	 */
-	public final Object[] names() {
-		final int len = list.size();
-		final Object[] ret = new Object[len];
-		for (int i = 0; i < len; i++) {
-			ret[i] = list.get(i).key;
-		}
-		return ret;
-	}
-
-	/**
-	 * 指定項番でキー情報を取得.
-	 * @param no
-	 * @return
-	 */
-	public final K keyAt(int no) {
-		return list.get(no).key;
-	}
-
-	/**
-	 * 指定項番で要素情報を取得.
-	 * @param no
-	 * @return
-	 */
-	public final V valueAt(int no) {
-		return list.get(no).value;
-	}
-
-	// 指定キーのEntry情報を取得.
-	protected final Entry<K, V> getEntry(final K key) {
-		final int no = searchKey(key);
-		if (no == -1) {
-			return null;
-		}
-		return list.get(no);
-	}
-
-	@Override
-	public int hashCode() {
-		return list.size();
-	}
-
-	/**
-	 * 対象オブジェクトと一致するかチェック.
-	 * @param o
-	 * @return
-	 */
-	@Override
-	public boolean equals(Object o) {
-		if(o instanceof IndexMap) {
-			final IndexMap ix = (IndexMap)o;
-			int len = list.size();
-			if(len != ix.size()) {
-				return false;
-			}
-			Entry s, d;
-			final Object[] lst = list.rawArray();
-			for(int i = 0; i < len; i ++) {
-				s = (Entry)lst[i];
-				d = ix.getEntry(s.key);
-				if(d == null || !s.equals(d)) {
-					return false;
+			for (int i = 0; i < len; i++) {
+				if (value.equals(list.valueAt(i))) {
+					return true;
 				}
 			}
-			return true;
 		}
 		return false;
 	}
 
-	/**
-	 * 文字列として出力.
-	 * @return
-	 */
+	@Override
+	public int size() {
+		return list.size();
+	}
+
 	@Override
 	public String toString() {
-		StringBuilder buf = new StringBuilder();
+		return list.toString();
+	}
+
+	@Override
+	public Collection<V> values() {
+		ArrayList<V> ret = new ArrayList<V>();
 		int len = list.size();
-		buf.append("{");
 		for (int i = 0; i < len; i++) {
-			if (i != 0) {
-				buf.append(", ");
-			}
-			buf.append(list.get(i));
+			ret.add(list.valueAt(i));
 		}
-		return buf.append("}").toString();
+		return ret;
 	}
 
-
-	// バイナリサーチ.
-	private final int searchKey(final K n) {
-		if(n != null) {
-			final Object[] olst = list.rawArray();
-			int low = 0;
-			int high = list.size() - 1;
-			int mid, cmp;
-			while (low <= high) {
-				mid = (low + high) >>> 1;
-				if ((cmp = ((Comparable)((Entry<K, V>)olst[mid]).key).compareTo(n)) < 0) {
-					low = mid + 1;
-				} else if (cmp > 0) {
-					high = mid - 1;
-				} else {
-					return mid; // key found
-				}
-			}
-		}
-		return -1;
+	public IndexKeyValueList getIndexMap() {
+		return list;
 	}
 
-	// Index用KeyValue.
-	protected static final class Entry<K, V> implements Comparable<K> {
-		K key;
-		V value;
-		public Entry(K k, V v) {
-			key = k;
-			value = v;
-		}
-		public K getKey() {
-			return key;
-		}
-		public V getValue() {
-			return value;
-		}
-		@Override
-		public int compareTo(K n) {
-			return ((Comparable)key).compareTo(n);
-		}
-		@Override
-		public int hashCode() {
-			return key.hashCode();
-		}
-		@Override
-		public boolean equals(Object o) {
-			if(o instanceof Entry) {
-				Entry e = (Entry)o;
-				return key.equals(e.key) &&
-					(value == null ? e.value == null : value.equals(e.value));
-			}
-			return false;
-		}
-		@Override
-		public String toString() {
-			if(value instanceof CharSequence || value instanceof Character) {
-				return new StringBuilder().append("\"").append(key).append("\": \"")
-					.append(value).append("\"").toString();
-			}
-			return new StringBuilder().append("\"").append(key).append("\": \"")
-				.append(value).append("\"").toString();
-		}
+	@Override
+	public Set<K> keySet() {
+		return new AbstractKeyIterator.Set<K>(this);
+	}
+
+	@Override
+	public Set<Entry<K, V>> entrySet() {
+		return new AbstractEntryIterator.Set<K, V>(this);
+	}
+
+	@Override
+	public K getKey(int no) {
+		return list.keyAt(no);
+	}
+
+	@Override
+	public V getValue(int no) {
+		return list.valueAt(no);
+	}
+
+	public K keyAt(int no) {
+		return list.keyAt(no);
+	}
+
+	public V valueAt(int no) {
+		return list.valueAt(no);
 	}
 }

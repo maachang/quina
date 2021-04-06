@@ -1,12 +1,12 @@
 package quina.json;
 
-import quina.util.collection.BinarySearchMap;
 import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 
 /**
  * JSON返却処理.
  */
-public class ResultJson extends BinarySearchMap<String, Object> {
+public class ResultJson extends IndexMap<String, Object> {
 	/**
 	 * コンストラクタ.
 	 */
@@ -15,7 +15,7 @@ public class ResultJson extends BinarySearchMap<String, Object> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ResultJson(BinarySearchMap<String, Object> map) {
+	public ResultJson(IndexMap<String, Object> map) {
 		super(map.getIndexMap());
 	}
 
@@ -23,7 +23,7 @@ public class ResultJson extends BinarySearchMap<String, Object> {
 	 * コンストラクタ.
 	 * @param list
 	 */
-	public ResultJson(IndexMap<String, Object> list) {
+	public ResultJson(IndexKeyValueList<String, Object> list) {
 		super(list);
 	}
 
@@ -36,12 +36,12 @@ public class ResultJson extends BinarySearchMap<String, Object> {
 	}
 
 	@Override
-	public void setIndexMap(IndexMap<String, Object> m) {
+	public void setIndexMap(IndexKeyValueList<String, Object> m) {
 		super.setIndexMap(m);
 	}
 
 	@Override
-	public IndexMap<String, Object> getIndexMap() {
+	public IndexKeyValueList<String, Object> getIndexMap() {
 		return null;
 	}
 }

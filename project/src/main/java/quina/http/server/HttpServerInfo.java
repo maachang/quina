@@ -7,7 +7,7 @@ import quina.http.EditMimeTypes;
 import quina.http.HttpCustomAnalysisParams;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
-import quina.util.collection.BinarySearchMap;
+import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
 
 /**
@@ -278,7 +278,7 @@ public class HttpServerInfo implements QuinaInfo {
 		// コンフィグ情報を読み込む.
 		QuinaInfo.super.readConfig(configDir);
 		// mimeTypeのコンフィグ読み込み.
-		BinarySearchMap<String, Object> json = QuinaUtil.loadJson(
+		IndexMap<String, Object> json = QuinaUtil.loadJson(
 			configDir, MIME_CONFIG_FILE);
 		// jsonが取得できた場合.
 		if(json != null) {

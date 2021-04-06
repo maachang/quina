@@ -1,6 +1,6 @@
 package quina;
 
-import quina.util.collection.BinarySearchMap;
+import quina.util.collection.IndexMap;
 
 /**
  * Quina情報管理.
@@ -24,7 +24,7 @@ public interface QuinaInfo {
 	 * @param configDir コンフィグファイル読み込み先のディレクトリを設定します.
 	 */
 	default void readConfig(String configDir) {
-		final BinarySearchMap<String, Object> json = QuinaUtil.loadConfig(configDir, this);
+		final IndexMap<String, Object> json = QuinaUtil.loadConfig(configDir, this);
 		if(json != null) {
 			getQuinaConfig().setConfig(json);
 		}

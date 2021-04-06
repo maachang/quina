@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import quina.util.Alphabet;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
-import quina.util.collection.BinarySearchMap;
+import quina.util.collection.IndexMap;
 
 /**
  * Json変換処理.
@@ -406,7 +406,7 @@ public final class Json {
 		// map.
 		else if (type == TYPE_MAP) {
 			String key = null;
-			final Map<String, Object> ret = new BinarySearchMap<String, Object>();
+			final Map<String, Object> ret = new IndexMap<String, Object>();
 			for (int i = no + 1; i < len; i++) {
 				value = (String) token.get(i);
 				if (":".equals(value)) {

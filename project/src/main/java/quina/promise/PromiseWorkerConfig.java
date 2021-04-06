@@ -3,7 +3,7 @@ package quina.promise;
 import quina.QuinaUtil;
 import quina.util.AtomicNumber;
 import quina.util.NumberUtil;
-import quina.util.collection.BinarySearchMap;
+import quina.util.collection.IndexMap;
 
 /**
  * PromiseWorkerConfig.
@@ -65,7 +65,7 @@ public class PromiseWorkerConfig {
 	private boolean load(String dir) {
 		try {
 			// 対象のコンフィグ情報を読み込む.
-			BinarySearchMap<String, Object> conf =
+			IndexMap<String, Object> conf =
 				QuinaUtil.loadJson(dir, WORKER_CONFIG_NAME);
 			// 取得できなかった場合.
 			if(conf == null) {

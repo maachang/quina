@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import quina.json.Json;
-import quina.util.collection.IndexMap;
+import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.TreeKey;
 import quina.util.collection.TypesClass;
 import quina.util.collection.TypesElement;
@@ -129,8 +129,8 @@ public class QuinaConfig {
 		new ConcurrentHashMap<Object, QuinaConfigElement>();
 
 	// 予約キー情報.
-	private final IndexMap<Object, QuinaConfigElement> reservationKeys =
-		new IndexMap<Object, QuinaConfigElement>();
+	private final IndexKeyValueList<Object, QuinaConfigElement> reservationKeys =
+		new IndexKeyValueList<Object, QuinaConfigElement>();
 
 	/**
 	 * コンストラクタ.

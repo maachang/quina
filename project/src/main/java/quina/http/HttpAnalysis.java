@@ -9,7 +9,7 @@ import quina.net.nio.tcp.NioRecvFileBody;
 import quina.net.nio.tcp.NioRecvMemBody;
 import quina.util.Alphabet;
 import quina.util.StringUtil;
-import quina.util.collection.BinarySearchMap;
+import quina.util.collection.IndexMap;
 
 /**
  * Http解析処理.
@@ -130,13 +130,13 @@ public class HttpAnalysis {
 		// デコード結果を返却.
 		if(o != null) {
 			if(o instanceof Map) {
-				if(o instanceof BinarySearchMap) {
+				if(o instanceof IndexMap) {
 					// Paramsオブジェクトの場合.
 					if(o instanceof Params) {
 						return (Params)o;
 					}
 					// 形式がBinarySearchMap形式の場合はそのまま返却.
-					return new Params(((BinarySearchMap)o).getIndexMap());
+					return new Params(((IndexMap)o).getIndexMap());
 				} else {
 					// それ以外のMap形式の場合.
 					return new Params((Map)o);
