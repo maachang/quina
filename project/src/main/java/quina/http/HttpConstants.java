@@ -1,5 +1,8 @@
 package quina.http;
 
+import quina.QuinaConstants;
+import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.net.nio.tcp.NioConstants;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
 import quina.util.Flag;
@@ -21,6 +24,14 @@ public class HttpConstants {
 	public static final byte[] END_HEADER = "\r\n\r\n".getBytes();
 	public static final int END_HEADER_LENGTH = END_HEADER.length;
 
+	// デフォルトのサーバー名.
+	private static final String DEF_SERVER_NAME = QuinaConstants.SERVER_NAME +
+			"(" + QuinaConstants.SERVER_VERSION + ")";
+
+	// サーバー名.
+	private static final AtomicObject<String> serverName =
+		new AtomicObject<String>(DEF_SERVER_NAME);
+
 	// デフォルトの文字コード.
 	private static final String DEF_CHARSET = "UTF8";
 
@@ -40,6 +51,32 @@ public class HttpConstants {
 
 	// HttpRequestのBodyに対して、TransferEncodingのchunkedを受け付けるか.
 	private static final Flag requestBodyChunked = new Flag(DEF_REQUEST_BODY_CHUNKED);
+
+	// チャング送信での１つの塊のバッファサイズデフォルト値.
+	private static final int DEF_SEND_CHUNKED_BUFFER_LENGTH = NioConstants.getBufferSize();
+
+	// チャング送信での１つの塊のバッファサイズ.
+	private static final Number32 sendChunkedBufferLength =
+		new Number32(DEF_SEND_CHUNKED_BUFFER_LENGTH);
+
+	/**
+	 * サーバー名を設定.
+	 * @param name
+	 */
+	public static final void setServerName(String name) {
+		if(name == null || name.isEmpty()) {
+			name = DEF_SERVER_NAME;
+		}
+		serverName.set(name);
+	}
+
+	/**
+	 * サーバー名を取得.
+	 * @return
+	 */
+	public static final String getServerName() {
+		return serverName.get();
+	}
 
 	/**
 	 * 文字コードを設定.
@@ -90,5 +127,21 @@ public class HttpConstants {
 	 */
 	public static final boolean isRequestBodyChunked() {
 		return requestBodyChunked.get();
+	}
+
+	/**
+	 * デフォルトの条件でチャング通信の送信塊のサイズを取得.
+	 * @return int チャング通信の送信塊のサイズを取得します.
+	 */
+	public static final int getSendChunkedBufferLength() {
+		return sendChunkedBufferLength.get();
+	}
+
+	/**
+	 * デフォルトの条件でチャング通信の送信塊のサイズを設定.
+	 * @param len チャング通信の送信塊のサイズを設定します.
+	 */
+	public static final void setSendChunkedBufferLength(int len) {
+		sendChunkedBufferLength.set(len);
 	}
 }

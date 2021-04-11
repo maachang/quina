@@ -3,14 +3,13 @@ package quina.http.server.response;
 import java.io.IOException;
 
 import quina.component.ComponentType;
-import quina.http.EditMimeTypes;
+import quina.http.MimeTypes;
 import quina.http.Header;
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpSendHeader;
 import quina.http.HttpStatus;
-import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.CreateResponseHeader;
@@ -187,7 +186,7 @@ public abstract class AbstractResponse<T>
 	@Override
 	public String getContentType() {
 		if(contentType == null || contentType.isEmpty()) {
-			return EditMimeTypes.UNKNONW_MIME_TYPE;
+			return MimeTypes.UNKNONW_MIME_TYPE;
 		}
 		return contentType;
 	}

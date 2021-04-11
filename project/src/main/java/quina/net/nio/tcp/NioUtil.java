@@ -136,10 +136,10 @@ public final class NioUtil {
 	 */
 	public static final boolean initClientChannel(SocketChannel channel) {
 		return initSocketChannel(channel
-				, NioClientConstants.getSendBuffer()
-				, NioClientConstants.getRecvBuffer()
-				, NioClientConstants.isKeepAlive()
-				, NioClientConstants.isTcpNoDeley());
+			, NioClientConstants.getSendBuffer()
+			, NioClientConstants.getRecvBuffer()
+			, NioClientConstants.isKeepAlive()
+			, NioClientConstants.isTcpNoDeley());
 	}
 
 	/**
@@ -150,10 +150,10 @@ public final class NioUtil {
 	 */
 	public static final boolean initAcceptSocket(SocketChannel channel) {
 		return initSocketChannel(channel
-				, NioServerConstants.getSendBuffer()
-				, NioServerConstants.getRecvBuffer()
-				, NioServerConstants.isKeepAlive()
-				, NioServerConstants.isTcpNoDeley());
+			, NioServerConstants.getSendBuffer()
+			, NioServerConstants.getRecvBuffer()
+			, NioServerConstants.isKeepAlive()
+			, NioServerConstants.isTcpNoDeley());
 	}
 
 	/**

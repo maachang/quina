@@ -19,8 +19,8 @@ import quina.net.nio.tcp.SslCacerts;
 /**
  * NioClientSocket生成.
  */
-final class NioClientCreateSocket {
-	protected NioClientCreateSocket() {
+public final class NioClientSocket {
+	protected NioClientSocket() {
 	}
 
 	private static final Object sync = new Object();
@@ -69,22 +69,15 @@ final class NioClientCreateSocket {
 		return sslFactory;
 	}
 
-	/** Socket基本オプション. **/
-	private static final int LINGER = 0;
-	private static final int SENDBUF = 8192;
-	private static final int RECVBUF = 32767;
-	private static final boolean TCP_NODELAY = false;
-	private static final boolean KEEP_ALIVE = false;
-
 	/** Httpソケットオプションをセット. **/
 	private static final void setSocketOption(Socket soc, int timeout) {
 		try {
 			soc.setReuseAddress(true);
-			soc.setSoLinger(true, LINGER);
-			soc.setSendBufferSize(SENDBUF);
-			soc.setReceiveBufferSize(RECVBUF);
-			soc.setKeepAlive(KEEP_ALIVE);
-			soc.setTcpNoDelay(TCP_NODELAY);
+			soc.setSoLinger(true, 0);
+			soc.setSendBufferSize(NioClientConstants.getSendBuffer());
+			soc.setReceiveBufferSize(NioClientConstants.getRecvBuffer());
+			soc.setKeepAlive(NioClientConstants.isKeepAlive());
+			soc.setTcpNoDelay(NioClientConstants.isTcpNoDeley());
 			soc.setSoTimeout(timeout);
 		} catch(Exception e) {
 			throw new NioException(e);

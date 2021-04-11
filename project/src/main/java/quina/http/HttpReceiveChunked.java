@@ -58,6 +58,16 @@ public final class HttpReceiveChunked {
 	}
 
 	/**
+	 * 受信データの書き込み処理.
+	 * @param bin 対象のバイナリを設定します.
+	 * @param off 対象のオフセット値を設定します.
+	 * @param len 対象の長さを設定します.
+	 */
+	public void write(byte[] bin, int off, int len) {
+		nioBuffer.write(bin, off, len);
+	}
+
+	/**
 	 * 読み込み処理.
 	 * @param buf 受信データを受け取るバッファを設定します.
 	 * @return int -1が返却された場合、受信完了しています.

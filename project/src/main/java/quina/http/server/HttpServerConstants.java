@@ -2,7 +2,6 @@ package quina.http.server;
 
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
-import quina.net.nio.tcp.NioConstants;
 
 /**
  * HttpServer用定義.
@@ -19,9 +18,6 @@ public class HttpServerConstants {
 	// [Browser]でのCrossDomain対応のデフォルト値.
 	private static final boolean DEF_CROSS_DOMAIN_MODE = true;
 
-	// チャング送信での１つの塊のバッファサイズデフォルト値.
-	private static final int DEF_SEND_CHUNKED_BUFFER_LENGTH = NioConstants.getBufferSize();
-
 	// サーバーソケットのバインドポート番号.
 	private static final int DEF_BIND_SERVER_SOCKET_PORT = 3333;
 
@@ -36,10 +32,6 @@ public class HttpServerConstants {
 
 	// [Browser]でのCrossDomain対応のモード.
 	private static final Bool crossDomainMode = new Bool(DEF_CROSS_DOMAIN_MODE);
-
-	// チャング送信での１つの塊のバッファサイズ.
-	private static final Number32 sendChunkedBufferLength =
-		new Number32(DEF_SEND_CHUNKED_BUFFER_LENGTH);
 
 	// サーバーソケットのバインドポート番号.
 	private static final Number32 bindServerSocketPort =
@@ -94,22 +86,6 @@ public class HttpServerConstants {
 	 */
 	public static final void setCrossDomainMode(boolean mode) {
 		crossDomainMode.set(mode);
-	}
-
-	/**
-	 * デフォルトの条件でチャング通信の送信塊のサイズを取得.
-	 * @return int チャング通信の送信塊のサイズを取得します.
-	 */
-	public static final int getSendChunkedBufferLength() {
-		return sendChunkedBufferLength.get();
-	}
-
-	/**
-	 * デフォルトの条件でチャング通信の送信塊のサイズを設定.
-	 * @param len チャング通信の送信塊のサイズを設定します.
-	 */
-	public static final void setSendChunkedBufferLength(int len) {
-		sendChunkedBufferLength.set(len);
 	}
 
 	/**

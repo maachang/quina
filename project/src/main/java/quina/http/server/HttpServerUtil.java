@@ -1,9 +1,9 @@
 package quina.http.server;
 
 import quina.Quina;
+import quina.http.MimeTypes;
 import quina.http.HttpElement;
 import quina.http.HttpException;
-import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;

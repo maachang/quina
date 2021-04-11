@@ -14,7 +14,6 @@ import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpSendChunkedData;
 import quina.http.HttpStatus;
-import quina.http.server.HttpServerConstants;
 import quina.json.Json;
 import quina.json.JsonBuilder;
 import quina.net.nio.tcp.NioAsyncBuffer;
@@ -42,25 +41,6 @@ public final class ResponseUtil {
 		}
 		// 設定した文字コードを返却.
 		return charset;
-	}
-
-	/**
-	 * 拡張子を取得.
-	 * @param path
-	 * @return
-	 */
-	public static final String getExtension(String path) {
-		// "aaa/bbb.ccc" の場合は "ccc"の位置を取得.
-		int p = path.lastIndexOf(".");
-		if(p == -1) {
-			return null;
-		}
-		final String ret = path.substring(p + 1);
-		// "aaa.bb/ccc" のような状況の場合.
-		if(ret.indexOf("/") != -1) {
-			return null;
-		}
-		return ret;
 	}
 
 	/**
@@ -211,7 +191,7 @@ public final class ResponseUtil {
 			length = -1L;
 			res.getHeader().put("Transfer-Encoding", "chunked");
 			sendBody = new HttpSendChunkedData(
-				HttpServerConstants.getSendChunkedBufferLength(), value);
+				HttpConstants.getSendChunkedBufferLength(), value);
 		} else {
 			sendBody = new NioSendInputStreamData(value, length);
 		}
@@ -270,15 +250,10 @@ public final class ResponseUtil {
 				throw new HttpException(HttpStatus.NotFound);
 			// Content-Typeがヘッダに設定されてない場合.
 			} else if(!res.isContentType()) {
-				// 拡張子からMimeTypeを取得してセット.
-				String extension = getExtension(name);
-				if(extension != null) {
-					extension = extension.trim();
-					// 拡張子からmimeTypeを取得してセット.
-					String mimeType = res.mimeTypes.getMimeType(extension);
-					if(mimeType != null) {
-						res.setContentType(mimeType);
-					}
+				// 拡張子からmimeTypeを取得してセット.
+				String mimeType = res.mimeTypes.getMimeType(name);
+				if(mimeType != null) {
+					res.setContentType(mimeType);
 				}
 			}
 			// データ送信.

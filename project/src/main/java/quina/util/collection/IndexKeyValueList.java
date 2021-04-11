@@ -3,7 +3,7 @@ package quina.util.collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import quina.json.Json;
+import quina.util.NumberUtil;
 
 /**
  * IndexMapオブジェクト.
@@ -40,8 +40,8 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 			} else if(args[0] instanceof Number) {
 				list = new ObjectList<Entry<K, V>>(((Number)args[0]).intValue());
 				return;
-			} else if(args[0] instanceof String && Json.isNumeric((String)args[0])) {
-				list = new ObjectList<Entry<K, V>>(Integer.parseInt((String)args[0]));
+			} else if(args[0] instanceof String && NumberUtil.isNumeric((String)args[0])) {
+				list = new ObjectList<Entry<K, V>>(NumberUtil.parseInt((String)args[0]));
 				return;
 			}
 			throw new IllegalArgumentException("Key and Value need to be set.");
@@ -123,7 +123,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 					}
 					put(k, (V)mp.get(k));
 				}
-			// IndexMapの場合.
+			// IndexKeyValueListの場合.
 			} else if(args[0] instanceof IndexKeyValueList) {
 				int len;
 				IndexKeyValueList mp = (IndexKeyValueList)args[0];
@@ -279,6 +279,24 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 		return buf.append("}").toString();
 	}
 
+	/**
+	 * 同じ内容で別のオブジェクトを作成.
+	 * @param out 指定した場合、このオブジェクトに格納されます.
+	 * @return IndexKeyValueList コピーされた内容が返却されます.
+	 */
+	public IndexKeyValueList copy(IndexKeyValueList<K, V> out) {
+		final IndexKeyValueList<K, V> ret = out == null ?
+			new IndexKeyValueList<K, V>(this.size()) :
+			out;
+		ret.clear();
+		final ObjectList<Entry<K, V>> srcList = this.list;
+		final ObjectList<Entry<K, V>> retList = ret.list;
+		final int len = srcList.size();
+		for(int i = 0; i < len; i ++) {
+			retList.add(srcList.get(i).copy());
+		}
+		return ret;
+	}
 
 	// バイナリサーチ.
 	private final int searchKey(final K n) {
@@ -301,13 +319,18 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 		return -1;
 	}
 
-	// Index用KeyValue.
+	/**
+	 *  Index用KeyValue.
+	 */
 	protected static final class Entry<K, V> implements Comparable<K> {
 		K key;
 		V value;
 		public Entry(K k, V v) {
 			key = k;
 			value = v;
+		}
+		public Entry<K, V> copy() {
+			return new Entry(key, value);
 		}
 		public K getKey() {
 			return key;

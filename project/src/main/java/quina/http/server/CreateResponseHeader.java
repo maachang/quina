@@ -3,12 +3,11 @@ package quina.http.server;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import quina.QuinaConstants;
+import quina.http.MimeTypes;
 import quina.http.Header;
 import quina.http.HttpConstants;
 import quina.http.HttpException;
 import quina.http.HttpStatus;
-import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioSendBinaryListData;
 import quina.net.nio.tcp.NioSendData;
 import quina.util.collection.IndexKeyValueList;
@@ -53,8 +52,7 @@ public class CreateResponseHeader {
 		byte[] crossDomainHeader;
 		final String charset = HttpConstants.getCharset();
 		// サーバー名.
-		final String serverName = QuinaConstants.SERVER_NAME +
-			"(" + QuinaConstants.SERVER_VERSION + ")";
+		final String serverName = HttpConstants.getServerName();
 		// 予約ヘッダを定義.
 		IndexKeyValueList<Object, Object[]> reservationHeaders = new IndexKeyValueList<Object, Object[]>();
 		reservationHeaders.put(new TreeKey("X-Accel-Buffering"),

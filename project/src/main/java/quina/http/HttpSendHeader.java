@@ -174,4 +174,14 @@ public class HttpSendHeader implements Header {
 	public String getValue(int no) {
 		return list.valueAt(no);
 	}
+
+	/**
+	 * このオブジェクトと同じ内容のオブジェクトを生成.
+	 * @return
+	 */
+	public HttpSendHeader copy() {
+		HttpSendHeader ret = new HttpSendHeader();
+		list.copy(ret.list);
+		return ret;
+	}
 }

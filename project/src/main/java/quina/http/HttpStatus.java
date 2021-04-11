@@ -85,6 +85,14 @@ public enum HttpStatus {
 	TemporaryRedirect(307, "Temporary Redirect"),
 
 	/**
+	 * リダイレクトステータスコードは、リクエストされたリソースが Location ヘッダーで
+	 * 示された URL へ完全に移動したことを示します。ブラウザーはこのページに
+	 * リダイレクトし、検索エンジンはリソースへのリンクを更新します (「SEO 用語」では、
+	 * 「リンクジュース」が新しい URL に送られたと言われます)。
+	 */
+	PermanentRedirect(308, "Permanent Redirect"),
+
+	/**
 	 * 無効な要求です
 	 */
 	BadRequest(400, "Bad Request"),

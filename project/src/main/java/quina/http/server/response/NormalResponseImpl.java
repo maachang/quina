@@ -1,8 +1,8 @@
 package quina.http.server.response;
 
 import quina.component.ComponentType;
-import quina.http.HttpElement;
 import quina.http.MimeTypes;
+import quina.http.HttpElement;
 import quina.http.Response;
 
 /**

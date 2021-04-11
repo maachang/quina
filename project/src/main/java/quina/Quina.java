@@ -7,6 +7,7 @@ import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
+import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 import quina.net.nio.tcp.worker.WorkerElement;
 import quina.promise.PromiseWorkerManager;
@@ -60,6 +61,8 @@ public class Quina {
 
 	// コンストラクタ.
 	private Quina() {
+		// ネットワーク初期処理.
+		NioUtil.initNet();
 		// シャットダウンデフォルトトークンを設定.
 		ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
 		// ルーターオブジェクト生成.

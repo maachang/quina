@@ -3,8 +3,8 @@ package quina.http.server;
 import quina.QuinaConfig;
 import quina.QuinaInfo;
 import quina.QuinaUtil;
-import quina.http.EditMimeTypes;
 import quina.http.HttpCustomAnalysisParams;
+import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
 import quina.util.collection.IndexMap;
@@ -44,7 +44,7 @@ public class HttpServerInfo implements QuinaInfo {
 	// カスタムなPostBody解析.
 	private HttpCustomAnalysisParams custom = null;
 	// MimeTypes.
-	private EditMimeTypes mimeTypes = null;
+	private MimeTypes mimeTypes = null;
 
 	/**
 	 * コンストラクタ.
@@ -57,7 +57,7 @@ public class HttpServerInfo implements QuinaInfo {
 	public void reset() {
 		config.clear();
 		custom = null;
-		mimeTypes = new EditMimeTypes();
+		mimeTypes = MimeTypes.getInstance();
 	}
 
 	@Override
@@ -245,19 +245,8 @@ public class HttpServerInfo implements QuinaInfo {
 	 * MimeTypeを取得.
 	 * @return
 	 */
-	public EditMimeTypes getMimeTypes() {
+	public MimeTypes getMimeTypes() {
 		return mimeTypes;
-	}
-
-	/**
-	 * MimeTypeを設定.
-	 * @param mimeTypes
-	 */
-	public void setMimeTypes(EditMimeTypes mimeTypes) {
-		if(mimeTypes == null) {
-			mimeTypes = new EditMimeTypes();
-		}
-		this.mimeTypes = mimeTypes;
 	}
 
 	@Override

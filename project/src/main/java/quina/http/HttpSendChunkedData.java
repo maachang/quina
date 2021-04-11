@@ -24,6 +24,14 @@ public class HttpSendChunkedData implements NioSendData {
 	 * コンストラクタ.
 	 * @param in InputStreamを設定します.
 	 */
+	public HttpSendChunkedData(InputStream in) {
+		this(HttpConstants.getSendChunkedBufferLength(), in);
+	}
+
+	/**
+	 * コンストラクタ.
+	 * @param in InputStreamを設定します.
+	 */
 	public HttpSendChunkedData(int bufLen, InputStream in) {
 		this.in = new HttpSendChunked(bufLen, in);
 		this.endSendFlag = false;
