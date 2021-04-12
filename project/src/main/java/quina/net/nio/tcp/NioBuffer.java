@@ -571,14 +571,18 @@ public class NioBuffer {
 			byte f = chk[0];
 			for (int i = 0; i < len; i++, p++) {
 				if (p >= bLen) {
-					src = src.next;
+					if((src = src.next) == null) {
+						return -1;
+					}
 					bin = src.value;
 					p = 0;
 				}
 				if (f == bin[p]) {
 					for (j = i, n = 1, nsrc = src, nbin = bin, pp = p + 1; j < len; j++, pp++) {
 						if (pp >= bLen) {
-							nsrc = nsrc.next;
+							if((nsrc = nsrc.next) == null) {
+								return -1;
+							}
 							nbin = nsrc.value;
 							pp = 0;
 						}

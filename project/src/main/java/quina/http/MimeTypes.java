@@ -280,7 +280,7 @@ public class MimeTypes {
 	 * @param name
 	 * @return
 	 */
-	public String getMimeTypeFileName(String name) {
+	public String getFileNameToMimeType(String name) {
 		name = getExtension(name);
 		if(name != null) {
 			return getMimeType(name);

@@ -102,7 +102,7 @@ public final class HttpReceiveChunked {
 		int ret = 0;
 		// 基本的にchunked単位の情報を受信して、指定バッファにデータをセットする.
 		// 対象バッファが満タンになった場合はループを抜ける.
-		while(len > off) {
+		while(len > off && nioBuffer.size() != 0) {
 			// chunkedBodyLengthが取得できていない場合.
 			if(chunkedBodyLength == -1) {
 				// chunkedBodyLength + ¥r¥n を検索.
@@ -120,10 +120,7 @@ public final class HttpReceiveChunked {
 				nioBuffer.read(lengthBuffer, 0, p);
 				nioBuffer.skip(HttpConstants.END_LINE_LENGTH);
 				// chunkedBodyLength(16進数)を解析.
-				n = 0;
-				for(int i = p - 1, j = 0; i >= 0; i --, j ++) {
-					n += toHex(lengthBuffer[i]) << (4 << j);
-				}
+				n = toHex(lengthBuffer, 0, p);
 				// chunkedBodyLengthが0の場合はchunkedの終端.
 				if(n == 0) {
 					// 終端を検出した場合はループを抜ける.
@@ -154,7 +151,9 @@ public final class HttpReceiveChunked {
 			if(chunkedBodyPosition == chunkedBodyLength) {
 				// chunkedBodyの終端(¥r¥n)が存在するかチェック.
 				p = nioBuffer.indexOf(HttpConstants.END_LINE);
-				if(p != 0) {
+				if(p == -1) {
+					break;
+				} else if(p != 0) {
 					throw new HttpException(
 						"The position of chunked-end is incorrect.");
 				}
@@ -176,16 +175,25 @@ public final class HttpReceiveChunked {
 		return eof;
 	}
 
-	/** byteを16進数値で変換. **/
-	private static final int toHex(final byte b) {
-		final char c = (char)(b & 0x00ff);
-		if (c >= '0' && c <= '9') {
-			return ((int) (c - '0') & 0x0000000f);
-		} else if (c >= 'A' && c <= 'F') {
-			return ((int) (c - 'A') & 0x0000000f) + 10;
-		} else if (c >= 'a' && c <= 'f') {
-			return ((int) (c - 'a') & 0x0000000f) + 10;
+	/** byte[] を 16進数値で変換. **/
+	private static final int toHex(final byte[] b, int off, int len) {
+		char c;
+		int n;
+		int ret = 0;
+		for(int i = len - 1, j = 0; i >= off; i --, j += 4) {
+			c = (char)(b[i] & 0x00ff);
+			if (c >= '0' && c <= '9') {
+				n = ((int) (c - '0') & 0x0000000f);
+			} else if (c >= 'A' && c <= 'F') {
+				n = ((int) (c - 'A') & 0x0000000f) + 10;
+			} else if (c >= 'a' && c <= 'f') {
+				n = ((int) (c - 'a') & 0x0000000f) + 10;
+			} else {
+				throw new HttpException("Not a hexadecimal value: " +
+					new String(b, off, len));
+			}
+			ret += n << j;
 		}
-		throw new HttpException("Not a hexadecimal value: " + c);
+		return ret;
 	}
 }

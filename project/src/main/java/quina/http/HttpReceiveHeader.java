@@ -45,9 +45,9 @@ public class HttpReceiveHeader implements Header {
 		@Override
 		public String toString() {
 			return new StringBuilder("mode: ")
-					.append((mode == MODE_PUT ? "PUT" : "REMOVE"))
-					.append(", value: ")
-					.append(value).toString();
+				.append((mode == MODE_PUT ? "PUT" : "REMOVE"))
+				.append(", value: ")
+				.append(value).toString();
 		}
 	}
 
@@ -73,7 +73,33 @@ public class HttpReceiveHeader implements Header {
 	 * @param headerBin ヘッダ情報のバイナリを設定します.
 	 */
 	public HttpReceiveHeader(final byte[] headerBin) {
+		/**
+		 * バイナリの設定範囲は、以下のように行う必要があります.
+		 * --------------------------------------------
+		 * Location: https://www.google.com/\r\n
+		 * Content-Type: text/html; charset=UTF-8\r\n
+		 * Date: Mon, 12 Apr 2021 08:02:34 GMT\r\n
+		 * Expires: Wed, 12 May 2021 08:02:34 GMT\r\n
+		 * Cache-Control: public, max-age=2592000\r\n
+		 * Server: gws\r\n
+		 * Content-Length: 220\r\n
+		 * Connection: close\r\n
+		 * --------------------------------------------
+		 * key: value[\r\n]まで設定することでヘッダ行が認識されます.
+		 */
 		httpIndexHeaders = new HttpIndexHeaders(headerBin);
+	}
+
+	/**
+	 * コンストラクタ.
+	 * @param headerBin ヘッダ情報のバイナリを設定します.
+	 * @param off 対象のオフセット値を設定します.
+	 * @param len 対象の長さを設定します.
+	 */
+	public HttpReceiveHeader(final byte[] headerBin, int off, int len) {
+		byte[] h = new byte[len];
+		System.arraycopy(headerBin, off, h, 0, len);
+		httpIndexHeaders = new HttpIndexHeaders(h);
 	}
 
 	@Override
@@ -320,39 +346,16 @@ public class HttpReceiveHeader implements Header {
 		return httpIndexHeaders;
 	}
 
-	/*
-	public static final void main(String[] args) throws Exception {
-		byte[] headers = (
-				"Accept: image/gif, image/jpeg\r\n" +
-				"accept-Language: ja\r\n" +
-				"Accept-Encoding: gzip, deflate\r\n" +
-				"user-Agent: Mozilla/4.0 (Compatible; MSIE 6.0; Windows NT 5.1;)\r\n" +
-				"Host: www.xxx.zzz\r\n" +
-				"connection: Keep-Alive\r\n"
-				).getBytes("UTF8");
-
-		HttpIndexHeaders ih = new HttpIndexHeaders(headers);
-		HttpReceiveHeader rh = new HttpReceiveHeader(ih);
-		System.out.println("size: " + rh.size());
-		//rh.clear();
-
-		System.out.println("size: " + rh.size());
-
-		rh.put("X-Hoge", "moge");
-		System.out.println("size: " + rh.size());
-		System.out.println("x-hoge: " + rh.get("x-hoge"));
-		rh.remove("x-hoge");
-		System.out.println("size: " + rh.size());
-		System.out.println("x-hoge: " + rh.get("x-hoge"));
-
-		System.out.println(rh.putRemoveHeader);
-
-		Entry<String, String> e;
-		Iterator<Entry<String, String>> itr = rh.entrySet().iterator();
-		while(itr.hasNext()) {
-			e = itr.next();
-			System.out.println("key: " + e.getKey() + " value: " + e.getValue());
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		int len = size();
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				buf.append("\n");
+			}
+			buf.append(getKey(i)).append(": ").append(getValue(i));
 		}
+		return buf.toString();
 	}
-	*/
 }

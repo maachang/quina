@@ -142,7 +142,15 @@ public class HttpSendHeader implements Header {
 
 	@Override
 	public String toString() {
-		return list.toString();
+		StringBuilder buf = new StringBuilder();
+		int len = size();
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				buf.append("\n");
+			}
+			buf.append(getKey(i)).append(": ").append(getValue(i));
+		}
+		return buf.toString();
 	}
 
 	@Override

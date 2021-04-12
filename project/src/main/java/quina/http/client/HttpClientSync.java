@@ -43,6 +43,9 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult get(String url, HttpClientOption option) {
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		return fetch(url, option.setMethod(Method.GET));
 	}
 
@@ -53,6 +56,9 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult post(String url, HttpClientOption option) {
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		return fetch(url, option.setMethod(Method.POST));
 	}
 
@@ -64,6 +70,9 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult json(String url, Object json, HttpClientOption option) {
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		return fetch(url, option.setJson(json).setMethod(Method.POST));
 	}
 
@@ -74,6 +83,9 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult delete(String url, HttpClientOption option) {
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		return fetch(url, option.setMethod(Method.DELETE));
 	}
 
@@ -84,6 +96,9 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult put(String url, HttpClientOption option) {
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		return fetch(url, option.setMethod(Method.PUT));
 	}
 
@@ -94,6 +109,9 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult patch(String url, HttpClientOption option) {
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		return fetch(url, option.setMethod(Method.PATCH));
 	}
 
@@ -111,6 +129,22 @@ public class HttpClientSync {
 		return url;
 	}
 
+	// URLとパスをマージさせる.
+	private static final String margeUrl(String url, String path) {
+		int p = url.indexOf("://");
+		if(p == -1) {
+			throw new HttpClientException("Not in URL format: " + url);
+		}
+		if(!path.startsWith("/")) {
+			path = "/" + path;
+		}
+		int pp = url.indexOf("/", p + 3);
+		if(pp == -1) {
+			return url + path;
+		}
+		return url.substring(0, pp) + path;
+	}
+
 	/**
 	 * HttpClient接続.
 	 *
@@ -124,6 +158,9 @@ public class HttpClientSync {
 		String location;
 		int cnt = 0;
 		HttpResult ret = null;
+		if(option == null) {
+			option = new HttpClientOption();
+		}
 		// OptionのFix.
 		option.fix();
 		while (true) {
@@ -147,6 +184,10 @@ public class HttpClientSync {
 				// locationが存在しない場合.
 				if(location == null || location.isEmpty()) {
 					throw new HttpClientException("Detects rogue redirects.");
+				}
+				// リダイレクト先のURLがフルパスじゃない場合.
+				if(!location.startsWith("http://") && !location.startsWith("https://")) {
+					location = margeUrl(accessUrl, location);
 				}
 				// GETでリダイレクト必須のステータスの場合.
 				if(HttpStatus.MovedPermanently == state ||
@@ -185,26 +226,37 @@ public class HttpClientSync {
 			socket = createSocket(urlArray);
 			out = new BufferedOutputStream(socket.getOutputStream());
 			createRequest(urlArray, out, option);
-			out = null;
 			// レスポンス受信.
 			in = new BufferedInputStream(socket.getInputStream());
-			HttpResult ret = receive(url, in, option);
+			HttpResult ret = receiveHttp(url, in, option);
+			out.close();
+			out = null;
+			in.close();
 			in = null;
 			socket.close();
 			socket = null;
 			return ret;
 		} catch(Exception e) {
-			throw new HttpClientException(500, e);
-		} finally {
-			if (in != null) {
-				try {
-					in.close();
-				} catch (Exception ee) {
+			// エラー発生の場合はbodyをクローズ.
+			if (option != null) {
+				if(option.getBody() != null) {
+					try {
+						option.getBody().close();
+					} catch(Exception ee) {
+					}
 				}
 			}
+			throw new HttpClientException(500, e);
+		} finally {
 			if (out != null) {
 				try {
 					out.close();
+				} catch (Exception ee) {
+				}
+			}
+			if (in != null) {
+				try {
+					in.close();
 				} catch (Exception ee) {
 				}
 			}
@@ -308,16 +360,19 @@ public class HttpClientSync {
 				if (k == null ||
 					Alphabet.eqArray(k, "host", "connection") != -1) {
 					continue;
+				// コンテンツタイプが設定されている場合.
 				} else if(Alphabet.eq(k, "content-type")) {
 					contentType = true;
 				}
+				// ユーザー定義のヘッダを出力.
 				buf.append(k).append(":").append(v).append("\r\n");
 			}
 			// コンテンツタイプが設定されてなくて、Body情報がファイル送信の場合.
 			if(!contentType && option.getBody() != null &&
 				option.getBody() instanceof NioSendFileData) {
+				// 拡張子からmimeTypeを取得する.
 				String name = ((NioSendFileData)option.getBody()).getFileName();
-				String mime = MimeTypes.getInstance().getMimeTypeFileName(name);
+				String mime = MimeTypes.getInstance().getFileNameToMimeType(name);
 				if(mime != null) {
 					buf.append("Content-Type:").append(mime);
 				}
@@ -333,8 +388,8 @@ public class HttpClientSync {
 		// binary 変換.
 		String s = buf.toString();
 		buf = null;
-		// ヘッダ出力.
 		try {
+			// ヘッダ出力.
 			out.write(s.getBytes(charset));
 			s = null;
 			// body情報が存在する場合.
@@ -360,7 +415,6 @@ public class HttpClientSync {
 				}
 			}
 			out.flush();
-			out.close();
 			out = null;
 		} finally {
 			if(out != null) {
@@ -373,12 +427,13 @@ public class HttpClientSync {
 
 	// ヘッダ区切り文字.
 	private static final byte[] CFLF = ("\r\n").getBytes();
+
 	// ヘッダ終端.
 	private static final byte[] END_HEADER = ("\r\n\r\n").getBytes();
 
 	// データ受信.
 	@SuppressWarnings("resource")
-	private static final HttpResult receive(String url, InputStream in, HttpClientOption option)
+	private static final HttpResult receiveHttp(String url, InputStream in, HttpClientOption option)
 		throws IOException {
 		int len, p;
 		boolean memFlg = true;
@@ -391,7 +446,7 @@ public class HttpClientSync {
 		int status = -1;
 		String message = "";
 		HttpResultSync result = null;
-		NioRecvBody recvBody = null;
+		NioRecvBody body = null;
 		try {
 			while ((len = in.read(binary)) != -1) {
 				// データ生成が行われていない場合.
@@ -406,7 +461,7 @@ public class HttpClientSync {
 							int pp, ppp;
 							b = binary.length > p + 2 ? binary : new byte[p + 2];
 							recvBuf.read(b, 0, p + 2);
-							String top = new String(b, "UTF8");
+							String top = new String(b, 0, p + 2, "UTF8");
 							b = null;
 							pp = top.indexOf(" ");
 							if(pp == -1) {
@@ -427,7 +482,7 @@ public class HttpClientSync {
 					}
 					// ヘッダ終端が存在.
 					if ((p = recvBuf.indexOf(END_HEADER)) != -1) {
-						b = binary.length > p + 2 ? binary : new byte[p + 2];
+						b = new byte[p + 2];
 						recvBuf.read(b);
 						recvBuf.skip(2);
 						Header header = new HttpReceiveHeader(b);
@@ -449,62 +504,61 @@ public class HttpClientSync {
 						if(contentLength > 0L) {
 							// 一定以上のデータ長の場合は、一時ファイルで受け取る.
 							if(contentLength > maxBodyLength) {
-								recvBody = new NioRecvFileBody();
+								body = new NioRecvFileBody();
 							} else {
-								recvBody = new NioRecvMemBody();
+								body = new NioRecvMemBody();
 							}
 							// 受信Bodyに現在の残りデータを設定.
-							recvBody.write(recvBuf.toByteArray());
+							body.write(recvBuf.toByteArray());
 							recvBuf.close();
 							recvBuf = null;
 						// チャンク受信の場合.
 						} else if(contentLength == -1) {
 							recvChunked = new HttpReceiveChunked(recvBuf);
-							recvBody = new NioRecvMemBody();
+							body = new NioRecvMemBody();
 							// 今回分のデータ読み込み.
-							while((len = recvChunked.read(binary)) != -1) {
-								recvBody.write(binary, 0, len);
+							while((len = recvChunked.read(binary)) > 0) {
+								body.write(binary, 0, len);
 								// データ長が一定以上を超えた場合.
-								if(memFlg &&
-									recvBody.getLength() > maxBodyLength) {
+								if(memFlg && body.getLength() > maxBodyLength) {
 									// 一時ファイル処理に切り替える.
 									NioRecvFileBody d = new NioRecvFileBody();
-									d.write(binary, (NioRecvMemBody)recvBody);
-									recvBody.close();
-									recvBody = d;
+									d.write(binary, (NioRecvMemBody)body);
+									body.close();
+									body = d;
 									memFlg = false;
 								}
 							}
-							recvBuf.close();
 							recvBuf = null;
 						}
 					}
 				}
 				// チャンク受信の場合.
 				if(recvChunked != null) {
+					recvChunked.write(binary, 0, len);
 					// 今回分のデータ読み込み.
-					while((len = recvChunked.read(binary)) != -1) {
-						recvBody.write(binary, 0, len);
+					while((len = recvChunked.read(binary)) > 0) {
+						body.write(binary, 0, len);
 						// データ長が一定以上を超えた場合.
 						if(memFlg &&
-							recvBody.getLength() > maxBodyLength) {
+							body.getLength() > maxBodyLength) {
 							// 一時ファイル処理に切り替える.
 							NioRecvFileBody d = new NioRecvFileBody();
-							d.write(binary, (NioRecvMemBody)recvBody);
-							recvBody.close();
-							recvBody = d;
+							d.write(binary, (NioRecvMemBody)body);
+							body.close();
+							body = d;
 							memFlg = false;
 						}
 					}
 				// 通常受信の場合.
-				} else if(recvBody != null) {
-					recvBody.write(binary, 0, len);
+				} else if(body != null) {
+					body.write(binary, 0, len);
 				}
 			}
 			// resultが存在する場合、recvBodyをセット.
 			if(result != null) {
-				result.setNioRecvBody(recvBody);
-				recvBody = null;
+				result.setNioRecvBody(body);
+				body = null;
 			}
 			return result;
 		} finally {
@@ -514,12 +568,16 @@ public class HttpClientSync {
 				} catch (Exception e) {
 				}
 			}
-			if(in != null) {
-				try {
-					in.close();
-				} catch (Exception e) {
-				}
-			}
 		}
+	}
+
+
+	public static final void main(String[] args) throws Exception {
+		//System.setProperty("javax.net.debug", "all");
+		String url = "https://www.ameba.jp/home";
+		HttpResult res = HttpClientSync.get(url, null);
+		System.out.println("gzip: " + res.isGzip());
+		System.out.println(res.getHeader());
+		System.out.println("len: " + res.getBody().length);
 	}
 }

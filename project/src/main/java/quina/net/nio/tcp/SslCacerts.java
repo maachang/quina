@@ -77,7 +77,6 @@ public class SslCacerts {
 			if (isFile(ret)) {
 				return ret;
 			}
-
 		}
 		return null;
 	}
@@ -154,7 +153,7 @@ public class SslCacerts {
 			synchronized (sync) {
 				if(!cacertsFlag.get()) {
 					InputStream in = null;
-					// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む..
+					// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む.
 					String changeitFile = getJreCacertsPath();
 					if (changeitFile != null) {
 						try {
@@ -163,6 +162,7 @@ public class SslCacerts {
 							in = null;
 						}
 					}
+					// 読み込めない場合はConfigディレクトリ群をシィ特.
 					if(in == null) {
 						// configディレクトリを取得.
 						changeitFile = getConfigDirectory();
@@ -189,18 +189,8 @@ public class SslCacerts {
 							}
 						}
 					}
-					// JAVA_HOME環境変数が存在する場合はそちらを優先して読み込む.
+					// 読み込めない場合はリソースファイルを取得する.
 					try {
-						// それでも読み込み失敗の場合は組み込まれたcacertsを読み込む.
-						if(in == null) {
-							try {
-								in = new BufferedInputStream(
-									SslCacerts.class.getResourceAsStream(
-										CACERTS_FILE));
-							} catch(Exception e) {
-								in = null;
-							}
-						}
 						// cacertsが存在しない場合はエラー.
 						if(in == null) {
 							throw new NioException("Failed to load '" +
