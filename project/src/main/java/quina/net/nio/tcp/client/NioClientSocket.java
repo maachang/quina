@@ -70,7 +70,7 @@ public final class NioClientSocket {
 	}
 
 	/** Httpソケットオプションをセット. **/
-	private static final void setSocketOption(Socket soc, int timeout) {
+	private static final void setSocketOption(Socket soc, long timeout) {
 		try {
 			soc.setReuseAddress(true);
 			soc.setSoLinger(true, 0);
@@ -78,7 +78,7 @@ public final class NioClientSocket {
 			soc.setReceiveBufferSize(NioClientConstants.getRecvBuffer());
 			soc.setKeepAlive(NioClientConstants.isKeepAlive());
 			soc.setTcpNoDelay(NioClientConstants.isTcpNoDeley());
-			soc.setSoTimeout(timeout);
+			soc.setSoTimeout((int)timeout);
 		} catch(Exception e) {
 			throw new NioException(e);
 		}
@@ -96,7 +96,7 @@ public final class NioClientSocket {
 	 * @param timeout
 	 *            通信タイムアウト値を設定します.
 	 */
-	public static final Socket create(boolean ssl, String addr, int port, int timeout) {
+	public static final Socket create(boolean ssl, String addr, int port, long timeout) {
 		if (ssl) {
 			return createSSLSocket(addr, port, timeout);
 		} else {
@@ -105,13 +105,13 @@ public final class NioClientSocket {
 	}
 
 	/** SSLSocket生成. **/
-	private static final Socket createSSLSocket(String addr, int port, int timeout) {
+	private static final Socket createSSLSocket(String addr, int port, long timeout) {
 		SSLSocket ret = null;
 		try {
 			SSLSocketFactory factory = (SSLSocketFactory) getSSLSocketFactory();
 			ret = (SSLSocket) factory.createSocket();
 			setSocketOption(ret, timeout);
-			ret.connect(new InetSocketAddress(addr, port), timeout);
+			ret.connect(new InetSocketAddress(addr, port), (int)timeout);
 			ret.startHandshake();
 		} catch (Exception e) {
 			if (ret != null) {
@@ -126,11 +126,11 @@ public final class NioClientSocket {
 	}
 
 	/** Socket生成. **/
-	private static final Socket createSocket(String addr, int port, int timeout) {
+	private static final Socket createSocket(String addr, int port, long timeout) {
 		Socket ret = new Socket();
 		try {
 			setSocketOption(ret, timeout);
-			ret.connect(new InetSocketAddress(addr, port), timeout);
+			ret.connect(new InetSocketAddress(addr, port), (int)timeout);
 		} catch (Exception e) {
 			try {
 				ret.close();

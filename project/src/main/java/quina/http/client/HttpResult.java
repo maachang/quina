@@ -55,6 +55,12 @@ public interface HttpResult extends Closeable {
 	public long getContentLength();
 
 	/**
+	 * Bodyに対する文字コードを取得.
+	 * @return String 文字コードが返却されます.
+	 */
+	public String getCharset();
+
+	/**
 	 * レスポンスボディInputStreamを取得.
 	 *
 	 * @return InputStream レスポンスボディInputStreamが返却されます.

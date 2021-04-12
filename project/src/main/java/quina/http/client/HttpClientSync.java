@@ -22,6 +22,7 @@ import quina.net.nio.tcp.NioRecvFileBody;
 import quina.net.nio.tcp.NioRecvMemBody;
 import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.NioSendFileData;
+import quina.net.nio.tcp.client.NioClientConstants;
 import quina.net.nio.tcp.client.NioClientSocket;
 import quina.util.Alphabet;
 import quina.util.NumberUtil;
@@ -30,8 +31,17 @@ import quina.util.NumberUtil;
  * [同期]HttpClient.
  */
 public class HttpClientSync {
-	private static final int TIMEOUT = 30000;
-	private static final int MAX_RETRY = 99;
+
+	//
+	// [memo]
+	//
+	// HTTPClientでは、以下のようにclient用のTLSバージョンを指定しないと
+	// 接続を拒否されるものもあるようです.
+	//
+	// -Djdk.tls.client.protocols=TLSv1.2
+	//              or
+	// System.setProperty("jdk.tls.client.protocols", "TLSv1.2");
+	//
 
 	protected HttpClientSync() {
 	}
@@ -131,18 +141,18 @@ public class HttpClientSync {
 
 	// URLとパスをマージさせる.
 	private static final String margeUrl(String url, String path) {
-		int p = url.indexOf("://");
+		// url のプロトコルが http:// or https:// であるかチェック.
+		final int p = url.indexOf("://");
 		if(p == -1) {
+			// HTTP関連のURLでない場合はエラー.
 			throw new HttpClientException("Not in URL format: " + url);
 		}
-		if(!path.startsWith("/")) {
-			path = "/" + path;
-		}
-		int pp = url.indexOf("/", p + 3);
+		// プロトコル＋ドメイン名＋ポート番号までを取得.
+		final int pp = url.indexOf("/", p + 3);
 		if(pp == -1) {
-			return url + path;
+			return url + (!path.startsWith("/") ? "/" : "") + path;
 		}
-		return url.substring(0, pp) + path;
+		return url.substring(0, pp) + (!path.startsWith("/") ? "/" : "") + path;
 	}
 
 	/**
@@ -163,6 +173,7 @@ public class HttpClientSync {
 		}
 		// OptionのFix.
 		option.fix();
+		final int maxRetry = NioClientConstants.getMaxRetry();
 		while (true) {
 			// MethodがGETで、FormDataが存在する場合はGETのパラメータ設定.
 			accessUrl = appendUrlParams(url, option);
@@ -203,7 +214,7 @@ public class HttpClientSync {
 				// リダイレクト先のURL設定.
 				url = location;
 				// 規定回数を超えるリダイレクトの場合.
-				if (cnt ++ > MAX_RETRY) {
+				if (cnt ++ > maxRetry) {
 					throw new HttpClientException("Retry limit exceeded.");
 				}
 				continue;
@@ -246,6 +257,7 @@ public class HttpClientSync {
 					}
 				}
 			}
+			// Internalエラー返却.
 			throw new HttpClientException(500, e);
 		} finally {
 			if (out != null) {
@@ -313,7 +325,7 @@ public class HttpClientSync {
 	private static final Socket createSocket(String[] urlArray) throws IOException {
 		return NioClientSocket.create(
 			"https".equals(urlArray[0]), urlArray[1], NumberUtil.parseInt(urlArray[2]),
-				TIMEOUT);
+				NioClientConstants.getTimeout());
 	}
 
 	// 文字コードを取得.
@@ -555,11 +567,14 @@ public class HttpClientSync {
 					body.write(binary, 0, len);
 				}
 			}
+			// resultが取得できてない場合.
+			if(result == null) {
+				throw new HttpClientException("The connection has been lost.");
 			// resultが存在する場合、recvBodyをセット.
-			if(result != null) {
-				result.setNioRecvBody(body);
-				body = null;
+			} else if(body == null || body.getLength() == 0L) {
+				return result;
 			}
+			result.setNioRecvBody(body);
 			return result;
 		} finally {
 			if (recvBuf != null) {
@@ -571,13 +586,24 @@ public class HttpClientSync {
 		}
 	}
 
-
+	/*
 	public static final void main(String[] args) throws Exception {
 		//System.setProperty("javax.net.debug", "all");
-		String url = "https://www.ameba.jp/home";
+		//-Dhttps.protocols=TLSv1.2
+		//-Djdk.tls.client.protocols=TLSv1.2
+		System.setProperty("https.protocols", "TLSv1.2");
+		System.setProperty("jdk.tls.client.protocols", "TLSv1.2");
+		//String url = "https://google.com/";
+		String url = "https://yahoo.co.jp/";
+		//String url = "https://www.ameba.jp/home";
+		//String url = "https://ja.javascript.info/fetch-api";
+		//String url = "https://xxx.yyy.zzz";
 		HttpResult res = HttpClientSync.get(url, null);
 		System.out.println("gzip: " + res.isGzip());
 		System.out.println(res.getHeader());
-		System.out.println("len: " + res.getBody().length);
+		byte[] bin = res.getBody();
+		System.out.println("len: " + bin.length);
+		System.out.println(new String(bin, res.getCharset()));
 	}
+	*/
 }

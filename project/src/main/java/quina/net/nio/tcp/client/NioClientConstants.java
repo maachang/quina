@@ -4,6 +4,7 @@ import java.net.InetAddress;
 
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.net.nio.tcp.NioAtomicValues.Number64;
 import quina.net.nio.tcp.NioAtomicValues.Value;
 
 public class NioClientConstants {
@@ -39,6 +40,16 @@ public class NioClientConstants {
 	 */
 	private static final int BIND_PORT = -1;
 
+	/**
+	 * 受信タイムアウト値.
+	 */
+	private static final int TIMEOUT = 30000;
+
+	/**
+	 * リトライ許容回数.
+	 */
+	private static final int MAX_RETRY = 16;
+
 	// TCPクライアント用送信バッファ.
 	private static final Number32 sendBuf = new Number32(NioClientConstants.SEND_BUFFER);
 
@@ -56,6 +67,12 @@ public class NioClientConstants {
 
 	// TCPクライアント用バインドポート.
 	private static final Number32 bindPort = new Number32(BIND_PORT);
+
+	// 受信タイムアウト(同期モードのみ).
+	private static final Number64 timeout = new Number64(TIMEOUT);
+
+	// リトライ許容回数.
+	private static final Number32 maxRetry = new Number32(MAX_RETRY);
 
 	/**
 	 * TCPクライアント用送信バッファ.
@@ -152,6 +169,46 @@ public class NioClientConstants {
 	public static final void setBindPort(int bindPort) {
 		NioClientConstants.bindPort.set(bindPort);
 	}
+
+	/**
+	 * タイムアウト値(同期モードのみ)を取得します.
+	 * @return タイムアウト値が返却されます.
+	 */
+	public static final long getTimeout() {
+		return timeout.get();
+	}
+
+	/**
+	 * タイムアウト値(同期モードのみ)を設定します.
+	 * @param timeout タイムアウト値を設定します.
+	 *                0 の場合、タイムアウトを無効にできます.
+	 */
+	public static final void setTimeout(long timeout) {
+		if(timeout <= 0L) {
+			timeout = 0L;
+		}
+		NioClientConstants.timeout.set(timeout);
+	}
+
+	/**
+	 * リトライ許容範囲の回数を取得.
+	 * @return int リトライ許容範囲の回数が返却されます.
+	 */
+	public static final int getMaxRetry() {
+		return maxRetry.get();
+	}
+
+	/**
+	 * リトライ許容範囲の回数を設定します.
+	 * @param maxRetry リトライ許容範囲の回数を設定します.
+	 */
+	public static final void setMaxRetry(int maxRetry) {
+		if(maxRetry <= 0) {
+			maxRetry = 1;
+		}
+		NioClientConstants.maxRetry.set(maxRetry);
+	}
+
 
 
 }

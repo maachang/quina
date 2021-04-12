@@ -137,6 +137,15 @@ class HttpResultSync implements HttpResult {
 	}
 
 	/**
+	 * Bodyに対する文字コードを取得.
+	 * @return String 文字コードが返却されます.
+	 */
+	@Override
+	public String getCharset() {
+		return HttpAnalysis.contentTypeToCharset(getContentType());
+	}
+
+	/**
 	 * レスポンスボディInputStreamを取得.
 	 *
 	 * @return InputStream レスポンスボディInputStreamが返却されます.
