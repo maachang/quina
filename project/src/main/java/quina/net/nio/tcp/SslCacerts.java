@@ -53,7 +53,7 @@ public class SslCacerts {
 	}
 
 	// JREの「cacerts」ファイルパスを取得.
-	private static final String getJreCacertsPath() {
+	private static final String getJavaHomeCacertsPath() {
 		// JAVA_HOMEが設定されている場合.
 		final String javaHome = System.getenv("JAVA_HOME");
 		if (javaHome != null && !javaHome.isEmpty()) {
@@ -154,7 +154,7 @@ public class SslCacerts {
 				if(!cacertsFlag.get()) {
 					InputStream in = null;
 					// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む.
-					String changeitFile = getJreCacertsPath();
+					String changeitFile = getJavaHomeCacertsPath();
 					if (changeitFile != null) {
 						try {
 							in = new BufferedInputStream(new FileInputStream(changeitFile));

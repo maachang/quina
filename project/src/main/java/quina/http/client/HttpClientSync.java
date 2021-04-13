@@ -233,13 +233,18 @@ public class HttpClientSync {
 		try {
 			// 解析.
 			String[] urlArray = parseUrl(url);
+
 			// リクエスト送信.
 			socket = createSocket(urlArray);
 			out = new BufferedOutputStream(socket.getOutputStream());
+
+			// リクエスト送信.
 			createRequest(urlArray, out, option);
+
 			// レスポンス受信.
 			in = new BufferedInputStream(socket.getInputStream());
 			HttpResult ret = receiveHttp(url, in, option);
+
 			out.close();
 			out = null;
 			in.close();
@@ -586,24 +591,34 @@ public class HttpClientSync {
 		}
 	}
 
-	/*
+	/**
 	public static final void main(String[] args) throws Exception {
 		//System.setProperty("javax.net.debug", "all");
 		//-Dhttps.protocols=TLSv1.2
 		//-Djdk.tls.client.protocols=TLSv1.2
 		System.setProperty("https.protocols", "TLSv1.2");
 		System.setProperty("jdk.tls.client.protocols", "TLSv1.2");
-		//String url = "https://google.com/";
-		String url = "https://yahoo.co.jp/";
-		//String url = "https://www.ameba.jp/home";
+		String url = "https://google.com/";
+		//String url = "https://yahoo.co.jp/";
 		//String url = "https://ja.javascript.info/fetch-api";
-		//String url = "https://xxx.yyy.zzz";
-		HttpResult res = HttpClientSync.get(url, null);
+		//String url = "http://www.asyura2.com";
+		int loopLen = 1;
+		HttpResult res = null;
+		byte[] bin = null;
+		// １回目はSSL関連の初期化があるのではじめに一度だけ実行する.
+		res = HttpClientSync.get(url, null);
+		res.close();
+		System.out.println("start");
+		long time = System.currentTimeMillis();
+		for(int i = 0; i < loopLen; i ++) {
+			res = HttpClientSync.get(url, null);
+			bin = res.getBody();
+		}
+		System.out.println("time: " + ((System.currentTimeMillis() - time) / loopLen) + "msec");
 		System.out.println("gzip: " + res.isGzip());
-		System.out.println(res.getHeader());
-		byte[] bin = res.getBody();
+		//System.out.println(res.getHeader());
 		System.out.println("len: " + bin.length);
-		System.out.println(new String(bin, res.getCharset()));
+		//System.out.println(new String(bin, res.getCharset()));
 	}
-	*/
+	**/
 }
