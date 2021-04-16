@@ -36,6 +36,13 @@ public final class HttpReceiveChunked {
 
 	/**
 	 * コンストラクタ.
+	 */
+	public HttpReceiveChunked() {
+		nioBuffer = new NioBuffer();
+	}
+
+	/**
+	 * コンストラクタ.
 	 * @param r 対象のNio受信バッファを設定します.
 	 */
 	public HttpReceiveChunked(NioBuffer r) {

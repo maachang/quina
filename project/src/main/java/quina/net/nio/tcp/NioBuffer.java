@@ -791,8 +791,8 @@ public class NioBuffer {
 		public int read() throws IOException {
 			checkClose();
 			byte[] b = b1;
-			int res = this.buffer.read(b, 0, 1);
-			if(res == -1) {
+			int len = this.buffer.read(b, 0, 1);
+			if(len <= 0) {
 				return -1;
 			}
 			return (b[0] & 0x000000ff);
@@ -800,13 +800,21 @@ public class NioBuffer {
 		@Override
 		public int read(byte b[]) throws IOException {
 			checkClose();
-			return this.buffer.read(b, 0, b.length);
+			int ret = this.buffer.read(b, 0, b.length);
+			if(ret <= 0) {
+				return -1;
+			}
+			return ret;
 		}
 		@Override
 		public int read(byte b[], int off, int len)
 			throws IOException {
 			checkClose();
-			return this.buffer.read(b, off, len);
+			int ret = this.buffer.read(b, off, len);
+			if(ret <= 0) {
+				return -1;
+			}
+			return ret;
 		}
 		@Override
 		public long skip(long n) throws IOException {

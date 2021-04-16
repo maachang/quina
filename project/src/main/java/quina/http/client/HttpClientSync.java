@@ -167,7 +167,7 @@ public class HttpClientSync {
 		HttpStatus state;
 		String location;
 		int cnt = 0;
-		HttpResult ret = null;
+		HttpResultSync ret = null;
 		if(option == null) {
 			option = new HttpClientOption();
 		}
@@ -177,8 +177,9 @@ public class HttpClientSync {
 		while (true) {
 			// MethodがGETで、FormDataが存在する場合はGETのパラメータ設定.
 			accessUrl = appendUrlParams(url, option);
-			//
+			// Httpアクセス.
 			ret = accessHttp(accessUrl, option);
+			// 処理結果のステータスを取得.
 			state = ret.getStatus();
 			// リダイレクト要求の場合.
 			if(HttpStatus.MovedPermanently == state ||
@@ -226,7 +227,7 @@ public class HttpClientSync {
 	}
 
 	// 接続処理.
-	private static final HttpResult accessHttp(String url, HttpClientOption option) {
+	private static final HttpResultSync accessHttp(String url, HttpClientOption option) {
 		Socket socket = null;
 		InputStream in = null;
 		OutputStream out = null;
@@ -243,7 +244,7 @@ public class HttpClientSync {
 
 			// レスポンス受信.
 			in = new BufferedInputStream(socket.getInputStream());
-			HttpResult ret = receiveHttp(url, in, option);
+			HttpResultSync ret = receiveHttp(url, in, option);
 
 			out.close();
 			out = null;
@@ -450,7 +451,7 @@ public class HttpClientSync {
 
 	// データ受信.
 	@SuppressWarnings("resource")
-	private static final HttpResult receiveHttp(String url, InputStream in, HttpClientOption option)
+	private static final HttpResultSync receiveHttp(String url, InputStream in, HttpClientOption option)
 		throws IOException {
 		int len, p;
 		boolean memFlg = true;
@@ -522,13 +523,14 @@ public class HttpClientSync {
 							// 一定以上のデータ長の場合は、一時ファイルで受け取る.
 							if(contentLength > maxBodyLength) {
 								body = new NioRecvFileBody();
+								// 受信Bodyに現在の残りデータを設定.
+								body.write(recvBuf.toByteArray());
+								recvBuf.close();
 							} else {
-								body = new NioRecvMemBody();
+								body = new NioRecvMemBody(recvBuf);
 							}
-							// 受信Bodyに現在の残りデータを設定.
-							body.write(recvBuf.toByteArray());
-							recvBuf.close();
 							recvBuf = null;
+							continue;
 						// チャンク受信の場合.
 						} else if(contentLength == -1) {
 							recvChunked = new HttpReceiveChunked(recvBuf);
@@ -547,29 +549,32 @@ public class HttpClientSync {
 								}
 							}
 							recvBuf = null;
+							continue;
 						}
 					}
 				}
 				// チャンク受信の場合.
-				if(recvChunked != null) {
-					recvChunked.write(binary, 0, len);
-					// 今回分のデータ読み込み.
-					while((len = recvChunked.read(binary)) > 0) {
-						body.write(binary, 0, len);
-						// データ長が一定以上を超えた場合.
-						if(memFlg &&
-							body.getLength() > maxBodyLength) {
-							// 一時ファイル処理に切り替える.
-							NioRecvFileBody d = new NioRecvFileBody();
-							d.write(binary, (NioRecvMemBody)body);
-							body.close();
-							body = d;
-							memFlg = false;
+				if(body != null) {
+					if(recvChunked != null) {
+						recvChunked.write(binary, 0, len);
+						// 今回分のデータ読み込み.
+						while((len = recvChunked.read(binary)) > 0) {
+							body.write(binary, 0, len);
+							// データ長が一定以上を超えた場合.
+							if(memFlg &&
+								body.getLength() > maxBodyLength) {
+								// 一時ファイル処理に切り替える.
+								NioRecvFileBody d = new NioRecvFileBody();
+								d.write(binary, (NioRecvMemBody)body);
+								body.close();
+								body = d;
+								memFlg = false;
+							}
 						}
+					// 通常受信の場合.
+					} else {
+						body.write(binary, 0, len);
 					}
-				// 通常受信の場合.
-				} else if(body != null) {
-					body.write(binary, 0, len);
 				}
 			}
 			// resultが取得できてない場合.
@@ -591,17 +596,19 @@ public class HttpClientSync {
 		}
 	}
 
-	/**
+	/*
 	public static final void main(String[] args) throws Exception {
 		//System.setProperty("javax.net.debug", "all");
 		//-Dhttps.protocols=TLSv1.2
 		//-Djdk.tls.client.protocols=TLSv1.2
 		System.setProperty("https.protocols", "TLSv1.2");
 		System.setProperty("jdk.tls.client.protocols", "TLSv1.2");
-		String url = "https://google.com/";
-		//String url = "https://yahoo.co.jp/";
-		//String url = "https://ja.javascript.info/fetch-api";
-		//String url = "http://www.asyura2.com";
+		String url;
+		url = "http://127.0.0.1:3333/";
+		//url = "https://google.com/";
+		//url = "https://yahoo.co.jp/";
+		//url = "https://ja.javascript.info/fetch-api";
+		//url = "http://www.asyura2.com";
 		int loopLen = 1;
 		HttpResult res = null;
 		byte[] bin = null;
@@ -613,12 +620,12 @@ public class HttpClientSync {
 		for(int i = 0; i < loopLen; i ++) {
 			res = HttpClientSync.get(url, null);
 			bin = res.getBody();
+			System.out.println("bin: " + bin.length);
 		}
-		System.out.println("time: " + ((System.currentTimeMillis() - time) / loopLen) + "msec");
+		System.out.println("time: " + ((System.currentTimeMillis() - time) / loopLen) + " msec");
 		System.out.println("gzip: " + res.isGzip());
 		//System.out.println(res.getHeader());
-		System.out.println("len: " + bin.length);
 		//System.out.println(new String(bin, res.getCharset()));
 	}
-	**/
+	*/
 }

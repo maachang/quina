@@ -1,6 +1,5 @@
 package quina.http.client;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
@@ -9,6 +8,7 @@ import quina.http.Header;
 import quina.http.HttpAnalysis;
 import quina.http.HttpStatus;
 import quina.json.Json;
+import quina.net.nio.tcp.NioBuffer;
 import quina.net.nio.tcp.NioRecvBody;
 import quina.util.Alphabet;
 
@@ -116,7 +116,7 @@ class HttpResultSync implements HttpResult {
 	@Override
 	public boolean isGzip() {
 		final String value = header.get("content-encoding");
-		if (Alphabet.indexOf(value, "gzip") != -1) {
+		if (value != null && Alphabet.indexOf(value, "gzip") != -1) {
 			return true;
 		}
 		return false;
@@ -184,11 +184,10 @@ class HttpResultSync implements HttpResult {
 			if (in != null) {
 				int len;
 				byte[] buf = new byte[1024];
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				NioBuffer out = new NioBuffer();
 				while ((len = in.read(buf)) != -1) {
 					out.write(buf, 0, len);
 				}
-				out.flush();
 				in.close();
 				in = null;
 				return out.toByteArray();
