@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 import quina.QuinaException;
-import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.util.FileUtil;
 
 /**
@@ -16,9 +15,6 @@ import quina.util.FileUtil;
 public class SslCacerts {
 	private static final String CACERTS_FILE = "cacerts";
 	public static final char[] TRUST_PASSWORD = "changeit".toCharArray();
-	private static byte[] cacerts = null;
-	private static final Object sync = new Object();
-	private static final Bool cacertsFlag = new Bool(false);
 
 	// ファイル存在.
 	private static final boolean isFile(String name) {
@@ -149,80 +145,74 @@ public class SslCacerts {
 	 * @return
 	 */
 	public static final byte[] get() {
-		if (!cacertsFlag.get()) {
-			synchronized (sync) {
-				if(!cacertsFlag.get()) {
-					InputStream in = null;
-					// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む.
-					String changeitFile = getJavaHomeCacertsPath();
-					if (changeitFile != null) {
-						try {
-							in = new BufferedInputStream(new FileInputStream(changeitFile));
-						} catch(Exception e) {
-							in = null;
-						}
-					}
-					// 読み込めない場合はConfigディレクトリ群をシィ特.
-					if(in == null) {
-						// configディレクトリを取得.
-						changeitFile = getConfigDirectory();
-						// configディレクトリが存在する場合.
-						if(changeitFile != null) {
-							try {
-								in = new BufferedInputStream(
-									new FileInputStream(changeitFile));
-							} catch(Exception e) {
-								in = null;
-							}
-						}
-					}
-					// configディレクトリが見つからない場合.
-					if(in == null) {
-						// SystemPropertyから取得.
-						changeitFile = getCacertsBySystemProperty();
-						if(changeitFile != null) {
-							try {
-								in = new BufferedInputStream(
-									new FileInputStream(changeitFile));
-							} catch(Exception e) {
-								in = null;
-							}
-						}
-					}
-					// 読み込めない場合はリソースファイルを取得する.
-					try {
-						// cacertsが存在しない場合はエラー.
-						if(in == null) {
-							throw new NioException("Failed to load '" +
-								CACERTS_FILE + "' file.");
-						}
-						int len;
-						final byte[] b = new byte[1024];
-						NioBuffer buf = new NioBuffer(1024);
-						while((len = in.read(b)) != -1) {
-							buf.write(b, 0, len);
-						}
-						in.close();
-						in = null;
-						cacerts = buf.toByteArray();
-						cacertsFlag.set(true);
-						buf.close();
-						buf = null;
-					} catch (NioException ne) {
-						throw ne;
-					} catch (Exception e) {
-						throw new NioException(e);
-					} finally {
-						if (in != null) {
-							try {
-								in.close();
-							} catch (Exception e) {
-							}
-						}
-					}
+		InputStream in = null;
+		// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む.
+		String changeitFile = getJavaHomeCacertsPath();
+		if (changeitFile != null) {
+			try {
+				in = new BufferedInputStream(new FileInputStream(changeitFile));
+			} catch(Exception e) {
+				in = null;
+			}
+		}
+		// 読み込めない場合はConfigディレクトリ群をシィ特.
+		if(in == null) {
+			// configディレクトリを取得.
+			changeitFile = getConfigDirectory();
+			// configディレクトリが存在する場合.
+			if(changeitFile != null) {
+				try {
+					in = new BufferedInputStream(
+						new FileInputStream(changeitFile));
+				} catch(Exception e) {
+					in = null;
 				}
 			}
 		}
-		return cacerts;
+		// configディレクトリが見つからない場合.
+		if(in == null) {
+			// SystemPropertyから取得.
+			changeitFile = getCacertsBySystemProperty();
+			if(changeitFile != null) {
+				try {
+					in = new BufferedInputStream(
+						new FileInputStream(changeitFile));
+				} catch(Exception e) {
+					in = null;
+				}
+			}
+		}
+		// 読み込めない場合はリソースファイルを取得する.
+		byte[] ret = null;
+		try {
+			// cacertsが存在しない場合はエラー.
+			if(in == null) {
+				throw new NioException("Failed to load '" +
+					CACERTS_FILE + "' file.");
+			}
+			int len;
+			final byte[] b = new byte[1024];
+			NioBuffer buf = new NioBuffer(1024);
+			while((len = in.read(b)) != -1) {
+				buf.write(b, 0, len);
+			}
+			in.close();
+			in = null;
+			ret = buf.toByteArray();
+			buf.close();
+			buf = null;
+		} catch (NioException ne) {
+			throw ne;
+		} catch (Exception e) {
+			throw new NioException(e);
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (Exception e) {
+				}
+			}
+		}
+		return ret;
 	}
 }
