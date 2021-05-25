@@ -1,9 +1,13 @@
 package quina.logger;
 
+import quina.exception.CoreException;
+
 /**
  * ログ定義例外.
  */
-public class LogDefineException extends RuntimeException {
+public class LogDefineException extends CoreException {
+	private static final long serialVersionUID = -5683305474945524974L;
+
 	/**
 	 * コンストラクタ.
 	 */

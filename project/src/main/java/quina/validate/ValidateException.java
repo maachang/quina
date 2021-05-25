@@ -1,11 +1,12 @@
 package quina.validate;
 
-import quina.QuinaException;
+import quina.exception.CoreException;
 
 /**
  * Validate例外.
  */
-public class ValidateException extends QuinaException {
+public class ValidateException extends CoreException {
+	private static final long serialVersionUID = 1986130764272672301L;
 	public ValidateException(int status) {
 		super(status);
 	}

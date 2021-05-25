@@ -4,6 +4,8 @@ package quina.command.shutdown;
  * シャットダウン例外.
  */
 public class ShutdownException extends RuntimeException {
+	private static final long serialVersionUID = -731486070955051391L;
+
 	/**
 	 * コンストラクタ.
 	 */

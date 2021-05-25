@@ -1,11 +1,13 @@
 package quina.json;
 
-import quina.QuinaException;
+import quina.exception.CoreException;
 
 /**
  * JSON例外.
  */
-public class JsonException extends QuinaException {
+public class JsonException extends CoreException {
+	private static final long serialVersionUID = -2856761833799946840L;
+
 	public JsonException() {
 		super();
 	}

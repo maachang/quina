@@ -1,60 +1,41 @@
 package quina;
 
-import quina.net.nio.tcp.NioException;
+import quina.exception.CoreException;
 
 /**
  * QuinaException.
  */
-public class QuinaException extends NioException {
+public class QuinaException extends CoreException {
+	private static final long serialVersionUID = 3811602491396883951L;
 	public QuinaException(int status) {
-		super();
-		this.status = status;
+		super(status);
 	}
 
 	public QuinaException(int status, String message) {
-		super(message);
-		this.status = status;
+		super(status, message);
 	}
 
 	public QuinaException(int status, Throwable e) {
-		super(e);
-		this.status = status;
+		super(status, e);
 	}
 
 	public QuinaException(int status, String message, Throwable e) {
-		super(message, e);
-		this.status = status;
+		super(status, message, e);
 	}
 
 	public QuinaException() {
-		this(500);
+		super();
 	}
 
 	public QuinaException(String m) {
-		this(500, m);
+		super(m);
 	}
 
 	public QuinaException(Throwable e) {
-		this(500, e);
+		super(e);
 	}
 
 	public QuinaException(String m, Throwable e) {
-		this(500, m, e);
-	}
-
-	public int getStatus() {
-		return status;
-	}
-
-	public void setMessage(String msg) {
-		this.msg = msg;
-	}
-
-	public String getMessage() {
-		return msg == null ? super.getMessage() : msg;
-	}
-
-	public String getLocalizedMessage() {
-		return msg == null ? super.getLocalizedMessage() : msg;
+		super(m, e);
 	}
 }

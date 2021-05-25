@@ -1,61 +1,41 @@
 package quina.util;
 
-/**
- * BooleanException.
- */
-public class StringException extends RuntimeException {
-	protected int status;
-	protected String msg;
+import quina.exception.CoreException;
 
+/**
+ * StringException.
+ */
+public class StringException extends CoreException {
+	private static final long serialVersionUID = -4288350208273210318L;
 	public StringException(int status) {
-		super();
-		this.status = status;
+		super(status);
 	}
 
 	public StringException(int status, String message) {
-		super(message);
-		this.status = status;
+		super(status, message);
 	}
 
 	public StringException(int status, Throwable e) {
-		super(e);
-		this.status = status;
+		super(status, e);
 	}
 
 	public StringException(int status, String message, Throwable e) {
-		super(message, e);
-		this.status = status;
+		super(status, message, e);
 	}
 
 	public StringException() {
-		this(500);
+		super();
 	}
 
 	public StringException(String m) {
-		this(500, m);
+		super(m);
 	}
 
 	public StringException(Throwable e) {
-		this(500, e);
+		super(e);
 	}
 
 	public StringException(String m, Throwable e) {
-		this(500, m, e);
-	}
-
-	public int getStatus() {
-		return status;
-	}
-
-	public void setMessage(String msg) {
-		this.msg = msg;
-	}
-
-	public String getMessage() {
-		return msg == null ? super.getMessage() : msg;
-	}
-
-	public String getLocalizedMessage() {
-		return msg == null ? super.getLocalizedMessage() : msg;
+		super(m, e);
 	}
 }

@@ -1,11 +1,13 @@
 package quina.http;
 
-import quina.QuinaException;
+import quina.exception.CoreException;
 
 /**
  * HttpException.
  */
-public class HttpException extends QuinaException {
+public class HttpException extends CoreException {
+	private static final long serialVersionUID = -6152362160134736688L;
+
 	public HttpException(HttpStatus status) {
 		super(status.getState(), status.getMessage());
 	}
@@ -27,7 +29,7 @@ public class HttpException extends QuinaException {
 	}
 
 	public HttpException(int status, String message) {
-		this(HttpStatus.getHttpStatus(status), message);
+		super(status, message);
 	}
 
 	public HttpException(int status, Throwable e) {
@@ -35,7 +37,7 @@ public class HttpException extends QuinaException {
 	}
 
 	public HttpException(int status, String message, Throwable e) {
-		this(HttpStatus.getHttpStatus(status), message, e);
+		super(status, message, e);
 	}
 
 	public HttpException() {
@@ -47,16 +49,16 @@ public class HttpException extends QuinaException {
 	}
 
 	public HttpException(Throwable e) {
-		this(getStatus(e), e);
+		this(_getStatus(e), e);
 	}
 
 	public HttpException(String m, Throwable e) {
-		this(getStatus(e), m, e);
+		this(_getStatus(e), m, e);
 	}
 
-	private static final int getStatus(Throwable e) {
-		if(e instanceof QuinaException) {
-			return ((QuinaException)e).getStatus();
+	private static final int _getStatus(Throwable e) {
+		if(e instanceof CoreException) {
+			return ((CoreException)e).getStatus();
 		}
 		return 500;
 	}

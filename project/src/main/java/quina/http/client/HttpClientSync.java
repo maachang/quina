@@ -80,11 +80,25 @@ public class HttpClientSync {
 	 * @return HttpResult 返却データが返されます.
 	 */
 	public static final HttpResult json(String url, Object json, HttpClientOption option) {
+		return json(Method.POST, url, json, option);
+	}
+
+	/**
+	 * [JSON]HttpClient接続.
+	 *
+	 * @param method メソッドを設定します.
+	 * @param url 対象のURLを設定します.
+	 * @param option 対象のオプションを設定します.
+	 * @return HttpResult 返却データが返されます.
+	 */
+	public static final HttpResult json(Method method, String url, Object json,
+		HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setJson(json).setMethod(Method.POST));
+		return fetch(url, option.setJson(json).setMethod(method));
 	}
+
 
 	/**
 	 * [DELETE]HttpClient接続.
@@ -353,7 +367,18 @@ public class HttpClientSync {
 		// 先頭条件を設定.
 		StringBuilder buf = new StringBuilder();
 		buf.append(method).append(" ")
-			.append(url).append(" HTTP/1.1\r\n");
+			.append(url);
+		// GETでフォームデータが存在する場合.
+		if(Method.GET == method && option.isFormData()) {
+			// パラメーターとしてセット.
+			if(url.indexOf("?") == -1) {
+				buf.append("?");
+			} else {
+				buf.append("&");
+			}
+			buf.append(option.getFormData());
+		}
+		buf.append(" HTTP/1.1\r\n");
 		// 基本ヘッダ生成.
 		buf.append("Host:").append(urlArray[1]);
 		if (("http".equals(urlArray[0]) && !"80".equals(urlArray[2]))

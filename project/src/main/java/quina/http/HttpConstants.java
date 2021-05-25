@@ -17,9 +17,6 @@ public class HttpConstants {
 	/** Httpの１つの終端を示す記号の長さ. **/
 	public static final int END_LINE_LENGTH = END_LINE.length;
 
-	/** JSONのMimeType. **/
-	public static final String MIME_TYPE_JSON = "application/json";
-
 	// ヘッダ終端.
 	public static final byte[] END_HEADER = "\r\n\r\n".getBytes();
 	public static final int END_HEADER_LENGTH = END_HEADER.length;

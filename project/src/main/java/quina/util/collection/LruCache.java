@@ -1,8 +1,5 @@
 package quina.util.collection;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * LRUキャッシュ.
  */
@@ -13,15 +10,14 @@ public class LruCache<K, V> {
 		public Object value;
 		protected Element before;
 		protected Element next;
-
 		public String toString() {
-			return new StringBuilder().append(key).append(": ").append(value).toString();
+			return new StringBuilder().append(key).append(": ")
+				.append(value).toString();
 		}
 	};
-
 	private Element top;
 	private Element last;
-	private Map<K, Element> list;
+	private IndexKeyValueList<K, Element> list;
 	private int maxSize;
 
 	/**
@@ -33,7 +29,7 @@ public class LruCache<K, V> {
 	public LruCache(int size) {
 		top = null;
 		last = null;
-		list = new HashMap<K, Element>(size + 1, 1.0f);
+		list = new IndexKeyValueList<K, Element>(size + 1);
 		maxSize = size;
 	}
 
@@ -60,7 +56,6 @@ public class LruCache<K, V> {
 
 	// 新規データをセット.
 	private final void newTop(Element e) {
-
 		// topにセット.
 		e.before = null;
 		e.next = top;
@@ -83,8 +78,7 @@ public class LruCache<K, V> {
 
 			list.remove((K) end.key);
 			maxDataByRemove((K) end.key, (V) end.value);
-
-			// 空きがある.
+		// 空きがある.
 		} else {
 			list.put((K) e.key, e);
 		}
@@ -92,7 +86,6 @@ public class LruCache<K, V> {
 
 	// 既存データの上書き.
 	private final void useTop(Element s, Element d) {
-
 		// topにセット.
 		d.before = null;
 		d.next = top;
@@ -100,15 +93,12 @@ public class LruCache<K, V> {
 			top.before = d;
 		}
 		top = d;
-
 		// リストセット.
 		list.put((K) d.key, d);
-
 		// 今回処理した条件がラストの場合.
 		if (d.next == null) {
 			last = d;
 		}
-
 		// 削除対象の要素をクリア.
 		Element before = s.before;
 		Element next = s.next;
@@ -122,7 +112,6 @@ public class LruCache<K, V> {
 		}
 		if (next != null) {
 			next.before = before;
-
 			// 今回処理した条件がラストの場合.
 			if (next.next == null) {
 				last = next;
@@ -135,23 +124,20 @@ public class LruCache<K, V> {
 		if (e.before == null) {
 			return;
 		}
-
 		// 対象の情報をクリア.
 		Element before = e.before;
 		Element next = e.next;
 		before.next = next;
 		if (next != null) {
 			next.before = before;
-
 			// 今回処理した条件がラストの場合.
 			if (next.next == null) {
 				last = next;
 			}
-			// 今回処理した条件がラストの場合.
+		// 今回処理した条件がラストの場合.
 		} else if (before.next == null) {
 			last = before;
 		}
-
 		// topにセット.
 		e.before = null;
 		e.next = top;
@@ -159,7 +145,6 @@ public class LruCache<K, V> {
 			top.before = e;
 		}
 		top = e;
-
 		// 今回処理した条件がラストの場合.
 		if (e.next == null) {
 			last = e;
@@ -171,7 +156,6 @@ public class LruCache<K, V> {
 		// 削除対象の要素をクリア.
 		Element before = e.before;
 		Element next = e.next;
-
 		// 今回の処理で、データがゼロ件になる場合.
 		if (before == null && next == null) {
 			top = null;
@@ -181,7 +165,6 @@ public class LruCache<K, V> {
 			if (before != null) {
 				// 下の条件を削除.
 				before.next = next;
-
 				// 今回処理した条件がラストの場合.
 				if (before.next == null) {
 					last = before;
@@ -191,12 +174,10 @@ public class LruCache<K, V> {
 			if (next != null) {
 				// 上の条件を削除.
 				next.before = before;
-
 				// 今回処理した条件がラストの場合.
 				if (next.next == null) {
 					last = next;
 				}
-
 				// 今回処理した条件がTOPの場合.
 				if (next.before == null) {
 					top = next;
@@ -218,19 +199,15 @@ public class LruCache<K, V> {
 		if (key == null) {
 			return null;
 		}
-
 		Element e = new Element();
 		e.key = key;
 		e.value = value;
-
 		Element ret = list.get(key);
 		if (ret == null) {
 			newTop(e);
 			return null;
 		}
-
 		useTop(ret, e);
-
 		return (V) ret.value;
 	}
 
@@ -245,12 +222,10 @@ public class LruCache<K, V> {
 		if (key == null) {
 			return null;
 		}
-
 		Element ret = list.get(key);
 		if (ret == null) {
 			return null;
 		}
-
 		updateTop(ret);
 		return (V) ret.value;
 	}
@@ -266,12 +241,10 @@ public class LruCache<K, V> {
 		if (key == null) {
 			return null;
 		}
-
 		Element ret = list.remove(key);
 		if (ret == null) {
 			return null;
 		}
-
 		removeElement(ret);
 		return (V) ret.value;
 	}

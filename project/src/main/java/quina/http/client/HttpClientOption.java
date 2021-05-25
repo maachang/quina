@@ -1,14 +1,18 @@
 package quina.http.client;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import quina.http.Header;
+import quina.http.HttpCharset;
 import quina.http.HttpConstants;
 import quina.http.HttpSendChunkedData;
 import quina.http.HttpSendHeader;
+import quina.http.MediaType;
 import quina.http.Method;
 import quina.json.Json;
 import quina.net.nio.tcp.NioSendData;
@@ -29,7 +33,9 @@ public class HttpClientOption {
 	private NioSendData body = null;
 	private String formData = null;
 	private String referrer = null;
+	private String mimeType = null;
 	private String charset = null;
+	private String bodyCharset = null;
 	private boolean jsonFlag = false;
 	private boolean fixFlag = false;
 
@@ -41,11 +47,17 @@ public class HttpClientOption {
 			try {
 				body.close();
 			} catch(Exception e) {}
+			body = null;
 		}
+		method = Method.GET;
+		redirect = RedirectMode.follow;
 		headers = null;
 		fixHeaders = null;
 		referrer = null;
+		mimeType= null;
 		charset = null;
+		jsonFlag = false;
+		fixFlag = false;
 	}
 
 	/**
@@ -72,7 +84,6 @@ public class HttpClientOption {
 		}
 		// ヘッダー情報が設定されていない場合.
 		if(headers == null) {
-			headers = new HttpSendHeader();
 			fixHeaders = new HttpSendHeader();
 		} else {
 			// fix後のヘッダを生成.
@@ -89,28 +100,50 @@ public class HttpClientOption {
 		} else {
 			fixHeaders.put("Referer", referrer);
 		}
+		String mime = null;
+		String mimeCharset = null;
 		// JSONモードでの送信の場合.
 		if(jsonFlag) {
-			fixHeaders.put("Content-Type", HttpConstants.MIME_TYPE_JSON);
-		}
+			mime = MediaType.JSON.getMimeType();
 		// Formデータが存在する場合.
-		if(formData != null && !formData.isEmpty()) {
+		} else if(formData != null && !formData.isEmpty()) {
 			// メソッドがGETかDELETE以外の場合.
 			if(Method.GET != method && Method.DELETE != method) {
 				// Body変換してコンテンツタイプにフォームデータ設定.
-				setBody(formData, charset);
-				fixHeaders.put("Content-Type",
-					"application/x-www-form-urlencoded");
-				formData = null;
+				setBody(formData);
+				mime = MediaType.FORM_DATA.getMimeType();
 			}
 		}
-		// コンテンツタイプが設定されていて、キャラクターセットが
-		// 設定されている場合.
+		// 現在設定されている文字コードを取得.
+		if(charset != null && !charset.isEmpty()) {
+			mimeCharset = charset;
+		} else if(bodyCharset != null && !bodyCharset.isEmpty()) {
+			mimeCharset = bodyCharset;
+		}
+		// コンテンツタイプが直接設定されている場合.
 		String s = fixHeaders.get("Content-Type");
-		if(charset != null && !charset.isEmpty() &&
-			s != null && !s.isEmpty()) {
-			if(Alphabet.indexOf(s, "charset") == -1) {
-				s += ";charset=" + charset;
+		if(s != null && !s.isEmpty()) {
+			// charsetが定義されていて、直接設定されてる
+			// Content-Typeにcharsetが設定されていない場合.
+			if(mimeCharset != null && Alphabet.indexOf(s, "charset") == -1) {
+				s += ";charset=" + mimeCharset;
+				fixHeaders.put("Content-Type", s);
+			}
+		// コンテンツタイプが設定されていない場合.
+		} else {
+			// setMimeTypeで設定されてる場合.
+			if(mimeType != null && !mimeType.isEmpty()) {
+				s = mimeType;
+			// formData や json設定で定義されてる場合.
+			} else if(mime != null && !mime.isEmpty()) {
+				s = mime;
+			}
+			// mimeTypeが存在する場合.
+			if(s != null && !s.isEmpty()) {
+				// charsetが設定されている場合.
+				if(mimeCharset != null) {
+					s += ";charset=" + charset;
+				}
 				fixHeaders.put("Content-Type", s);
 			}
 		}
@@ -123,7 +156,7 @@ public class HttpClientOption {
 				fixHeaders.remove("Content-Length");
 			// Body情報がチャンク送信でない場合.
 			// コンテンツ長が設定されていない場合は設定する.
-			} else if(headers.containsKey("Content-Length")) {
+			} else if(!headers.containsKey("Content-Length")) {
 				fixHeaders.put("Content-Length", "" + body.length());
 			}
 		}
@@ -177,7 +210,8 @@ public class HttpClientOption {
 			Method.OPTIONS == method ||
 			Method.TRACE == method) {
 			throw new HttpClientException(
-				"The configured Http method is not supported: " + method);
+				"The configured Http method is not supported: " +
+				method);
 		}
 		// methodがGETの場合.
 		if(Method.GET == method) {
@@ -192,6 +226,7 @@ public class HttpClientOption {
 				headers.remove("Content-Length");
 				headers.remove("Transfer-Encoding");
 			}
+			bodyCharset = null;
 		}
 		this.method = method;
 		return this;
@@ -214,6 +249,8 @@ public class HttpClientOption {
 	public Header getHeaders() {
 		if(fixFlag) {
 			return fixHeaders;
+		} else if(headers == null) {
+			headers = new HttpSendHeader();
 		}
 		return headers;
 	}
@@ -256,6 +293,63 @@ public class HttpClientOption {
 	}
 
 	/**
+	 * MimeTypeを設定.
+	 * @param mimeType
+	 * @return HttpClientOption オブジェクトが返却されます.
+	 */
+	public HttpClientOption setMimeType(String mimeType) {
+		checkFix();
+		this.mimeType = mimeType;
+		return this;
+	}
+
+	/**
+	 * MimeTypeを設定.
+	 * @param mimeType
+	 * @return HttpClientOption オブジェクトが返却されます.
+	 */
+	public HttpClientOption setMimeType(MediaType mimeType) {
+		checkFix();
+		this.mimeType = mimeType.getMimeType();
+		return this;
+	}
+
+
+	/**
+	 * 文字コードを設定.
+	 * @param charset
+	 * @return HttpClientOption オブジェクトが返却されます.
+	 */
+	public HttpClientOption setCharset(String charset) {
+		checkFix();
+		this.charset = charset;
+		return this;
+	}
+
+	/**
+	 * 文字コードを設定.
+	 * @param charset
+	 * @return HttpClientOption オブジェクトが返却されます.
+	 */
+	public HttpClientOption setCharset(Charset charset) {
+		checkFix();
+		this.charset = charset.displayName();
+		return this;
+	}
+
+	/**
+	 * 文字コードを設定.
+	 * @param charset
+	 * @return HttpClientOption オブジェクトが返却されます.
+	 */
+	public HttpClientOption setCharset(HttpCharset charset) {
+		checkFix();
+		this.charset = charset.getCharset();
+		return this;
+	}
+
+
+	/**
 	 * Body情報を取得.
 	 * @return
 	 */
@@ -296,39 +390,39 @@ public class HttpClientOption {
 		}
 		this.body = null;
 		this.formData = null;
-		this.charset = null;
 		this.jsonFlag = false;
+		this.bodyCharset = null;
+	}
+
+	// Body用の文字コードを取得.
+	private String getBodyCharset() {
+		String charset = this.charset;
+		if(charset == null || charset.isEmpty()) {
+			if(bodyCharset != null && !bodyCharset.isEmpty()) {
+				charset = bodyCharset;
+			} else {
+				charset = HttpConstants.getCharset();
+			}
+		}
+		return charset;
 	}
 
 	/**
 	 * フォームデータを設定.
 	 * @param formData フォームデータを設定します.
-	 * @param charset 文字コードを設定します.
-	 * @return HttpClientOption オブジェクトが返却されます.
-	 */
-	@SuppressWarnings("rawtypes")
-	public HttpClientOption setFormData(Map formData) {
-		return setFormData(formData, null);
-	}
-
-	/**
-	 * フォームデータを設定.
-	 * @param formData フォームデータを設定します.
-	 * @param charset 文字コードを設定します.
 	 * @return HttpClientOption オブジェクトが返却されます.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public HttpClientOption setFormData(Map formData, String charset) {
+	public HttpClientOption setFormData(Map formData) {
 		if(formData == null || formData.size() <= 0) {
 			throw new HttpClientException("Form data is not set.");
-		} else if(charset == null || charset.isEmpty()) {
-			charset = HttpConstants.getCharset();
 		}
 		checkFix();
 		Entry e;
 		Object v;
 		String k;
 		int cnt = 0;
+		String charset = getBodyCharset();
 		StringBuilder buf = new StringBuilder();
 		Iterator<Entry> it = formData.entrySet().iterator();
 		while (it.hasNext()) {
@@ -344,10 +438,51 @@ public class HttpClientOption {
 		}
 		nowBodyByClose();
 		this.formData = buf.toString();
-		this.charset = charset;
+		this.bodyCharset = charset;
 		return this;
 	}
 
+	/**
+	 * フォームデータを設定.
+	 * @param args フォームデータを設定します.
+	 *             [0] key, [1] value ... のように定義します.
+	 *             また args[0] = string でargs.length == 1 で
+	 *             定義した場合、直接文字列でFormData設定できます.
+	 * @return HttpClientOption オブジェクトが返却されます.
+	 */
+	public HttpClientOption setFormData(Object... args) {
+		if(args == null || args.length == 0) {
+			throw new HttpClientException("Form data is not set.");
+		}
+		checkFix();
+		if(args.length == 1 && args[0] instanceof String) {
+			String data = (String)args[0];
+			if(data == null || data.isEmpty()) {
+				throw new HttpClientException("Form data is not set.");
+			}
+			this.formData = data;
+			this.bodyCharset = getBodyCharset();
+			return this;
+		}
+		Object v;
+		int len = args.length;
+		String charset = getBodyCharset();
+		StringBuilder buf = new StringBuilder();
+		for(int i = 0; i < len; i += 2) {
+			if (i != 0) {
+				buf.append("&");
+			}
+			buf.append(args[i]).append("=");
+			v = args[i + 1];
+			if (v != null && ((String) (v = v.toString())).length() > 0) {
+				buf.append(StringUtil.urlEncode((String) v, charset));
+			}
+		}
+		nowBodyByClose();
+		this.formData = buf.toString();
+		this.bodyCharset = charset;
+		return this;
+	}
 
 	/**
 	 * Body情報を設定.
@@ -361,6 +496,7 @@ public class HttpClientOption {
 		checkFix();
 		nowBodyByClose();
 		this.body = new NioSendMemData(body);
+		this.bodyCharset = null;
 		return this;
 	}
 
@@ -370,22 +506,11 @@ public class HttpClientOption {
 	 * @return HttpClientOption オブジェクトが返却されます.
 	 */
 	public HttpClientOption setBody(String body) {
-		return this.setBody(body, null);
-	}
-
-	/**
-	 * Body情報を設定.
-	 * @param body 文字列を設定します.
-	 * @param charset バイナリに変換する文字コードを設定します.
-	 * @return HttpClientOption オブジェクトが返却されます.
-	 */
-	public HttpClientOption setBody(String body, String charset) {
 		if(body == null || body.isEmpty()) {
 			throw new HttpClientException("body information is not set.");
-		} else if(charset == null || charset.isEmpty()) {
-			charset = HttpConstants.getCharset();
 		}
 		checkFix();
+		String charset = getBodyCharset();
 		NioSendData ns = null;
 		try {
 			ns = new NioSendMemData(body.getBytes(charset));
@@ -394,7 +519,7 @@ public class HttpClientOption {
 		}
 		nowBodyByClose();
 		this.body = ns;
-		this.charset = charset;
+		this.bodyCharset = charset;
 		return this;
 	}
 
@@ -404,22 +529,11 @@ public class HttpClientOption {
 	 * @return HttpClientOption オブジェクトが返却されます.
 	 */
 	public HttpClientOption setJson(Object json) {
-		return setJson(json, null);
-	}
-
-	/**
-	 * Body情報にJson情報をセット.
-	 * @param json 送信するオブジェクトを設定します.
-	 * @param charset バイナリに変換する文字コードを設定します.
-	 * @return HttpClientOption オブジェクトが返却されます.
-	 */
-	public HttpClientOption setJson(Object json, String charset) {
 		if(json == null) {
 			throw new HttpClientException("body information is not set.");
-		} else if(charset == null || charset.isEmpty()) {
-			charset = HttpConstants.getCharset();
 		}
 		checkFix();
+		String charset = getBodyCharset();
 		String body = Json.encode(json);
 		json = null;
 		NioSendData ns = null;
@@ -430,7 +544,7 @@ public class HttpClientOption {
 		}
 		nowBodyByClose();
 		this.body = ns;
-		this.charset = charset;
+		this.bodyCharset = charset;
 		this.jsonFlag = true;
 		return this;
 	}
@@ -449,6 +563,7 @@ public class HttpClientOption {
 		try {
 			nowBodyByClose();
 			this.body = new HttpSendChunkedData(body);
+			this.bodyCharset = null;
 		} catch(Exception e) {
 			throw new HttpClientException(e);
 		}
@@ -468,6 +583,7 @@ public class HttpClientOption {
 		checkFix();
 		nowBodyByClose();
 		this.body = new NioSendInputStreamData(body, length);
+		this.bodyCharset = null;
 		return this;
 	}
 
@@ -489,7 +605,16 @@ public class HttpClientOption {
 		}
 		nowBodyByClose();
 		this.body = ns;
+		this.bodyCharset = null;
 		return this;
+	}
+
+	/**
+	 * 設定されたMimeTypeを取得.
+	 * @return String MimeTypeが返却されます.
+	 */
+	public String getMimeType() {
+		return mimeType;
 	}
 
 	/**
@@ -498,7 +623,13 @@ public class HttpClientOption {
 	 *                nullの場合は設定されていません.
 	 */
 	public String getCharset() {
-		return charset;
+		// 現在設定されている文字コードを取得.
+		if(charset != null && !charset.isEmpty()) {
+			return charset;
+		} else if(bodyCharset != null && !bodyCharset.isEmpty()) {
+			return bodyCharset;
+		}
+		return null;
 	}
 
 	/**

@@ -8,8 +8,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 日付関連ユーティリティ.
@@ -310,13 +313,33 @@ public class DateUtil {
 
 	// 汎用変換処理.
 	private static final DateTimeFormatter[] BASIC_DTF = new DateTimeFormatter[] {
-		DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+		DateTimeFormatter.ofPattern("yyyy-MM-dd")
+		,DateTimeFormatter.ofPattern("yyyy/MM/dd")
+		,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 		,DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
 	};
 
 	// 数値文字列.
-	private static final DateTimeFormatter NUMBER_DTF =
-		DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+	private static final DateTimeFormatter[] NUMBER_DTF = new DateTimeFormatter[] {
+		DateTimeFormatter.ofPattern("yyyyMMdd")
+		,DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+	};
+
+
+	// 拡張変換文字から日付変換フォーマット.
+	private static final Queue<DateTimeFormatter> EXTENTION_DTF =
+		new ConcurrentLinkedQueue<DateTimeFormatter>();
+
+	/**
+	 * parseDateでの拡張文字列から日付変換フォーマットを設定します.
+	 * @param format 日付フォーマットを設定します.
+	 */
+	public static final void setExtensionDtf(String format) {
+		if(format == null || !format.isEmpty()) {
+			return;
+		}
+		EXTENTION_DTF.offer(DateTimeFormatter.ofPattern(format));
+	}
 
 	/**
 	 * オブジェクトをDateオブジェクトに変換.
@@ -335,9 +358,12 @@ public class DateUtil {
 			if(isISO8601(s)) {
 				return toISO8601(s);
 			} else if(NumberUtil.isNumeric(s)) {
-				try {
-					return toDate(s, NUMBER_DTF);
-				} catch(Exception e) {}
+				int len = NUMBER_DTF.length;
+				for(int i = 0; i < len; i ++) {
+					try {
+						return toDate(s, NUMBER_DTF[i]);
+					} catch(Exception e) {}
+				}
 				return new java.util.Date(NumberUtil.parseLong(s));
 			}
 			try {
@@ -348,6 +374,14 @@ public class DateUtil {
 				try {
 					return toDate(s, BASIC_DTF[i]);
 				} catch(Exception e) {}
+			}
+			if(EXTENTION_DTF.size() > 0) {
+				Iterator<DateTimeFormatter> it = EXTENTION_DTF.iterator();
+				while(it.hasNext()) {
+					try {
+						return toDate(s, it.next());
+					} catch(Exception e) {}
+				}
 			}
 		} else if(v instanceof LocalDateTime) {
 			return java.util.Date.from(

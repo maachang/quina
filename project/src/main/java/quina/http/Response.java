@@ -2,6 +2,7 @@ package quina.http;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import quina.http.server.furnishing.BaseSendResponse;
 
@@ -113,9 +114,102 @@ public interface Response<T>
 	/**
 	 * コンテンツタイプを設定.
 	 * @param contentType コンテンツタイプを設定します.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(String contentType, String charset) {
+		setCharset(charset);
+		return setContentType(contentType);
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(String contentType, Charset charset) {
+		setCharset(charset);
+		return setContentType(contentType);
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(String contentType, HttpCharset charset) {
+		setCharset(charset);
+		return setContentType(contentType);
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(MediaType contentType, String charset) {
+		setCharset(charset);
+		return setContentType(contentType);
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(MediaType contentType, Charset charset) {
+		setCharset(charset);
+		return setContentType(contentType);
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(MediaType contentType, HttpCharset charset) {
+		setCharset(charset);
+		return setContentType(contentType);
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setContentType(MediaType contentType) {
+		return setContentType(contentType.getMimeType());
+	}
+
+	/**
+	 * コンテンツタイプを設定.
+	 * @param contentType コンテンツタイプを設定します.
 	 * @return Response レスポンスオブジェクトが返却されます.
 	 */
 	public T setContentType(String contentType);
+
+	/**
+	 * 文字コードを設定.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setCharset(Charset charset) {
+		return setCharset(charset.displayName());
+	}
+
+	/**
+	 * 文字コードを設定.
+	 * @param charset 文字コードを設定します.
+	 * @return Response レスポンスオブジェクトが返却されます.
+	 */
+	default T setCharset(HttpCharset charset) {
+		return setCharset(charset.getCharset());
+	}
 
 	/**
 	 * 文字コードを設定.

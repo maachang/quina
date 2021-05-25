@@ -4,6 +4,8 @@
 
 quina-*.jar
 
+quinaTest
+
 cacerts
 
 project/classes

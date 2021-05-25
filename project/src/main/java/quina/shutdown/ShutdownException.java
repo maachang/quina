@@ -1,9 +1,13 @@
 package quina.shutdown;
 
+import quina.exception.CoreException;
+
 /**
  * シャットダウン例外.
  */
-public class ShutdownException extends RuntimeException {
+public class ShutdownException extends CoreException {
+	private static final long serialVersionUID = 2451048062021273370L;
+
 	/**
 	 * コンストラクタ.
 	 */
