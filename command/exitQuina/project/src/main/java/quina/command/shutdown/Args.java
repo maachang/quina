@@ -74,23 +74,45 @@ public class Args {
 	/**
 	 * 指定ヘッダ名を設定して、要素を取得します.
 	 *
-	 * @param name
-	 * @return
+	 * @param names 対象のヘッダ名を設定します.
+	 * @return String 文字列が返却されます.
 	 */
 	public String get(String... names) {
+		return next(0, names);
+	}
+
+	/**
+	 * 番号指定での指定ヘッダ名を指定した要素取得処理.
+	 *
+	 * たとえば
+	 * > -i abc -i def -i xyz
+	 *
+	 * このような情報が定義されてる場合にたとえば
+	 * next(0, "-i") なら "abc" が返却され
+	 * next(1, "-i") なら "def" が返却されます.
+	 *
+	 * @param no 取得番目番号を設定します.
+	 * @param names 対象のヘッダ名を設定します.
+	 * @return String 文字列が返却されます.
+	 */
+	public String next(int no, String... names) {
 		final int len = names.length;
+		if(len == 1 && isNumeric(names[0])) {
+			final int pos = Integer.parseInt(names[0]);
+			if(pos >= 0 && pos < args.length) {
+				return args[pos];
+			}
+			return null;
+		}
+		int cnt = 0;
 		final int lenJ = args.length - 1;
 		for(int i = 0; i < len; i ++) {
-			if(isNumeric(names[i])) {
-				final int no = Integer.parseInt(names[i]);
-				if(no >= 0 && no < args.length) {
-					return args[no];
-				}
-			} else {
-				for (int j = 0; j < lenJ; j++) {
-					if (names[i].equals(args[j])) {
+			for (int j = 0; j < lenJ; j++) {
+				if (names[i].equals(args[j])) {
+					if(no <= cnt) {
 						return args[j + 1];
 					}
+					cnt ++;
 				}
 			}
 		}

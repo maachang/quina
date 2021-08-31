@@ -230,6 +230,17 @@ public final class FileUtil {
 	}
 
 	/**
+	 * 対象パスのディレクトリ名のみ取得.
+	 *
+	 * @param name
+	 * @return
+	 */
+	public static final String getDirectoryName(String name) {
+		String f = FileUtil.getFileName(name);
+		return name.substring(0, name.length() - f.length());
+	}
+
+	/**
 	 * ファイル内容を取得.
 	 *
 	 * @param name

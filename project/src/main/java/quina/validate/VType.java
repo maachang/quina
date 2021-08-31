@@ -3,7 +3,7 @@ package quina.validate;
 import java.util.List;
 import java.util.Map;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.json.Json;
 import quina.util.Alphabet;
 import quina.util.BooleanUtil;
@@ -14,7 +14,7 @@ import quina.util.StringUtil;
 /**
  * Validateタイプ.
  */
-public enum VT {
+public enum VType {
 	String(1, "string"),
 	Boolean(2, "boolean"),
 	Number(10, "number"),
@@ -28,7 +28,7 @@ public enum VT {
 	private int type;
 	private String name;
 
-	private VT(int type, String name) {
+	private VType(int type, String name) {
 		this.type = type;
 		this.name = name;
 	}
@@ -59,7 +59,7 @@ public enum VT {
 	 * @param type 文字列を設定します.
 	 * @return VType VTypeが返却されます.
 	 */
-	public static final VT getStringByVType(String type) {
+	public static final VType getStringByVType(String type) {
 		if (Alphabet.eqArray(type, "str", "string") != -1) {
 			return String;
 		} else if (Alphabet.eqArray(type, "num", "number") != -1) {
@@ -89,7 +89,7 @@ public enum VT {
 	 * @param value 変換対象のvalueを設定します.
 	 * @return Object 変換結果が返却されます.
 	 */
-	public static final Object convert(VT type, Object value) {
+	public static final Object convert(VType type, Object value) {
 		return convert(type, null, value);
 	}
 
@@ -100,7 +100,7 @@ public enum VT {
 	 * @param value 変換対象のvalueを設定します.
 	 * @return Object 変換結果が返却されます.
 	 */
-	public static final Object convert(VT type, String column, Object value) {
+	public static final Object convert(VType type, String column, Object value) {
 		try {
 			if (value == null) {
 				value = null;
@@ -191,7 +191,7 @@ public enum VT {
 				}
 				break;
 			}
-		} catch (ValidateException ve) {
+		} catch (ValidationException ve) {
 			throw ve;
 		} catch (Exception e) {
 			if(column != null) {

@@ -2,7 +2,7 @@ package quina.http.server.furnishing;
 
 import java.io.InputStream;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 

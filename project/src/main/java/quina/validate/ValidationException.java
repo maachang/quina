@@ -5,37 +5,37 @@ import quina.exception.CoreException;
 /**
  * Validate例外.
  */
-public class ValidateException extends CoreException {
+public class ValidationException extends CoreException {
 	private static final long serialVersionUID = 1986130764272672301L;
-	public ValidateException(int status) {
+	public ValidationException(int status) {
 		super(status);
 	}
 
-	public ValidateException(int status, String message) {
+	public ValidationException(int status, String message) {
 		super(status, message);
 	}
 
-	public ValidateException(int status, Throwable e) {
+	public ValidationException(int status, Throwable e) {
 		super(status, e);
 	}
 
-	public ValidateException(int status, String message, Throwable e) {
+	public ValidationException(int status, String message, Throwable e) {
 		super(status, message, e);
 	}
 
-	public ValidateException() {
+	public ValidationException() {
 		super();
 	}
 
-	public ValidateException(String m) {
+	public ValidationException(String m) {
 		super(m);
 	}
 
-	public ValidateException(Throwable e) {
+	public ValidationException(Throwable e) {
 		super(e);
 	}
 
-	public ValidateException(String m, Throwable e) {
+	public ValidationException(String m, Throwable e) {
 		super(m, e);
 	}
 

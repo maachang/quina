@@ -8,8 +8,9 @@ import quina.http.Response;
 import quina.http.server.response.RESTfulResponse;
 
 /**
- * RESTfulzメソッドPut専用のComponent.
+ * RESTfulメソッドPut専用のComponent.
  */
+@FunctionalInterface
 public interface RESTfulPut extends Component {
 	/**
 	 * コンポーネントタイプを取得.
@@ -50,5 +51,5 @@ public interface RESTfulPut extends Component {
 	 * @param res RESTfulResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public abstract void put(Request req, RESTfulResponse res, Params params);
+	public void put(Request req, RESTfulResponse res, Params params);
 }

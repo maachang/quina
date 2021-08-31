@@ -10,8 +10,9 @@ import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 
 /**
- * [同期]RESTfulzメソッドPatch専用のComponent.
+ * [同期]RESTfulメソッドPatch専用のComponent.
  */
+@FunctionalInterface
 public interface RESTfulPatchSync extends Component {
 	/**
 	 * 送信なしを示すオブジェクト.
@@ -65,5 +66,5 @@ public interface RESTfulPatchSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public abstract Object patch(Request req, SyncResponse res, Params params);
+	public Object patch(Request req, SyncResponse res, Params params);
 }

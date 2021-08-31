@@ -6,10 +6,10 @@ import static quina.component.ComponentConstants.*;
  * コンポーネントタイプを取得.
  */
 public enum ComponentType {
-	/** 通常コンポーネント. **/
+	/** Anyコンポーネント. **/
 	NORMAL(ATTRIBUTE_NORMAL, ATTRIBUTE_NORMAL, "normal"),
 
-	/** 同期用コンポーネント. **/
+	/** [同期]Anyコンポーネント. **/
 	Sync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC, "Sync"),
 
 	/** RESTful 用コンポーネント. **/

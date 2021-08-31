@@ -1,6 +1,6 @@
 package quina.promise;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.net.nio.tcp.Wait;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;

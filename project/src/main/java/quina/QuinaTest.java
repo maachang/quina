@@ -1,14 +1,13 @@
 package quina;
 
-import quina.component.FileComponent;
-import quina.component.NormalComponent;
+import quina.component.AnyComponent;
 import quina.component.RESTfulGet;
 import quina.component.RESTfulGetSync;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
 import quina.promise.Promise;
-import quina.validate.VT;
+import quina.validate.VType;
 import quina.validate.Validation;
 
 /**
@@ -22,9 +21,15 @@ public class QuinaTest {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		// ログの定義を直接セット.
-		LogFactory.getInstance().register(
-			new LogDefineElement().setDirectory("${HOME}/project/test/log/"));
+		try {
+			// ログの定義を直接セット(Linux).
+			LogFactory.getInstance().register(
+				new LogDefineElement().setDirectory("${HOME}/project/test/log/"));
+		} catch(Exception e) {
+			// Windows.
+			LogFactory.getInstance().register(
+					new LogDefineElement().setDirectory("${HOMEPATH}/log/"));
+		}
 
 		// テストプログラムの実行.
 		QuinaTest quinaTest = new QuinaTest(args);
@@ -44,7 +49,7 @@ public class QuinaTest {
 	// テスト開始.
 	public void startTest() {
 		final Quina quina = Quina.get();
-
+		
 		// ルーターを取得.
 		quina.getRouter()
 
@@ -60,26 +65,26 @@ public class QuinaTest {
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
 		.route("/hoge/moge/${id}/a/${name}/",
-			new Validation(
-				"id", VT.Number, ">= 10"
-				,"name", VT.String, "default 'mo_|_ge'"
+			Validation.of(
+				"id", VType.Number, ">= 10"
+				,"name", VType.String, "default 'mo_|_ge'"
 			),
 			(RESTfulGetSync)(req, res, params) -> {
 				return new ResultJson("params", params);
 		})
-
+		
 		// http://127.0.0.1:3333/redirect
-		.route("/redirect", (NormalComponent)(req, res) -> {
+		.route("/redirect", (AnyComponent)(req, res) -> {
 			res.redirect("https://www.yahoo.co.jp");
 		})
 
 		// http://127.0.0.1:3333/forward
-		.route("/forward", (NormalComponent)(req, res) -> {
+		.route("/forward", (AnyComponent)(req, res) -> {
 			res.forward("/hoge/moge/5/a/zzz/");
 		})
 
 		// http://127.0.0.1:3333/promise
-		.route("/promise", (NormalComponent)(req, res) -> {
+		.route("/promise", (AnyComponent)(req, res) -> {
 			// promiseテスト.
 			Promise p = new Promise((action) -> {
 				action.resolve("abc");
@@ -110,7 +115,7 @@ public class QuinaTest {
 		})
 
 		// http://127.0.0.1:3333/promiseAll
-		.route("/promiseAll", (NormalComponent)(req, res) -> {
+		.route("/promiseAll", (AnyComponent)(req, res) -> {
 			// Promise.allのテスト.
 			Promise a = new Promise((action) -> {
 				action.resolve("hoge");
@@ -148,7 +153,8 @@ public class QuinaTest {
 		})
 
 		// http://127.0.0.1:3333/public/*
-		.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));
+		//.route("/public/*", new FileComponent("${HOME}/project/test/quinaTest/"));
+		;
 
 		// quinaを開始して、終了まで待機する.
 		quina.start().await();

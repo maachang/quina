@@ -7,6 +7,7 @@ import quina.http.server.response.AbstractResponse;
 /**
  * HTTPエラー発生時のコンポーネント.
  */
+@FunctionalInterface
 public interface ErrorComponent {
 	/**
 	 * コンポーネントタイプを取得.
@@ -75,7 +76,9 @@ public interface ErrorComponent {
 	 * @param req HttpRequestを設定します.
 	 * @param res HttpResponseを設定します.
 	 */
-	public void call(int state, boolean restful, Request req, Response<?> res);
+	default void call(int state, boolean restful, Request req, Response<?> res) {
+		call(state, restful, req, res, null);
+	}
 
 	/**
 	 * HttpError処理を実行.

@@ -1,6 +1,6 @@
 package quina.component;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.Method;
 import quina.http.Request;
@@ -33,11 +33,6 @@ public class ComponentManager {
 		 * コンストラクタ.
 		 */
 		private DefaultErrorComponent() {
-		}
-
-		@Override
-		public void call(int state, boolean restful, Request req, Response<?> res) {
-			call(state, restful, req, res, null);
 		}
 
 		@Override

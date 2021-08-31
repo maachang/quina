@@ -10,8 +10,9 @@ import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 
 /**
- * [同期]RESTfulzメソッドDelete専用のComponent.
+ * [同期]RESTfulメソッドDelete専用のComponent.
  */
+@FunctionalInterface
 public interface RESTfulDeleteSync extends Component {
 	/**
 	 * 送信なしを示すオブジェクト.
@@ -65,5 +66,5 @@ public interface RESTfulDeleteSync extends Component {
 	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public abstract Object delete(Request req, SyncResponse res, Params params);
+	public Object delete(Request req, SyncResponse res, Params params);
 }

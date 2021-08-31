@@ -43,7 +43,11 @@ public class Env implements TypesKeyValue<String, String> {
 		String key = "" + name;
 		String ret = cache.get(key);
 		if (ret == null) {
-			ret = System.getenv(key);
+			if((ret = System.getenv(key)) == null) {
+				throw new StringException(
+					"Failed to read the specified environment variable \"" +
+					key + "\". ");
+			}
 			cache.put(key, ret);
 		}
 		return ret;

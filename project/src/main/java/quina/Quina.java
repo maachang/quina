@@ -1,6 +1,7 @@
 package quina;
 
 import quina.component.EtagManagerInfo;
+import quina.exception.QuinaException;
 import quina.http.server.HttpServerCall;
 import quina.http.server.HttpServerInfo;
 import quina.http.server.HttpServerService;

@@ -1,6 +1,6 @@
 package quina.promise;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.net.nio.tcp.Wait;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
@@ -16,7 +16,7 @@ import quina.util.Flag;
  *   action.resolve(value + " moge");
  * });
  * promise.then((action, value) -> {
- *   action.getResponse().setContentType("text/html");
+ *   response.setContentType("text/html");
  *   action.send(value);
  * });
  * promise.exception((action, error) -> {
@@ -30,7 +30,7 @@ import quina.util.Flag;
  * またPromiseはコンポーネントは、基本的に「非同期モード」のものしか
  * 実行出来ません.
  *
- * ですが、以下のように行う事で、動機モードのコンポーネントでも実装可能です.
+ * ですが、以下のように行う事で、同期モードのコンポーネントでも実装可能です.
  * <例>
  *
  * Quina.getRouter().route("/promiseSync",

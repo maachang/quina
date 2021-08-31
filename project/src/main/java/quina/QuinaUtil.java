@@ -1,5 +1,6 @@
 package quina;
 
+import quina.exception.QuinaException;
 import quina.json.Json;
 import quina.util.Env;
 import quina.util.FileUtil;

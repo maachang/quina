@@ -8,8 +8,9 @@ import quina.http.Response;
 import quina.http.server.response.RESTfulResponse;
 
 /**
- * RESTfulzメソッドPatch専用のComponent.
+ * RESTfulメソッドPatch専用のComponent.
  */
+@FunctionalInterface
 public interface RESTfulPatch extends Component {
 	/**
 	 * コンポーネントタイプを取得.
@@ -51,5 +52,5 @@ public interface RESTfulPatch extends Component {
 	 * @param res HttpResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public abstract void patch(Request req, RESTfulResponse res, Params params);
+	public void patch(Request req, RESTfulResponse res, Params params);
 }

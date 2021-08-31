@@ -8,7 +8,7 @@ import java.io.OutputStreamWriter;
 import java.util.zip.GZIPOutputStream;
 
 import quina.Quina;
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
 import quina.http.HttpException;

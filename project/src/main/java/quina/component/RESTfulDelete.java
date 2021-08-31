@@ -8,8 +8,9 @@ import quina.http.Response;
 import quina.http.server.response.RESTfulResponse;
 
 /**
- * RESTfulzメソッドDelete専用のComponent.
+ * RESTfulメソッドDelete専用のComponent.
  */
+@FunctionalInterface
 public interface RESTfulDelete extends Component {
 	/**
 	 * コンポーネントタイプを取得.
@@ -50,5 +51,5 @@ public interface RESTfulDelete extends Component {
 	 * @param res RESTfulResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public abstract void delete(Request req, RESTfulResponse res, Params params);
+	public void delete(Request req, RESTfulResponse res, Params params);
 }

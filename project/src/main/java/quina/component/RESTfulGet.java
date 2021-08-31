@@ -8,8 +8,9 @@ import quina.http.Response;
 import quina.http.server.response.RESTfulResponse;
 
 /**
- * RESTfulzメソッドGet専用のComponent.
+ * RESTfulメソッドGet専用のComponent.
  */
+@FunctionalInterface
 public interface RESTfulGet extends Component {
 	/**
 	 * コンポーネントタイプを取得.
@@ -51,6 +52,6 @@ public interface RESTfulGet extends Component {
 	 * @param res RESTfulResponseが設定されます.
 	 * @param params パラメータが設定されます.
 	 */
-	public abstract void get(Request req, RESTfulResponse res, Params params);
+	public void get(Request req, RESTfulResponse res, Params params);
 
 }

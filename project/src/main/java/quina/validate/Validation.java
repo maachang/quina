@@ -28,7 +28,7 @@ import quina.util.StringUtil;
 public class Validation {
 	// validateリスト.
 	private List<VElement> list = new ArrayList<VElement>();
-
+	
 	/**
 	 * コンストラクタ.
 	 * @param args パラメータの検証条件を設定します.
@@ -36,13 +36,15 @@ public class Validation {
 	public Validation(Object... args) {
 		final int len = args.length;
 		for(int i = 0; i < len; i += 3) {
-			list.add(
-				new VElement(
-					StringUtil.parseString(args[i]),
+			if(args[i + 1] instanceof VType) {
+				add(StringUtil.parseString(args[i]),
+					(VType)args[i + 1],
+					StringUtil.parseString(args[i + 2]));
+			} else {
+				add(StringUtil.parseString(args[i]),
 					StringUtil.parseString(args[i + 1]),
-					StringUtil.parseString(args[i + 2])
-				)
-			);
+					StringUtil.parseString(args[i + 2]));
+			}
 		}
 	}
 
@@ -50,7 +52,7 @@ public class Validation {
 	 * Validation生成.
 	 * @param args パラメータの検証条件を設定します.
 	 */
-	public static final Validation ins(Object... args) {
+	public static final Validation of(Object... args) {
 		return new Validation(args);
 	}
 
@@ -61,8 +63,27 @@ public class Validation {
 	public static final Validation getInstance(Object... args) {
 		return new Validation(args);
 	}
-
-
+	
+	/**
+	 * Validation条件を設定.
+	 * @param name 変数名を設定します.
+	 * @param type 型情報を設定します.
+	 * @param condisions 条件を設定します.
+	 */
+	public void add(String name, String type, String condisions) {
+		list.add(new VElement(name, type, condisions));
+	}
+	
+	/**
+	 * Validation条件を設定.
+	 * @param name 変数名を設定します.
+	 * @param type 型情報を設定します.
+	 * @param condisions 条件を設定します.
+	 */
+	public void add(String name, VType type, String condisions) {
+		list.add(new VElement(name, type, condisions));
+	}
+	
 	/**
 	 * 検証処理を実行.
 	 * @param req HTTPリクエストを設定します.

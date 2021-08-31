@@ -2,7 +2,7 @@ package quina.component;
 
 import java.io.File;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
@@ -11,9 +11,10 @@ import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 
 /**
- * 同期用コンポーネント.
+ * [同期]Anyコンポーネント.
  */
-public interface SyncComponent extends Component {
+@FunctionalInterface
+public interface AnySyncComponent extends Component {
 	/**
 	 * 送信なしを示すオブジェクト.
 	 */

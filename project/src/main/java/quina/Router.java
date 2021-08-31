@@ -1,11 +1,14 @@
 package quina;
 
+import quina.annotation.route.LoadAnnotationRoute;
+import quina.annotation.validate.LoadAnnotationValidate;
 import quina.component.Component;
 import quina.component.ComponentManager;
 import quina.component.ErrorComponent;
 import quina.component.EtagManager;
 import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
+import quina.exception.QuinaException;
 import quina.http.Method;
 import quina.validate.Validation;
 
@@ -70,8 +73,23 @@ public class Router {
 
 	/**
 	 * 対象コンポーネントとルートを紐付けます.
+	 * @param component 実行コンポーネントを設定します.
+	 *                  このコンポーネントに対して @Route のアノテーション定義
+	 *                  が設定されている必要があります.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router route(Component component) {
+		final String path = LoadAnnotationRoute.load(component);
+		if(path == null) {
+			throw new QuinaException("Route annotation definition does not exist " +
+				"in the specified component:" + component.getClass());
+		}
+		return route(path, null, component);
+	}
+
+	/**
+	 * 対象コンポーネントとルートを紐付けます.
 	 * @param path コンポーネント実行するURLのパスを設定します.
-	 * @param validation 対象のValidationを設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
@@ -91,6 +109,11 @@ public class Router {
 			path = this.path + path.substring(1);
 		} else {
 			path = this.path + path;
+		}
+		// validationが直接指定されてない場合.
+		if(validation == null) {
+			// annotationのvalidationを取得.
+			validation = LoadAnnotationValidate.load(component);
 		}
 		manager.put(path, validation, component);
 		return this;

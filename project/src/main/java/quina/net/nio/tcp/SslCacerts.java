@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.util.FileUtil;
 
 /**

@@ -1,6 +1,4 @@
-package quina;
-
-import quina.exception.CoreException;
+package quina.exception;
 
 /**
  * QuinaException.

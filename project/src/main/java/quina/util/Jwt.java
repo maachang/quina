@@ -3,7 +3,7 @@ package quina.util;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.json.Json;
 
 /**

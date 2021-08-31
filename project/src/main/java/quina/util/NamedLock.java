@@ -14,17 +14,17 @@ public class NamedLock {
 	/**
 	 * ロック管理オブジェクト.
 	 */
-	private Object[] syncArray;
+	private final Object[] syncArray;
 
 	/**
-	 * null文字様ロックオブジェクト.
+	 * null文字ロックオブジェクト.
 	 */
 	private final Object nullSync = new Object();
 
 	/**
 	 * ロック管理マスク値.
 	 */
-	private int mask;
+	private final int mask;
 
 	/**
 	 * コンストラクタ.

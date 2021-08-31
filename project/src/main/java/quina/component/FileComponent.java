@@ -1,6 +1,6 @@
 package quina.component;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;

@@ -1,6 +1,6 @@
 package quina.validate;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.util.StringUtil;
 
 /**
@@ -10,7 +10,7 @@ final class VElement {
 	private boolean headerFlag;
 	private String column;
 	private String headerColumn;
-	private VT type;
+	private VType type;
 	private VCheckElements vlist;
 
 	/**
@@ -20,7 +20,7 @@ final class VElement {
 	 * @param validate
 	 */
 	public VElement(String column, String type, String validate) {
-		this(column, VT.getStringByVType(type), validate);
+		this(column, VType.getStringByVType(type), validate);
 	}
 
 	/**
@@ -29,7 +29,7 @@ final class VElement {
 	 * @param type
 	 * @param validate
 	 */
-	public VElement(String column, VT type, String validate) {
+	public VElement(String column, VType type, String validate) {
 		VCheckElements lst = new VCheckElements(type, validate);
 		this.column = headerColumnNames(column);
 		this.type = type;
@@ -97,7 +97,7 @@ final class VElement {
 	 * VTypeを取得.
 	 * @return
 	 */
-	public VT getType() {
+	public VType getType() {
 		return type;
 	}
 

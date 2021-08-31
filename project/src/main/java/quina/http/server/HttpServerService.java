@@ -2,9 +2,9 @@ package quina.http.server;
 
 import java.nio.channels.ServerSocketChannel;
 
-import quina.QuinaException;
 import quina.QuinaInfo;
 import quina.QuinaService;
+import quina.exception.QuinaException;
 import quina.http.worker.HttpWorkerService;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerCore;

@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.http.HttpStatus;
 import quina.http.Request;
 import quina.http.Response;
@@ -24,7 +24,8 @@ import quina.util.NamedLock;
 public final class EtagManager {
 
 	//
-	// ここで管理する情報はFileComponentなどで利用するキャッシュ機構をサポートします.
+	// FileComponentなどで利用するキャッシュ機構を
+	// サポートします.
 	//
 
 	/**
@@ -401,9 +402,9 @@ public final class EtagManager {
 	 */
 	private static final class EtagElement {
 		// ETAG情報.
-		private String etag;
+		private final String etag;
 		// コンテンツのファイルタイム.
-		private long lastTime;
+		private final long lastTime;
 
 		/**
 		 * コンストラクタ.

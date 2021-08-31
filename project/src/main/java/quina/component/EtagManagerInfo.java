@@ -2,7 +2,7 @@ package quina.component;
 
 import java.util.Map;
 
-import quina.QuinaException;
+import quina.exception.QuinaException;
 import quina.util.AtomicNumber;
 import quina.util.BooleanUtil;
 import quina.util.Flag;
@@ -14,6 +14,7 @@ import quina.util.NumberUtil;
 public class EtagManagerInfo {
 	/**
 	 * ETAGとして計算可能なデフォルトの最大ファイルサイズ.
+	 * (5MByte).
 	 */
 	private static final int DEFAULT_MAX_FILE_SIZE = 0x00100000 * 5;
 

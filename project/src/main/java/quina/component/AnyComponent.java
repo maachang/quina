@@ -6,9 +6,10 @@ import quina.http.Response;
 import quina.http.server.response.NormalResponse;
 
 /**
- * ノーマルコンポーネント.
+ * Anyコンポーネント.
  */
-public interface NormalComponent extends Component {
+@FunctionalInterface
+public interface AnyComponent extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.

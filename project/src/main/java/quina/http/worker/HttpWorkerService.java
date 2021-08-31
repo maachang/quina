@@ -1,8 +1,8 @@
 package quina.http.worker;
 
-import quina.QuinaException;
 import quina.QuinaInfo;
 import quina.QuinaService;
+import quina.exception.QuinaException;
 import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 import quina.util.Flag;
