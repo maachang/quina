@@ -13,7 +13,21 @@ public class ResultJson extends IndexMap<String, Object> {
 	protected ResultJson() {
 		super();
 	}
+	
+	/**
+	 * Json作成処理.
+	 * @param args
+	 * @return
+	 */
+	public static final ResultJson of(Object... args) {
+		return new ResultJson(args);
+	}
+	
 
+	/**
+	 * コンストラクタ.
+	 * @param map
+	 */
 	@SuppressWarnings("unchecked")
 	public ResultJson(IndexMap<String, Object> map) {
 		super(map.getIndexMap());

@@ -19,10 +19,12 @@ import java.lang.annotation.Target;
  *   }
  * }
  * 
- * 上記内容を以下のようにRouterに登録することでルートパスの設定が可能です.
+ * 上記内容をqRouteOutコマンドでAutoRoute可能な定義を行う事で、
+ * GraalVMのNative-Imageでコンパイルが可能となります.
  * 
- * quina.getRouter().route(new JsonGetSync());
- * 
+ * これによりJsonGetSyncオブジェクトのURLパスが
+ *  "/hoge/moge/${id}/a/${name}/"
+ * としてルート設定されます.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

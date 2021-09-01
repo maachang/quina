@@ -272,6 +272,8 @@ public class Quina {
 	public Quina start() {
 		check(true);
 		try {
+			// AutoRouter読み込みを実行.
+			router.autoRoute();
 			// Etag管理情報を取得.
 			final EtagManagerInfo etagManagerInfo =
 				router.getEtagManagerInfo();

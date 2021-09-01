@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sh ./qRouteOut -c ../../../test/classes/ -s ../../../test/src/main/java/

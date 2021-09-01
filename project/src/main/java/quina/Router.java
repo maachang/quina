@@ -1,5 +1,7 @@
 package quina;
 
+import java.lang.reflect.InvocationTargetException;
+
 import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.validate.LoadAnnotationValidate;
 import quina.component.Component;
@@ -16,6 +18,21 @@ import quina.validate.Validation;
  * URLアクセスに対するコンポーネントを管理.
  */
 public class Router {
+	/**
+	 * @Routeアノテーション自動読み込み実行用クラス名.
+	 */
+	public static final String AUTO_READ_ROUTE_CLASS = "RouteComponents";
+
+	/**
+	 * @Routeアノテーション自動読み込み実行用メソッド名.
+	 */
+	public static final String AUTO_READ_ROUTE_METHOD = "load";
+	
+	/**
+	 * 出力先パッケージ名.
+	 */
+	public static final String AUTO_READ_ROUTE_PACKAGE = "quinax";
+	
 	// 基本マッピングパス.
 	private String path = "/";
 
@@ -116,6 +133,36 @@ public class Router {
 			validation = LoadAnnotationValidate.load(component);
 		}
 		manager.put(path, validation, component);
+		return this;
+	}
+	
+	/**
+	 * AutoRoute実行.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	protected Router autoRoute() {
+		java.lang.Class<?> clazz;
+		java.lang.reflect.Method method;
+		try {
+			// AutoRoute実行用のクラスを取得.
+			clazz = Class.forName(
+				AUTO_READ_ROUTE_PACKAGE + "." + AUTO_READ_ROUTE_CLASS);
+			// 実行メソッドを取得.
+			method = clazz.getMethod(AUTO_READ_ROUTE_METHOD);
+		} catch(Exception e) {
+			// クラスローディングやメソッド読み込みに失敗した場合は処理終了.
+			return this;
+		}
+		try {
+			// Methodをstatic実行.
+			method.invoke(null);
+		} catch(InvocationTargetException it) {
+			// メソッド実行でエラーの場合はエラー返却.
+			throw new QuinaException(it.getCause());
+		} catch(Exception e) {
+			// メソッド実行でエラーの場合はエラー返却.
+			throw new QuinaException(e);
+		}
 		return this;
 	}
 

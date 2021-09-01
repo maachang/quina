@@ -1,0 +1,6 @@
+.DS_Store
+
+qRouteOut-*.jar
+quina-*.jar
+
+project/classes
