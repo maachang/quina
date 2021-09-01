@@ -7,12 +7,32 @@ import java.util.regex.Pattern;
 
 import quina.util.Alphabet;
 import quina.util.DateUtil;
+import quina.util.NumberUtil;
 import quina.util.StringUtil;
 
 /**
  * １つのValidateチェック要素群.
  */
 final class VCheckElements {
+	
+	// valueがnullの時のメッセージ.
+	private static final String NULL_MESSAGE = "The value of '{0}' is {1}.";
+	
+	// 予約正規表現のエラーメッセージ.
+	private static final String EXP_RESERV_ERROR_MESSAGE = "\"{0}\" is not a {1} format.";
+	
+	// 正規表現のエラーメッセージ.
+	private static final String EXP_ERROR_MESSAGE = "The contents of \"{0}\" do not apply.";
+	
+	// MinErrorMessage.
+	private static final String MIN_ERROR_MESSAGE = "Length of '{0}' is out of condition: min({1})";
+	
+	// MaxErrorMessage.
+	private static final String MAX_ERROR_MESSAGE = "Length of '{0}' is out of condition: max({1})";
+	
+	// RangeErrorMessage.
+	private static final String RANGE_ERROR_MESSAGE = "Length of '{0}' is out of condition: range({1}, {2})";
+	
 	/**
 	 * Validateチェック要素.
 	 */
@@ -60,6 +80,9 @@ final class VCheckElements {
 
 	// Validateチェック要素を管理するリスト.
 	private List<VCheckElement> list = new ArrayList<VCheckElement>();
+	
+	// オリジナルメッセージ.
+	private String originMessage = null;
 
 	/**
 	 * コンストラクタ.
@@ -67,24 +90,25 @@ final class VCheckElements {
 	 * @param validate validateチェック条件を設定します.
 	 */
 	public VCheckElements(VType vtype, String validate) {
-		analysis(list, vtype, validate);
+		this.originMessage = analysis(list, vtype, validate);
 	}
 
 	// Validateチェック条件を解析.
-	private static final void analysis(List<VCheckElement> out, VType type, String validate) {
+	private static final String analysis(List<VCheckElement> out, VType type, String validate) {
 		if (!StringUtil.useString(validate) || Alphabet.eq("none", validate)) {
 			// 条件が空か"none"の場合はチェックしない.
 			out.clear();
-			return;
+			return null;
 		}
 		// 情報をカット.
 		List<String> list = new ArrayList<String>();
 		StringUtil.cutString(list, true, false, validate, " 　\t_|(),");
 		if (list.size() == 0) {
 			out.clear();
-			return;
+			return null;
 		}
 		// 区切り条件毎に解析を行う.
+		String message = null;
 		VCheckType vc;
 		Object v1, v2;
 		boolean notFlag = false;
@@ -99,7 +123,7 @@ final class VCheckElements {
 			// "none"が設定されている場合.
 			} else if(vc == VCheckType.None) {
 				// 解析終了.
-				return;
+				return message;
 			// "not"定義の場合.
 			} else if(vc.equals(VCheckType.Not)) {
 				// NotフラグをONにする.
@@ -110,8 +134,12 @@ final class VCheckElements {
 				notFlag = false;
 				// Validateチェックタイプのパラメータが1個の場合.
 			} else if(vc.getArgsLength() == 1) {
+				// オリジナルメッセージ.
+				if(vc.equals(VCheckType.Message)) {
+					message = list.get(++pos);
+					continue;
 				// 正規表現の場合.
-				if(vc.equals(VCheckType.EXP)) {
+				} else if(vc.equals(VCheckType.EXP)) {
 					// 正規表現コンパイル.
 					v1 = Pattern.compile(list.get(++pos));
 				} else {
@@ -134,6 +162,7 @@ final class VCheckElements {
 					"Unknown validation condition: " + list.get(pos));
 			}
 		}
+		return message;
 	}
 
 	/**
@@ -152,67 +181,67 @@ final class VCheckElements {
 			case None:
 			case Not: continue; // 何もしない.
 			case Null:
-				value = isNull(em, vtype, column, value);
+				value = isNull(em, originMessage, vtype, column, value);
 				break;
 			case Date:
-				value = date(em, column, value);
+				value = date(em, originMessage, column, value);
 				break;
 			case Time:
-				value = time(em, column, value);
+				value = time(em, originMessage, column, value);
 				break;
 			case Zip:
-				value = zip(em, column, value);
+				value = zip(em, originMessage, column, value);
 				break;
 			case Tel:
-				value = tel(em, column, value);
+				value = tel(em, originMessage, column, value);
 				break;
 			case Ipv4:
-				value = ipv4(em, column, value);
+				value = ipv4(em, originMessage, column, value);
 				break;
 			case Url:
-				value = url(em, column, value);
+				value = url(em, originMessage, column, value);
 				break;
 			case Email:
-				value = email(em, column, value);
+				value = email(em, originMessage, column, value);
 				break;
 			case EXP:
-				value = exp(em, column, value);
+				value = exp(em, originMessage, column, value);
 				break;
 			case LT:
-				value = min(em, true, vtype, column, value);
+				value = max(em, originMessage, true, vtype, column, value);
 				break;
 			case LE:
-				value = min(em, false, vtype, column, value);
+				value = max(em, originMessage, false, vtype, column, value);
 				break;
 			case GT:
-				value = max(em, true, vtype, column, value);
+				value = min(em, originMessage, true, vtype, column, value);
 				break;
 			case GE:
-				value = max(em, false, vtype, column, value);
+				value = min(em, originMessage, false, vtype, column, value);
 				break;
 			case Min:
-				value = min(em, true, vtype, column, value);
+				value = min(em, originMessage, true, vtype, column, value);
 				break;
 			case Max:
-				value = max(em, true, vtype, column, value);
+				value = max(em, originMessage, true, vtype, column, value);
 				break;
 			case Range:
-				value = range(em, vtype, column, value);
+				value = range(em, originMessage, vtype, column, value);
 				break;
 			case Default:
 				value = defaultValue(em, vtype, column, value);
+				break;
+			case Message:
+				// 何もしない.
+				break;
 			}
 		}
 		return value;
 	}
-
-	// not が付与されている場合の例外メッセージ追加.
-	private static final String notOut(VCheckElement em) {
-		return em.isNot() ? " not" : "";
-	}
-
+	
 	// null.
-	private static final Object isNull(VCheckElement em, VType vtype, String column, Object value) {
+	private static final Object isNull(VCheckElement em, String origin, VType vtype,
+		String column, Object value) {
 		boolean res;
 		if(VType.String.equals(vtype)) {
 			// 文字列の場合はnullか空の場合はデフォルト定義.
@@ -222,107 +251,111 @@ final class VCheckElements {
 		}
 		if (res == !em.isNot()) {
 			throw new ValidationException(400,
-				"The value of '" + column + "' is" + notOut(em) + " null");
+				message(origin, NULL_MESSAGE, column, em.isNot() ? " not null" : "null"));
 		}
 		return value;
 	}
-
+	
 	// date.
-	private static final Object date(VCheckElement em, String column, Object value) {
+	private static final Object date(VCheckElement em, String origin, String column, Object value) {
 		try {
 			if((DateUtil.parseDate(value) != null) == em.isNot()) {
 				return value;
 			}
 		} catch(Exception e) {}
-		return exp(DATE_EXP, em, column, value, "\"" + column + "\" is not a date format.");
+		return exp(DATE_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "date"));
 	}
 
 	// time.
-	private static final Object time(VCheckElement em, String column, Object value) {
-		return exp(TIME_EXP, em, column, value, "\"" + column + "\" is not a time format.");
+	private static final Object time(VCheckElement em, String origin, String column, Object value) {
+		return exp(TIME_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "time"));
+
 	}
 
 	// zip.
-	private static final Object zip(VCheckElement em, String column, Object value) {
-		return exp(ZIP_EXP, em, column, value, "\"" + column + "\" is not a zip format.");
+	private static final Object zip(VCheckElement em, String origin, String column, Object value) {
+		return exp(ZIP_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "zip"));
 	}
 
 	// tel.
-	private static final Object tel(VCheckElement em, String column, Object value) {
-		return exp(TEL_EXP, em, column, value, "\"" + column + "\" is not a telephone format.");
+	private static final Object tel(VCheckElement em, String origin, String column, Object value) {
+		return exp(TEL_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "telephone"));
 	}
 	// ipv4.
-	private static final Object ipv4(VCheckElement em, String column, Object value) {
-		return exp(IPV4_EXP, em, column, value, "\"" + column +
-			"\" is not in the format of IP address (IPV4).");
+	private static final Object ipv4(VCheckElement em, String origin, String column, Object value) {
+		return exp(IPV4_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "ipAddress(ipv4)"));
 	}
 
 	// url.
-	private static final Object url(VCheckElement em, String column, Object value) {
-		return exp(URL_EXP, em, column, value, "\"" + column + "\" is not a url format.");
+	private static final Object url(VCheckElement em, String origin, String column, Object value) {
+		return exp(URL_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "url"));
 	}
 
 	// email.
-	private static final Object email(VCheckElement em, String column, Object value) {
-		return exp(EMAIL_EXP, em, column, value, "\"" + column + "\" is not a email format.");
+	private static final Object email(VCheckElement em, String origin, String column, Object value) {
+		return exp(EMAIL_EXP, em, origin, column, value,
+			message(origin, EXP_RESERV_ERROR_MESSAGE, column, "email") );
 	}
-
+	
 	// exp.
-	private static final Object exp(VCheckElement em, String column, Object value) {
-		return exp((Pattern)em.getArgs()[0], em, column, value,
-			"The contents of \"" + column + "\" do not apply.");
+	private static final Object exp(VCheckElement em, String origin, String column, Object value) {
+		return exp((Pattern)em.getArgs()[0], em, origin, column, value,
+			message(origin, EXP_ERROR_MESSAGE, column));
 	}
-
+	
 	// min [number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object min(VCheckElement em, boolean eq, VType vtype, String column, Object value) {
+	private static final Object min(VCheckElement em, String origin, boolean eq, VType vtype,
+		String column, Object value) {
+		Comparable d = (Comparable)em.getArgs()[0];
 		if (value == null) {
-			throw new ValidationException(400,
-				"The value of '" + column + "' is null.");
+			throw new ValidationException(400, message(origin, MIN_ERROR_MESSAGE, column, d));
 		}
 		Comparable s = (Comparable)VType.convert(vtype, column, value);
-		Comparable d = (Comparable)em.getArgs()[0];
 		// valueの方が大きい場合はエラー.
- 		if((eq && (s.compareTo(d) >= 0) == em.isNot()) ||
- 			(!eq && (s.compareTo(d) > 0) == em.isNot())) {
-			throw new ValidationException(400,
-				"Length of '" + column + "' is out of condition: min(" + d + ")");
+		if((eq && (s.compareTo(d) >= 0) == em.isNot()) ||
+			(!eq && (s.compareTo(d) > 0) == em.isNot())) {
+			throw new ValidationException(400, message(origin, MIN_ERROR_MESSAGE, column, d));
 		}
 		return value;
 	}
-
+	
 	// max [number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object max(VCheckElement em, boolean eq, VType vtype, String column, Object value) {
+	private static final Object max(VCheckElement em, String origin, boolean eq, VType vtype,
+		String column, Object value) {
+		Comparable d = (Comparable)em.getArgs()[0];
 		if (value == null) {
-			throw new ValidationException(400,
-				"The value of '" + column + "' is null.");
+			throw new ValidationException(400, message(origin, MAX_ERROR_MESSAGE, column, d));
 		}
 		Comparable s = (Comparable)VType.convert(vtype, column, value);
-		Comparable d = (Comparable)em.getArgs()[0];
 		// valueの方が小さい場合はエラー.
 		if((eq && (s.compareTo(d) <= 0) == em.isNot()) ||
 			(!eq && (s.compareTo(d) < 0) == em.isNot())) {
-			throw new ValidationException(400,
-				"Length of '" + column + "' is out of condition: max(" + d + ")");
+			throw new ValidationException(400, message(origin, MAX_ERROR_MESSAGE, column, d));
 		}
 		return value;
 	}
-
+	
 	// range [number number].
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final Object range(VCheckElement em, VType vtype, String column, Object value) {
-		if (value == null) {
-			throw new ValidationException(400,
-				"The value of '" + column + "' is null.");
-		}
+	private static final Object range(VCheckElement em, String origin, VType vtype, String column,
+		Object value) {
 		Comparable s = (Comparable)VType.convert(vtype, column, value);
 		Comparable d1 = (Comparable)em.getArgs()[0];
 		Comparable d2 = (Comparable)em.getArgs()[1];
+		if (value == null) {
+			throw new ValidationException(400, message(origin, RANGE_ERROR_MESSAGE, column, d1, d2));
+		}
 		// valueが範囲外の場合はエラー.
 		if((s.compareTo(d1) >= 0) == em.isNot() || (s.compareTo(d2) <= 0) == em.isNot()) {
-			throw new ValidationException(400,
-				"Length of '" + column + "' is out of condition: range(" + d1 + ", " + d2 + ")");
+			throw new ValidationException(400, message(origin, RANGE_ERROR_MESSAGE, column, d1, d2));
 		}
 		return value;
 	}
@@ -352,9 +385,10 @@ final class VCheckElements {
 	private static final Pattern EMAIL_EXP = Pattern.compile("\\w{1,}[@][\\w\\-]{1,}([.]([\\w\\-]{1,})){1,3}$");
 
 	// exp.
-	private static final Object exp(Pattern p, VCheckElement em, String column, Object value, String message) {
+	private static final Object exp(Pattern p, VCheckElement em, String origin, String column,
+		Object value, String message) {
 		if (value == null) {
-			throw new ValidationException(400, "The value of '" + column + "' is null.");
+			throw new ValidationException(400, message);
 		}
 		final Matcher mc = p.matcher(StringUtil.parseString(value));
 		if (em.isNot()) {
@@ -365,5 +399,58 @@ final class VCheckElements {
 			throw new ValidationException(400, message);
 		}
 		return value;
+	}
+	
+	// エラーメッセージを出力.
+	// origin オリジナルメッセージをセット.
+	//        nullか空の場合はデフォルトメッセージを利用.
+	// def デフォルトメッセージをセット.
+	// args パラメータをセット.
+	private static final String message(String origin, String def, Object... args) {
+		if(origin != null && !origin.isEmpty()) {
+			return message(origin, args);
+		}
+		return message(def, args);
+	}
+	
+	// エラーメッセージを出力.
+	// メッセージのフォーマットは以下の通り.
+	//
+	// msg="xxxx{0} yyyy{1}"
+	// message(msg, "hoge", "moge");
+	// 結果: "xxxxhoge yyyymoge"
+	//
+	private static final String message(String msg, Object... args) {
+		int p, pp, no, b = 0;
+		String s;
+		final StringBuilder buf = new StringBuilder();
+		while(true) {
+			p = msg.indexOf("{", b);
+			if(p == -1) {
+				buf.append(msg.substring(b));
+				break;
+			}
+			buf.append(msg.substring(b, p));
+			pp = msg.indexOf("}", p);
+			if(pp == -1) {
+				buf.append(msg.substring(p));
+				break;
+			}
+			s = msg.substring(p + 1, pp).trim();
+			if(!NumberUtil.isNumeric(s)) {
+				buf.append(msg.substring(p, pp));
+				b = pp;
+			} else {
+				no = NumberUtil.parseInt(s);
+				if(no < 0 || no >= args.length) {
+					buf.append(msg.substring(p, pp));
+					b = pp;
+				} else {
+					buf.append(args[no]);
+					b = pp + 1;
+				}
+			}
+		}
+		return buf.toString();
 	}
 }

@@ -2,16 +2,18 @@ package quinax;
 
 import quina.Quina;
 import quina.Router;
-import quina.component.Component;
 
 /**
- * @Route Registers the configured Component group as a Router.
+ * Route Annotation Registers the configured Component group as a Router.
  */
 public final class RouteComponents {
 	private RouteComponents() {}
 	
 	/**
-	 * @Route Performs Router registration processing for the set Component group.
+	 * Route Annotation Performs Router registration processing for the
+	 * set Component group.
+	 *
+	 * @exception Exception When Router registration fails.
 	 */
 	public static final void load() throws Exception {
 		
@@ -19,8 +21,6 @@ public final class RouteComponents {
 		final Router router = Quina.get().getRouter();
 		
 		// Register the "quina.test.route.JsonGet" component in the Router. 
-		router.route((Component)(Class.forName("quina.test.route.JsonGet")
-			.getDeclaredConstructor().newInstance()
-		));
+		router.route(new quina.test.route.JsonGet());
 	}
 }

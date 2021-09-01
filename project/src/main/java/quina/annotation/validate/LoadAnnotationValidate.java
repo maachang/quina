@@ -47,6 +47,7 @@ public class LoadAnnotationValidate {
 	private static final void addValidate(
 		Validation validation, Validate validate) {
 		String condisions = validate.conditions();
+		// default が設定されてる場合.
 		if(validate.defVal() != null && !validate.defVal().isEmpty()) {
 			String defVal = validate.defVal();
 			if(validate.type() == VType.String) {
@@ -58,6 +59,15 @@ public class LoadAnnotationValidate {
 				condisions += " " + defVal;
 			} else {
 				condisions = defVal;
+			}
+		}
+		// message が設定されている場合.
+		if(validate.message() != null && !validate.message().isEmpty()) {
+			String message = validate.message();
+			if(condisions != null && !condisions.isEmpty()) {
+				condisions += " message '" + message + "'";
+			} else {
+				condisions = "message '" + message + "'";
 			}
 		}
 		validation.add(validate.name(), validate.type(), condisions);

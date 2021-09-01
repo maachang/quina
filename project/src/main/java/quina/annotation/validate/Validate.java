@@ -16,7 +16,8 @@ import quina.validate.VType;
  * <例>
  * 
  * @Validate(name="id", type=VType.Number, conditions=">= 10")
- * @Validate(name="name", type=VType.String, conditions="not null")
+ * @Validate(name="name", type=VType.String, conditions="not null",
+ *           message="名前が設定されていません")
  * @Validate(name="abc", type=VType.String, defVal="moge")
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
@@ -25,8 +26,9 @@ import quina.validate.VType;
  * }
  * 
  * 上記条件で対象Routerのrouteに以下のValidate定義が行われます.
- *   数字型のid名のパラメータで、10以上の場合はエラー.
+ *   数字型のid名のパラメータで、10以下の場合はエラー.
  *   文字列型のname名のパラメータで、定義されてない場合はエラー.
+ *     エラーの場合「名前が設定されていません」が返却されます.
  *   文字列型のabc名のパラメータで、定義されてない場合は"moge"がセットされる.
  * 
  * これらの定義がquina.validate.Validate.of() の定義と同様に定義されます.
@@ -51,9 +53,14 @@ public @interface Validate {
 	public String conditions() default "";
 	
 	/**
-	 * 空の場合の定義条件が設定します.
+	 * 未定義や空の場合の定義条件が設定します.
 	 */
 	public String defVal() default "";
+	
+	/**
+	 * エラー時のメッセージを設定します.
+	 */
+	public String message() default "";
 }
 
 /**

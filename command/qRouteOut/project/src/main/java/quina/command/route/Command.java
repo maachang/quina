@@ -278,17 +278,20 @@ public class Command {
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
 			println(w, 0, "import quina.Router;");
-			println(w, 0, "import quina.component.Component;");
+			//println(w, 0, "import quina.component.Component;");
 			println(w, 0, "");
 			println(w, 0, "/**");
-			println(w, 0, " * @Route Registers the configured Component group as a Router.");
+			println(w, 0, " * Route Annotation Registers the configured Component group as a Router.");
 			println(w, 0, " */");
 			println(w, 0, "public final class " + Router.AUTO_READ_ROUTE_CLASS + " {");
 			println(w, 1, "private " + Router.AUTO_READ_ROUTE_CLASS + "() {}");
 			
 			println(w, 1, "");
 			println(w, 1, "/**");
-			println(w, 1, " * @Route Performs Router registration processing for the set Component group.");
+			println(w, 1, " * Route Annotation Performs Router registration processing for the");
+			println(w, 1, " * set Component group.");
+			println(w, 1, " *");
+			println(w, 1, " * @exception Exception When Router registration fails.");
 			println(w, 1, " */");
 			println(w, 1, "public static final void " + Router.AUTO_READ_ROUTE_METHOD + "() throws Exception {");
 			
@@ -302,9 +305,10 @@ public class Command {
 				clazzName = routeList.get(i);
 				println(w, 2, "");
 				println(w, 2, "// Register the \""+ clazzName + "\" component in the Router. ");
-				println(w, 2, "router.route((Component)(Class.forName(\"" + clazzName + "\")");
-				println(w, 3, ".getDeclaredConstructor().newInstance()");
-				println(w, 2, "));");
+				//println(w, 2, "router.route((Component)(Class.forName(\"" + clazzName + "\")");
+				//println(w, 3, ".getDeclaredConstructor().newInstance()");
+				//println(w, 2, "));");
+				println(w, 2, "router.route(new " + clazzName + "());");
 			}
 			
 			println(w, 1, "}");

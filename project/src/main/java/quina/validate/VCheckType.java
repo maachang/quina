@@ -81,7 +81,11 @@ enum VCheckType {
 	/**
 	 * 条件が設定されてない場合にデフォルト値を設定.
 	 */
-	Default("default", 1);
+	Default("default", 1),
+	/**
+	 * エラー時の独自のメッセージを設定.
+	 */
+	Message("message", 1);
 
 	// 名前.
 	private String name;
@@ -159,6 +163,8 @@ enum VCheckType {
 			return Range;
 		} else if(Alphabet.eq("def", value) || Alphabet.eq("default", value)) {
 			return Default;
+		} else if(Alphabet.eq("msg", value) || Alphabet.eq("message", value)) {
+			return Message;
 		}
 		return null;
 	}
