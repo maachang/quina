@@ -106,7 +106,7 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router route(Component component) {
-		final String path = LoadAnnotationRoute.load(component);
+		final String path = LoadAnnotationRoute.loadRoute(component);
 		if(path == null) {
 			throw new QuinaException("Route annotation definition does not exist " +
 				"in the specified component:" + component.getClass());

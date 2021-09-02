@@ -15,7 +15,7 @@ public class LoadAnnotationRoute {
 	 * @return String Routeのパスが返却されます.
 	 *                nullの場合、Routeのパスが設定されていません.
 	 */
-	public static final String load(Component c) {
+	public static final String loadRoute(Component c) {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
@@ -24,5 +24,17 @@ public class LoadAnnotationRoute {
 			return null;
 		}
 		return route.value();
+	}
+	
+	/**
+	 * Annotationに定義されてるAnyルートが定義されてるか取得.
+	 * @param c コンポーネントを設定します.
+	 * @return boolean Anyルートの場合 true が返却されます.
+	 */
+	public static final boolean loadAny(Component c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return c.getClass().isAnnotationPresent(Any.class);
 	}
 }

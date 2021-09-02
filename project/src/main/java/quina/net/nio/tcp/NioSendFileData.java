@@ -124,7 +124,7 @@ public class NioSendFileData extends AbstractNioSendData {
 			throw new IOException("The specified file'"
 				+ fileName + "'does not exist or you do not have read permission.");
 		}
-		String fpath = file.getAbsolutePath();
+		String fpath = file.getCanonicalPath();
 		this.fileName = fpath;
 		this.length = length;
 		this.position = 0L;
