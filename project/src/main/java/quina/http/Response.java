@@ -208,7 +208,13 @@ public interface Response<T>
 	 * @return Response レスポンスオブジェクトが返却されます.
 	 */
 	default T setCharset(HttpCharset charset) {
-		return setCharset(charset.getCharset());
+		if(charset != HttpCharset.NONE) {
+			// 未設定の場合は、デフォルトのCharsetを設定.
+			return setCharset(HttpConstants.getCharset());
+		} else {
+			// 設定されてる場合はその値をセット.
+			return setCharset(charset.getCharset());
+		}
 	}
 
 	/**

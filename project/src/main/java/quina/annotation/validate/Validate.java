@@ -11,6 +11,8 @@ import quina.validate.VType;
 /**
  * Validateアノテーション.
  * 
+ * このAnnotationは複数設定することが可能です.
+ * 
  * quina.component.Componentインターフェイスを継承した
  * コンポーネントに対してValidate条件を設定します.
  * <例>
@@ -39,6 +41,7 @@ import quina.validate.VType;
 public @interface Validate {
 	/**
 	 * Validate対象のパラメーター名を設定します.
+	 * ※必須.
 	 */
 	public String name();
 	

@@ -1,5 +1,6 @@
 package quina.component;
 
+import quina.annotation.response.ResponseInitialSetting;
 import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.Method;
@@ -761,10 +762,12 @@ public class ComponentManager {
 	 * @param pos urlsの開始ポジションを設定します.
 	 * @param urlParam urlParamを設定します.
 	 * @param validation Validationを設定します.
+	 * @param responseInitialSetting 対象のResponse初期設定を設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 */
 	private static final void putAnyElement(AnyElement topAnyElement, String url, String[] urls,
-		int pos, Object[] urlParam, Validation validation, Component component) {
+		int pos, Object[] urlParam, Validation validation, ResponseInitialSetting responseInitialSetting,
+		Component component) {
 		String path;
 		AnyElement em;
 		AnyElement now = topAnyElement;
@@ -795,7 +798,8 @@ public class ComponentManager {
 			now = em;
 		}
 		// 最後の条件に対してAnyComponentをセット.
-		RegisterComponent cmp = new RegisterComponent(url, urlParam, validation, component);
+		RegisterComponent cmp = new RegisterComponent(
+			url, urlParam, validation, responseInitialSetting, component);
 		now.setAnyComponent(cmp);
 	}
 
@@ -836,24 +840,29 @@ public class ComponentManager {
 	/**
 	 * 指定URLの条件が存在しない場合の実行コンポーネントをセット.
 	 * @param validation 対象のValidationを設定します.
+	 * @param responseInitialSetting 対象のResponse初期設定を設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 */
-	public void put(Validation validation, Component component) {
+	public void put(Validation validation, ResponseInitialSetting responseInitialSetting,
+		Component component) {
 		if(component instanceof RegisterComponent) {
 			component = ((RegisterComponent)component).getComponent();
 		}
-		notFoundUrlComponent = new RegisterComponent("/*", null, validation, component);
+		notFoundUrlComponent = new RegisterComponent(
+			"/*", null, validation, responseInitialSetting, component);
 	}
 
 	/**
 	 * 指定URLに対してコンポーネントを登録.
 	 * @param url 対象のURLを設定します.
 	 * @param validation 対象のValidationを設定します.
+	 * @param responseInitialSetting 対象のResponse初期設定を設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 * @return boolean [true]の場合はstaticなURLとして
 	 *                 [false]の場合はanyなURLとして登録されました.
 	 */
-	public boolean put(String url, Validation validation, Component component) {
+	public boolean put(String url, Validation validation,
+		ResponseInitialSetting responseInitialSetting, Component component) {
 		if(url == null || url.length() == 0 || component == null) {
 			if(url == null || url.length() == 0) {
 				throw new QuinaException("url is not set.");
@@ -879,7 +888,8 @@ public class ComponentManager {
 			if(mc == null) {
 				staticComponent.put(url, (mc = new MethodsComponent()));
 			}
-			mc.setComponent(new RegisterComponent(url, null, validation, component));
+			mc.setComponent(new RegisterComponent(
+				url, null, validation, responseInitialSetting, component));
 			return true;
 		}
 		// urlにurlParamsの条件に対してnullセット.
@@ -887,7 +897,8 @@ public class ComponentManager {
 		// 対象コンポーネントがFileコンポーネントの場合はEtag管理をセット.
 		component = fileComponentByAppendEtagComponent(component);
 		// anyコンポーネント管理に追加.
-		putAnyElement(this.rootAnyElement, url, urls, 0, urlParam, validation, component);
+		putAnyElement(this.rootAnyElement, url, urls, 0, urlParam, validation,
+			responseInitialSetting, component);
 		return false;
 	}
 

@@ -2,6 +2,7 @@ package quina.component;
 
 import java.util.Map;
 
+import quina.annotation.response.ResponseInitialSetting;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
@@ -30,6 +31,8 @@ public class RegisterComponent implements Component {
 	private boolean lastAsterrisk;
 	// validation.
 	private Validation validation;
+	// Response初期設定.
+	private ResponseInitialSetting responseInitialSetting;
 
 	/**
 	 * コンストラクタ.
@@ -39,7 +42,8 @@ public class RegisterComponent implements Component {
 	 * @param component 対象のコンポーネントを設定します.
 	 */
 	protected RegisterComponent(String url, Object[] urlParam,
-		Validation validation, Component component) {
+		Validation validation, ResponseInitialSetting responseInitialSetting,
+		Component component) {
 		this.url = url;
 		this.urlSlashCount = countSlash(url);
 		this.urlParam = urlParam;
@@ -47,6 +51,7 @@ public class RegisterComponent implements Component {
 		this.component = component;
 		this.lastAsterrisk = url.endsWith("/*");
 		this.validation = validation;
+		this.responseInitialSetting = responseInitialSetting;
 	}
 
 
@@ -257,6 +262,10 @@ public class RegisterComponent implements Component {
 				// データセット.
 				((AbstractResponse<?>)res).setting(ares);
 			}
+		}
+		// response初期設定を反映.
+		if(responseInitialSetting != null) {
+			responseInitialSetting.setResponse(res);
 		}
 		// 実行処理.
 		component.call(method, req, res);

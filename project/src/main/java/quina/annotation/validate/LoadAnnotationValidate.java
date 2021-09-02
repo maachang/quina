@@ -46,6 +46,11 @@ public class LoadAnnotationValidate {
 	// １つのValidateを追加.
 	private static final void addValidate(
 		Validation validation, Validate validate) {
+		// name は必須.
+		if(validate.name() == null || validate.name().isEmpty()) {
+			throw new QuinaException("The required \"name\" is not set.");
+		}
+		// Validate処理条件の処理.
 		String condisions = validate.conditions();
 		// default が設定されてる場合.
 		if(validate.defVal() != null && !validate.defVal().isEmpty()) {
@@ -70,6 +75,7 @@ public class LoadAnnotationValidate {
 				condisions = "message '" + message + "'";
 			}
 		}
+		// 1つのValidate条件を追加.
 		validation.add(validate.name(), validate.type(), condisions);
 	}
 }

@@ -1,9 +1,9 @@
 package quina.http;
 
 /**
- * HTTPモード.
+ * Client/Serverモード.
  */
-public enum HttpMode {
+public enum CsMode {
 	/**
 	 * Httpサーバーモード.
 	 */
@@ -16,7 +16,7 @@ public enum HttpMode {
 	private String name;
 	private boolean serverMode;
 
-	private HttpMode(String name, boolean serverMode) {
+	private CsMode(String name, boolean serverMode) {
 		this.name = name;
 		this.serverMode = serverMode;
 	}

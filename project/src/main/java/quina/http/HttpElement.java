@@ -13,7 +13,7 @@ public class HttpElement extends NioElement {
 	private HttpElementState state = HttpElementState.STATE_RECEIVING_HEADER;
 
 	/** Httpモード. **/
-	private HttpMode httpMode = null;
+	private CsMode httpMode = null;
 
 	/** MimeTypes. **/
 	private MimeTypes mimeTypes = null;
@@ -38,7 +38,7 @@ public class HttpElement extends NioElement {
 	 * @param httpMode httpMode を設定します.
 	 * @param mimeTypes mimeTypes を設定します.
 	 */
-	public HttpElement(HttpMode httpMode, MimeTypes mimeTypes) {
+	public HttpElement(CsMode httpMode, MimeTypes mimeTypes) {
 		this.httpMode = httpMode;
 		this.mimeTypes = mimeTypes;
 	}
@@ -105,7 +105,7 @@ public class HttpElement extends NioElement {
 	 * HTTPモードを取得.
 	 * @return
 	 */
-	public HttpMode getHttpMode() {
+	public CsMode getHttpMode() {
 		return httpMode;
 	}
 

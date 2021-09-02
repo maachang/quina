@@ -11,7 +11,7 @@ import quina.http.MimeTypes;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
-import quina.http.HttpMode;
+import quina.http.CsMode;
 import quina.http.Method;
 import quina.http.Params;
 import quina.http.Response;
@@ -133,7 +133,7 @@ public class HttpServerCall extends NioServerCall {
 	 */
 	@Override
 	public NioElement createElement() {
-		HttpElement ret = new HttpElement(HttpMode.Server, mimeTypes);
+		HttpElement ret = new HttpElement(CsMode.Server, mimeTypes);
 		return ret;
 	}
 

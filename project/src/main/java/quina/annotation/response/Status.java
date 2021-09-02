@@ -1,37 +1,39 @@
-package quina.annotation.route;
+package quina.annotation.response;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.http.HttpStatus;
+
 /**
- * ルートパスを設定するアノテーション.
+ * HttpResponse返却のStatusを設定するAnnotation.
  * 
  * quina.component.Componentインターフェイスを継承した
  * コンポーネントに対してルートパスを設定します.
  * <例>
  * 
- * @Route("/hoge/moge/${id}/a/${name}/")
+ * @Status(status=HttpStatus.OK, message="hello world!!")
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);
  *   }
  * }
  * 
- * 上記内容をqRouteOutコマンドからAutoRoute可能な設定を行う事で、
- * GraalVMのNative-Imageでコンパイルが可能となります.
- * 
- * これによりJsonGetSyncオブジェクトのURLパスが
- *  "/hoge/moge/${id}/a/${name}/"
- * としてルート設定されます.
+ * これによりHttpResponseでステータス２００でメッセージにHello world!!
+ * が返却されます.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Route {
+public @interface Status {
 	/**
-	 * Route先のPath.
+	 * ステータス.
 	 */
-	public String value();
+	public HttpStatus status();
+	
+	/**
+	 * メッセージ.
+	 */
+	public String message() default "";
 }
-

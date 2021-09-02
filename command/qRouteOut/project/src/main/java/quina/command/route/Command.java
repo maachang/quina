@@ -199,9 +199,11 @@ public class Command {
 	// 指定Classディレクトリのクラスを読み込むクラローダーを作成.
 	private static final ClassLoader createClassLoader(String dir)
 		throws Exception {
-		java.net.URL[] url = new java.net.URL[1];
-		url[0] = new File(dir + "/").toURI().toURL();
-		return new java.net.URLClassLoader(url, Thread.currentThread().getContextClassLoader());
+		return new java.net.URLClassLoader(
+			new java.net.URL[] {
+				new File(dir + "/").toURI().toURL()
+			}
+			, Thread.currentThread().getContextClassLoader());
 	}
 	
 	// 1つのディレクトリに対して@Route指定されてるComponentを抽出.
@@ -225,13 +227,13 @@ public class Command {
 				className = createClassName(packageName, list[i]);
 				try {
 					// クラスを取得.
-					Class c = Class.forName(className, true, cl);
+					final Class c = Class.forName(className, true, cl);
 					// Routeのアノテーションが設定されていない場合.
 					if(!c.isAnnotationPresent(Route.class)) {
 						continue;
 					}
 					// クラスのインスタンスを生成.
-					Object o = c.getDeclaredConstructor().newInstance();
+					final Object o = c.getDeclaredConstructor().newInstance();
 					// 対象がコンポーネントクラスでない場合は処理しない.
 					if(!(o instanceof Component)) {
 						continue;
@@ -273,6 +275,7 @@ public class Command {
 		String outFileName = outDir + "/" + JAVA_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
+			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + Router.AUTO_READ_ROUTE_PACKAGE + ";");
 			println(w, 0, "");

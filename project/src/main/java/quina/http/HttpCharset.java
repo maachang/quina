@@ -4,8 +4,10 @@ package quina.http;
  * 基本的なHTTPでの文字コードを設定します.
  */
 public enum HttpCharset {
+	/** 指定なし **/
+	NONE("")
 	/** 不明. **/
-	UNKNOWN("iso-8859-1")
+	,UNKNOWN("iso-8859-1")
 	/** ISO-8859-1. **/
 	,ISO_8859_1("iso-8859-1")
 	/** UTF8. **/
@@ -43,6 +45,6 @@ public enum HttpCharset {
 
 	@Override
 	public String toString() {
-		return charset;
+		return getCharset();
 	}
 }

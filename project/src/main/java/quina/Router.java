@@ -2,6 +2,8 @@ package quina;
 
 import java.lang.reflect.InvocationTargetException;
 
+import quina.annotation.response.LoadAnnotationResponse;
+import quina.annotation.response.ResponseInitialSetting;
 import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.validate.LoadAnnotationValidate;
 import quina.component.Component;
@@ -19,17 +21,17 @@ import quina.validate.Validation;
  */
 public class Router {
 	/**
-	 * @Routeアノテーション自動読み込み実行用クラス名.
+	 * Routeアノテーション自動読み込み実行用クラス名.
 	 */
 	public static final String AUTO_READ_ROUTE_CLASS = "RouteComponents";
 
 	/**
-	 * @Routeアノテーション自動読み込み実行用メソッド名.
+	 * Routeアノテーション自動読み込み実行用メソッド名.
 	 */
 	public static final String AUTO_READ_ROUTE_METHOD = "load";
 	
 	/**
-	 * 出力先パッケージ名.
+	 * Routeアノテーション自動読み込み実行用パッケージ名.
 	 */
 	public static final String AUTO_READ_ROUTE_PACKAGE = "quinax";
 	
@@ -74,7 +76,15 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router any(Validation validation, Component component) {
-		manager.put(validation, component);
+		// validationが直接指定されてない場合.
+		if(validation == null) {
+			// annotationのvalidationを取得.
+			validation = LoadAnnotationValidate.load(component);
+		}
+		// annotationのResponse初期設定を取得.
+		ResponseInitialSetting responseInitialSetting =
+			LoadAnnotationResponse.load(component);
+		manager.put(validation, responseInitialSetting, component);
 		return this;
 	}
 
@@ -132,7 +142,11 @@ public class Router {
 			// annotationのvalidationを取得.
 			validation = LoadAnnotationValidate.load(component);
 		}
-		manager.put(path, validation, component);
+		// annotationのResponse初期設定を取得.
+		ResponseInitialSetting responseInitialSetting =
+			LoadAnnotationResponse.load(component);
+		// ComponentManagerに登録.
+		manager.put(path, validation, responseInitialSetting, component);
 		return this;
 	}
 	
