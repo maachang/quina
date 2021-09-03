@@ -48,6 +48,191 @@ public class ComponentManager {
 			ResponseUtil.send((AbstractResponse<?>)res);
 		}
 	}
+	
+	/**
+	 * 対象エラーコンポーネントに対する有効ステータス範囲要素.
+	 */
+	protected static final class RangeStatusElement {
+		private int startStatus;
+		private int endStatus;
+		private ErrorComponent errorComponent;
+		
+		/**
+		 * コンストラクタ.
+		 * @param startStatus
+		 * @param endStatus
+		 * @param errorComponent
+		 */
+		public RangeStatusElement(
+			int startStatus, int endStatus, ErrorComponent errorComponent) {
+			if(startStatus > endStatus) {
+				int n = startStatus;
+				startStatus = endStatus;
+				endStatus = n;
+			}
+			this.startStatus = startStatus;
+			this.endStatus = endStatus;
+			this.errorComponent = errorComponent;
+		}
+		
+		/**
+		 * 指定ステータスがマッチするかチェック.
+		 * @param state
+		 * @return
+		 */
+		public boolean match(int state) {
+			return (startStatus <= state && endStatus >= state);
+		}
+		
+		/**
+		 * 開始ステータス.
+		 * @return
+		 */
+		public int getStartStatus() {
+			return startStatus;
+		}
+		
+		/**
+		 * 終了ステータス.
+		 * @return
+		 */
+		public int getEndStatus() {
+			return endStatus;
+		}
+		
+		/**
+		 * エラーコンポーネント.
+		 * @return
+		 */
+		public ErrorComponent getErrorComponent() {
+			return errorComponent;
+		}
+		
+		@Override
+		public String toString() {
+			return new StringBuilder()
+				.append(startStatus).append(" - ").append(endStatus)
+				.toString();
+		}
+	}
+	
+	/**
+	 * エラーコンポーネントマネージャ.
+	 */
+	protected static final class ErrorComponentManager {
+		// 指定ステータスでエラーコンポーネントを管理.
+		private IndexKeyValueList<Integer, ErrorComponent> singleManager =
+			new IndexKeyValueList<Integer, ErrorComponent>();
+		
+		// 範囲指定のステータスでエラーコンポーネントを管理.
+		private ObjectList<RangeStatusElement> rangeManager =
+			new ObjectList<RangeStatusElement>();
+		
+		// 登録ステータス以外のステータスに対応するエラーコンポーネント.
+		private ErrorComponent anyErrorComponent;
+		
+		/**
+		 * コンストラクタ.
+		 */
+		public ErrorComponentManager() {}
+		
+		/**
+		 * 指定ステータスでエラーコンポーネント登録.
+		 * @param state 
+		 * @param cmp
+		 */
+		public void putSingle(int state, ErrorComponent cmp) {
+			if(cmp == null) {
+				throw new QuinaException("No error component is specified.");
+			}
+			singleManager.put(state, cmp);
+		}
+		
+		/**
+		 * 範囲指定のステータスでエラーコンポーネント登録.
+		 * @param startState
+		 * @param endState
+		 * @param cmp
+		 */
+		public void putRange(int startState, int endState, ErrorComponent cmp) {
+			if(cmp == null) {
+				throw new QuinaException("No error component is specified.");
+			}
+			rangeManager.add(new RangeStatusElement(startState, endState, cmp));
+		}
+		
+		/**
+		 * 登録ステータス以外のステータスに対応するエラーコンポーネント登録.
+		 * @param cmp
+		 */
+		public void any(ErrorComponent cmp) {
+			anyErrorComponent = cmp;
+		}
+		
+		/**
+		 * 指定ステータスにマッチしたエラーコンポーネントを取得.
+		 * @param state
+		 * @return
+		 */
+		public ErrorComponent get(int state) {
+			// 単一ステータスで検索.
+			ErrorComponent ret = singleManager.get(state);
+			if(ret != null) {
+				return ret;
+			}
+			
+			// 範囲ステータスで検索.
+			RangeStatusElement rse;
+			final int len = rangeManager.size();
+			for(int i = 0; i < len; i ++) {
+				rse = rangeManager.get(i);
+				if(rse.match(state)) {
+					return rse.getErrorComponent();
+				}
+			}
+			
+			// その他ステータス内容を返却.
+			return anyErrorComponent == null ?
+				DefaultErrorComponent.getInstance() :
+				anyErrorComponent;
+		}
+		
+		/**
+		 * 文字列を出力.
+		 * @param space
+		 * @param buf
+		 * @return
+		 */
+		public StringBuilder toString(int space, StringBuilder buf) {
+			int len = singleManager.size();
+			buf.append("\n");
+			toSpace(buf, space).append("single: ").append(len).append("\n");
+			toSpace(buf, space + 2);
+			for(int i = 0; i < len; i ++) {
+				if(i != 0) {
+					buf.append(", ");
+				}
+				buf.append(singleManager.keyAt(i));
+			}
+			buf.append("\n");
+			
+			len = rangeManager.size();
+			toSpace(buf, space).append("range: ").append(len).append("\n");
+			toSpace(buf, space + 2);
+			for(int i = 0; i < len; i ++) {
+				if(i != 0) {
+					buf.append(", ");
+				}
+				buf.append(rangeManager.get(i));
+			}
+			buf.append("\n");
+			
+			toSpace(buf, space).append("any: ")
+				.append(anyErrorComponent == null ? "default" : "original")
+				.append("\n");
+			return buf;
+		}
+	}
 
 	// スペースを指定長分セット.
 	protected static final StringBuilder toSpace(StringBuilder out, int len) {
@@ -438,6 +623,7 @@ public class ComponentManager {
 			return out;
 		}
 	}
+	
 
 	// パラメータやアスタリスクでは無い普通の固定ディレクトリ名.
 	protected static final int NON_URL_PARAMS = -1;
@@ -813,8 +999,9 @@ public class ComponentManager {
 	// 指定URLの条件が存在しない場合の実行コンポーネント.
 	private RegisterComponent notFoundUrlComponent = null;
 
-	// エラー発生時に呼び出すコンポーネント.
-	private ErrorComponent errorComponent = null;
+	// エラー発生時に呼び出すコンポーネントマネージャ.
+	private ErrorComponentManager errorComponentManager =
+		new ErrorComponentManager();
 
 	// Etagマネージャ.
 	private EtagManager etagManager = null;
@@ -833,7 +1020,7 @@ public class ComponentManager {
 		staticComponent.clear();
 		rootAnyElement = new AnyElement(0, null);
 		notFoundUrlComponent = null;
-		errorComponent = null;
+		errorComponentManager = new ErrorComponentManager();
 		etagManager = null;
 	}
 
@@ -914,14 +1101,36 @@ public class ComponentManager {
 
 	/**
 	 * エラー処理用のコンポーネントをセット.
+	 * 
+	 * ここでは登録方法は少し特殊で、以下のような条件となります.
+	 *  startState: 400, endState: 499
+	 *   Httpステータスが 400 ～ 499 までの範囲を対象.
+	 *  startState: 404, endState: 0
+	 *   Httpステータスが 404 を対象.
+	 *  startState: 0, endState: 0
+	 *   登録内容が当てはまらない場合の全ステータスが対象.
+	 * 
+	 * @param startState 開始Httpステータスを設定します.
+	 * @param endState 終了Httpステータスを設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 */
-	public void putError(ErrorComponent component) {
-		if(component == null) {
-			errorComponent = DefaultErrorComponent.getInstance();
+	public void putError(int startState, int endState, ErrorComponent component) {
+		if(startState <= 0) {
+			errorComponentManager.any(component);
+		} else if(endState <= 0) {
+			errorComponentManager.putSingle(startState, component);
 		} else {
-			errorComponent = component;
+			errorComponentManager.putRange(startState, endState, component);
 		}
+	}
+	
+	/**
+	 * エラー時の登録コンポーネントを取得.
+	 * @param state 対象のHttpステータスを設定します.
+	 * @return ErrorComponent エラー時のコンポーネントが返却されます.
+	 */
+	public ErrorComponent getError(int state) {
+		return errorComponentManager.get(state);
 	}
 
 	/**
@@ -995,17 +1204,6 @@ public class ComponentManager {
 	}
 
 	/**
-	 * エラー時の登録コンポーネントを取得.
-	 * @return ErrorComponent エラー時のコンポーネントが返却されます.
-	 */
-	public ErrorComponent getError() {
-		// エラーコンポーネントが存在しない場合は
-		// 標準エラーコンポーネントを利用.
-		return errorComponent == null ?
-			DefaultErrorComponent.getInstance() : errorComponent;
-	}
-
-	/**
 	 * Etag管理定義情報を取得.
 	 * @return EtagManagerInfo Etag管理定義情報が返却されます.
 	 */
@@ -1030,10 +1228,10 @@ public class ComponentManager {
 		buf.append("*notFoundUrlComponent: ")
 			.append(notFoundUrlComponent != null)
 			.append("\n");
-		// エラー発生時のコンポーネント実行.
-		buf.append("*errorComponent: ")
-		.append(errorComponent != null)
-		.append("\n");
+		// エラー発生時のコンポーネントマネージャ.
+		buf.append("*errorComponentManager: ");
+		errorComponentManager.toString(2, buf)
+			.append("\n");
 		return buf.toString();
 	}
 }

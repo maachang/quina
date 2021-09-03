@@ -184,7 +184,7 @@ public final class HttpServerUtil {
 				res.setStatus(500);
 			}
 			// エラー出力.
-			Quina.router().getError()
+			Quina.router().getError(res.getStatusNo())
 				.call(res.getStatusNo(), json, req, res);
 		} else {
 			// Nio例外の場合.
@@ -195,7 +195,8 @@ public final class HttpServerUtil {
 			} else {
 				res.setStatus(500, e.getMessage());
 			}
-			Quina.router().getError()
+			// エラー出力.
+			Quina.router().getError(res.getStatusNo())
 				.call(res.getStatusNo(), json, req, (NormalResponse)res, e);
 		}
 	}

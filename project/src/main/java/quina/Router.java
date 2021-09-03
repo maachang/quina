@@ -94,9 +94,39 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router error(ErrorComponent component) {
-		manager.putError(component);
+		int[] startEndStatus = LoadAnnotationRoute.loadErrorRoute(component);
+		if(startEndStatus == null) {
+			return error(0, 0, component);
+		}
+		return error(startEndStatus[0], startEndStatus[1], component);
+	}
+	
+	/**
+	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param status 対象Httpステータスが発生した場合にエラー実行します.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router error(int status, ErrorComponent component) {
+		if(status <= 0) {
+			throw new QuinaException(
+				"The specified Http status is out of range.");
+		}
+		return error(status, 0, component);
+	}
+	
+	/**
+	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router error(int startStatus, int endStatus,
+		ErrorComponent component) {
+		manager.putError(startStatus, endStatus, component);
 		return this;
 	}
+
+
 
 	/**
 	 * 対象コンポーネントとルートを紐付けます.
@@ -203,10 +233,11 @@ public class Router {
 
 	/**
 	 * エラー発生時に呼び出されるコンポーネントを取得.
+	 * @param status 対象のHTTPエラーステータスを設定します.
 	 * @return ErrorComponent エラーコンポーネントが返却されます.
 	 */
-	public ErrorComponent getError() {
-		return manager.getError();
+	public ErrorComponent getError(int status) {
+		return manager.getError(status);
 	}
 
 	/**

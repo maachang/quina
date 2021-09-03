@@ -31,8 +31,36 @@ import java.lang.annotation.Target;
  * GraalVMのNative-Imageでコンパイルが可能となります.
  * 
  * これによりエラーが発生した場合にNewErrorComponentが呼び出されます.
+ * 
+ * また設定方法として以下の３通りの設定方法があります。
+ * 
+ *  1. 指定Httpステータスのエラー登録
+ *   @ErrorRoute(status=404)
+ *     Httpステータス４０４でのエラ登録.
+ *  
+ *  2. 範囲Httpステータスのエラー登録
+ *   @ErrorRoute(start=500, end=599)
+ *     Httpステータス５００～５９９の範囲のエラー登録.
+ *  
+ *  3. 1と2以外のエラー登録.
+ *   @ErrorRoute or @ErrorRoute()
+ *     1と2で登録した以外のHttpステータスが発生した場合に呼び出されます.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ErrorRoute {
+	/**
+	 * 指定Httpステータス.
+	 */
+	public int status() default 0;
+
+	/**
+	 * 範囲Httpステータス開始値.
+	 */
+	public int start() default 0;
+
+	/**
+	 * 範囲Httpステータス終了値.
+	 */
+	public int end() default 0;
 }
