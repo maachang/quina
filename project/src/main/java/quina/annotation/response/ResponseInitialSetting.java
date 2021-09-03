@@ -50,7 +50,7 @@ public class ResponseInitialSetting {
 		}
 		// ContentTypeの設定.
 		if(contentType != null) {
-			this.mimeType = contentType.mimeType();
+			this.mimeType = contentType.type();
 			if(contentType.charset() != HttpCharset.NONE) {
 				this.charset = contentType.charset();
 			}

@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Anyパスを設定するアノテーション.
  * 
  * quina.component.Componentインターフェイスを継承した
- * コンポーネントに対してルートパスを設定します.
+ * コンポーネントに対してAnyパスを設定します.
  * <例>
  * 
  * @Any

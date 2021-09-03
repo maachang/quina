@@ -20,7 +20,7 @@ import quina.validate.VType;
  * @Validate(name="id", type=VType.Number, conditions=">= 10")
  * @Validate(name="name", type=VType.String, conditions="not null",
  *           message="名前が設定されていません")
- * @Validate(name="abc", type=VType.String, defVal="moge")
+ * @Validate(name="abc", type=VType.String, noset="moge")
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);
@@ -58,7 +58,7 @@ public @interface Validate {
 	/**
 	 * 未定義や空の場合の定義条件が設定します.
 	 */
-	public String defVal() default "";
+	public String noset() default "";
 	
 	/**
 	 * エラー時のメッセージを設定します.

@@ -3,7 +3,7 @@ package quina.component;
 /**
  * ファイル属性コンポーネント.
  */
-interface FileAttributeComponent extends Component {
+public interface FileAttributeComponent extends Component {
 	/**
 	 * EtagManagerを設定.
 	 * @param etagManager EtagManagerを設定します.
@@ -15,6 +15,14 @@ interface FileAttributeComponent extends Component {
 	 * @return EtagManager EtagManagerが返却されます.
 	 */
 	public EtagManager getEtagManager();
+	
+	/**
+	 * キャッシュモードを取得.
+	 * @return Boolean [true]の場合キャッシュモードは有効です.
+	 *                 null の場合、デフォルトのキャッシュモードが
+	 *                 利用されます.
+	 */
+	public Boolean getCacheMode();
 
 	/**
 	 * コンポーネントタイプを取得.

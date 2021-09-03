@@ -1,5 +1,6 @@
 package quina.component;
 
+import quina.annotation.route.LoadAnnotationRoute;
 import quina.exception.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
@@ -18,6 +19,9 @@ public class FileComponent implements FileAttributeComponent {
 
 	// EtagManager.
 	protected EtagManager etagManager = null;
+	
+	// キャッシュを有効にするか設定.
+	protected Boolean cacheMode = null;
 
 	/**
 	 * ローカルファイルを返信するコンポーネント.
@@ -34,17 +38,51 @@ public class FileComponent implements FileAttributeComponent {
 
 	/**
 	 * コンストラクタ.
+	 */
+	public FileComponent() {
+		this((Boolean)null);
+	}
+	
+	/**
+	 * コンストラクタ.
+	 * @param cacheMode [true]に設定する事でEtagによるキャッシュが有効になります.
+	 *                  nullを設定した場合はデフォルトのキャッシュモードになります.
+	 */
+	public FileComponent(Boolean cacheMode) {
+		// Annotationからファイルパスを取得.
+		String dir = LoadAnnotationRoute.loadFilePath(this);
+		if(dir == null) {
+			// 設定されてない場合はエラー.
+			throw new QuinaException("@FilePath annotation is not set.");
+		}
+		init(cacheMode, dir);
+	}
+	
+	/**
+	 * コンストラクタ.
 	 * @param dir ターゲットディレクトリを設定します.
 	 */
 	public FileComponent(String dir) {
-		init(dir);
+		init(null, dir);
 	}
-
+	
 	/**
-	 * 初期処理.
+	 * コンストラクタ.
+	 * @param cacheMode [true]に設定する事でEtagによるキャッシュが有効になります.
+	 *                  nullを設定した場合はデフォルトのキャッシュモードになります.
 	 * @param dir ターゲットディレクトリを設定します.
 	 */
-	protected void init(String dir) {
+	public FileComponent(Boolean cacheMode, String dir) {
+		init(cacheMode, dir);
+	}
+	
+	/**
+	 * 初期処理.
+	 * @param cacheMode [true]に設定する事でEtagによるキャッシュが有効になります.
+	 *                  nullを設定した場合はデフォルトのキャッシュモードになります.
+	 * @param dir ターゲットディレクトリを設定します.
+	 */
+	protected void init(Boolean cacheMode, String dir) {
 		if(dir == null || dir.isEmpty()) {
 			throw new QuinaException("Target directory is not set.");
 		}
@@ -53,7 +91,8 @@ public class FileComponent implements FileAttributeComponent {
 			if(!dir.endsWith("/")) {
 				dir += "/";
 			}
-			targetDir = dir;
+			this.targetDir = dir;
+			this.cacheMode = cacheMode;
 		} catch(Exception e) {
 			throw new QuinaException(e);
 		}
@@ -146,6 +185,11 @@ public class FileComponent implements FileAttributeComponent {
 		checkIllegalUrl(target);
 		return targetDir + target;
 	}
+	
+	@Override
+	public Boolean getCacheMode() {
+		return cacheMode;
+	}
 
 	@Override
 	public void setEtagManager(EtagManager etagManager) {
@@ -160,18 +204,37 @@ public class FileComponent implements FileAttributeComponent {
 	@Override
 	public void call(Method method, Request req, Response<?> res) {
 		// 要求URLパスとローカルディレクトリ名とマージ.
-		final String path = urlAndComponentUrlByMargeLocalPath(
+		String path = urlAndComponentUrlByMargeLocalPath(
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),
 			req.getUrl(), targetDir);
-		// 対象のファイルが存在しない場合.
-		if(!FileUtil.isFile(path)) {
-			// 404エラーを返却.
-			throw new QuinaException(404);
-		// Etag定義の確認.
-		} else if(etagManager.setResponse(path, req, res)) {
+		// 拡張子がgzのファイルが存在しない場合.
+		if(!FileUtil.isFile(path + ".gz")) {
+			// 対象のファイルが存在しない場合.
+			if(!FileUtil.isFile(path)) {
+				// 404エラーを返却.
+				throw new QuinaException(404);
+			}
+			// GzipモードはOff.
+			res.setGzip(false);
+		// 拡張子がgzのファイルが存在する場合.
+		} else {
+			// gz拡張子のファイルを対象とする.
+			path = path + ".gz";
+			// GzipモードはOn.
+			res.setGzip(true);
+		}
+		// キャッシュモードが設定されてる場合.
+		if(cacheMode != null) {
+			// レスポンスのキャッシュモードに設定.
+			res.setCacheMode(cacheMode);
+		}
+		// キャッシュがONの場合、Etag定義の確認.
+		if(etagManager.setResponse(path, req, res)) {
 			// 接続元と一致の場合はキャッシュ処理として0byteBody返却.
 			ResponseUtil.send((AbstractResponse<?>)res);
+		// キャッシュがOffかEtagが存在しない場合.
 		} else {
+			// 普通に送信.
 			ResponseUtil.sendFile((AbstractResponse<?>)res, path);
 		}
 	}

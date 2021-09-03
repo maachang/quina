@@ -53,8 +53,8 @@ public class LoadAnnotationValidate {
 		// Validate処理条件の処理.
 		String condisions = validate.conditions();
 		// default が設定されてる場合.
-		if(validate.defVal() != null && !validate.defVal().isEmpty()) {
-			String defVal = validate.defVal();
+		if(validate.noset() != null && !validate.noset().isEmpty()) {
+			String defVal = validate.noset();
 			if(validate.type() == VType.String) {
 				defVal = "default '" + defVal + "'";
 			} else {

@@ -37,4 +37,22 @@ public class LoadAnnotationRoute {
 		}
 		return c.getClass().isAnnotationPresent(Any.class);
 	}
+	
+	/**
+	 * Annotationに定義されてるFilePathのパスを取得.
+	 * @param c コンポーネントを設定します.
+	 * @return String ファイルのパスが返却されます.
+	 *                nullの場合、ファイルのパスが設定されていません.
+	 */
+	public static final String loadFilePath(Component c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		FilePath filePath = c.getClass().getAnnotation(FilePath.class);
+		if(filePath == null) {
+			return null;
+		}
+		return filePath.value();
+	}
+
 }

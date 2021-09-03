@@ -15,7 +15,7 @@ import quina.http.MediaType;
  * コンポーネントに対してルートパスを設定します.
  * <例>
  * 
- * @ContentType(mimeType=MediaType.JSON, charset=HttpCharset.UTF8)
+ * @ContentType(type=MediaType.JSON, charset=HttpCharset.UTF8)
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);
@@ -32,7 +32,7 @@ public @interface ContentType {
 	/**
 	 * MimeType.
 	 */
-	public MediaType mimeType();
+	public MediaType type();
 	
 	/**
 	 * エンコードキャラクターセット.

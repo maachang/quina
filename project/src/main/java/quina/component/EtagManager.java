@@ -124,12 +124,16 @@ public final class EtagManager {
 		// 1) Requestに設定されているEtagと比較する.
 		// 2) (1)でEtagが存在しない、比較が一致しない場合はEtagの付与をResponseに行い返却する.
 		// 3) (1)でRequestのEtagが一致した場合はキャッシュが有効をResponseに設定して返却する.
+		
+		// ただしres.isCacheMode() == false の場合は処理しない.
+		if(!res.isCacheMode()) {
+			return false;
+		}
 
 		// このローカルパスのEtagを取得.
 		final String etag = get(path);
 		// Etagが取得できた場合.
 		if(etag != null) {
-			res.setCacheMode(true);
 			// リクエストにキャッシュされたEtag情報が設定されている場合.
 			final String reqEtag = req.getHeader().getString("If-None-Match");
 			// サーバー側のEtagと一致する場合.
