@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * コンポーネントに対してAnyパスを設定します.
  * <例>
  * 
- * @Any
+ * @AnyRoute
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);

@@ -85,6 +85,9 @@ public class FileComponent implements FileAttributeComponent {
 	protected void init(Boolean cacheMode, String dir) {
 		if(dir == null || dir.isEmpty()) {
 			throw new QuinaException("Target directory is not set.");
+		} else if(!FileUtil.isDir(dir)) {
+			throw new QuinaException("The specified directory \"" +
+				dir + "\" does not exist. ");
 		}
 		try {
 			dir = FileUtil.getFullPath(Env.path(dir));

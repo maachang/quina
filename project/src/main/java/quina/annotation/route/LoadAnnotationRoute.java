@@ -31,12 +31,25 @@ public class LoadAnnotationRoute {
 	 * @param c コンポーネントを設定します.
 	 * @return boolean Anyルートの場合 true が返却されます.
 	 */
-	public static final boolean loadAny(Component c) {
+	public static final boolean loadAnyRoute(Component c) {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
 		return c.getClass().isAnnotationPresent(AnyRoute.class);
 	}
+	
+	/**
+	 * Annotationに定義されてるErrorルートが定義されてるか取得.
+	 * @param c コンポーネントを設定します.
+	 * @return boolean Errorルートの場合 true が返却されます.
+	 */
+	public static final boolean loadErrorRoute(Component c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return c.getClass().isAnnotationPresent(ErrorRoute.class);
+	}
+
 	
 	/**
 	 * Annotationに定義されてるFilePathのパスを取得.
