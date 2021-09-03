@@ -5,8 +5,8 @@ import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.Method;
 import quina.http.Request;
-import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.NormalResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.ObjectList;
@@ -37,7 +37,7 @@ public class ComponentManager {
 		}
 
 		@Override
-		public void call(int state, boolean restful, Request req, Response<?> res, Throwable e) {
+		public void call(int state, boolean restful, Request req, NormalResponse res, Throwable e) {
 			// BodyなしのHttpHeaderでのエラーメッセージを送信.
 			if(e != null) {
 				res.setStatus(state, e.getMessage());

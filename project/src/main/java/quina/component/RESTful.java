@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.RESTfulResponse;
 
 /**
@@ -37,6 +38,10 @@ public interface RESTful extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
+		// ResponseがSyncResponseでない場合は変換.
+		if(!(res instanceof RESTfulResponse)) {
+			res = HttpServerUtil.RESTfulResponse(res);
+		}
 		final RESTfulResponse rres = (RESTfulResponse)res;
 		switch(method) {
 		case GET: get(req, rres, req.getParams()); break;

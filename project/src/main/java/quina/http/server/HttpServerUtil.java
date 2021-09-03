@@ -1,16 +1,17 @@
 package quina.http.server;
 
 import quina.Quina;
-import quina.http.MimeTypes;
+import quina.exception.CoreException;
 import quina.http.HttpElement;
 import quina.http.HttpException;
+import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.NormalResponse;
 import quina.http.server.response.NormalResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponseImpl;
-import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.NioSendData;
 
 /**
@@ -171,6 +172,10 @@ public final class HttpServerUtil {
 			// HTML返却条件を設定.
 			res.setContentType("text/html");
 		}
+		// ResponseがNormalResponseでない場合は変換.
+		if(!(res instanceof NormalResponse)) {
+			res = defaultResponse(res);
+		}
 		// エラー実行.
 		if(e == null) {
 			// ステータスが４００未満の場合.
@@ -183,15 +188,15 @@ public final class HttpServerUtil {
 				.call(res.getStatusNo(), json, req, res);
 		} else {
 			// Nio例外の場合.
-			if(e instanceof NioException) {
-				NioException ne = (NioException)e;
-				res.setStatus(ne.getStatus(), ne.getMessage());
+			if(e instanceof CoreException) {
+				CoreException core = (CoreException)e;
+				res.setStatus(core.getStatus(), core.getMessage());
 			// それ以外の例外の場合.
 			} else {
 				res.setStatus(500, e.getMessage());
 			}
 			Quina.router().getError()
-				.call(res.getStatusNo(), json, req, res, e);
+				.call(res.getStatusNo(), json, req, (NormalResponse)res, e);
 		}
 	}
 

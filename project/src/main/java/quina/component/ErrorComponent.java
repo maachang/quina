@@ -2,7 +2,9 @@ package quina.component;
 
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.NormalResponse;
 
 /**
  * HTTPエラー発生時のコンポーネント.
@@ -43,7 +45,11 @@ public interface ErrorComponent {
 				res.setContentType("text/html");
 			}
 		}
-		call(state, json, req, res);
+		// ResponseがNormalResponseでない場合は変換.
+		if(!(res instanceof NormalResponse)) {
+			res = HttpServerUtil.defaultResponse(res);
+		}
+		call(state, json, req, (NormalResponse)res);
 	}
 
 	/**
@@ -65,7 +71,11 @@ public interface ErrorComponent {
 				res.setContentType("text/html");
 			}
 		}
-		call(state, json, req, res, e);
+		// ResponseがNormalResponseでない場合は変換.
+		if(!(res instanceof NormalResponse)) {
+			res = HttpServerUtil.defaultResponse(res);
+		}
+		call(state, json, req, (NormalResponse)res, e);
 	}
 
 	/**
@@ -74,10 +84,14 @@ public interface ErrorComponent {
 	 * @param json エラーが発生した呼び出しコンポーネントが
 	 *             [RESFful]の場合は[true]が設定されます.
 	 * @param req HttpRequestを設定します.
-	 * @param res HttpResponseを設定します.
+	 * @param res NormalResponseを設定します.
 	 */
 	default void call(int state, boolean restful, Request req, Response<?> res) {
-		call(state, restful, req, res, null);
+		// ResponseがNormalResponseでない場合は変換.
+		if(!(res instanceof NormalResponse)) {
+			res = HttpServerUtil.defaultResponse(res);
+		}
+		call(state, restful, req, (NormalResponse)res, null);
 	}
 
 	/**
@@ -86,8 +100,9 @@ public interface ErrorComponent {
 	 * @param json エラーが発生した呼び出しコンポーネントが
 	 *             [RESFful]の場合は[true]が設定されます.
 	 * @param req HttpRequestを設定します.
-	 * @param res HttpResponseを設定します.
+	 * @param res NormalResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
-	public void call(int state, boolean restful, Request req, Response<?> res, Throwable e);
+	public void call(int state, boolean restful, Request req,
+		NormalResponse res, Throwable e);
 }

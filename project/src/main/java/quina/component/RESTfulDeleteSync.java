@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
@@ -48,6 +49,10 @@ public interface RESTfulDeleteSync extends Component {
 		if(method != Method.DELETE) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
+		}
+		// ResponseがSyncResponseでない場合は変換.
+		if(!(res instanceof SyncResponse)) {
+			res = HttpServerUtil.syncResponse(res);
 		}
 		final Object o = delete(req, (SyncResponse)res, req.getParams());
 		// 送信なしを示す場合.

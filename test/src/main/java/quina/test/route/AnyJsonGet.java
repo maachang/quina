@@ -1,13 +1,13 @@
 package quina.test.route;
 
-import quina.annotation.route.Any;
+import quina.annotation.route.AnyRoute;
 import quina.component.RESTfulGetSync;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.server.response.SyncResponse;
 import quina.json.ResultJson;
 
-@Any
+@AnyRoute
 public class AnyJsonGet implements RESTfulGetSync {
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {

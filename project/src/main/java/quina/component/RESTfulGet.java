@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.RESTfulResponse;
 
 /**
@@ -41,6 +42,10 @@ public interface RESTfulGet extends Component {
 		if(method != Method.GET) {
 			throw new HttpException(405,
 				"The specified method: " + method + " cannot be used for this URL.");
+		}
+		// ResponseがSyncResponseでない場合は変換.
+		if(!(res instanceof RESTfulResponse)) {
+			res = HttpServerUtil.RESTfulResponse(res);
 		}
 		get(req, (RESTfulResponse)res, req.getParams());
 

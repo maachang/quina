@@ -7,12 +7,13 @@ import quina.component.ComponentConstants;
 import quina.component.ComponentManager;
 import quina.component.ComponentType;
 import quina.component.RegisterComponent;
-import quina.http.MimeTypes;
+import quina.exception.CoreException;
+import quina.http.CsMode;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
-import quina.http.CsMode;
 import quina.http.Method;
+import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Response;
 import quina.http.server.response.NormalResponseImpl;
@@ -21,7 +22,6 @@ import quina.http.server.response.SyncResponseImpl;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
-import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.server.NioServerCall;
 import quina.validate.Validation;
 
@@ -237,8 +237,6 @@ public class HttpServerCall extends NioServerCall {
 				// エラー404返却.
 				if(res == null) {
 					res = new NormalResponseImpl(em, mime);
-				} else {
-					res = NormalResponseImpl.newResponse(res);
 				}
 				res.setStatus(404);
 				HttpServerUtil.sendError(json, req, res, null);
@@ -299,10 +297,10 @@ public class HttpServerCall extends NioServerCall {
 			if(LOG.isWarnEnabled()) {
 				int status = -1;
 				boolean noErrorFlag = false;
-				// NioExceptionで、ステータスが５００以下の場合は
+				// CoreExceptionで、ステータスが５００以下の場合は
 				// エラー表示なし.
-				if(e instanceof NioException) {
-					if((status = ((NioException)e).getStatus()) > 500) {
+				if(e instanceof CoreException) {
+					if((status = ((CoreException)e).getStatus()) > 500) {
 						noErrorFlag = true;
 					}
 				// それ以外の例外の場合はエラー表示.

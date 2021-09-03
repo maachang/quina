@@ -6,6 +6,7 @@ import quina.exception.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
@@ -46,6 +47,10 @@ public interface AnySyncComponent extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
+		// ResponseがSyncResponseでない場合は変換.
+		if(!(res instanceof SyncResponse)) {
+			res = HttpServerUtil.syncResponse(res);
+		}
 		final Object ret = call(req, (SyncResponse)res);
 		// 送信なしを示す場合.
 		if(NOSEND == ret) {

@@ -5,6 +5,7 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
@@ -45,6 +46,10 @@ public interface RESTfulSync extends Component {
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
 		final Object o;
+		// ResponseがSyncResponseでない場合は変換.
+		if(!(res instanceof SyncResponse)) {
+			res = HttpServerUtil.syncResponse(res);
+		}
 		final SyncResponse sres = (SyncResponse)res;
 		switch(method) {
 		case GET: o = get(req, sres, req.getParams()); break;

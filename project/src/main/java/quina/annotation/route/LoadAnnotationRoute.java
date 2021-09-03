@@ -35,7 +35,7 @@ public class LoadAnnotationRoute {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
-		return c.getClass().isAnnotationPresent(Any.class);
+		return c.getClass().isAnnotationPresent(AnyRoute.class);
 	}
 	
 	/**

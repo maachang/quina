@@ -3,6 +3,7 @@ package quina.component;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.HttpServerUtil;
 import quina.http.server.response.NormalResponse;
 
 /**
@@ -36,6 +37,10 @@ public interface AnyComponent extends Component {
 	 */
 	@Override
 	default void call(Method method, Request req, Response<?> res) {
+		// ResponseがNormalResponseでない場合は変換.
+		if(!(res instanceof NormalResponse)) {
+			res = HttpServerUtil.defaultResponse(res);
+		}
 		call(req, (NormalResponse)res);
 	}
 

@@ -20,10 +20,13 @@ public final class RouteComponents {
 		// Get the Router to be registered.
 		final Router router = Quina.get().getRouter();
 		
-		// Register the "quina.test.route.JsonGet" component in the Router.
+		// Register the "quina.test.route.JsonGet" component in the @Route.
 		router.route(new quina.test.route.JsonGet());
 		
-		// Register the "quina.test.route.AnyJsonGet" component in the Any.
+		// Register the "quina.test.route.AnyJsonGet" component in the @AnyRoute.
 		router.any(new quina.test.route.AnyJsonGet());
+		
+		// Register the "quina.test.route.NewErrorComponent" component in the @ErrorRoute.
+		router.error(new quina.test.route.NewErrorComponent());
 	}
 }

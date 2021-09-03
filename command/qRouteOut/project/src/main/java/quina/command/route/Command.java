@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import quina.Router;
-import quina.annotation.route.Any;
+import quina.annotation.route.AnyRoute;
+import quina.annotation.route.ErrorRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
+import quina.component.ErrorComponent;
 
 /**
  * コマンド実行.
@@ -146,20 +148,22 @@ public class Command {
 		
 		List<String> routeList = new ArrayList<String>();
 		String[] any = new String[] { null };
+		String[] err = new String[] { null };
 		
 		// @Routeと@any指定されてるComponentを抽出.
-		extractComponentRoute(routeList, any, clazzDir);
+		extractComponentRoute(routeList, any, err, clazzDir);
 		
 		// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
-		if(routeList.size() == 0) {
+		if(routeList.size() == 0 && any[0] == null && err[0] == null) {
 			// 存在しない場合はエラー.
-			System.err.println("[ERROR] @Route The defined Component object does not exist.");
+			System.err.println(
+				"[ERROR] @Route and @Any and @Error The defined Component object does not exist.");
 			System.exit(1);
 			return;
 		}
 		
 		// ファイル出力.
-		outputComponentRoute(routeList, any[0], javaSourceDir);
+		outputComponentRoute(routeList, any[0], err[0], javaSourceDir);
 		
 		time = System.currentTimeMillis() - time;
 		System.out.println();
@@ -209,10 +213,11 @@ public class Command {
 	}
 	
 	// @Route指定されてるComponentを抽出.
-	private static final void extractComponentRoute(List<String> out, String[] anyOut, String dir)
+	private static final void extractComponentRoute(
+		List<String> out, String[] anyOut, String[] errOut, String dir)
 		throws Exception {
 		ClassLoader cl = createClassLoader(dir);
-		readComponentRoute(out, anyOut, cl, dir, "");
+		readComponentRoute(out, anyOut, errOut, cl, dir, "");
 	}
 	
 	// 指定Classディレクトリのクラスを読み込むクラローダーを作成.
@@ -227,7 +232,8 @@ public class Command {
 	
 	// 1つのディレクトリに対して@Route指定されてるComponentを抽出.
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static final void readComponentRoute(List<String> out, String[] anyOut,
+	private static final void readComponentRoute(
+		List<String> out, String[] anyOut, String[] errOut,
 		ClassLoader cl, String dir, String packageName)
 		throws Exception {
 		String target, className;
@@ -239,7 +245,7 @@ public class Command {
 			// 対象がディレクトリの場合.
 			if(new File(target).isDirectory()) {
 				// 今回のディレクトリで再帰処理.
-				readComponentRoute(out, anyOut, cl, target,
+				readComponentRoute(out, anyOut, errOut, cl, target,
 					createPackageName(packageName, list[i]));
 			// クラスファイルの場合.
 			} else if(list[i].endsWith(".class")) {
@@ -247,26 +253,33 @@ public class Command {
 				className = createClassName(packageName, list[i]);
 				// クラスを取得.
 				final Class c = Class.forName(className, true, cl);
-				// RouteやAnyのアノテーションが設定されていない場合.
+				// RouteやAnyやErrorのアノテーションが設定されていない場合.
 				if(!c.isAnnotationPresent(Route.class) &&
-					!c.isAnnotationPresent(Any.class)) {
+					!c.isAnnotationPresent(AnyRoute.class) &&
+					!c.isAnnotationPresent(ErrorRoute.class)) {
 					continue;
 				}
 				// クラスのインスタンスを生成.
 				final Object o = c.getDeclaredConstructor().newInstance();
-				// 対象がコンポーネントクラスでない場合は処理しない.
-				if(!(o instanceof Component)) {
-					continue;
-				}
-				// @Route付属のコンポーネントを登録.
-				if(c.isAnnotationPresent(Route.class)) {
-					System.out.println("  > route: '" + className + "' path: '" +
-						((Route)c.getAnnotation(Route.class)).value() + "'");
-					out.add(className);
-				// @Any付属のコンポーネントを登録.
-				} else if(c.isAnnotationPresent(Any.class)) {
-					System.out.println("  > any:   '" + className + "'");
-					anyOut[0] = className;
+				// 対象がコンポーネントクラスの場合.
+				if(o instanceof Component) {
+					// @Route付属のコンポーネントを登録.
+					if(c.isAnnotationPresent(Route.class)) {
+						System.out.println("  > route: '" + className + "' path: '" +
+							((Route)c.getAnnotation(Route.class)).value() + "'");
+						out.add(className);
+					// @Any付属のコンポーネントを登録.
+					} else if(c.isAnnotationPresent(AnyRoute.class)) {
+						System.out.println("  > any:   '" + className + "'");
+						anyOut[0] = className;
+					}
+				// 対象がエラーコンポーネントの場合.
+				} else if(o instanceof ErrorComponent) {
+					// @Error付属のコンポーネントを登録.
+					if(c.isAnnotationPresent(ErrorRoute.class)) {
+						System.out.println("  > error: '" + className + "'");
+						errOut[0] = className;
+					}
 				}
 			}
 		}
@@ -291,7 +304,7 @@ public class Command {
 	
 	// 抽出した@Route定義されたComponentをJavaファイルに出力.
 	private static final void outputComponentRoute(List<String> routeList, String any,
-		String outSourceDirectory)
+		String err, String outSourceDirectory)
 		throws Exception {
 		String outDir = outSourceDirectory + "/" + DIRECTORY_NAME;
 		
@@ -332,14 +345,20 @@ public class Command {
 			for(int i = 0; i < len; i ++) {
 				clazzName = routeList.get(i);
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\" component in the Router.");
+				println(w, 2, "// Register the \""+ clazzName + "\" component in the @Route.");
 				println(w, 2, "router.route(new " + clazzName + "());");
 			}
 			
 			if(any != null) {
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ any + "\" component in the Any.");
+				println(w, 2, "// Register the \""+ any + "\" component in the @AnyRoute.");
 				println(w, 2, "router.any(new " + any + "());");
+			}
+			
+			if(err != null) {
+				println(w, 2, "");
+				println(w, 2, "// Register the \""+ err + "\" component in the @ErrorRoute.");
+				println(w, 2, "router.error(new " + err + "());");
 			}
 			
 			println(w, 1, "}");
