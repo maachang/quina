@@ -85,21 +85,4 @@ public class LoadAnnotationCdi {
 		}
 		return o;
 	}
-	
-	/**
-	 * CdiManagerで管理されてるServiceに対してInject条件を反映.
-	 * @param man 対象のCdiManagerを設定します.
-	 */
-	public static final void loadCdiManagerByInject(CdiManager man) {
-		Object o;
-		final int len = man.size();
-		for(int i = 0; i < len; i ++) {
-			// サービス内のInjectを反映.
-			o = man.getService(i);
-			// objectにserviceを注入.
-			loadInject(man, o);
-			// serviceにlogを注入.
-			LoadAnnotationLog.loadLogDefine(o);
-		}
-	}
 }

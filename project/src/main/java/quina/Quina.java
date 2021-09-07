@@ -417,18 +417,35 @@ public class Quina {
 		checkInit();
 		return (HttpServerInfo)httpServerService.getInfo();
 	}
+	
+	/**
+	 * サービス群に対してAnnotation関連を反映.
+	 */
+	public final void updateAnnotationService() {
+		Object o;
+		final int len = cdiManager.size();
+		for(int i = 0; i < len; i ++) {
+			o = cdiManager.getService(i);
+			// objectにserviceを注入.
+			LoadAnnotationCdi.loadInject(cdiManager, o);
+			// serviceにlogを注入.
+			LoadAnnotationLog.loadLogDefine(o);
+		}
+	}
 
 	/**
 	 * コンポーネント群に対してAnnotation関連を反映.
 	 */
-	protected final void reflectionComponent() {
+	protected final void updateAnnotationComponent() {
+		Object o;
 		final ObjectList<Object> man = router.getRegComponentList();
 		final int len = man.size();
 		for(int i = 0; i < len; i ++) {
+			o = cdiManager.getService(i);
 			// componentにserviceを注入.
-			LoadAnnotationCdi.loadInject(cdiManager, man.get(i));
+			LoadAnnotationCdi.loadInject(cdiManager, o);
 			// componentにlogを注入.
-			LoadAnnotationLog.loadLogDefine(man.get(i));
+			LoadAnnotationLog.loadLogDefine(o);
 		}
 	}
 
@@ -443,10 +460,10 @@ public class Quina {
 			cdiManager.autoCdiService();
 			// AutoRouter読み込みを実行.
 			router.autoRoute();
-			// CdiServiceManagerに対してInjectを反映.
-			LoadAnnotationCdi.loadCdiManagerByInject(cdiManager);
-			// annotation関連のComponent定義.
-			reflectionComponent();
+			// annotation関連のService反映.
+			updateAnnotationService();
+			// annotation関連のComponent反映.
+			updateAnnotationComponent();
 			// Etag管理情報を取得.
 			final EtagManagerInfo etagManagerInfo =
 				router.getEtagManagerInfo();
