@@ -93,6 +93,9 @@ public class LoadAnnotationLog {
 	private static final Object loadLogDefineByClass(Object o, LogDefine def) {
 		Field targetField = null;
 		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		if(list == null) {
+			return o;
+		}
 		final int len = list.size();
 		final Class<?> log = Log.class;
 		for(int i = 0; i < len; i ++) {
@@ -129,6 +132,9 @@ public class LoadAnnotationLog {
 		LogDefine def;
 		Field targetField;
 		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		if(list == null) {
+			return o;
+		}
 		final int len = list.size();
 		final Class<?> log = Log.class;
 		for(int i = 0; i < len; i ++) {

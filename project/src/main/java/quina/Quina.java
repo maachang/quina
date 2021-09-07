@@ -441,7 +441,7 @@ public class Quina {
 		final ObjectList<Object> man = router.getRegComponentList();
 		final int len = man.size();
 		for(int i = 0; i < len; i ++) {
-			o = cdiManager.getService(i);
+			o = man.get(i);
 			// componentにserviceを注入.
 			LoadAnnotationCdi.loadInject(cdiManager, o);
 			// componentにlogを注入.

@@ -52,6 +52,9 @@ public class LoadAnnotationCdi {
 		Field targetField;
 		Object serviceObject;
 		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		if(list == null) {
+			return o;
+		}
 		final int len = list.size();
 		for(int i = 0; i < len; i ++) {
 			targetField = list.get(i);
