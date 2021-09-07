@@ -9,10 +9,14 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import quina.CdiManager;
 import quina.Router;
+import quina.annotation.AnnotationUtil;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
+import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.route.Route;
+import quina.annotation.service.ServiceScoped;
 import quina.component.Component;
 import quina.component.ErrorComponent;
 
@@ -22,21 +26,32 @@ import quina.component.ErrorComponent;
  * このコマンドにより、指定されたJavaクラスフォルダーから
  * quina.component.Componentを継承したQuinaのComponentに
  * 対してquina.annotation.route.Route定義されてるものを
- * 抽出して、対象プロジェクトにquinax.RouteComponents.java
- * を作成します.
+ * 抽出して、自動実行できるJavaソースコードを生成します.
+ * 
+ * また、quina.annotation.service.ServiceScooedアノテーション
+ * を定義したオブジェクトを抽出して、自動実行できるJavaソース
+ * コードを生成します.
  */
 public class Command {
 
 	// バージョン.
 	private static final String VERSION = "0.0.1";
 	
-	// 出力先ディレクトリ名.
-	private static final String DIRECTORY_NAME = packageNameToDirectory(
+	// AutoRoute出力先ディレクトリ名.
+	private static final String AUTO_ROUTE_DIRECTORY_NAME = packageNameToDirectory(
 		Router.AUTO_READ_ROUTE_PACKAGE);
 	
-	// 出力先Javaソースファイル名.
-	private static final String JAVA_SOURCE_NAME = Router.AUTO_READ_ROUTE_CLASS +
-		".java";
+	// AutoRoute出力先Javaソースファイル名.
+	private static final String AUTO_ROUTE_SOURCE_NAME =
+		Router.AUTO_READ_ROUTE_CLASS + ".java";
+	
+	// AutoCdiService出力先ディレクトリ名.
+	private static final String CDI_SERVICE_DIRECTORY_NAME = packageNameToDirectory(
+			CdiManager.AUTO_READ_CDI_SERVICE_PACKAGE);
+	
+	// AutoCdiService出力先Javaソースファイル名.
+	private static final String CDI_SERVICE_SOURCE_NAME =
+		CdiManager.AUTO_READ_CDI_SERVICE_CLASS + ".java";
 	
 	/**
 	 * メイン処理.
@@ -121,7 +136,7 @@ public class Command {
 			System.exit(1);
 			return;
 		}
-		clazzDir = pathSlash(clazzDir);
+		clazzDir = AnnotationUtil.slashPath(clazzDir);
 		
 		// javaソースディレクトリを取得.
 		String javaSourceDir = args.get("-s", "--source");
@@ -136,8 +151,7 @@ public class Command {
 			System.exit(1);
 			return;
 		}
-		javaSourceDir = pathSlash(javaSourceDir);
-		
+		javaSourceDir = AnnotationUtil.slashPath(javaSourceDir);
 		
 		// 処理開始.
 		System.out.println("start qRouteOut version: " + VERSION);
@@ -147,29 +161,49 @@ public class Command {
 		long time = System.currentTimeMillis();
 		
 		List<String> routeList = new ArrayList<String>();
+		List<String> cdiList = new ArrayList<String>();
 		String[] any = new String[] { null };
-		String[] err = new String[] { null };
+		List<String> errList = new ArrayList<String>();
+		ClassLoader cl = createClassLoader(clazzDir);
 		
 		// @Routeと@any指定されてるComponentを抽出.
-		extractComponentRoute(routeList, any, err, clazzDir);
+		extractComponentRoute(routeList, cdiList, any, errList, clazzDir, cl);
 		
 		// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
-		if(routeList.size() == 0 && any[0] == null && err[0] == null) {
+		if(routeList.size() == 0 && cdiList.size() == 0 &&
+			any[0] == null && errList.size() == 0) {
 			// 存在しない場合はエラー.
 			System.err.println(
-				"[ERROR] @Route and @Any and @Error The defined Component object does not exist.");
+				"[ERROR] @Route and @Any and @Error and @ServiceScoped The " +
+				"defined Component object does not exist.");
 			System.exit(1);
 			return;
 		}
 		
-		// ファイル出力.
-		outputComponentRoute(routeList, any[0], err[0], javaSourceDir);
+		// [Router]ファイル出力.
+		if(routeList.size() != 0 || any[0] != null || errList.size() != 0) {
+			outputComponentRoute(routeList, any[0], errList, javaSourceDir, cl);
+		}
+		
+		// [CdiService]ファイル出力.
+		if(cdiList.size() != 0) {
+			outputCdiService(cdiList, javaSourceDir);
+		}
 		
 		time = System.currentTimeMillis() - time;
 		System.out.println();
-		System.out.println( " output: " +
-			new File(javaSourceDir).getCanonicalPath() +
-			"/" + DIRECTORY_NAME + "/" + JAVA_SOURCE_NAME);
+		// [Router]ファイル出力内容が存在する場合.
+		if(routeList.size() != 0 || any[0] != null || errList.size() != 0) {
+			System.out.println( " routerOutput: " +
+				new File(javaSourceDir).getCanonicalPath() +
+				"/" + AUTO_ROUTE_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
+		}
+		// [CdiService]ファイル出力内容が存在する場合.
+		if(cdiList.size() != 0) {
+			System.out.println( " cdiServiceOutput: " +
+				new File(javaSourceDir).getCanonicalPath() +
+				"/" + CDI_SERVICE_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+		}
 		System.out.println("success: " + time + " msec");
 		System.out.println();
 		
@@ -192,32 +226,12 @@ public class Command {
 		return buf.toString();
 	}
 	
-	// パスのセパレータをスラッシュに統一.
-	private static final String pathSlash(String name) {
-		char c;
-		StringBuilder buf = new StringBuilder();
-		int len = name.length();
-		for(int i = 0; i < len; i ++) {
-			c = name.charAt(i);
-			if(c == '\\') {
-				buf.append('/');
-			} else {
-				buf.append(c);
-			}
-		}
-		name = buf.toString();
-		if(name.endsWith("/")) {
-			return name.substring(0, name.length() - 1);
-		}
-		return name;
-	}
-	
 	// @Route指定されてるComponentを抽出.
 	private static final void extractComponentRoute(
-		List<String> out, String[] anyOut, String[] errOut, String dir)
+		List<String> routeOut, List<String> cdiOut, String[] anyOut,
+		List<String> errOut, String dir, ClassLoader cl)
 		throws Exception {
-		ClassLoader cl = createClassLoader(dir);
-		readComponentRoute(out, anyOut, errOut, cl, dir, "");
+		readComponentRoute(routeOut, cdiOut, anyOut, errOut, cl, dir, "");
 	}
 	
 	// 指定Classディレクトリのクラスを読み込むクラローダーを作成.
@@ -233,8 +247,8 @@ public class Command {
 	// 1つのディレクトリに対して@Route指定されてるComponentを抽出.
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static final void readComponentRoute(
-		List<String> out, String[] anyOut, String[] errOut,
-		ClassLoader cl, String dir, String packageName)
+		List<String> routeOut, List<String> cdiOut, String[] anyOut,
+		List<String> errOut, ClassLoader cl, String dir, String packageName)
 		throws Exception {
 		String target, className;
 		File f = new File(dir);
@@ -245,18 +259,26 @@ public class Command {
 			// 対象がディレクトリの場合.
 			if(new File(target).isDirectory()) {
 				// 今回のディレクトリで再帰処理.
-				readComponentRoute(out, anyOut, errOut, cl, target,
-					createPackageName(packageName, list[i]));
+				readComponentRoute(routeOut, cdiOut, anyOut, errOut, cl,
+					target, createPackageName(packageName, list[i]));
 			// クラスファイルの場合.
 			} else if(list[i].endsWith(".class")) {
 				// クラス名を取得.
 				className = createClassName(packageName, list[i]);
 				// クラスを取得.
 				final Class c = Class.forName(className, true, cl);
-				// RouteやAnyやErrorのアノテーションが設定されていない場合.
+				// RouteやAnyやErrorやServiceScopedのアノテーションが
+				// 設定されていない場合.
 				if(!c.isAnnotationPresent(Route.class) &&
 					!c.isAnnotationPresent(AnyRoute.class) &&
-					!c.isAnnotationPresent(ErrorRoute.class)) {
+					!c.isAnnotationPresent(ErrorRoute.class) &&
+					!c.isAnnotationPresent(ServiceScoped.class)) {
+					continue;
+				}
+				// ServiceScoped定義のCdiServiceの場合.
+				if(c.isAnnotationPresent(ServiceScoped.class)) {
+					System.out.println("  > cdiService: '" + className + "'");
+					cdiOut.add(className);
 					continue;
 				}
 				// クラスのインスタンスを生成.
@@ -267,7 +289,7 @@ public class Command {
 					if(c.isAnnotationPresent(Route.class)) {
 						System.out.println("  > route: '" + className + "' path: '" +
 							((Route)c.getAnnotation(Route.class)).value() + "'");
-						out.add(className);
+						routeOut.add(className);
 					// @Any付属のコンポーネントを登録.
 					} else if(c.isAnnotationPresent(AnyRoute.class)) {
 						System.out.println("  > any:   '" + className + "'");
@@ -277,8 +299,16 @@ public class Command {
 				} else if(o instanceof ErrorComponent) {
 					// @Error付属のコンポーネントを登録.
 					if(c.isAnnotationPresent(ErrorRoute.class)) {
-						System.out.println("  > error: '" + className + "'");
-						errOut[0] = className;
+						int[] es = LoadAnnotationRoute.loadErrorRoute(c);
+						if(es[0] == 0) {
+							System.out.println("  > error: '" + className + "'");
+						} else if(es[1] == 0) {
+							System.out.println("  > error: '" + className + "' status: " +
+								es[0]);
+							System.out.println("  > error: '" + className + "' status: " +
+								es[0] + "-" + es[1]);
+						}
+						errOut.add(className);
 					}
 				}
 			}
@@ -304,14 +334,14 @@ public class Command {
 	
 	// 抽出した@Route定義されたComponentをJavaファイルに出力.
 	private static final void outputComponentRoute(List<String> routeList, String any,
-		String err, String outSourceDirectory)
+		List<String> errList, String outSourceDirectory, ClassLoader cl)
 		throws Exception {
-		String outDir = outSourceDirectory + "/" + DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + AUTO_ROUTE_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + JAVA_SOURCE_NAME;
+		String outFileName = outDir + "/" + AUTO_ROUTE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// ソースコードを出力.
@@ -355,10 +385,85 @@ public class Command {
 				println(w, 2, "router.any(new " + any + "());");
 			}
 			
-			if(err != null) {
+			Class<?> c;
+			len = errList.size();
+			for(int i = 0; i < len; i ++) {
+				clazzName = errList.get(i);
+				c = Class.forName(clazzName, true, cl);
+				int[] es = LoadAnnotationRoute.loadErrorRoute(c);
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ err + "\" component in the @ErrorRoute.");
-				println(w, 2, "router.error(new " + err + "());");
+				if(es[0] == 0) {
+					println(w, 2, "// Register the \""+ clazzName + "\" component in the @ErrorRoute.");
+				} else if(es[1] == 0) {
+					println(w, 2, "// Register the \""+ clazzName + "\" component in the @ErrorRoute(" +
+						es[0] + ")");
+					println(w, 2, "// Register the \""+ clazzName + "\" component in the @ErrorRoute(" +
+						es[0] + ", " + es[1] + ")");
+				}
+				println(w, 2, "router.error(new " + clazzName + "());");
+			}
+			
+			println(w, 1, "}");
+			
+			println(w, 0, "}");
+			
+			w.close();
+			w = null;
+			
+		} finally {
+			if(w != null) {
+				try {
+					w.close();
+				} catch(Exception e) {}
+			}
+		}
+	}
+
+	
+	// 抽出した@ServiceScoped定義されたオブジェクトをJavaファイルに出力.
+	private static final void outputCdiService(List<String> cdiList, String outSourceDirectory)
+		throws Exception {
+		String outDir = outSourceDirectory + "/" + CDI_SERVICE_DIRECTORY_NAME;
+		
+		// ソース出力先ディレクトリを作成.
+		new File(outDir).mkdirs();
+		
+		String outFileName = outDir + "/" + CDI_SERVICE_SOURCE_NAME;
+		BufferedWriter w = null;
+		try {
+			// ソースコードを出力.
+			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
+			println(w, 0, "package " + CdiManager.AUTO_READ_CDI_SERVICE_PACKAGE + ";");
+			println(w, 0, "");
+			println(w, 0, "import quina.Quina;");
+			println(w, 0, "import quina.CdiManager;");
+			println(w, 0, "");
+			println(w, 0, "/**");
+			println(w, 0, " * ServiceScoped Annotation Registers the defined service object.");
+			println(w, 0, " */");
+			println(w, 0, "public final class " + CdiManager.AUTO_READ_CDI_SERVICE_CLASS + " {");
+			println(w, 1, "private " + CdiManager.AUTO_READ_CDI_SERVICE_CLASS + "() {}");
+			
+			println(w, 1, "");
+			println(w, 1, "/**");
+			println(w, 1, " * ServiceScoped Annotation Registers the defined service object.");
+			println(w, 1, " *");
+			println(w, 1, " * @exception Exception If the service registration fails.");
+			println(w, 1, " */");
+			println(w, 1, "public static final void " + CdiManager.AUTO_READ_CDI_SERVICE_METHOD +
+				"() throws Exception {");
+			
+			println(w, 2, "");
+			println(w, 2, "// Get the Service Manager to be registered.");
+			println(w, 2, "final CdiManager cdiManager = Quina.get().getCdiManager();");
+			
+			String clazzName;
+			int len = cdiList.size();
+			for(int i = 0; i < len; i ++) {
+				clazzName = cdiList.get(i);
+				println(w, 2, "");
+				println(w, 2, "// Register the \""+ clazzName + "\" object in the @ServiceScoped.");
+				println(w, 2, "cdiManager.put(new " + clazzName + "());");
 			}
 			
 			println(w, 1, "}");

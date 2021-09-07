@@ -20,7 +20,20 @@ public class LoadAnnotationRoute {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
-		Route route = c.getClass().getAnnotation(Route.class);
+		return loadRoute(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるRouteのパスを取得.
+	 * @param c コンポーネントクラスを設定します.
+	 * @return String Routeのパスが返却されます.
+	 *                nullの場合、Routeのパスが設定されていません.
+	 */
+	public static final String loadRoute(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		Route route = c.getAnnotation(Route.class);
 		if(route == null) {
 			return null;
 		}
@@ -36,7 +49,19 @@ public class LoadAnnotationRoute {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
-		return c.getClass().isAnnotationPresent(AnyRoute.class);
+		return loadAnyRoute(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるAnyルートが定義されてるか取得.
+	 * @param c コンポーネントクラスを設定します.
+	 * @return boolean Anyルートの場合 true が返却されます.
+	 */
+	public static final boolean loadAnyRoute(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return c.isAnnotationPresent(AnyRoute.class);
 	}
 	
 	/**
@@ -48,7 +73,19 @@ public class LoadAnnotationRoute {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
-		ErrorRoute error = c.getClass().getAnnotation(ErrorRoute.class);
+		return loadErrorRoute(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるErrorルートが定義されてるか取得.
+	 * @param c エラーコンポーネントクラスを設定します.
+	 * @return int[] {start, end} の条件で返却されます.
+	 */
+	public static final int[] loadErrorRoute(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		ErrorRoute error = c.getAnnotation(ErrorRoute.class);
 		if(error == null) {
 			return null;
 		}
@@ -56,13 +93,18 @@ public class LoadAnnotationRoute {
 		if(error.status() > 0) {
 			return new int[] {error.status(), 0};
 		// 範囲ステータス指定.
-		} else if(error.start() > 0 && error.end() > 0) {
-			return new int[] {error.start(), error.end()};
+		} else if(error.start() > 0) {
+			if(error.end() > 0) {
+				// 範囲ステータス指定.
+				return new int[] {error.start(), error.end()};
+			} else {
+				// 単独ステータス指定.
+				return new int[] {error.start(), 0};
+			}
 		}
 		// any指定.
 		return new int[] {0, 0};
 	}
-
 	
 	/**
 	 * Annotationに定義されてるFilePathのパスを取得.
@@ -74,7 +116,20 @@ public class LoadAnnotationRoute {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
-		FilePath filePath = c.getClass().getAnnotation(FilePath.class);
+		return loadFilePath(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるFilePathのパスを取得.
+	 * @param c コンポーネントクラスを設定します.
+	 * @return String ファイルのパスが返却されます.
+	 *                nullの場合、ファイルのパスが設定されていません.
+	 */
+	public static final String loadFilePath(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		FilePath filePath = c.getAnnotation(FilePath.class);
 		if(filePath == null) {
 			return null;
 		}

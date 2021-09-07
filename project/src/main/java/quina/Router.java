@@ -14,6 +14,7 @@ import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
 import quina.exception.QuinaException;
 import quina.http.Method;
+import quina.util.collection.ObjectList;
 import quina.validate.Validation;
 
 /**
@@ -23,7 +24,7 @@ public class Router {
 	/**
 	 * Routeアノテーション自動読み込み実行用クラス名.
 	 */
-	public static final String AUTO_READ_ROUTE_CLASS = "RouteComponents";
+	public static final String AUTO_READ_ROUTE_CLASS = "LoadRouter";
 
 	/**
 	 * Routeアノテーション自動読み込み実行用メソッド名.
@@ -40,7 +41,7 @@ public class Router {
 
 	// コンポーネントマネージャ.
 	private final ComponentManager manager = new ComponentManager();
-
+	
 	/**
 	 * パスのマッピング.
 	 * @param path 基本パスを設定します.
@@ -79,11 +80,12 @@ public class Router {
 		// validationが直接指定されてない場合.
 		if(validation == null) {
 			// annotationのvalidationを取得.
-			validation = LoadAnnotationValidate.load(component);
+			validation = LoadAnnotationValidate.loadValidation(component);
 		}
 		// annotationのResponse初期設定を取得.
 		ResponseInitialSetting responseInitialSetting =
-			LoadAnnotationResponse.load(component);
+			LoadAnnotationResponse.loadResponse(component);
+		// any登録.
 		manager.put(validation, responseInitialSetting, component);
 		return this;
 	}
@@ -94,10 +96,13 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router error(ErrorComponent component) {
+		// annotationの定義からHttpステータス条件を取得.
 		int[] startEndStatus = LoadAnnotationRoute.loadErrorRoute(component);
 		if(startEndStatus == null) {
+			// 存在しない場合は共通エラー登録.
 			return error(0, 0, component);
 		}
+		// 存在する場合はAnnotation定義のHttpステータスを設定.
 		return error(startEndStatus[0], startEndStatus[1], component);
 	}
 	
@@ -117,16 +122,17 @@ public class Router {
 	
 	/**
 	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param startStatus 開始範囲のHttpステータスを設定します.
+	 * @param endStatus 終了範囲のHttpステータスを設定します.
 	 * @param component 実行コンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router error(int startStatus, int endStatus,
 		ErrorComponent component) {
+		// エラー登録.
 		manager.putError(startStatus, endStatus, component);
 		return this;
 	}
-
-
 
 	/**
 	 * 対象コンポーネントとルートを紐付けます.
@@ -170,12 +176,12 @@ public class Router {
 		// validationが直接指定されてない場合.
 		if(validation == null) {
 			// annotationのvalidationを取得.
-			validation = LoadAnnotationValidate.load(component);
+			validation = LoadAnnotationValidate.loadValidation(component);
 		}
 		// annotationのResponse初期設定を取得.
 		ResponseInitialSetting responseInitialSetting =
-			LoadAnnotationResponse.load(component);
-		// ComponentManagerに登録.
+			LoadAnnotationResponse.loadResponse(component);
+		// パスを指定して登録.
 		manager.put(path, validation, responseInitialSetting, component);
 		return this;
 	}
@@ -209,7 +215,15 @@ public class Router {
 		}
 		return this;
 	}
-
+	
+	/**
+	 * 登録コンポーネントリストを取得.
+	 * @return ObjectList<Object> 登録コンポーネントリストが返却されます.
+	 */
+	protected ObjectList<Object> getRegComponentList() {
+		return manager.getRegComponentList();
+	}
+	
 	/**
 	 * 指定URLに対するコンポーネントを取得.
 	 * @param url urlを設定します.

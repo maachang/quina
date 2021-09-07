@@ -52,14 +52,31 @@ public class LogFactory {
 	 */
 	private LogFactory() {
 	}
+	
+	/**
+	 * ログコンフィグ設定を完了させる.
+	 * @return LogFactory 
+	 */
+	public synchronized LogFactory fixConfig() {
+		configFlag = true;
+		return this;
+	}
+	
+	/**
+	 * コンフィグの設定が完了済みかチェック.
+	 * @return
+	 */
+	public synchronized boolean isFixConfig() {
+		return configFlag;
+	}
 
 	/**
 	 * ログコンフィグの設定.
 	 * @param json json定義を設定します.
-	 * @return LogFactory ログファクトリが返却されます.
+	 * @return true の場合、読み込みに成功しました.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public synchronized LogFactory config(Map<String, Object> json) {
+	public synchronized boolean loadConfig(Map<String, Object> json) {
 		/**
 		 * jsonのコンフィグ定義内容説明.
 		 *
@@ -101,6 +118,11 @@ public class LogFactory {
 		 * ログ定義の場合は[default]の定義は必須で、それ以外
 		 * ログ定義名に対しての個別定義が可能です.
 		 */
+		
+		// 既にコンフィグ情報が読み込まれた場合.
+		if(configFlag) {
+			return false;
+		}
 
 		// 最初にdefault定義を取得.
 		Map<String, Object> v;
@@ -117,10 +139,12 @@ public class LogFactory {
 			defaultLogDefine = em;
 			n = json.get(DEFAULT_NAME);
 		}
+		boolean ret = false;
 		// defaultログ定義名が存在する場合.
 		if(n != null && n instanceof String) {
 			// デフォルトログ名の変更.
 			setDefaultLogName(((String)n).trim());
+			ret = true;
 		}
 		// default条件をセット.
 		manager.put(defaultLogName, defaultLogDefine);
@@ -144,21 +168,27 @@ public class LogFactory {
 				em = new LogDefineElement(defaultLogDefine, v);
 				// LogFactoryに登録.
 				_register(name, em);
+				ret = true;
 			}
 		}
-		// コンフィグ情報呼び出し完了.
-		this.configFlag = true;
-		return this;
+		return ret;
 	}
-
+	
 	/**
-	 * コンフィグ呼び出しが行われたかチェック.
-	 * @return
+	 * ログコンフィグを設定してコンフィグをFixする.
+	 * @param json json定義を設定します.
+	 * @return true の場合、読み込みに成功しました.
 	 */
-	public synchronized boolean isConfig() {
-		return configFlag;
+	public synchronized boolean loadConfigByFix(Map<String, Object> json) {
+		boolean ret = loadConfig(json);
+		if(ret) {
+			// 読み込みが成功した場合はFixする.
+			fixConfig();
+		}
+		return ret;
 	}
 
+	
 	/**
 	 * ログ定義を登録.
 	 *
@@ -242,6 +272,10 @@ public class LogFactory {
 			throw new NullPointerException();
 		} else if((name = name.trim()).isEmpty()) {
 			throw new IllegalArgumentException();
+		}
+		// 既にコンフィグ情報が読み込まれた場合.
+		if(configFlag) {
+			return this;
 		}
 		// デフォルトのログ定義名でない、ログ定義の場合.
 		if(!defaultLogName.equals(name)) {
@@ -358,6 +392,24 @@ public class LogFactory {
 	public Log get(String name) {
 		return get(name, null);
 	}
+	
+	/**
+	 * デフォルトのログ情報取得.
+	 * @return Log ログオブジェクトが返却されます.
+	 */
+	public static final Log log() {
+		return LogFactory.getInstance().get();
+	}
+	
+	/**
+	 * 個別に定義されたログ情報取得.
+	 * @param name 個別に定義されたログ定義名を設定します.
+	 * @return Log ログオブジェクトが返却されます.
+	 */
+	public static final Log log(String name) {
+		return LogFactory.getInstance().get(name);
+	}
+	
 
 	/**
 	 * 個別に定義されたログ情報取得.

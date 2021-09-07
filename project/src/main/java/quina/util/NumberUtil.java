@@ -472,4 +472,36 @@ public class NumberUtil {
 			return mFlg ? (ret + (dret / v)) * -1d : ret + (dret / v);
 		}
 	}
+	
+	/**
+	 * 容量を指定する文字列からlong値に変換.
+	 * 以下のように キロ,メガ,ギガ,テラ のような単位を
+	 * long値に変換します.
+	 * 
+	 * "1024" = 1,024.
+	 * "1k" = 1,024.
+	 * "1m" = 1,048,576.
+	 * "1g" = 1,073,741,824.
+	 * "1t" = 1,099,511,627,776.
+	 * "1p" = 1,125,899,906,842,624.
+	 * 
+	 * @param num 対象のサイズの文字列を設定します.
+	 * @return long 変換されたLong値が返却されます.
+	 */
+	public static final long parseCapacityByLong(String num) {
+		int lastPos = num.length() - 1;
+		char c = num.charAt(lastPos);
+		if(Alphabet.oneEq(c, 'k')) {
+			return parseLong(num.substring(0, lastPos)) * 1024L;
+		} else if(Alphabet.oneEq(c, 'm')) {
+			return parseLong(num.substring(0, lastPos)) * 1048576L;
+		} else if(Alphabet.oneEq(c, 'g')) {
+			return parseLong(num.substring(0, lastPos)) * 1073741824L;
+		} else if(Alphabet.oneEq(c, 't')) {
+			return parseLong(num.substring(0, lastPos)) * 1099511627776L;
+		} else if(Alphabet.oneEq(c, 'p')) {
+			return parseLong(num.substring(0, lastPos)) * 1125899906842624L;
+		}
+		return parseLong(num);
+	}
 }

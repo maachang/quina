@@ -6,8 +6,8 @@ import quina.Router;
 /**
  * Route Annotation Registers the configured Component group as a Router.
  */
-public final class RouteComponents {
-	private RouteComponents() {}
+public final class LoadRouter {
+	private LoadRouter() {}
 	
 	/**
 	 * Route Annotation Performs Router registration processing for the
@@ -20,8 +20,8 @@ public final class RouteComponents {
 		// Get the Router to be registered.
 		final Router router = Quina.get().getRouter();
 		
-		// Register the "quina.test.route.JsonGet" component in the @Route.
-		router.route(new quina.test.route.JsonGet());
+		// Register the "quina.test.route.GreetingJsonGet" component in the @Route.
+		router.route(new quina.test.route.GreetingJsonGet());
 		
 		// Register the "quina.test.route.AnyJsonGet" component in the @AnyRoute.
 		router.any(new quina.test.route.AnyJsonGet());

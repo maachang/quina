@@ -989,6 +989,9 @@ public class ComponentManager {
 		now.setAnyComponent(cmp);
 	}
 
+	// 登録されてるコンポーネントリスト群.
+	private final ObjectList<Object> regComponentList = new ObjectList<Object>();
+
 	// 固定パスコンポーネント管理.
 	private final IndexKeyValueList<String, MethodsComponent> staticComponent =
 		new IndexKeyValueList<String, MethodsComponent>();
@@ -1017,6 +1020,7 @@ public class ComponentManager {
 	 * クリア.
 	 */
 	public void clear() {
+		regComponentList.clear();
 		staticComponent.clear();
 		rootAnyElement = new AnyElement(0, null);
 		notFoundUrlComponent = null;
@@ -1035,8 +1039,11 @@ public class ComponentManager {
 		if(component instanceof RegisterComponent) {
 			component = ((RegisterComponent)component).getComponent();
 		}
+		// notFoundUrlに登録.
 		notFoundUrlComponent = new RegisterComponent(
 			"/*", null, validation, responseInitialSetting, component);
+		// コンポーネント管理リストに登録.
+		regComponentList.add(component);
 	}
 
 	/**
@@ -1075,8 +1082,11 @@ public class ComponentManager {
 			if(mc == null) {
 				staticComponent.put(url, (mc = new MethodsComponent()));
 			}
+			// staticコンポーネント登録.
 			mc.setComponent(new RegisterComponent(
 				url, null, validation, responseInitialSetting, component));
+			// コンポーネント管理リストに登録.
+			regComponentList.add(component);
 			return true;
 		}
 		// urlにurlParamsの条件に対してnullセット.
@@ -1086,12 +1096,15 @@ public class ComponentManager {
 		// anyコンポーネント管理に追加.
 		putAnyElement(this.rootAnyElement, url, urls, 0, urlParam, validation,
 			responseInitialSetting, component);
+		// コンポーネント管理リストに登録.
+		regComponentList.add(component);
 		return false;
 	}
 
 	// コンポーネントがファイルコンポーネントの場合は
 	// Etag管理オブジェクトをセット.
-	private final Component fileComponentByAppendEtagComponent(Component component) {
+	private final Component fileComponentByAppendEtagComponent(
+		Component component) {
 		// ファイル属性コンポーネントに対してEtagManagerを設定.
 		if(component instanceof FileAttributeComponent) {
 			((FileAttributeComponent)component).setEtagManager(etagManager);
@@ -1116,12 +1129,18 @@ public class ComponentManager {
 	 */
 	public void putError(int startState, int endState, ErrorComponent component) {
 		if(startState <= 0) {
+			// 全ステータス対応エラーとして登録.
 			errorComponentManager.any(component);
 		} else if(endState <= 0) {
+			// 指定ステータスのエラーとして登録.
 			errorComponentManager.putSingle(startState, component);
 		} else {
+			// 範囲指定のエラーとして登録.
 			errorComponentManager.putRange(startState, endState, component);
 		}
+		// コンポーネント管理リストに登録.
+		regComponentList.add(component);
+
 	}
 	
 	/**
@@ -1201,6 +1220,14 @@ public class ComponentManager {
 			// 次の条件を出力.
 			toAnyElementByString(buf, em);
 		}
+	}
+	
+	/**
+	 * 登録コンポーネントリストを取得.
+	 * @return ObjectList<Object> 登録コンポーネントリストが返却されます.
+	 */
+	public ObjectList<Object> getRegComponentList() {
+		return regComponentList;
 	}
 
 	/**

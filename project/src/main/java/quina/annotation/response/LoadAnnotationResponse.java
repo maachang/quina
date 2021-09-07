@@ -16,22 +16,34 @@ public class LoadAnnotationResponse {
 	 * @return ResponseInitialSetting Response初期設定が返却されます.
 	 *                nullの場合設定されていません.
 	 */
-	public static final ResponseInitialSetting load(Component c) {
+	public static final ResponseInitialSetting loadResponse(Component c) {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
-		Class<?> cs = c.getClass();
-		Status status = cs.getAnnotation(Status.class);
-		ContentType contentType = cs.getAnnotation(ContentType.class);
+		return loadResponse(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるResponse初期設定を取得.
+	 * @param c コンポーネントを設定します.
+	 * @return ResponseInitialSetting Response初期設定が返却されます.
+	 *                nullの場合設定されていません.
+	 */
+	public static final ResponseInitialSetting loadResponse(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		Status status = c.getAnnotation(Status.class);
+		ContentType contentType = c.getAnnotation(ContentType.class);
 		Header[] headers = null;
-		HeaderArray headerArray = cs.getAnnotation(HeaderArray.class);
+		HeaderArray headerArray = c.getAnnotation(HeaderArray.class);
 		if(headerArray != null) {
 			headers = headerArray.value();
 			if(headers == null || headers.length == 0) {
 				headers = null;
 			}
 		}
-		ResponseSwitch responseSwitch = cs.getAnnotation(ResponseSwitch.class);
+		ResponseSwitch responseSwitch = c.getAnnotation(ResponseSwitch.class);
 		if(status == null && contentType == null && headers == null &&
 			responseSwitch == null) {
 			return null;

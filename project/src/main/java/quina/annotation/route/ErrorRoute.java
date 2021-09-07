@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  * 
  *  1. 指定Httpステータスのエラー登録
  *   @ErrorRoute(status=404)
- *     Httpステータス４０４でのエラ登録.
+ *     Httpステータス４０４でのエラー登録.
  *  
  *  2. 範囲Httpステータスのエラー登録
  *   @ErrorRoute(start=500, end=599)

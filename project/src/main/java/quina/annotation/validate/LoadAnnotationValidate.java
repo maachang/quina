@@ -17,12 +17,25 @@ public class LoadAnnotationValidate {
 	 * @return Validation Validation定義が返却されます.
 	 *                    null の場合定義されていません.
 	 */
-	public static final Validation load(Component c) {
+	public static final Validation loadValidation(Component c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return loadValidation(c.getClass());
+	}
+	
+	/**
+	 * Annotationで定義されてるValidationを読み込む.
+	 * @param c 対象のComponentクラスを設定します.
+	 * @return Validation Validation定義が返却されます.
+	 *                    null の場合定義されていません.
+	 */
+	public static final Validation loadValidation(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}
 		// 対象コンポーネントからValidateアノテーション定義を取得.
-		ValidateArray array = c.getClass().getAnnotation(
+		ValidateArray array = c.getAnnotation(
 			ValidateArray.class);
 		// 存在しない場合.
 		if(array == null) {

@@ -1,10 +1,12 @@
 package quina.logger;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import quina.util.Env;
+import quina.logger.annotation.LogConfig;
 
 /**
  * ログ定義要素.
@@ -62,6 +64,14 @@ public class LogDefineElement {
 		Object level, Boolean cons, Long fileSize, String directory) {
 		set(level, cons, fileSize, directory).set();
 	}
+	
+	/**
+	 * コンストラクタ.
+	 * @param config LogConfigアノテーションを設定します.
+	 */
+	public LogDefineElement(LogConfig config) {
+		set(config);
+	}
 
 	/**
 	 * コンストラクタ.
@@ -70,7 +80,7 @@ public class LogDefineElement {
 	 */
 	public LogDefineElement(LogDefineElement defaultInfo,
 		Map<String, Object> map) {
-		set(map).set(defaultInfo);
+		set(defaultInfo).set(map);
 	}
 
 	/**
@@ -82,14 +92,24 @@ public class LogDefineElement {
 	 * @param directory ログ出力先のディレクトリを設定します.
 	 */
 	public LogDefineElement(LogDefineElement defaultInfo,
-		Object level, Boolean cons, Long fileSize, String directory) {
-		set(level, cons, fileSize, directory).set(defaultInfo);
+		Object level, Boolean cons, Object fileSize, String directory) {
+		set(defaultInfo).set(level, cons, fileSize, directory);
 	}
-
+	
+	/**
+	 * コンストラクタ.
+	 * @param defaultInfo デフォルトの定義を設定します.
+	 * @param config LogConfigアノテーションを設定します.
+	 */
+	public LogDefineElement(LogDefineElement defaultInfo,
+		LogConfig config) {
+		set(defaultInfo).set(config);
+	}
+	
 	// ログ定義確定済みの場合はエラー出力.
 	protected final void checkFinalized() {
 		if(finalizedFlag.get()) {
-			throw new LogDefineException("The log definition has been finalized.");
+			throw new LogException("The log definition has been finalized.");
 		}
 	}
 
@@ -165,7 +185,7 @@ public class LogDefineElement {
 
 	/**
 	 * デフォルト条件を設定.
-	 * @return
+	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
 	public LogDefineElement set() {
 		defaultDefine();
@@ -175,7 +195,7 @@ public class LogDefineElement {
 	/**
 	 * LogDefineElementを設定.
 	 * @param defaultInfo
-	 * @return
+	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
 	public LogDefineElement set(LogDefineElement defaultInfo) {
 		if(defaultInfo != null) {
@@ -191,7 +211,7 @@ public class LogDefineElement {
 	/**
 	 * Map形式でログ定義を設定.
 	 * @param map
-	 * @return
+	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
 	public LogDefineElement set(Map<String, Object> map) {
 		checkFinalized();
@@ -250,13 +270,13 @@ public class LogDefineElement {
 	 * @param cons コンソール出力を許可する場合[true]を設定します.
 	 * @param fileSize ログ分割をする基本ファイルサイズを設定します.
 	 * @param directory ログ出力先のディレクトリを設定します.
+	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
 	public LogDefineElement set(
-		Object level, Boolean cons, Long fileSize, String directory) {
+		Object level, Boolean cons, Object fileSize, String directory) {
 		checkFinalized();
 		String dir = null;
 		LogLevel lv = null;
-		Long size = null;
 		Boolean console = null;
 		if(level != null) {
 			lv = LogLevel.convertLogLevel(level);
@@ -264,16 +284,32 @@ public class LogDefineElement {
 		if(cons != null) {
 			console = cons;
 		}
-		if (fileSize != null) {
-			size = fileSize;
-		}
 		if (directory != null && !directory.isEmpty()) {
 			dir = directory;
 		}
 		setLogLevel(lv);
-		setLogSize(size);
+		setLogSize(fileSize);
 		setConsoleOut(console);
 		setDirectory(dir);
+		defaultDefine();
+		return this;
+	}
+	
+	/**
+	 * LogConfigアノテーションで設定.
+	 * @param config LogConfigアノテーションを設定します.
+	 * @return LogDefineElement このオブジェクトが返却されます.
+	 */
+	public LogDefineElement set(LogConfig config) {
+		checkFinalized();
+		setConsoleOut(config.console());
+		if(!config.size().isEmpty()) {
+			setLogSize(parseCapacityByLong(config.size()));
+		}
+		if(!config.directory().isEmpty()) {
+			setDirectory(config.directory());
+		}
+		setLogLevel(config.level());
 		defaultDefine();
 		return this;
 	}
@@ -294,7 +330,7 @@ public class LogDefineElement {
 	public LogDefineElement setDirectory(String directory) {
 		checkFinalized();
 		if(directory != null && !directory.isEmpty()) {
-			this.directory = Env.path(directory);
+			this.directory = envPath(directory);
 		}
 		return this;
 	}
@@ -329,14 +365,20 @@ public class LogDefineElement {
 	}
 
 	/**
-	 * ログ１ファイルの書き込みファイルサイズを設定.
+	 * ログファイルの書き込みファイルサイズを設定.
 	 * @param logSize
 	 * @return
 	 */
-	public LogDefineElement setLogSize(Long logSize) {
+	public LogDefineElement setLogSize(Object logSize) {
 		checkFinalized();
-		if(logSize != null && logSize > 0L) {
-			this.logSize = logSize;
+		Long size = null;
+		if(logSize instanceof Number) {
+			size = ((Number)logSize).longValue();
+		} else {
+			size = parseCapacityByLong(logSize.toString());
+		}
+		if(size != null && size > 0L) {
+			this.logSize = size;
 		}
 		return this;
 	}
@@ -387,5 +429,134 @@ public class LogDefineElement {
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
 		return toString(buf).toString();
+	}
+	
+	/**
+	 * 容量を指定する文字列からlong値に変換.
+	 * 以下のように キロ,メガ,ギガ,テラ のような単位を
+	 * long値に変換します.
+	 * 
+	 * "1024" = 1,024.
+	 * "1k" = 1,024.
+	 * "1m" = 1,048,576.
+	 * "1g" = 1,073,741,824.
+	 * "1t" = 1,099,511,627,776.
+	 * "1p" = 1,125,899,906,842,624.
+	 * 
+	 * @param num 対象のサイズの文字列を設定します.
+	 * @return long 変換されたLong値が返却されます.
+	 */
+	private static final long parseCapacityByLong(String num) {
+		int lastPos = num.length() - 1;
+		String c = num.substring(lastPos).toLowerCase();
+		if(c.equals("k")) {
+			return Long.parseLong(num.substring(0, lastPos)) * 1024L;
+		} else if(c.equals("m")) {
+			return Long.parseLong(num.substring(0, lastPos)) * 1048576L;
+		} else if(c.equals("g")) {
+			return Long.parseLong(num.substring(0, lastPos)) * 1073741824L;
+		} else if(c.equals("t")) {
+			return Long.parseLong(num.substring(0, lastPos)) * 1099511627776L;
+		} else if(c.equals("p")) {
+			return Long.parseLong(num.substring(0, lastPos)) * 1125899906842624L;
+		}
+		return Long.parseLong(num);
+	}
+	
+	/**
+	 * 環境変数のパスを含んだ条件を取得.
+	 * 環境変数は２つの条件で設定が出来ます.
+	 * /xxx/${HOME}/yyy/zzz.txt
+	 * /xxx/%HOME%/yyy/zzz.txt
+	 *
+	 * @param path 対象の環境変数定義を含んだパスを設定します.
+	 * @return String 定義された環境変数が適用されたパスが返却されます.
+	 */
+	public static final String envPath(String path) {
+		final List<int[]> posList = new ArrayList<int[]>();
+		char c;
+		int len = path.length();
+		int start = 0;
+		int type = -1;
+		for(int i = 0; i < len; i ++) {
+			c = path.charAt(i);
+			if(type != -1) {
+				// $.../ or $...[END]
+				if(type == 0 && (c == '/' || i + 1 == len)) {
+					// $.../
+					if(c == '/') {
+						posList.add(new int[] {type, start, i});
+					// $...[END]
+					} else {
+						posList.add(new int[] {type, start, i + 1});
+					}
+					type = -1;
+				// ${...}
+				} else if(type == 1 && c == '}') {
+					posList.add(new int[] {type, start, i});
+					type = -1;
+				// %...%
+				} else if(type == 2 && c == '%') {
+					posList.add(new int[] {type, start, i});
+					type = -1;
+				}
+			} else if(c == '$') {
+				if(i + 1 < len && path.charAt(i + 1) == '{') {
+					type = 1; // ${...}
+					start = i;
+					i ++;
+				} else {
+					type = 0; // $...
+					start = i;
+				}
+			} else if(c == '%') {
+				type = 2; // %...%
+				start = i;
+			}
+		}
+		if(posList.size() == 0) {
+			return path;
+		}
+		int[] plst;
+		String envSrc, envDest;
+		int first = 0;
+		int s, e;
+		len = posList.size();
+		final StringBuilder buf = new StringBuilder();
+		for(int i = 0; i < len; i ++) {
+			plst = posList.get(i);
+			type = plst[0]; // type.
+			s = plst[1]; // 開始位置.
+			e = plst[2]; // 終了位置.
+			plst = null;
+			// $...
+			if(type == 0) {
+				start = s;
+			// ${...}
+			} else if(type == 1) {
+				start = s + 1;
+			// %...%
+			} else if(type == 2) {
+				start = s;
+			}
+			// 環境変数名.
+			envSrc = path.substring(start + 1, e);
+			// 環境変数名を変換.
+			envDest = System.getenv(envSrc);
+			buf.append(path.substring(first, s));
+			if(envDest != null) {
+				// 取得した環境変数をセット.
+				buf.append(envDest);
+			} else {
+				// 取得できない場合はエラー出力.
+				throw new LogException("Information for environment variable \"" +
+					envSrc + "\" does not exist.");
+			}
+			envSrc = null; envDest = null;
+			// $... の場合は${...} や %...% と違い終端が無いことを示す定義.
+			first = (type == 0) ? e : e + 1;
+		}
+		buf.append(path.substring(first));
+		return buf.toString();
 	}
 }

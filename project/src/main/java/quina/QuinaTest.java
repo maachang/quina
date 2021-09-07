@@ -21,6 +21,8 @@ public class QuinaTest {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
+		// Quina初期処理.
+		Quina.get().initialize(QuinaTest.class, args);
 		try {
 			// ログの定義を直接セット(Linux).
 			LogFactory.getInstance().register(

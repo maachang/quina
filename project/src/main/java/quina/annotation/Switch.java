@@ -1,4 +1,4 @@
-package quina.annotation.response;
+package quina.annotation;
 
 /**
  * On/Offを示すスイッチ.
