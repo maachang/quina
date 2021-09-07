@@ -1,6 +1,6 @@
 package quina.test.service;
 
-import quina.annotation.service.ServiceScoped;
+import quina.annotation.cdi.ServiceScoped;
 
 @ServiceScoped
 public class GreetingService {

@@ -1,7 +1,7 @@
 package quina.test;
 
 import quina.Quina;
-import quina.logger.annotation.LogConfig;
+import quina.annotation.log.LogConfig;
 
 /**
  * QuinaTest.

@@ -26,16 +26,18 @@ readJar() {
     echo $CLASSPATH
 }
 
-MAIN_PACKAGE=quina.QuinaTest
+MAIN_PACKAGE=quina.test.QuinaTest
 
 NATIVE_OUT=quinaTest
 
-JAR_DIR=./
+THIS_JAR_DIR=./
+JAR_DIR=../
 
-#JAR_FILES=`readJar ${JAR_DIR}`
-JAR_FILES=quina-0.0.1.jar
+## JAR_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`
+JAR_FILES=./quinaTest-0.0.1.jar:../quina-0.0.1.jar
 
 rm -f ${NATIVE_OUT}
+echo native-image -H:+ReportExceptionStackTraces -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
 native-image -H:+ReportExceptionStackTraces -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
 
 rm -f ${NATIVE_OUT}.build_artifacts.txt

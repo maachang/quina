@@ -1,4 +1,4 @@
-package quina.logger.annotation;
+package quina.annotation.log;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
@@ -38,7 +38,7 @@ import quina.logger.LogLevel;
  */
 
 @Target(ElementType.TYPE)
-@Repeatable(quina.logger.annotation.LogConfigArray.class)
+@Repeatable(quina.annotation.log.LogConfigArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LogConfig {
 	/**

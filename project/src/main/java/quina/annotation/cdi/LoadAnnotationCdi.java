@@ -1,16 +1,17 @@
-package quina.annotation.service;
+package quina.annotation.cdi;
 
 import java.lang.reflect.Field;
 
 import quina.CdiManager;
+import quina.Quina;
+import quina.annotation.log.LoadAnnotationLog;
 import quina.exception.QuinaException;
-import quina.logger.annotation.LoadAnnotationLog;
 
 /**
- * ServiceScopedのCDIに対する処理を行います.
+ * CDIに対する処理を行います.
  */
-public class LoadAnnotationService {
-	private LoadAnnotationService() {}
+public class LoadAnnotationCdi {
+	private LoadAnnotationCdi() {}
 	
 	/**
 	 * Annotationに定義されてるServiceScopeが定義されてるか取得.
@@ -50,10 +51,10 @@ public class LoadAnnotationService {
 		String clazz;
 		Field targetField;
 		Object serviceObject;
-		final Field[] list = o.getClass().getDeclaredFields();
-		final int len = list.length;
+		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		final int len = list.size();
 		for(int i = 0; i < len; i ++) {
-			targetField = list[i];
+			targetField = list.get(i);
 			// フィールドからInjectアノテーションを取得.
 			if((inj = targetField.getAnnotation(Inject.class)) != null) {
 				// Injectで定義されてるパッケージ名＋クラス名を取得.
@@ -74,7 +75,6 @@ public class LoadAnnotationService {
 							"The target service class definition (" + clazz +
 							") does not exist.");
 					}
-					targetField.setAccessible(true);
 					targetField.set(o, serviceObject);
 				} catch(QuinaException qe) {
 					throw qe;

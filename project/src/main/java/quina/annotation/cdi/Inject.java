@@ -1,4 +1,4 @@
-package quina.annotation.service;
+package quina.annotation.cdi;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

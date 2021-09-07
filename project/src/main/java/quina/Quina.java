@@ -1,7 +1,8 @@
 package quina;
 
+import quina.annotation.cdi.LoadAnnotationCdi;
+import quina.annotation.log.LoadAnnotationLog;
 import quina.annotation.quina.LoadAnnotationQuina;
-import quina.annotation.service.LoadAnnotationService;
 import quina.component.EtagManagerInfo;
 import quina.exception.QuinaException;
 import quina.http.server.HttpServerCall;
@@ -10,7 +11,6 @@ import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
-import quina.logger.annotation.LoadAnnotationLog;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 import quina.net.nio.tcp.worker.WorkerElement;
@@ -69,6 +69,9 @@ public class Quina {
 	
 	// CDIサービスマネージャ.
 	private final CdiManager cdiManager = new CdiManager();
+	
+	// CDIリフレクションマネージャ.
+	private final CdiReflectManager cdiRefrectManager = new CdiReflectManager();
 
 	// コンストラクタ.
 	private Quina() {
@@ -104,6 +107,8 @@ public class Quina {
 		NioUtil.initNet();
 		// SystemPropertyの初期処理.
 		LoadAnnotationQuina.loadSystemProperty(mainClass);
+		// CdiReflectManager読み込み.
+		cdiRefrectManager.autoCdiReflect();
 		// コンフィグディレクトリを取得.
 		String configDir = LoadAnnotationQuina.loadConfigDirectory(mainClass);
 		// 外部コンフィグファイルからログ定義を反映.
@@ -205,6 +210,15 @@ public class Quina {
 	 */
 	public CdiManager getCdiManager() {
 		return cdiManager;
+	}
+	
+	/**
+	 * CDI（Contexts and Dependency Injection）
+	 * リフレクションマネージャを取得..
+	 * @return CdiReflectManager CDIリフレクションマネージャが返却されます.
+	 */
+	public CdiReflectManager getCdiReflectManager() {
+		return cdiRefrectManager;
 	}
 	
 	/**
@@ -412,7 +426,7 @@ public class Quina {
 		final int len = man.size();
 		for(int i = 0; i < len; i ++) {
 			// componentにserviceを注入.
-			LoadAnnotationService.loadInject(cdiManager, man.get(i));
+			LoadAnnotationCdi.loadInject(cdiManager, man.get(i));
 			// componentにlogを注入.
 			LoadAnnotationLog.loadLogDefine(man.get(i));
 		}
@@ -425,12 +439,12 @@ public class Quina {
 	public Quina start() {
 		check(true);
 		try {
-			// AutoRouter読み込みを実行.
-			router.autoRoute();
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
+			// AutoRouter読み込みを実行.
+			router.autoRoute();
 			// CdiServiceManagerに対してInjectを反映.
-			LoadAnnotationService.loadCdiManagerByInject(cdiManager);
+			LoadAnnotationCdi.loadCdiManagerByInject(cdiManager);
 			// annotation関連のComponent定義.
 			reflectionComponent();
 			// Etag管理情報を取得.

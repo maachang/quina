@@ -1,4 +1,4 @@
-package quina.logger.annotation;
+package quina.annotation.log;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

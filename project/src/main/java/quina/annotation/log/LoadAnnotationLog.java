@@ -1,7 +1,9 @@
-package quina.logger.annotation;
+package quina.annotation.log;
 
 import java.lang.reflect.Field;
 
+import quina.Quina;
+import quina.annotation.cdi.CdiReflectElement;
 import quina.exception.QuinaException;
 import quina.logger.Log;
 import quina.logger.LogDefineElement;
@@ -90,19 +92,19 @@ public class LoadAnnotationLog {
 	// クラス定義されてるLogDefineアノテーションの定義処理.
 	private static final Object loadLogDefineByClass(Object o, LogDefine def) {
 		Field targetField = null;
-		final Field[] list = o.getClass().getDeclaredFields();
-		final int len = list.length;
+		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		final int len = list.size();
 		final Class<?> log = Log.class;
 		for(int i = 0; i < len; i ++) {
 			// ログクラスを対象とする.
-			if(list[i].getType() == log) {
+			if(list.get(i).getType() == log) {
 				// ログクラスが複数設定されてる場合はエラー.
 				if(targetField != null) {
 					throw new LogException(
 						"You cannot define multiple Log fields with the LogDefine"+
 						"annotation in the class definition. ");
 				}
-				targetField = list[i];
+				targetField = list.get(i);
 			}
 		}
 		// ログクラスが存在しない場合.
@@ -111,7 +113,6 @@ public class LoadAnnotationLog {
 		}
 		// 存在する場合、フィールドにLog定義を設定.
 		try {
-			targetField.setAccessible(true);
 			if(def.value() == null || def.value().isEmpty()) {
 				targetField.set(o, LogFactory.log());
 			} else {
@@ -127,18 +128,17 @@ public class LoadAnnotationLog {
 	private static final Object loadLogDefineByField(Object o) {
 		LogDefine def;
 		Field targetField;
-		final Field[] list = o.getClass().getDeclaredFields();
-		final int len = list.length;
+		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		final int len = list.size();
 		final Class<?> log = Log.class;
 		for(int i = 0; i < len; i ++) {
 			// ログクラスを対象とする.
-			if(list[i].getType() == log) {
-				targetField = list[i];
+			if(list.get(i).getType() == log) {
+				targetField = list.get(i);
 				// フィールドからLogDefineアノテーションを取得.
 				if((def = targetField.getAnnotation(LogDefine.class)) != null) {
 					// 存在する場合、フィールドにLog定義を設定.
 					try {
-						targetField.setAccessible(true);
 						if(def.value() == null || def.value().isEmpty()) {
 							targetField.set(o, LogFactory.log());
 						} else {

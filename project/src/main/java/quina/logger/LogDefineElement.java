@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import quina.logger.annotation.LogConfig;
+import quina.annotation.log.LogConfig;
 
 /**
  * ログ定義要素.

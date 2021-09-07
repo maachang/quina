@@ -1,14 +1,14 @@
 package quina.test.route;
 
+import quina.annotation.cdi.Inject;
+import quina.annotation.log.LogDefine;
 import quina.annotation.route.Route;
-import quina.annotation.service.Inject;
 import quina.component.RESTfulGetSync;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.server.response.SyncResponse;
 import quina.json.ResultJson;
 import quina.logger.Log;
-import quina.logger.annotation.LogDefine;
 import quina.test.service.GreetingService;
 
 @Route("/json/{name}/greeting")
