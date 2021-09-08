@@ -20,13 +20,16 @@ public final class LoadRouter {
 		// Get the Router to be registered.
 		final Router router = Quina.get().getRouter();
 		
-		// Register the "quina.test.route.GreetingJsonGet" component in the @Route.
+		// Register the "quina.test.route.GreetingJsonGet"
+		// component in the @Route.
 		router.route(new quina.test.route.GreetingJsonGet());
 		
-		// Register the "quina.test.route.AnyJsonGet" component in the @AnyRoute.
+		// Register the "quina.test.route.AnyJsonGet"
+		// component in the @AnyRoute.
 		router.any(new quina.test.route.AnyJsonGet());
 		
-		// Register the "quina.test.route.NewErrorComponent" component in the @ErrorRoute.
+		// Register the "quina.test.route.NewErrorComponent"
+		// component in the @ErrorRoute.
 		router.error(new quina.test.route.NewErrorComponent());
 	}
 }

@@ -1,4 +1,4 @@
-package quina.annotation.response;
+package quina.annotation.component;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,10 +11,10 @@ import quina.annotation.Switch;
  * HttpResponse返却のモードを設定するAnnotation.
  * 
  * quina.component.Componentインターフェイスを継承した
- * コンポーネントに対してルートパスを設定します.
+ * コンポーネントに対してResponse判別設定を設定します.
  * <例>
  * 
- * @ResponseSwitch(gzip=Switch.On, cache=Switch.Off, cros=Switch.On)
+ * @ResponseSwitch(gzip=Switch.On, cache=Switch.Off, cors=Switch.On)
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);

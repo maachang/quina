@@ -2,8 +2,8 @@ package quina;
 
 import java.lang.reflect.InvocationTargetException;
 
-import quina.annotation.response.LoadAnnotationResponse;
-import quina.annotation.response.ResponseInitialSetting;
+import quina.annotation.component.LoadAnnotationComponent;
+import quina.annotation.component.ResponseInitialSetting;
 import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.validate.LoadAnnotationValidate;
 import quina.component.Component;
@@ -84,7 +84,7 @@ public class Router {
 		}
 		// annotationのResponse初期設定を取得.
 		ResponseInitialSetting responseInitialSetting =
-			LoadAnnotationResponse.loadResponse(component);
+			LoadAnnotationComponent.loadResponse(component);
 		// any登録.
 		manager.put(validation, responseInitialSetting, component);
 		return this;
@@ -180,7 +180,7 @@ public class Router {
 		}
 		// annotationのResponse初期設定を取得.
 		ResponseInitialSetting responseInitialSetting =
-			LoadAnnotationResponse.loadResponse(component);
+			LoadAnnotationComponent.loadResponse(component);
 		// パスを指定して登録.
 		manager.put(path, validation, responseInitialSetting, component);
 		return this;

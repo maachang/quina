@@ -8,7 +8,7 @@ import quina.exception.QuinaException;
 import quina.util.collection.IndexKeyValueList;
 
 /**
- * CDI（Contexts and Dependency Injection）
+ * CDI(Contexts and Dependency Injection)
  * リフレクション代替え管理.
  * 
  * graalvmのnative-image では フィールド一覧の取得や
@@ -69,13 +69,14 @@ public class CdiReflectManager {
 	}
 	
 	/**
-	 * オブジェクトを指定してCdiReflectElementを取得.
+	 * オブジェクトを登録してCdiReflectElementを
 	 * @param o 対象のオブジェクトを設定します.
 	 * @return CdiReflectElement 要素が返却されます.
 	 */
-	public CdiReflectElement get(Object o) {
+	public CdiReflectElement register(Object o) {
 		if(o == null) {
-			throw new QuinaException("The specified argument is Null.");
+			throw new QuinaException(
+				"The specified argument is Null.");
 		}
 		CdiObjectType type = CdiObjectType.getType(o);
 		if(type == CdiObjectType.None) {
@@ -88,6 +89,20 @@ public class CdiReflectManager {
 			manager.put(name, ret);
 		}
 		return ret;
+	}
+	
+	/**
+	 * CdiReflectElementを取得.
+	 * @param o 対象のオブジェクトを設定します.
+	 * @return CdiReflectElement 要素が返却されます.
+	 */
+	public CdiReflectElement get(Object o) {
+		if(o == null) {
+			throw new QuinaException(
+				"The specified argument is Null.");
+		}
+		String name = o.getClass().getName();
+		return manager.get(name);
 	}
 	
 	/**

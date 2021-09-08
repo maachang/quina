@@ -11,8 +11,8 @@ import quina.logger.LogException;
 import quina.logger.LogFactory;
 
 /**
- * LogのAnnotationを取得して、Log初期設定
- * を取得します.
+ * LogのAnnotationを取得して、Logに関する定義処理を
+ * 実現します.
  */
 public class LoadAnnotationLog {
 	private LoadAnnotationLog() {}

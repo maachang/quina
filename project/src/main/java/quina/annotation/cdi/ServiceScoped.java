@@ -29,8 +29,8 @@ import java.lang.annotation.Target;
  *   }
  * }
  * 
- * 上記内容をqRouteOutコマンドからAutoRoute可能な設定を行う事で、
- * GraalVMのNative-Imageでコンパイルが可能となります.
+ * 上記内容をqRouteOutコマンドによって、GraalVMのNative-Imageで
+ * コンパイルが可能となります.
  * 
  * これによりPath "/greeting/world/get" でアクセスする事で
  *  {greeting: "hello world"}

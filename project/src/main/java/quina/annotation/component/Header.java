@@ -1,4 +1,4 @@
-package quina.annotation.response;
+package quina.annotation.component;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * このAnnotationは複数設定することが可能です.
  * 
  * quina.component.Componentインターフェイスを継承した
- * コンポーネントに対してルートパスを設定します.
+ * コンポーネントに対してHttpHeader群を設定します.
  * <例>
  * 
  * ＠Header(key="X-Test-Value", value="100")
@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * が追加されます.
  */
 @Target(ElementType.TYPE)
-@Repeatable(quina.annotation.response.HeaderArray.class)
+@Repeatable(quina.annotation.component.HeaderArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Header {
 	/**

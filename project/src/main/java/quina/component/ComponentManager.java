@@ -1,6 +1,6 @@
 package quina.component;
 
-import quina.annotation.response.ResponseInitialSetting;
+import quina.annotation.component.ResponseInitialSetting;
 import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.Method;

@@ -7,7 +7,7 @@ import quina.exception.QuinaException;
 import quina.util.collection.IndexKeyValueList;
 
 /**
- * CDI（Contexts and Dependency Injection）サービス管理.
+ * CDI(Contexts and Dependency Injection)サービス管理.
  */
 public class CdiManager {
 	/**

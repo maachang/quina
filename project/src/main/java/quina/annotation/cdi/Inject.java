@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
  * 
  * このInjectアノテーションはServiceアノテーションが設定された
  * クラスをquina.component.Componentオブジェクト内や
+ * quina.annotation.ErrorComponentオブジェクト内や
  * quina.annotation.service.ServiceScopedアノテーションの
  * オブジェクト内で利用が可能です.
  * 

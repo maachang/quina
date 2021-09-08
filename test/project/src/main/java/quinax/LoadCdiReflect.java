@@ -24,14 +24,16 @@ public final class LoadCdiReflect {
 		Class<?> cls = null;
 		CdiReflectElement element = null;
 		
-		// Register the field group of the target class "quina.test.route.GreetingJsonGet"
+		// Register the field group of the target class
+		// "quina.test.route.GreetingJsonGet"
 		o = new quina.test.route.GreetingJsonGet();
-		element = refManager.get(o);
+		element = refManager.register(o);
 		if(element != null) {
 			cls = o.getClass();
 			element.add(cls.getDeclaredField("log"));
 			element.add(cls.getDeclaredField("service"));
-			o = null; cls = null; element = null;
+			cls = null; element = null;
 		}
+		o = null;
 	}
 }

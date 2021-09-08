@@ -1,39 +1,41 @@
-package quina.annotation.response;
+package quina.annotation.component;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import quina.http.HttpStatus;
+import quina.http.HttpCharset;
+import quina.http.MediaType;
 
 /**
- * HttpResponse返却のStatusを設定するAnnotation.
+ * HttpResponse返却のContentTypeを設定するAnnotation.
  * 
  * quina.component.Componentインターフェイスを継承した
  * コンポーネントに対してルートパスを設定します.
  * <例>
  * 
- * @Status(status=HttpStatus.OK, message="hello world!!")
+ * @ContentType(type=MediaType.JSON, charset=HttpCharset.UTF8)
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);
  *   }
  * }
  * 
- * これによりHttpResponseでステータス２００でメッセージにHello world!!
- * が返却されます.
+ * これによりHttpResponseヘッダに
+ *   Content-Type: application/json; charset=utf-8
+ * が設定されます.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Status {
+public @interface ContentType {
 	/**
-	 * ステータス.
+	 * MimeType.
 	 */
-	public HttpStatus status();
+	public MediaType type();
 	
 	/**
-	 * メッセージ.
+	 * エンコードキャラクターセット.
 	 */
-	public String message() default "";
+	public HttpCharset charset() default HttpCharset.NONE;
 }

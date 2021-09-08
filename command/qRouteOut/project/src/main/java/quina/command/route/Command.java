@@ -30,9 +30,17 @@ import quina.component.ErrorComponent;
  * 対してquina.annotation.route.Route定義されてるものを
  * 抽出して、自動実行できるJavaソースコードを生成します.
  * 
- * また、quina.annotation.service.ServiceScooedアノテーション
+ * また quina.annotation.service.ServiceScooedアノテーション
  * を定義したオブジェクトを抽出して、自動実行できるJavaソース
  * コードを生成します.
+ * 
+ * また graalvm の native-image では 多くのReflectionが対応
+ * できてないものも多くあり、たとえばClass.getDeclaredFields
+ * のような一覧を取得する系は、基本使えません。
+ * 
+ * そのため Component, ErrorComponent, @ServiceScoped の
+ * Filed群を取得して CdiReflectManager に直接登録するソース
+ * コードを出力します.
  */
 public class Command {
 
@@ -427,13 +435,15 @@ public class Command {
 			for(int i = 0; i < len; i ++) {
 				clazzName = routeList.get(i);
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\" component in the @Route.");
+				println(w, 2, "// Register the \""+ clazzName + "\"");
+				println(w, 2, "// component in the @Route.");
 				println(w, 2, "router.route(new " + clazzName + "());");
 			}
 			
 			if(any != null) {
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ any + "\" component in the @AnyRoute.");
+				println(w, 2, "// Register the \""+ any + "\"");
+				println(w, 2, "// component in the @AnyRoute.");
 				println(w, 2, "router.any(new " + any + "());");
 			}
 			
@@ -445,11 +455,14 @@ public class Command {
 				int[] es = LoadAnnotationRoute.loadErrorRoute(c);
 				println(w, 2, "");
 				if(es[0] == 0) {
-					println(w, 2, "// Register the \""+ clazzName + "\" component in the @ErrorRoute.");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// component in the @ErrorRoute.");
 				} else if(es[1] == 0) {
-					println(w, 2, "// Register the \""+ clazzName + "\" component in the @ErrorRoute(" +
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// component in the @ErrorRoute(" +
 						es[0] + ")");
-					println(w, 2, "// Register the \""+ clazzName + "\" component in the @ErrorRoute(" +
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// component in the @ErrorRoute(" +
 						es[0] + ", " + es[1] + ")");
 				}
 				println(w, 2, "router.error(new " + clazzName + "());");
@@ -513,7 +526,8 @@ public class Command {
 			for(int i = 0; i < len; i ++) {
 				clazzName = cdiList.get(i);
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\" object in the @ServiceScoped.");
+				println(w, 2, "// Register the \""+ clazzName + "\"");
+				println(w, 2, "// object in the @ServiceScoped.");
 				println(w, 2, "cdiManager.put(new " + clazzName + "());");
 			}
 			
@@ -588,9 +602,10 @@ public class Command {
 					continue;
 				}
 				println(w, 2, "");
-				println(w, 2, "// Register the field group of the target class \""+ clazzName + "\"");
+				println(w, 2, "// Register the field group of the target class");
+				println(w, 2, "// \""+ clazzName + "\"");
 				println(w, 2, "o = new " + clazzName + "();");
-				println(w, 2, "element = refManager.get(o);");
+				println(w, 2, "element = refManager.register(o);");
 				println(w, 2, "if(element != null) {");
 				println(w, 3, "cls = o.getClass();");
 
@@ -598,8 +613,9 @@ public class Command {
 					println(w, 3, "element.add(cls.getDeclaredField(\"" +
 						list[j].getName() + "\"));");
 				}
-				println(w, 3, "o = null; cls = null; element = null;");
+				println(w, 3, "cls = null; element = null;");
 				println(w, 2, "}");
+				println(w, 2, "o = null;");
 			}
 			
 			println(w, 1, "}");

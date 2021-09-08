@@ -5,7 +5,7 @@ import quina.component.ErrorComponent;
 import quina.exception.QuinaException;
 
 /**
- * Cdiオブジェクトタイプ.
+ * Cdi(Contexts and Dependency Injection)オブジェクトタイプ.
  */
 public enum CdiObjectType {
 	// なし.

@@ -1,5 +1,6 @@
-package quina;
+package quina.test;
 
+import quina.Quina;
 import quina.component.AnyComponent;
 import quina.component.RESTfulGet;
 import quina.component.RESTfulGetSync;
@@ -11,9 +12,9 @@ import quina.validate.VType;
 import quina.validate.Validation;
 
 /**
- * QuinaTest.
+ * QuinaTest2.
  */
-public class QuinaTest {
+public class QuinaTest2 {
 
 	/**
 	 * テストメイン.
@@ -22,7 +23,7 @@ public class QuinaTest {
 	 */
 	public static final void main(String[] args) throws Exception {
 		// Quina初期処理.
-		Quina.get().initialize(QuinaTest.class, args);
+		Quina.get().initialize(QuinaTest2.class, args);
 		try {
 			// ログの定義を直接セット(Linux).
 			LogFactory.getInstance().register(
@@ -34,7 +35,7 @@ public class QuinaTest {
 		}
 
 		// テストプログラムの実行.
-		QuinaTest quinaTest = new QuinaTest(args);
+		QuinaTest2 quinaTest = new QuinaTest2(args);
 
 		// テスト開始.
 		quinaTest.startTest();
@@ -44,7 +45,7 @@ public class QuinaTest {
 	protected String[] args = null;
 
 	// コンストラクタ.
-	private QuinaTest(String[] args) {
+	private QuinaTest2(String[] args) {
 		this.args = args;
 	}
 

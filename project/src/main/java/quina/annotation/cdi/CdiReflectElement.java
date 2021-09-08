@@ -6,7 +6,8 @@ import quina.exception.QuinaException;
 import quina.util.collection.ObjectList;
 
 /**
- * フィールド群を管理する要素.
+ * Cdi(Contexts and Dependency Injection)フィールド群を
+ * 管理する要素.
  */
 public class CdiReflectElement {
 	private CdiObjectType type;

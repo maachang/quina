@@ -1,14 +1,14 @@
-package quina.annotation.response;
+package quina.annotation.component;
 
 import quina.component.Component;
 import quina.exception.QuinaException;
 
 /**
- * ResponseのAnnotationを取得して、Response初期設定
+ * ComponentのAnnotationを取得して、Response初期設定
  * を取得します.
  */
-public class LoadAnnotationResponse {
-	private LoadAnnotationResponse() {}
+public class LoadAnnotationComponent {
+	private LoadAnnotationComponent() {}
 	
 	/**
 	 * Annotationに定義されてるResponse初期設定を取得.
@@ -48,7 +48,11 @@ public class LoadAnnotationResponse {
 			responseSwitch == null) {
 			return null;
 		}
+		GzipSwitch gzipSwitch = c.getAnnotation(GzipSwitch.class);
+		CacheSwitch cacheSwitch = c.getAnnotation(CacheSwitch.class);
+		CorsSwitch corsSwitch = c.getAnnotation(CorsSwitch.class);
 		return new ResponseInitialSetting(
-			status, contentType, headers, responseSwitch);
+			status, contentType, headers, responseSwitch,
+			gzipSwitch, cacheSwitch, corsSwitch);
 	}
 }

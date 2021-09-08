@@ -8,7 +8,8 @@ import quina.annotation.log.LoadAnnotationLog;
 import quina.exception.QuinaException;
 
 /**
- * CDIに対する処理を行います.
+ * Cdi(Contexts and Dependency Injection)に対する
+ * アノテーション処理を行います.
  */
 public class LoadAnnotationCdi {
 	private LoadAnnotationCdi() {}

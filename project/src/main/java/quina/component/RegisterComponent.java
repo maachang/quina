@@ -2,7 +2,7 @@ package quina.component;
 
 import java.util.Map;
 
-import quina.annotation.response.ResponseInitialSetting;
+import quina.annotation.component.ResponseInitialSetting;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;

@@ -1,4 +1,4 @@
-package quina.annotation.response;
+package quina.annotation.component;
 
 import quina.http.HttpCharset;
 import quina.http.HttpStatus;
@@ -38,9 +38,13 @@ public class ResponseInitialSetting {
 	 * @param contentType ContentTypeAnnotationを設定.
 	 * @param headers HeaderAnnotationの配列を設定.
 	 * @param responseSwitch レスポンスモードAnnotationを設定.
+	 * @param gzipSwitch レスポンスのGzipモードをAnnotation設定.
+	 * @param cacheSwitch レスポンスのCacheモードをAnnotation設定.
+	 * @param corsSwitch レスポンスのCrossドメインモードをAnnotation設定.
 	 */
 	protected ResponseInitialSetting(Status status, ContentType contentType,
-		Header[] headers, ResponseSwitch responseSwitch) {
+		Header[] headers, ResponseSwitch responseSwitch, GzipSwitch gzipSwitch,
+		CacheSwitch cacheSwitch, CorsSwitch corsSwitch) {
 		// ステータスの設定.
 		if(status != null) {
 			this.status = status.status();
@@ -72,6 +76,18 @@ public class ResponseInitialSetting {
 			this.gzip = responseSwitch.gzip().getMode();
 			this.cache = responseSwitch.cache().getMode();
 			this.cors = responseSwitch.cors().getMode();
+		}
+		// gzipSwitchの設定.
+		if(gzipSwitch != null) {
+			this.gzip = gzipSwitch.value();
+		}
+		// cacheSwitchの設定.
+		if(cacheSwitch != null) {
+			this.cache = cacheSwitch.value();
+		}
+		// corsSwitchの設定.
+		if(corsSwitch != null) {
+			this.cors = corsSwitch.value();
 		}
 	}
 	
