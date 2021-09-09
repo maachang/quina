@@ -4,6 +4,7 @@ import quina.annotation.cdi.LoadAnnotationCdi;
 import quina.annotation.log.LoadAnnotationLog;
 import quina.annotation.quina.LoadAnnotationQuina;
 import quina.component.EtagManagerInfo;
+import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.server.HttpServerCall;
 import quina.http.server.HttpServerInfo;
@@ -30,7 +31,8 @@ import quina.util.collection.ObjectList;
 /**
  * Quina.
  */
-public class Quina {
+public final class Quina {
+	
 	// シングルトン.
 	private static final Quina SNGL = new Quina();
 
@@ -98,49 +100,93 @@ public class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina initialize(Class<?> mainClass, String[] args) {
-		// 初期化フラグをON.
+		// 初期化フラグを一旦ONにセット..
 		if(initFlag.setToGetBefore(true)) {
 			// 既に呼び出されてる場合は処理しない.
 			return this;
 		}
-		// ネットワーク初期処理.
-		NioUtil.initNet();
-		// SystemPropertyの初期処理.
-		LoadAnnotationQuina.loadSystemProperty(mainClass);
-		// CdiReflectManager読み込み.
-		cdiRefrectManager.autoCdiReflect();
-		// コンフィグディレクトリを取得.
-		String configDir = LoadAnnotationQuina.loadConfigDirectory(mainClass);
-		// 外部コンフィグファイルからログ定義を反映.
-		if(!loadLogConfig(configDir)) {
-			// 外部コンフィグファイルが存在しない場合は
-			// LogConfigの初期処理.
-			loadLogConfig(mainClass);
+		try {
+			// ネットワーク初期処理.
+			NioUtil.initNet();
+			// SystemPropertyの初期処理.
+			LoadAnnotationQuina.loadSystemProperty(mainClass);
+			// CdiReflectManager読み込み.
+			cdiRefrectManager.autoCdiReflect();
+			// AutoCdiService読み込みを実行.
+			cdiManager.autoCdiService();
+			// annotation関連のService反映.
+			updateAnnotationService();
+			// コンフィグディレクトリを取得.
+			String configDir = LoadAnnotationQuina.loadConfigDirectory(
+				mainClass);
+			// 外部コンフィグファイルからログ定義を反映.
+			if(!loadLogConfig(configDir)) {
+				// 外部コンフィグファイルが存在しない場合は
+				// LogConfigの初期処理.
+				loadLogConfig(mainClass);
+			}
+			// Argsを設定.
+			if(args != null) {
+				this.args = new Args(args);
+			}
+			// シャットダウンデフォルトトークンを設定.
+			ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
+			// ルーターオブジェクト生成.
+			this.router = new Router();
+			// シャットダウンマネージャを生成し、quinaシャットダウンコールをセット.
+			this.shutdownManager = new ShutdownManager();
+			this.shutdownManager.getInfo().register(new QuinaShutdownCall());
+			// quinaServiceを管理するマネージャを生成.
+			this.quinaServiceManager = new QuinaServiceManager();
+			// HTTP関連サービスを生成.
+			this.httpWorkerService = new HttpWorkerService();
+			this.httpServerService = new HttpServerService(this.httpWorkerService);
+			
+			// コンフィグディレクトリが設定されてる場合.
+			if(configDir != null && !configDir.isEmpty()) {
+				// 登録してQuinaのコンフィグ情報をロードする.
+				this.loadConfig(configDir);
+			}
+			return this;
+		} catch(CoreException ce) {
+			// 例外が発生した場合、初期化フラグをOFF.
+			initFlag.set(false);
+			throw ce;
+		} catch(Exception e) {
+			// 例外が発生した場合、初期化フラグをOFF.
+			initFlag.set(false);
+			throw new QuinaException(e);
 		}
-		// Argsを設定.
-		if(args != null) {
-			this.args = new Args(args);
+	}
+	
+	/**
+	 * initialize処理が呼び出されてない場合は例外.
+	 */
+	protected void checkInit() {
+		if(!initFlag.get()) {
+			throw new QuinaException(
+				"Quina initialization process has not been executed.");
 		}
-		// シャットダウンデフォルトトークンを設定.
-		ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
-		// ルーターオブジェクト生成.
-		this.router = new Router();
-		// シャットダウンマネージャを生成し、quinaシャットダウンコールをセット.
-		this.shutdownManager = new ShutdownManager();
-		this.shutdownManager.getInfo().register(new QuinaShutdownCall());
-		// quinaServiceを管理するマネージャを生成.
-		this.quinaServiceManager = new QuinaServiceManager();
-		// HTTP関連サービスを生成.
-		this.httpWorkerService = new HttpWorkerService();
-		this.httpServerService = new HttpServerService(this.httpWorkerService);
-		
-		// コンフィグディレクトリが設定されてる場合.
-		if(configDir != null && !configDir.isEmpty()) {
-			// 登録してQuinaのコンフィグ情報をロードする.
-			this.loadConfig(configDir);
+	}
+	
+	/**
+	 * 指定オブジェクトにアノテーションを注入.
+	 * @param o 対象のオブジェクトを設定します.
+	 */
+	protected final void injectAnnotation(Object o) {
+		// objectにserviceを注入.
+		LoadAnnotationCdi.loadInject(cdiManager, o);
+		// serviceにlogを注入.
+		LoadAnnotationLog.loadLogDefine(o);
+	}
+	
+	// サービス群に対してAnnotation関連を反映.
+	private final void updateAnnotationService() {
+		final int len = cdiManager.size();
+		for(int i = 0; i < len; i ++) {
+			// アノテーションを注入.
+			injectAnnotation(cdiManager.getService(i));
 		}
-		
-		return this;
 	}
 	
 	/**
@@ -151,8 +197,8 @@ public class Quina {
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public static final Quina init(Object o, String[] args) {
-		return SNGL.initialize(o, args);
+	public static final Quina init(Object mainObject, String[] args) {
+		return SNGL.initialize(mainObject, args);
 	}
 	
 	/**
@@ -163,19 +209,8 @@ public class Quina {
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public static final Quina init(Class<?> c, String[] args) {
-		return SNGL.initialize(c, args);
-	}
-
-	
-	/**
-	 * initialize処理が呼び出されてない場合は例外.
-	 */
-	protected void checkInit() {
-		if(!initFlag.get()) {
-			throw new QuinaException(
-				"Quina initialization process has not been executed.");
-		}
+	public static final Quina init(Class<?> mainClass, String[] args) {
+		return SNGL.initialize(mainClass, args);
 	}
 	
 	/**
@@ -419,51 +454,14 @@ public class Quina {
 	}
 	
 	/**
-	 * サービス群に対してAnnotation関連を反映.
-	 */
-	public final void updateAnnotationService() {
-		Object o;
-		final int len = cdiManager.size();
-		for(int i = 0; i < len; i ++) {
-			o = cdiManager.getService(i);
-			// objectにserviceを注入.
-			LoadAnnotationCdi.loadInject(cdiManager, o);
-			// serviceにlogを注入.
-			LoadAnnotationLog.loadLogDefine(o);
-		}
-	}
-
-	/**
-	 * コンポーネント群に対してAnnotation関連を反映.
-	 */
-	protected final void updateAnnotationComponent() {
-		Object o;
-		final ObjectList<Object> man = router.getRegComponentList();
-		final int len = man.size();
-		for(int i = 0; i < len; i ++) {
-			o = man.get(i);
-			// componentにserviceを注入.
-			LoadAnnotationCdi.loadInject(cdiManager, o);
-			// componentにlogを注入.
-			LoadAnnotationLog.loadLogDefine(o);
-		}
-	}
-
-	/**
 	 * 全てのQuinaサービスを開始処理.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina start() {
 		check(true);
 		try {
-			// AutoCdiService読み込みを実行.
-			cdiManager.autoCdiService();
 			// AutoRouter読み込みを実行.
 			router.autoRoute();
-			// annotation関連のService反映.
-			updateAnnotationService();
-			// annotation関連のComponent反映.
-			updateAnnotationComponent();
 			// Etag管理情報を取得.
 			final EtagManagerInfo etagManagerInfo =
 				router.getEtagManagerInfo();

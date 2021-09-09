@@ -25,6 +25,17 @@ public final class LoadCdiReflect {
 		CdiReflectElement element = null;
 		
 		// Register the field group of the target class
+		// "quina.test.service.GreetingService"
+		o = new quina.test.service.GreetingService();
+		element = refManager.register(o);
+		if(element != null) {
+			cls = o.getClass();
+			element.add(cls.getDeclaredField("uppercaseService"));
+			cls = null; element = null;
+		}
+		o = null;
+		
+		// Register the field group of the target class
 		// "quina.test.route.GreetingJsonGet"
 		o = new quina.test.route.GreetingJsonGet();
 		element = refManager.register(o);

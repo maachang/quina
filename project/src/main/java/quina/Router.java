@@ -14,7 +14,6 @@ import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
 import quina.exception.QuinaException;
 import quina.http.Method;
-import quina.util.collection.ObjectList;
 import quina.validate.Validation;
 
 /**
@@ -43,6 +42,28 @@ public class Router {
 	private final ComponentManager manager = new ComponentManager();
 	
 	/**
+	 * コンストラクタ.
+	 */
+	public Router() {
+		
+	}
+	
+	// ComponentにAnnotationを注入.
+	private static final ResponseInitialSetting injectComponent(
+		Component component) {
+		// アノテーションを注入.
+		Quina.get().injectAnnotation(component);
+		// annotationのResponse初期設定を取得.
+		return LoadAnnotationComponent.loadResponse(component);
+	}
+	
+	// ErrorComponentにAnnotationを注入.
+	private static final void injectComponent(ErrorComponent component) {
+		// アノテーションを注入.
+		Quina.get().injectAnnotation(component);
+	}
+	
+	/**
 	 * パスのマッピング.
 	 * @param path 基本パスを設定します.
 	 *             先頭[/]の場合はフルパスで再定義します.
@@ -58,7 +79,7 @@ public class Router {
 		this.path = path;
 		return this;
 	}
-
+	
 	/**
 	 * 指定URLでコンポーネントが見つからなかった場合に
 	 * 実行されるコンポーネントを設定します.
@@ -83,8 +104,7 @@ public class Router {
 			validation = LoadAnnotationValidate.loadValidation(component);
 		}
 		// annotationのResponse初期設定を取得.
-		ResponseInitialSetting responseInitialSetting =
-			LoadAnnotationComponent.loadResponse(component);
+		ResponseInitialSetting responseInitialSetting = injectComponent(component);
 		// any登録.
 		manager.put(validation, responseInitialSetting, component);
 		return this;
@@ -129,6 +149,8 @@ public class Router {
 	 */
 	public Router error(int startStatus, int endStatus,
 		ErrorComponent component) {
+		// Annotationを注入.
+		injectComponent(component);
 		// エラー登録.
 		manager.putError(startStatus, endStatus, component);
 		return this;
@@ -144,7 +166,8 @@ public class Router {
 	public Router route(Component component) {
 		final String path = LoadAnnotationRoute.loadRoute(component);
 		if(path == null) {
-			throw new QuinaException("Route annotation definition does not exist " +
+			throw new QuinaException(
+				"Route annotation definition does not exist " +
 				"in the specified component:" + component.getClass());
 		}
 		return route(path, null, component);
@@ -179,8 +202,7 @@ public class Router {
 			validation = LoadAnnotationValidate.loadValidation(component);
 		}
 		// annotationのResponse初期設定を取得.
-		ResponseInitialSetting responseInitialSetting =
-			LoadAnnotationComponent.loadResponse(component);
+		ResponseInitialSetting responseInitialSetting = injectComponent(component);
 		// パスを指定して登録.
 		manager.put(path, validation, responseInitialSetting, component);
 		return this;
@@ -190,7 +212,7 @@ public class Router {
 	 * AutoRoute実行.
 	 * @return Router このオブジェクトが返却されます.
 	 */
-	protected Router autoRoute() {
+	protected final Router autoRoute() {
 		java.lang.Class<?> clazz;
 		java.lang.reflect.Method method;
 		try {
@@ -214,14 +236,6 @@ public class Router {
 			throw new QuinaException(e);
 		}
 		return this;
-	}
-	
-	/**
-	 * 登録コンポーネントリストを取得.
-	 * @return ObjectList<Object> 登録コンポーネントリストが返却されます.
-	 */
-	protected ObjectList<Object> getRegComponentList() {
-		return manager.getRegComponentList();
 	}
 	
 	/**

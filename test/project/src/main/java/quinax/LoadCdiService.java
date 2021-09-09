@@ -19,6 +19,10 @@ public final class LoadCdiService {
 		// Get the Service Manager to be registered.
 		final CdiManager cdiManager = Quina.get().getCdiManager();
 		
+		// Register the "quina.test.service.UppercaseService"
+		// object in the @ServiceScoped.
+		cdiManager.put(new quina.test.service.UppercaseService());
+		
 		// Register the "quina.test.service.GreetingService"
 		// object in the @ServiceScoped.
 		cdiManager.put(new quina.test.service.GreetingService());

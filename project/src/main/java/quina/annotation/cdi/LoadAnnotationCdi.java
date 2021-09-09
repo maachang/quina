@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 
 import quina.CdiManager;
 import quina.Quina;
-import quina.annotation.log.LoadAnnotationLog;
 import quina.exception.QuinaException;
 
 /**

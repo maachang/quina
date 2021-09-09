@@ -28,20 +28,23 @@ readJar() {
     echo $CLASSPATH
 }
 
+# script directory.
+CURRENT_DIR=$(cd $(dirname $0);pwd)
+
 # project version.
 VERSION=0.0.1
 
 # project name.
-PROJECT_NAME=qRouteOut
+PROJECT_NAME=quina
 
 # execute class.
-EXECUTE_CLAZZ=quina.command.route.Command
+EXECUTE_CLAZZ=quina.command.GenerateCdi
 
 # JAR name.
 JAR_NAME=${PROJECT_NAME}-${VERSION}.jar
 
 # libs.
-LIB_FILES=`readJar ./lib`
+LIB_FILES=`readJar ${CURRENT_DIR}`
 
 # firstMemory.
 STM=128

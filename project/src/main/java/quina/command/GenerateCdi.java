@@ -1,4 +1,4 @@
-package quina.command.route;
+package quina.command;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,31 +21,38 @@ import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
 import quina.component.ErrorComponent;
+import quina.util.Args;
 
 /**
- * コマンド実行.
+ * リフレクションに対するJavaソースコードを生成.
  * 
- * このコマンドにより、指定されたJavaクラスフォルダーから
- * quina.component.Componentを継承したQuinaのComponentに
- * 対してquina.annotation.route.Route定義されてるものを
- * 抽出して、自動実行できるJavaソースコードを生成します.
+ * このコマンドは graalvm での native-image で利用できない
+ * Reflection 関連に対する、代替え的処理として、Javaの
+ * ソースコードを作成し、native-image を作成できるようにします.
  * 
- * また quina.annotation.service.ServiceScooedアノテーション
- * を定義したオブジェクトを抽出して、自動実行できるJavaソース
- * コードを生成します.
+ * 具体的には Quina のComponent関連とService関連に対する
+ * 各種annotationを取り込むためのリフレクション処理関連に
+ * 対して native-image で利用不可なものを、このコマンド実行
+ * し、３つのソースコードを作成することで、native-image 対応
+ * を可能にします。
  * 
- * また graalvm の native-image では 多くのReflectionが対応
- * できてないものも多くあり、たとえばClass.getDeclaredFields
- * のような一覧を取得する系は、基本使えません。
+ * 1. CDI関連のComponent/Serviceに対するField群を列挙する
+ *    ソースコードを生成.
+ *    
+ * 2. CDI関連のService群のオブジェクトを列挙するソースコードを
+ *    生成.
  * 
- * そのため Component, ErrorComponent, @ServiceScoped の
- * Filed群を取得して CdiReflectManager に直接登録するソース
- * コードを出力します.
+ * 3. Routeアノテーション定義のComponent群のオブジェクトを列挙
+ *    するソースコードを生成.
+ * 
  */
-public class Command {
+public class GenerateCdi {
 
 	// バージョン.
 	private static final String VERSION = "0.0.1";
+	
+	// コマンド名.
+	private static final String COMMAND_NAME = "genCdi";
 	
 	// AutoRoute出力先ディレクトリ名.
 	private static final String AUTO_ROUTE_DIRECTORY_NAME = packageNameToDirectory(
@@ -77,7 +84,7 @@ public class Command {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		Command cmd = new Command(args);
+		GenerateCdi cmd = new GenerateCdi(args);
 		try {
 			cmd.execute();
 		} catch(Exception e) {
@@ -93,7 +100,7 @@ public class Command {
 	 * コンストラクタ.
 	 * @param args
 	 */
-	private Command(String[] args) {
+	private GenerateCdi(String[] args) {
 		this.args = new Args(args);
 	}
 
@@ -107,7 +114,7 @@ public class Command {
 		System.out.println("                   from the specified class directory and");
 		System.out.println("                   creates an automatic loading program.");
 		System.out.println();
-		System.out.println("Usage: qRouteOut [options]");
+		System.out.println("Usage: " + COMMAND_NAME + " [options]");
 		System.out.println(" where options include:");
 
 		System.out.println("  -v [--version]");
@@ -172,7 +179,7 @@ public class Command {
 		javaSourceDir = AnnotationUtil.slashPath(javaSourceDir);
 		
 		// 処理開始.
-		System.out.println("start qRouteOut version: " + VERSION);
+		System.out.println("start " + COMMAND_NAME + " version: " + VERSION);
 		System.out.println(" target classPath : " + new File(clazzDir).getCanonicalPath());
 		System.out.println(" target outputPath: " + new File(javaSourceDir).getCanonicalPath());
 		System.out.println("");
@@ -633,5 +640,4 @@ public class Command {
 			}
 		}
 	}
-
 }
