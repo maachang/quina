@@ -24,17 +24,17 @@ import quina.component.ErrorComponent;
 import quina.util.Args;
 
 /**
- * リフレクションに対するJavaソースコードを生成.
+ * CDI関連のリフレクションに対するJavaソースコードを生成.
  * 
  * このコマンドは graalvm での native-image で利用できない
  * Reflection 関連に対する、代替え的処理として、Javaの
  * ソースコードを作成し、native-image を作成できるようにします.
  * 
- * 具体的には Quina のComponent関連とService関連に対する
- * 各種annotationを取り込むためのリフレクション処理関連に
- * 対して native-image で利用不可なものを、このコマンド実行
- * し、３つのソースコードを作成することで、native-image 対応
- * を可能にします。
+ * graalvm での native-image では、実行読み込み対象のプロジェクト
+ * 全体のClass群やそのClass群を読み込むAnnotation関連のField
+ * リフレクション群等の読み込みが、例外を求める事があり、それらを
+ * 防ぐために以下の条件に対して、別途実装ソースコードを自動生成
+ * して、それらを実行可能にするために対応します.
  * 
  * 1. CDI関連のComponent/Serviceに対するField群を列挙する
  *    ソースコードを生成.
@@ -77,6 +77,47 @@ public class GenerateCdi {
 	// AutoCdiReflect出力先Javaソースファイル名.
 	private static final String CDI_REFLECT_SOURCE_NAME =
 		CdiReflectManager.AUTO_READ_CDI_REFLECT_CLASS + ".java";
+	
+	// パラメータオブジェクト.
+	private static final class GenerateCdiParams {
+		// Route.
+		public final List<String> routeList = new ArrayList<String>();
+		// RouteAny.
+		public String any = null;
+		// RouteError.
+		public final List<String> errList = new ArrayList<String>();
+		
+		// CdiService.
+		public final List<String> cdiList = new ArrayList<String>();
+		// CdiReflect.
+		public final List<String> refList = new ArrayList<String>();
+		
+		// classLoader.
+		public ClassLoader cl;
+		
+		public GenerateCdiParams(String clazzDir)
+			throws Exception {
+			cl = createClassLoader(clazzDir);
+		}
+		
+		public boolean isEmpty() {
+			return refList.size() == 0 && routeList.size() == 0 && 
+				cdiList.size() == 0 && any == null && errList.size() == 0;
+		}
+		
+		public boolean isRouteEmpty() {
+			return routeList.size() == 0 && any == null &&
+				errList.size() == 0;
+		}
+		
+		public boolean isCdiEmpty() {
+			return cdiList.size() == 0;
+		}
+		
+		public boolean isCdiReflectEmpty() {
+			return refList.size() == 0;
+		}
+	}
 	
 	/**
 	 * メイン処理.
@@ -183,21 +224,17 @@ public class GenerateCdi {
 		System.out.println(" target classPath : " + new File(clazzDir).getCanonicalPath());
 		System.out.println(" target outputPath: " + new File(javaSourceDir).getCanonicalPath());
 		System.out.println("");
+		
 		long time = System.currentTimeMillis();
 		
-		List<String> routeList = new ArrayList<String>();
-		List<String> cdiList = new ArrayList<String>();
-		List<String> refList = new ArrayList<String>();
-		String[] any = new String[] { null };
-		List<String> errList = new ArrayList<String>();
-		ClassLoader cl = createClassLoader(clazzDir);
+		// params.
+		GenerateCdiParams params = new GenerateCdiParams(clazzDir);
 		
-		// @Routeと@any指定されてるComponentを抽出.
-		extractComponentRoute(refList, routeList, cdiList, any, errList, clazzDir, cl);
+		// ClassDirから、対象となるクラスを抽出.
+		extractionClass( clazzDir, params);
 		
 		// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
-		if(refList.size() == 0 && routeList.size() == 0 && 
-			cdiList.size() == 0 && any[0] == null && errList.size() == 0) {
+		if(params.isEmpty()) {
 			// 存在しない場合はエラー.
 			System.err.println(
 				"[ERROR] @Route and @Any and @Error and @ServiceScoped The " +
@@ -207,37 +244,36 @@ public class GenerateCdi {
 		}
 		
 		// [Router]ファイル出力.
-		if(routeList.size() != 0 || any[0] != null || errList.size() != 0) {
-			outputComponentRoute(routeList, any[0], errList, javaSourceDir, cl);
+		if(!params.isRouteEmpty()) {
+			outputComponentRoute(javaSourceDir, params);
 		}
 		
 		// [CdiService]ファイル出力.
-		if(cdiList.size() != 0) {
-			outputCdiService(cdiList, javaSourceDir);
+		if(!params.isCdiEmpty()) {
+			outputCdiService(javaSourceDir, params);
 		}
 		
 		// [CdiReflect]ファイル出力.
-		if(refList.size() != 0) {
-			outputCdiReflect(refList, javaSourceDir, cl);
+		if(!params.isCdiReflectEmpty()) {
+			outputCdiReflect(javaSourceDir, params);
 		}
-		
 		
 		time = System.currentTimeMillis() - time;
 		System.out.println();
 		// [Router]ファイル出力内容が存在する場合.
-		if(routeList.size() != 0 || any[0] != null || errList.size() != 0) {
+		if(!params.isRouteEmpty()) {
 			System.out.println( " routerOutput: " +
 				new File(javaSourceDir).getCanonicalPath() +
 				"/" + AUTO_ROUTE_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
 		}
 		// [CdiService]ファイル出力内容が存在する場合.
-		if(cdiList.size() != 0) {
+		if(!params.isCdiEmpty()) {
 			System.out.println( " cdiServiceOutput: " +
 				new File(javaSourceDir).getCanonicalPath() +
 				"/" + CDI_SERVICE_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
 		}
 		// [CdiReflect]ファイル出力内容が存在する場合.
-		if(refList.size() != 0) {
+		if(!params.isCdiReflectEmpty()) {
 			System.out.println( " cdiReflectOutput: " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_REFLECT_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
@@ -266,11 +302,9 @@ public class GenerateCdi {
 	}
 	
 	// @Route指定されてるComponentを抽出.
-	private static final void extractComponentRoute(List<String> refList,
-		List<String> routeOut, List<String> cdiOut, String[] anyOut,
-		List<String> errOut, String dir, ClassLoader cl)
+	private static final void extractionClass(String dir, GenerateCdiParams params)
 		throws Exception {
-		readComponentRoute(refList, routeOut, cdiOut, anyOut, errOut, cl, dir, "");
+		extractionClass(dir, "", params);
 	}
 	
 	// 指定Classディレクトリのクラスを読み込むクラローダーを作成.
@@ -285,10 +319,8 @@ public class GenerateCdi {
 	
 	// 1つのディレクトリに対して@Route指定されてるComponentを抽出.
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static final void readComponentRoute(List<String> refList,
-		List<String> routeOut, List<String> cdiOut, String[] anyOut,
-		List<String> errOut, ClassLoader cl, String dir, String packageName)
-		throws Exception {
+	private static final void extractionClass(String dir, String packageName,
+		GenerateCdiParams params) throws Exception {
 		String target, className;
 		File f = new File(dir);
 		String[] list = f.list();
@@ -298,14 +330,13 @@ public class GenerateCdi {
 			// 対象がディレクトリの場合.
 			if(new File(target).isDirectory()) {
 				// 今回のディレクトリで再帰処理.
-				readComponentRoute(refList, routeOut, cdiOut, anyOut, errOut, cl,
-					target, createPackageName(packageName, list[i]));
+				extractionClass(target, createPackageName(packageName, list[i]), params);
 			// クラスファイルの場合.
 			} else if(list[i].endsWith(".class")) {
 				// クラス名を取得.
 				className = createClassName(packageName, list[i]);
 				// クラスを取得.
-				final Class c = Class.forName(className, true, cl);
+				final Class c = Class.forName(className, true, params.cl);
 				// RouteやAnyやErrorやServiceScopedのアノテーションが
 				// 設定されていない場合.
 				if(!c.isAnnotationPresent(Route.class) &&
@@ -322,16 +353,16 @@ public class GenerateCdi {
 					// アノテーションなしのコンポーネントの場合.
 					if(o instanceof Component || o instanceof ErrorComponent) {
 						// Reflectリストに追加.
-						refList.add(className);
+						params.refList.add(className);
 					}
 					continue;
 				}
 				// ServiceScoped定義のCdiServiceの場合.
 				if(c.isAnnotationPresent(ServiceScoped.class)) {
 					System.out.println("  > cdiService: '" + className + "'");
-					cdiOut.add(className);
+					params.cdiList.add(className);
 					// Reflectリストに追加.
-					refList.add(className);
+					params.refList.add(className);
 					continue;
 				}
 				// クラスのインスタンスを生成.
@@ -342,14 +373,14 @@ public class GenerateCdi {
 					if(c.isAnnotationPresent(Route.class)) {
 						System.out.println("  > route: '" + className + "' path: '" +
 							((Route)c.getAnnotation(Route.class)).value() + "'");
-						routeOut.add(className);
+						params.routeList.add(className);
 					// @Any付属のコンポーネントを登録.
 					} else if(c.isAnnotationPresent(AnyRoute.class)) {
 						System.out.println("  > any:   '" + className + "'");
-						anyOut[0] = className;
+						params.any = className;
 					}
 					// Reflectリストに追加.
-					refList.add(className);
+					params.refList.add(className);
 				// 対象がエラーコンポーネントの場合.
 				} else if(o instanceof ErrorComponent) {
 					// @Error付属のコンポーネントを登録.
@@ -363,10 +394,10 @@ public class GenerateCdi {
 							System.out.println("  > error: '" + className + "' status: " +
 								es[0] + "-" + es[1]);
 						}
-						errOut.add(className);
+						params.errList.add(className);
 					}
 					// Reflectリストに追加.
-					refList.add(className);
+					params.refList.add(className);
 				}
 			}
 		}
@@ -400,8 +431,8 @@ public class GenerateCdi {
 	}
 	
 	// 抽出した@Route定義されたComponentをJavaファイルに出力.
-	private static final void outputComponentRoute(List<String> routeList, String any,
-		List<String> errList, String outSourceDirectory, ClassLoader cl)
+	private static final void outputComponentRoute(String outSourceDirectory,
+		GenerateCdiParams params)
 		throws Exception {
 		String outDir = outSourceDirectory + "/" + AUTO_ROUTE_DIRECTORY_NAME;
 		
@@ -438,27 +469,27 @@ public class GenerateCdi {
 			println(w, 2, "final Router router = Quina.get().getRouter();");
 			
 			String clazzName;
-			int len = routeList.size();
+			int len = params.routeList.size();
 			for(int i = 0; i < len; i ++) {
-				clazzName = routeList.get(i);
+				clazzName = params.routeList.get(i);
 				println(w, 2, "");
 				println(w, 2, "// Register the \""+ clazzName + "\"");
 				println(w, 2, "// component in the @Route.");
 				println(w, 2, "router.route(new " + clazzName + "());");
 			}
 			
-			if(any != null) {
+			if(params.any != null) {
 				println(w, 2, "");
-				println(w, 2, "// Register the \""+ any + "\"");
+				println(w, 2, "// Register the \""+ params.any + "\"");
 				println(w, 2, "// component in the @AnyRoute.");
-				println(w, 2, "router.any(new " + any + "());");
+				println(w, 2, "router.any(new " + params.any + "());");
 			}
 			
 			Class<?> c;
-			len = errList.size();
+			len = params.errList.size();
 			for(int i = 0; i < len; i ++) {
-				clazzName = errList.get(i);
-				c = Class.forName(clazzName, true, cl);
+				clazzName = params.errList.get(i);
+				c = Class.forName(clazzName, true, params.cl);
 				int[] es = LoadAnnotationRoute.loadErrorRoute(c);
 				println(w, 2, "");
 				if(es[0] == 0) {
@@ -492,7 +523,8 @@ public class GenerateCdi {
 	}
 	
 	// 抽出した@ServiceScoped定義されたオブジェクトをJavaファイルに出力.
-	private static final void outputCdiService(List<String> cdiList, String outSourceDirectory)
+	private static final void outputCdiService(String outSourceDirectory,
+		GenerateCdiParams params)
 		throws Exception {
 		String outDir = outSourceDirectory + "/" + CDI_SERVICE_DIRECTORY_NAME;
 		
@@ -529,9 +561,9 @@ public class GenerateCdi {
 			println(w, 2, "final CdiManager cdiManager = Quina.get().getCdiManager();");
 			
 			String clazzName;
-			int len = cdiList.size();
+			int len = params.cdiList.size();
 			for(int i = 0; i < len; i ++) {
-				clazzName = cdiList.get(i);
+				clazzName = params.cdiList.get(i);
 				println(w, 2, "");
 				println(w, 2, "// Register the \""+ clazzName + "\"");
 				println(w, 2, "// object in the @ServiceScoped.");
@@ -555,8 +587,8 @@ public class GenerateCdi {
 	}
 	
 	// 抽出した@ServiceScoped定義されたオブジェクトをJavaファイルに出力.
-	private static final void outputCdiReflect(List<String> refList, String outSourceDirectory,
-		ClassLoader cl)
+	private static final void outputCdiReflect(String outSourceDirectory,
+		GenerateCdiParams params)
 		throws Exception {
 		String outDir = outSourceDirectory + "/" + CDI_REFLECT_DIRECTORY_NAME;
 		
@@ -599,10 +631,10 @@ public class GenerateCdi {
 			
 			Class<?> c;
 			String clazzName;
-			int len = refList.size();
+			int len = params.refList.size();
 			for(int i = 0; i < len; i ++) {
-				clazzName = refList.get(i);
-				c = Class.forName(clazzName, true, cl);
+				clazzName = params.refList.get(i);
+				c = Class.forName(clazzName, true, params.cl);
 				final Field[] list = c.getDeclaredFields();
 				int lenJ = list.length;
 				if(lenJ == 0) {

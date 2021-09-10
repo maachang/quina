@@ -24,7 +24,7 @@ import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
-import quina.util.Flag;
+import quina.util.TwoStepsFlag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
 
@@ -40,7 +40,7 @@ public final class Quina {
 	private static final String DEFAULT_TOKEN = "@aniuq";
 	
 	// 初期化実行フラグ.
-	private final Flag initFlag = new Flag(false);
+	private final TwoStepsFlag initFlag = new TwoStepsFlag();
 
 	// コンフィグディレクトリ.
 	private String configDir = null;
@@ -100,12 +100,12 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina initialize(Class<?> mainClass, String[] args) {
-		// 初期化フラグを一旦ONにセット..
-		if(initFlag.setToGetBefore(true)) {
-			// 既に呼び出されてる場合は処理しない.
-			return this;
-		}
 		try {
+			// 初期化処理開始.
+			if(!initFlag.start()) {
+				// 既に実行済みの場合.
+				return this;
+			}
 			// ネットワーク初期処理.
 			NioUtil.initNet();
 			// SystemPropertyの初期処理.
@@ -147,14 +147,16 @@ public final class Quina {
 				// 登録してQuinaのコンフィグ情報をロードする.
 				this.loadConfig(configDir);
 			}
+			// 初期化成功.
+			initFlag.forcedSuccess();
 			return this;
 		} catch(CoreException ce) {
-			// 例外が発生した場合、初期化フラグをOFF.
-			initFlag.set(false);
+			// 初期化失敗.
+			initFlag.failure();
 			throw ce;
 		} catch(Exception e) {
-			// 例外が発生した場合、初期化フラグをOFF.
-			initFlag.set(false);
+			// 初期化失敗.
+			initFlag.failure();
 			throw new QuinaException(e);
 		}
 	}
@@ -163,7 +165,8 @@ public final class Quina {
 	 * initialize処理が呼び出されてない場合は例外.
 	 */
 	protected void checkInit() {
-		if(!initFlag.get()) {
+		// 初期化実行済みでない場合.
+		if(!initFlag.isExecuted()) {
 			throw new QuinaException(
 				"Quina initialization process has not been executed.");
 		}
