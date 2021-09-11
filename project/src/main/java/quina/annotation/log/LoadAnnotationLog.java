@@ -45,6 +45,12 @@ public class LoadAnnotationLog {
 			LogConfigArray.class);
 		// 存在しない場合.
 		if(array == null) {
+			// 単体で取得.
+			LogConfig conf = c.getAnnotation(LogConfig.class);
+			if(conf != null) {
+				regLogConfig(conf);
+				return true;
+			}
 			return false;
 		}
 		// 複数のLogConfigアノテーション定義を取得.
@@ -56,17 +62,21 @@ public class LoadAnnotationLog {
 		// LogFactoryにLogConfigの登録を実行.
 		int len = list.length;
 		for(int i = 0; i < len; i ++) {
-			// LogConfigからLogDefineElementを生成.
-			LogDefineElement em = new LogDefineElement(list[i]);
-			if(list[i].name().isEmpty()) {
-				// LogConfigのname()が空の場合はSystemログ設定.
-				LogFactory.getInstance().register(em);
-			} else {
-				// LogConfigのname()が存在する場合はログ定義名でのログ設定.
-				LogFactory.getInstance().register(list[i].name(), em);
-			}
+			regLogConfig(list[i]);
 		}
 		return len > 0;
+	}
+	
+	private static final void regLogConfig(LogConfig conf) {
+		// LogConfigからLogDefineElementを生成.
+		LogDefineElement em = new LogDefineElement(conf);
+		if(conf.name().isEmpty()) {
+			// LogConfigのname()が空の場合はSystemログ設定.
+			LogFactory.getInstance().register(em);
+		} else {
+			// LogConfigのname()が存在する場合はログ定義名でのログ設定.
+			LogFactory.getInstance().register(conf.name(), em);
+		}
 	}
 	
 	/**

@@ -123,7 +123,7 @@ public final class Quina {
 			if(!loadLogConfig(configDir)) {
 				// 外部コンフィグファイルが存在しない場合は
 				// LogConfigの初期処理.
-				loadLogConfig(mainClass);
+				loadLogConfigByAnnotation(mainClass);
 			}
 			// Argsを設定.
 			if(args != null) {
@@ -370,7 +370,7 @@ public final class Quina {
 	}
 	
 	// LogConfigアノテーションからログ定義を読み込む.
-	private static final boolean loadLogConfig(Class<?> mainClass) {
+	private static final boolean loadLogConfigByAnnotation(Class<?> mainClass) {
 		// LogFactoryが既にコンフィグ設定されている場合.
 		if(LogFactory.getInstance().isFixConfig()) {
 			// 処理しない.
@@ -495,6 +495,14 @@ public final class Quina {
 			} catch(Exception e) {}
 			throw qe;
 		}
+	}
+	
+	/**
+	 * 全てのQuinaサービスを開始処理してシャットダウン待機処理.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public Quina startAwait() {
+		return start().await();
 	}
 
 	/**

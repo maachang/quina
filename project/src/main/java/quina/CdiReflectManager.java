@@ -52,11 +52,6 @@ public class CdiReflectManager {
 	 */
 	public static final String AUTO_READ_CDI_REFLECT_METHOD = "load";
 	
-	/**
-	 * CDIRefect自動読み込み実行用パッケージ名.
-	 */
-	public static final String AUTO_READ_CDI_REFLECT_PACKAGE = "quinax";
-	
 	// Componentや@ServiceScopedアノテーション単位で管理するマネージャ.
 	private IndexKeyValueList<String, CdiReflectElement> manager = new
 		IndexKeyValueList<String, CdiReflectElement>();
@@ -79,7 +74,8 @@ public class CdiReflectManager {
 				"The specified argument is Null.");
 		}
 		CdiObjectType type = CdiObjectType.getType(o);
-		if(type == CdiObjectType.None) {
+		if(type == CdiObjectType.Unknown) {
+			// Cdiオブジェクトで無い不明な場合はnull返却.
 			return null;
 		}
 		String name = o.getClass().getName();
@@ -133,7 +129,7 @@ public class CdiReflectManager {
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
-				AUTO_READ_CDI_REFLECT_PACKAGE + "." + AUTO_READ_CDI_REFLECT_CLASS);
+				QuinaConstants.CDI_PACKAGE_NAME + "." + AUTO_READ_CDI_REFLECT_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_CDI_REFLECT_METHOD);
 		} catch(Exception e) {

@@ -21,7 +21,7 @@ import java.lang.annotation.Target;
  * 
  * この設定によりGzip圧縮されたレスポンス返却が行われます.
  * 
- * また @GzipSwitch や @GzipSwitch() の場合は Gzipは有効に
+ * また @GzipSwitch や @GzipSwitch() 定義の場合は Gzipは有効に
  * なります.
  */
 

@@ -39,6 +39,14 @@ public class LoadAnnotationValidate {
 			ValidateArray.class);
 		// 存在しない場合.
 		if(array == null) {
+			// 単体で取得.
+			Validate v = c.getAnnotation(Validate.class);
+			if(v != null) {
+				// Validationを生成して返却.
+				Validation ret = new Validation();
+				addValidate(ret, v);
+				return ret;
+			}
 			return null;
 		}
 		// 複数のValidateアノテーション定義を取得.

@@ -8,8 +8,8 @@ import quina.exception.QuinaException;
  * Cdi(Contexts and Dependency Injection)オブジェクトタイプ.
  */
 public enum CdiObjectType {
-	// なし.
-	None("none", false),
+	// 不明.
+	Unknown("unknown", false),
 	// コンポーネント.
 	Component("component", true),
 	// サービス.
@@ -57,7 +57,7 @@ public enum CdiObjectType {
 		} else if(LoadAnnotationCdi.loadServiceScoped(o)) {
 			return Service;
 		}
-		return None;
+		return Unknown;
 	}
 	
 	@Override

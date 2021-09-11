@@ -38,7 +38,7 @@
   <!-- ===================================================================== -->
   <!-- all.                                                                  -->
   <!-- ===================================================================== -->
-  <target name="all" depends="compile, jar"/>
+  <target name="all" depends="genCdi, compile, jar"/>
   
   <!-- ===================================================================== -->
   <!-- compile.                                                              -->
@@ -71,12 +71,12 @@
   <!-- ===================================================================== -->
   <!-- create archive zip                                                    -->
   <!-- ===================================================================== -->
-    <target name="archive">
-    <zip destfile="${project.name}-${version}_src.zip" 
-             basedir="${src.dir}"
-             update="true"
-        />
-    </target>
+  <target name="archive">
+  <zip destfile="${project.name}-${version}_src.zip" 
+            basedir="${src.dir}"
+            update="true"
+      />
+  </target>
   
   <!-- ===================================================================== -->
   <!-- make javadoc.                                                         -->
@@ -111,6 +111,23 @@
     <delete file="${project.name}-${version}_src.zip" />
     <delete dir="${doc.dir}" />
     <delete file=".ant-targets-build.xml" />
+  </target>
+
+  <!-- ===================================================================== -->
+  <!-- execute genCdi.                                                      -->
+  <!-- ===================================================================== -->
+  <target name="genCdi">
+    <java classname="quina.command.GenerateCdi" fork="true">
+      <classpath refid="path.lib" />
+      <jvmarg value="-Xms128m" />
+      <jvmarg value="-Xmx128m" />
+      <!-- target class path. -->
+			<arg value="-c" />
+			<arg value="${dest.dir}" />
+      <!-- output java source path. -->
+			<arg value="-s" />
+			<arg value="${src.dir}" />
+		</java>
   </target>
 
 </project>

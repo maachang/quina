@@ -21,7 +21,7 @@ import java.lang.annotation.Target;
  * 
  * この設定によりCacheモードがOnにされたレスポンス返却が行われます.
  * 
- * また @CacheSwitch や @CacheSwitch() の場合は cacheは有効に
+ * また @CacheSwitch や @CacheSwitch() 定義の場合は cacheは有効に
  * なります.
  */
 

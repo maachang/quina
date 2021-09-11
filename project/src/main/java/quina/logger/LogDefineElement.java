@@ -357,7 +357,7 @@ public class LogDefineElement {
 	}
 
 	/**
-	 * ログ１ファイルの書き込みファイルサイズを取得.
+	 * ログの１ファイルの書き込みファイルサイズを取得.
 	 * @return
 	 */
 	public Long getLogSize() {
@@ -419,9 +419,9 @@ public class LogDefineElement {
 	 */
 	public StringBuilder toString(StringBuilder buf) {
 		buf.append("\"logLevel\": \"").append(logLevel)
-			.append("\", \"fileSize\": ").append(logSize)
+			.append("\", \"logSize\": ").append(logSize)
 			.append("\", \"consoleOut\": ").append(consoleOut)
-			.append(", \"logDir\": \"").append(directory).append("\"");
+			.append(", \"directory\": \"").append(directory).append("\"");
 		return buf;
 	}
 

@@ -20,11 +20,6 @@ public class CdiManager {
 	 */
 	public static final String AUTO_READ_CDI_SERVICE_METHOD = "load";
 	
-	/**
-	 * CDIServiceアノテーション自動読み込み実行用パッケージ名.
-	 */
-	public static final String AUTO_READ_CDI_SERVICE_PACKAGE = "quinax";
-	
 	// package + class名で、対象サービスを管理.
 	private IndexKeyValueList<String, Object> manager =
 		new IndexKeyValueList<String, Object>();
@@ -124,7 +119,7 @@ public class CdiManager {
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
-				AUTO_READ_CDI_SERVICE_PACKAGE + "." + AUTO_READ_CDI_SERVICE_CLASS);
+				QuinaConstants.CDI_PACKAGE_NAME + "." + AUTO_READ_CDI_SERVICE_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_CDI_SERVICE_METHOD);
 		} catch(Exception e) {

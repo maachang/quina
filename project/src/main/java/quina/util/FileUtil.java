@@ -27,11 +27,6 @@ public final class FileUtil {
 	protected FileUtil() {
 	}
 
-	// ファイル及びディレクトリの削除.
-	private static final void _deleteFileOrDirectory(String name) throws Exception {
-		Files.delete(Paths.get(name));
-	}
-
 	// ファイル時間を取得.
 	private static final long _getFileTime(int type, String name) throws Exception {
 		File fp = new File(name);
@@ -415,6 +410,24 @@ public final class FileUtil {
 	public static final void removeFile(String name) throws Exception {
 		_deleteFileOrDirectory(name);
 	}
+	
+	/**
+	 * 指定フォルダ内のファイルとフォルダを全削除.
+	 *
+	 * @param name
+	 *            削除対象のフォルダ名かファイル名を設定します.
+	 * @throws Exception
+	 *             例外.
+	 */
+	public static final void delete(String name) throws Exception {
+		_delete(getFullPath(name));
+	}
+
+	
+	// ファイル及びディレクトリの削除.
+	private static final void _deleteFileOrDirectory(String name) throws Exception {
+		Files.delete(Paths.get(name));
+	}
 
 	// 指定内のフォルダが空でない場合は中身も削除して削除処理.
 	private static final void _delete(String name) throws Exception {
@@ -437,18 +450,6 @@ public final class FileUtil {
 				}
 			}
 		}
-	}
-
-	/**
-	 * 指定フォルダ内のファイルとフォルダを全削除.
-	 *
-	 * @param name
-	 *            削除対象のフォルダ名かファイル名を設定します.
-	 * @throws Exception
-	 *             例外.
-	 */
-	public static final void delete(String name) throws Exception {
-		_delete(getFullPath(name));
 	}
 
 	/**

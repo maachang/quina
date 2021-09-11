@@ -21,7 +21,7 @@ import java.lang.annotation.Target;
  * 
  * この設定によりCrossドメインモードがOnにされたレスポンス返却が行われます.
  * 
- * また @CorsSwitch や @CorsSwitch() の場合は Crossドメインからのアクセスは
+ * また @CorsSwitch や @CorsSwitch() 定義の場合は Crossドメインからのアクセスは
  * 許可されます.
  */
 

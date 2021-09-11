@@ -12,6 +12,7 @@ import java.util.List;
 
 import quina.CdiManager;
 import quina.CdiReflectManager;
+import quina.QuinaConstants;
 import quina.Router;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.cdi.ServiceScoped;
@@ -22,6 +23,7 @@ import quina.annotation.route.Route;
 import quina.component.Component;
 import quina.component.ErrorComponent;
 import quina.util.Args;
+import quina.util.FileUtil;
 
 /**
  * CDI関連のリフレクションに対するJavaソースコードを生成.
@@ -45,6 +47,10 @@ import quina.util.Args;
  * 3. Routeアノテーション定義のComponent群のオブジェクトを列挙
  *    するソースコードを生成.
  * 
+ * 利用想定としては、対象プロジェクトのコンパイル前にこの
+ * コマンドを実行して、Cdi関連のリフレクション代替え用の
+ * コードを生成して、プロジェクトをコンパイルする事で
+ * graalvm の native-image 実行が可能になります.
  */
 public class GenerateCdi {
 
@@ -55,24 +61,16 @@ public class GenerateCdi {
 	private static final String COMMAND_NAME = "genCdi";
 	
 	// AutoRoute出力先ディレクトリ名.
-	private static final String AUTO_ROUTE_DIRECTORY_NAME = packageNameToDirectory(
-		Router.AUTO_READ_ROUTE_PACKAGE);
+	private static final String CDI_DIRECTORY_NAME = packageNameToDirectory(
+		QuinaConstants.CDI_PACKAGE_NAME);
 	
 	// AutoRoute出力先Javaソースファイル名.
 	private static final String AUTO_ROUTE_SOURCE_NAME =
 		Router.AUTO_READ_ROUTE_CLASS + ".java";
 	
-	// AutoCdiService出力先ディレクトリ名.
-	private static final String CDI_SERVICE_DIRECTORY_NAME = packageNameToDirectory(
-		CdiManager.AUTO_READ_CDI_SERVICE_PACKAGE);
-	
 	// AutoCdiService出力先Javaソースファイル名.
 	private static final String CDI_SERVICE_SOURCE_NAME =
 		CdiManager.AUTO_READ_CDI_SERVICE_CLASS + ".java";
-	
-	// AutoCdiReflect出力先ディレクトリ名.
-	private static final String CDI_REFLECT_DIRECTORY_NAME = packageNameToDirectory(
-		CdiReflectManager.AUTO_READ_CDI_REFLECT_PACKAGE);
 	
 	// AutoCdiReflect出力先Javaソースファイル名.
 	private static final String CDI_REFLECT_SOURCE_NAME =
@@ -220,7 +218,7 @@ public class GenerateCdi {
 		javaSourceDir = AnnotationUtil.slashPath(javaSourceDir);
 		
 		// 処理開始.
-		System.out.println("start " + COMMAND_NAME + " version: " + VERSION);
+		System.out.println("start " + this.getClass().getSimpleName() + " version: " + VERSION);
 		System.out.println(" target classPath : " + new File(clazzDir).getCanonicalPath());
 		System.out.println(" target outputPath: " + new File(javaSourceDir).getCanonicalPath());
 		System.out.println("");
@@ -231,15 +229,20 @@ public class GenerateCdi {
 		GenerateCdiParams params = new GenerateCdiParams(clazzDir);
 		
 		// ClassDirから、対象となるクラスを抽出.
-		extractionClass( clazzDir, params);
+		extractionClass(clazzDir, params);
+		
+		// 出力先のソースコードを全削除.
+		removeOutAutoJavaSource(javaSourceDir);
 		
 		// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
 		if(params.isEmpty()) {
-			// 存在しない場合はエラー.
-			System.err.println(
-				"[ERROR] @Route and @Any and @Error and @ServiceScoped The " +
-				"defined Component object does not exist.");
-			System.exit(1);
+			time = System.currentTimeMillis() - time;
+			// 存在しない場合は正常終了.
+			System.out.println("There is no target condition to read.");
+			System.out.println();
+			System.out.println("success: " + time + " msec");
+			System.out.println();
+			System.exit(0);
 			return;
 		}
 		
@@ -262,21 +265,21 @@ public class GenerateCdi {
 		System.out.println();
 		// [Router]ファイル出力内容が存在する場合.
 		if(!params.isRouteEmpty()) {
-			System.out.println( " routerOutput: " +
+			System.out.println( " routerOutput:     " +
 				new File(javaSourceDir).getCanonicalPath() +
-				"/" + AUTO_ROUTE_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
+				"/" + CDI_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
 		}
 		// [CdiService]ファイル出力内容が存在する場合.
 		if(!params.isCdiEmpty()) {
 			System.out.println( " cdiServiceOutput: " +
 				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_SERVICE_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
 		}
 		// [CdiReflect]ファイル出力内容が存在する場合.
 		if(!params.isCdiReflectEmpty()) {
 			System.out.println( " cdiReflectOutput: " +
 					new File(javaSourceDir).getCanonicalPath() +
-					"/" + CDI_REFLECT_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
+					"/" + CDI_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
 		}
 		System.out.println();
 		System.out.println("success: " + time + " msec");
@@ -430,11 +433,28 @@ public class GenerateCdi {
 		w.append("\n");
 	}
 	
+	// 出力作のディレクトリ内の自動生成のJavaソースを削除.
+	private static final void removeOutAutoJavaSource(String outSourceDirectory)
+		throws Exception {
+		String[] javaSrcs = new String[] {
+			AUTO_ROUTE_SOURCE_NAME,
+			CDI_SERVICE_SOURCE_NAME,
+			CDI_REFLECT_SOURCE_NAME
+		};
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME + "/";
+		int len = javaSrcs.length;
+		for(int i = 0; i < len; i ++) {
+			try {
+				FileUtil.removeFile(outDir + javaSrcs[i]);
+			} catch(Exception e) {}
+		}
+	}
+	
 	// 抽出した@Route定義されたComponentをJavaファイルに出力.
 	private static final void outputComponentRoute(String outSourceDirectory,
 		GenerateCdiParams params)
 		throws Exception {
-		String outDir = outSourceDirectory + "/" + AUTO_ROUTE_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
@@ -444,7 +464,7 @@ public class GenerateCdi {
 		try {
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + Router.AUTO_READ_ROUTE_PACKAGE + ";");
+			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
 			println(w, 0, "import quina.Router;");
@@ -526,7 +546,7 @@ public class GenerateCdi {
 	private static final void outputCdiService(String outSourceDirectory,
 		GenerateCdiParams params)
 		throws Exception {
-		String outDir = outSourceDirectory + "/" + CDI_SERVICE_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
@@ -536,7 +556,7 @@ public class GenerateCdi {
 		try {
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + CdiManager.AUTO_READ_CDI_SERVICE_PACKAGE + ";");
+			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
 			println(w, 0, "import quina.CdiManager;");
@@ -590,7 +610,7 @@ public class GenerateCdi {
 	private static final void outputCdiReflect(String outSourceDirectory,
 		GenerateCdiParams params)
 		throws Exception {
-		String outDir = outSourceDirectory + "/" + CDI_REFLECT_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
@@ -600,7 +620,7 @@ public class GenerateCdi {
 		try {
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + CdiReflectManager.AUTO_READ_CDI_REFLECT_PACKAGE + ";");
+			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
 			println(w, 0, "import quina.CdiReflectManager;");

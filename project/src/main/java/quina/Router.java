@@ -30,11 +30,6 @@ public class Router {
 	 */
 	public static final String AUTO_READ_ROUTE_METHOD = "load";
 	
-	/**
-	 * Routeアノテーション自動読み込み実行用パッケージ名.
-	 */
-	public static final String AUTO_READ_ROUTE_PACKAGE = "quinax";
-	
 	// 基本マッピングパス.
 	private String path = "/";
 
@@ -218,7 +213,7 @@ public class Router {
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
-				AUTO_READ_ROUTE_PACKAGE + "." + AUTO_READ_ROUTE_CLASS);
+				QuinaConstants.CDI_PACKAGE_NAME + "." + AUTO_READ_ROUTE_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_ROUTE_METHOD);
 		} catch(Exception e) {

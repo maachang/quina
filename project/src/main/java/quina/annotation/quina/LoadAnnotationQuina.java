@@ -38,6 +38,13 @@ public class LoadAnnotationQuina {
 			SystemPropertyArray.class);
 		// 存在しない場合.
 		if(array == null) {
+			// 単体で取得.
+			SystemProperty p = c.getAnnotation(SystemProperty.class);
+			if(p != null) {
+				// システムプロパティを設定.
+				System.setProperty(p.key(), p.value());
+				return true;
+			}
 			return false;
 		}
 		// 複数のSystemPropertyアノテーション定義を取得.

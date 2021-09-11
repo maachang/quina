@@ -9,12 +9,13 @@ import java.lang.annotation.Target;
 import quina.logger.LogLevel;
 
 /**
- * Log定義を設定するAnnotation.
- * 
+ * Log定義を設定するAnnotation.<br>
+ * <br>
  * Quinaを実行するmainクラスに対して、LogConfigアノテーションを
- * 設定しQuina.init()処理を行う事で、Log定義が行えます.
- * 
- * @LogConfig(name="hoge", level=LogLevel.Trace,
+ * 設定しQuina.init()処理を行う事で、Log定義が行えます.<br>
+ * <pre>
+ * {@code
+ * ＠LogConfig(name="hoge", level=LogLevel.Trace,
  *     console=false, size="50m" directory="./log")
  * public class QuinaTest {
  *   public static main(String[] args) throws Exception {
@@ -23,17 +24,19 @@ import quina.logger.LogLevel;
  *     
  *     //(略).....
  *   }
- * 
+ * }
+ * }
+ * </pre>
  * これによって LogFactory.log("hoge") で設定されたログ条件のログが
- * 取得できます.
- * 
+ * 取得できます.<br>
+ * <br>
  * また取得対象のログはTraceレベルまで出力され、ConsoleはONに
- * １つのログファイルサイズは５０Mbyteで出力先は ./log 配下に
- * なります.
- * 
+ * １つのログファイルサイズは50Mbyteで出力先は ./log 配下に
+ * なります.<br>
+ * <br>
  * あと name を指定しない場合はQuinaのシステムログ "system" の設定に
- * なります.
- * 
+ * なります.<br>
+ * <br>
  * またこのAnnotationは複数定義が可能です.
  */
 

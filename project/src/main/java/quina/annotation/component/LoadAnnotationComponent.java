@@ -42,6 +42,11 @@ public class LoadAnnotationComponent {
 			if(headers == null || headers.length == 0) {
 				headers = null;
 			}
+		} else {
+			Header h =c.getAnnotation(Header.class);
+			if(h != null) {
+				headers = new Header[] {h};
+			}
 		}
 		ResponseSwitch responseSwitch = c.getAnnotation(ResponseSwitch.class);
 		if(status == null && contentType == null && headers == null &&
