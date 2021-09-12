@@ -1,21 +1,9 @@
 package quina.logger;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Logファクトリ.
@@ -35,6 +23,9 @@ public class LogFactory {
 
 	// コンフィグ処理が呼び出されたかチェック.
 	private boolean configFlag = false;
+	
+	// ログ出力用ワーカー.
+	private final LogWriteWorker logWriteWorker = new LogWriteWorker();
 
 	// シングルトン.
 	private static final LogFactory SNGL = new LogFactory();
@@ -51,6 +42,7 @@ public class LogFactory {
 	 * コンストラクタ.
 	 */
 	private LogFactory() {
+		logWriteWorker.startThread();
 	}
 	
 	/**
@@ -257,7 +249,8 @@ public class LogFactory {
 	 * @param element ログ定義要素を設定します.
 	 * @return LogFactory LogFactoryオブジェクトが返却されます.
 	 */
-	public synchronized LogFactory register(String name, LogDefineElement element) {
+	public synchronized LogFactory register(
+		String name, LogDefineElement element) {
 		return _register(name, new LogDefineElement(element));
 	}
 
@@ -267,7 +260,8 @@ public class LogFactory {
 	 * @param element ログ定義要素を設定します.
 	 * @return LogFactory LogFactoryオブジェクトが返却されます.
 	 */
-	private synchronized LogFactory _register(String name, LogDefineElement element) {
+	private synchronized LogFactory _register(
+		String name, LogDefineElement element) {
 		if(name == null || element == null) {
 			throw new NullPointerException();
 		} else if((name = name.trim()).isEmpty()) {
@@ -381,7 +375,8 @@ public class LogFactory {
 	 * @return Log ログオブジェクトが返却されます.
 	 */
 	public synchronized Log get() {
-		return new BaseLog(defaultLogName, defaultLogDefine);
+		return new BaseLog(defaultLogName, defaultLogDefine,
+			logWriteWorker);
 	}
 
 	/**
@@ -425,39 +420,61 @@ public class LogFactory {
 		}
 		// ログ定義名とログ定義が存在する場合.
 		if(element != null) {
-			return new BaseLog(name, element);
+			return new BaseLog(name, element, logWriteWorker);
 		}
 		LogDefineElement em;
 		// 定義されているデフォルト名と一致しない場合.
 		if(!defaultLogName.equals(name)) {
 			// 既に登録されている場合.
 			if((em = manager.get(name)) != null) {
-				return new BaseLog(name, em);
+				return new BaseLog(name, em, logWriteWorker);
 			}
 			// デフォルトのログ定義を複製して、その名前のログ定義を作成.
 			em = new LogDefineElement(defaultLogDefine);
 			manager.put(name, em);
-			return new BaseLog(name, em);
+			return new BaseLog(name, em, logWriteWorker);
 		}
 		// デフォルトのログ定義の呼び出し.
-		return new BaseLog(defaultLogName, defaultLogDefine);
+		return new BaseLog(defaultLogName, defaultLogDefine,
+			logWriteWorker);
+	}
+	
+	/**
+	 * ログ書き込みワーカーの停止.
+	 * ※注意: この処理を呼び出すとログ書き込みが行われなく
+	 *         なります.
+	 */
+	public void stopLogWriteWorker() {
+		logWriteWorker.stopThread();
+	}
+	
+	/**
+	 * ログ書き込みワーカーが終了したかチェック.
+	 * @return boolean true の場合、停止します.
+	 */
+	public boolean isExitLogWriteWorker() {
+		return logWriteWorker.isExitThread();
 	}
 
 	/**
 	 * ログ実装.
 	 */
 	private static final class BaseLog implements Log {
-		private String name;
-		private LogDefineElement element;
+		private final String name;
+		private final LogDefineElement element;
+		private final LogWriteWorker logWriteWorker;
 
 		/**
 		 * コンストラクタ.
 		 * @param name
 		 * @param element
+		 * @param logWriteWorker
 		 */
-		protected BaseLog(String name, LogDefineElement element) {
+		protected BaseLog(String name, LogDefineElement element,
+			LogWriteWorker logWriteWorker) {
 			this.name = name;
 			this.element = element;
+			this.logWriteWorker = logWriteWorker;
 
 			// ログ確定処理が行われてない場合.
 			if(!element.isFinalized()) {
@@ -494,7 +511,7 @@ public class LogFactory {
 		 */
 		@Override
 		public void trace(Object... args) {
-			LogFactory.write(name, element, LogLevel.TRACE, args);
+			logWriteWorker.push(name, element, LogLevel.TRACE, args);
 		}
 
 		/**
@@ -503,7 +520,7 @@ public class LogFactory {
 		 */
 		@Override
 		public void debug(Object... args) {
-			LogFactory.write(name, element, LogLevel.DEBUG, args);
+			logWriteWorker.push(name, element, LogLevel.DEBUG, args);
 		}
 
 		/**
@@ -512,7 +529,7 @@ public class LogFactory {
 		 */
 		@Override
 		public void info(Object... args) {
-			LogFactory.write(name, element, LogLevel.INFO, args);
+			logWriteWorker.push(name, element, LogLevel.INFO, args);
 		}
 
 		/**
@@ -521,7 +538,7 @@ public class LogFactory {
 		 */
 		@Override
 		public void warn(Object... args) {
-			LogFactory.write(name, element, LogLevel.WARN, args);
+			logWriteWorker.push(name, element, LogLevel.WARN, args);
 		}
 
 		/**
@@ -530,7 +547,7 @@ public class LogFactory {
 		 */
 		@Override
 		public void error(Object... args) {
-			LogFactory.write(name, element, LogLevel.ERROR, args);
+			logWriteWorker.push(name, element, LogLevel.ERROR, args);
 		}
 
 		/**
@@ -539,7 +556,7 @@ public class LogFactory {
 		 */
 		@Override
 		public void fatal(Object... args) {
-			LogFactory.write(name, element, LogLevel.FATAL, args);
+			logWriteWorker.push(name, element, LogLevel.FATAL, args);
 		}
 
 		/**
@@ -549,7 +566,7 @@ public class LogFactory {
 		@Override
 		public void console(Object... args) {
 			if(element.isConsoleOut()) {
-				System.out.println(format(LogLevel.CONSOLE, args));
+				System.out.println(LogWriteWorker.format(LogLevel.CONSOLE, args));
 			}
 		}
 
@@ -653,255 +670,5 @@ public class LogFactory {
 				.append(name).append("\", ");
 			return element.toString(buf).toString();
 		}
-	}
-
-	// 数値変換可能かチェック.
-	protected static final boolean isNumeric(Object o) {
-		if(o instanceof Number) {
-			return true;
-		}
-		return isNumeric("" + o);
-	}
-
-	/**
-	 * 指定文字列が数値かチェック.
-	 * @param s 文字列を設定します.
-	 * @return trueの場合、文字列です.
-	 */
-	protected static final boolean isNumeric(String s) {
-		if(s == null || s.isEmpty()) {
-			return false;
-		}
-		char c;
-		int off = 0;
-		int dot = 0;
-		final int len = s.length();
-		if(s.charAt(0) == '-') {
-			off = 1;
-		}
-		for (int i = off; i < len; i++) {
-			if (!((c = s.charAt(i)) == '.' || (c >= '0' && c <= '9'))) {
-				return false;
-			} else if(c == '.') {
-				dot ++;
-				if(dot > 1) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	// int 変換.
-	protected static final int convertInt(Object o) {
-		if(o instanceof Number) {
-			return ((Number)o).intValue();
-		}
-		return Integer.parseInt(""+o);
-	}
-
-	// long 変換.
-	protected static final long convertLong(Object o) {
-		if(o instanceof Number) {
-			return ((Number)o).longValue();
-		}
-		return Long.parseLong(""+o);
-	}
-
-	// 日付情報を取得.
-	@SuppressWarnings("deprecation")
-	protected static final String dateString(Date d) {
-		String n;
-		return new StringBuilder().append((d.getYear() + 1900)).append("-")
-				.append("00".substring((n = "" + (d.getMonth() + 1)).length())).append(n).append("-")
-				.append("00".substring((n = "" + d.getDate()).length())).append(n).toString();
-	}
-
-	// ログフォーマット情報を作成.
-	@SuppressWarnings("deprecation")
-	private static final String format(LogLevel type, Object[] args) {
-		String n;
-		Date d = new Date();
-		StringBuilder buf = new StringBuilder();
-		buf.append("[").append(d.getYear() + 1900).append("/")
-				.append("00".substring((n = "" + (d.getMonth() + 1)).length())).append(n).append("/")
-				.append("00".substring((n = "" + d.getDate()).length())).append(n).append(" ")
-				.append("00".substring((n = "" + d.getHours()).length())).append(n).append(":")
-				.append("00".substring((n = "" + d.getMinutes()).length())).append(n).append(":")
-				.append("00".substring((n = "" + d.getSeconds()).length())).append(n).append(".")
-				.append((n = "" + d.getTime()).substring(n.length() - 3)).append("] [").append(type).append("] ");
-
-		Object o;
-		String nx = "";
-		int len = (args == null) ? 0 : args.length;
-		for (int i = 0; i < len; i++) {
-			if ((o = args[i]) instanceof Throwable) {
-				buf.append("\n").append(getStackTrace((Throwable) o));
-				nx = "\n";
-			} else {
-				buf.append(nx).append(o).append(" ");
-				nx = "";
-			}
-		}
-		return buf.append("\n").toString();
-	}
-
-	// stackTraceを文字出力.
-	private static final String getStackTrace(final Throwable t) {
-		final StringWriter sw = new StringWriter();
-		final PrintWriter pw = new PrintWriter(sw);
-		t.printStackTrace(pw);
-		return sw.toString();
-	}
-
-	// ファイル追加書き込み.
-	private static final void appendFile(final String name, final String out) {
-		FileOutputStream o = null;
-		try {
-			byte[] b = out.getBytes("UTF8");
-			o = new FileOutputStream(name, true);
-			o.write(b);
-			o.close();
-			o = null;
-		} catch (Exception e) {
-			if (o != null) {
-				try {
-					o.close();
-				} catch (Exception ee) {
-				}
-			}
-		}
-	}
-
-	// ログ出力処理.
-	@SuppressWarnings("deprecation")
-	private static final void write(final String name, final LogDefineElement element,
-		final LogLevel typeNo, final Object... args) {
-		final LogLevel logLevel = element.getLogLevel();
-		// 指定されたログレベル以下はログ出力させない場合.
-		if (typeNo.checkMinMaxEquals(logLevel) < 0) {
-			return;
-		}
-		final boolean consoleOut = element.isConsoleOut();
-		final long fileSize = element.getLogSize();
-		final String logDir = element.getDirectory();
-		// ログ出力先がない場合は作成.
-		final File dir = new File(logDir);
-		if (!dir.isDirectory()) {
-			dir.mkdirs();
-		}
-
-		final String format = format(typeNo, args);
-		final String fileName = name + ".log";
-		final File stat = new File(logDir + fileName);
-		final Date date = new Date(stat.lastModified());
-		final Date now = new Date();
-
-		// ファイルサイズの最大値が設定されていて、その最大値が増える場合.
-		// また、現在のログファイルの日付が、現在の日付と一致しない場合.
-		if (stat.isFile() && ((fileSize > 0 && stat.length() + format.length() > fileSize) || ((date.getYear() & 31)
-				| ((date.getMonth() & 31) << 9) | ((date.getDate() & 31) << 18)) != ((now.getYear() & 31)
-						| ((now.getMonth() & 31) << 9) | ((now.getDate() & 31) << 18)))) {
-			// 現在のログファイルをリネームして、新しいログファイルに移行する.
-			int p, v;
-			String n;
-			int cnt = -1;
-			File renameToStat = null;
-			final String tname;
-
-			// 条件によって新しいファイルに移行する場合はロック処理.
-			synchronized(element.getSync()) {
-				final String targetName = fileName + "." + dateString(date) + ".";
-				// 指定フォルダ内から、targetNameの条件とマッチするものを検索.
-				String[] list = dir.list(new FilenameFilter() {
-					public boolean accept(final File file, final String str) {
-						return str.indexOf(targetName) == 0;
-					}
-				});
-				// そこの一番高いカウント値＋１の値を取得.
-				String s;
-				int len = (list == null) ? 0 : list.length;
-				for (int i = 0; i < len; i++) {
-					n = list[i];
-					p = n.lastIndexOf(".");
-					s = n.substring(p + 1);
-					if(isNumeric(s)) {
-						v = Integer.parseInt(s);
-						if (cnt < v) {
-							cnt = v;
-						}
-					}
-				}
-				// 今回のファイルをリネーム.
-				tname = logDir + targetName + (cnt + 1);
-				renameToStat = new File(tname);
-				stat.renameTo(renameToStat);
-			}
-			// gzip変換.
-			toGzip(tname, renameToStat);
-			renameToStat = null;
-		}
-
-		// ログ出力.
-		// 書き込みロック.
-		final String outLogFile = logDir + fileName;
-		synchronized(element.getSync()) {
-			appendFile(outLogFile, format);
-		}
-		// コンソール出力が許可されている場合.
-		if(consoleOut) {
-			// ログ情報をコンソールアウト.
-			System.out.print(format);
-		}
-	}
-
-	// ファイルをGZIP変換.
-	protected static final void toGzip(String name, File stat) {
-		final String tname = name;
-		final File tstat = stat;
-		// gzip圧縮(スレッド実行).
-		final Thread t = new Thread() {
-			public void run() {
-				InputStream in = null;
-				try {
-					int len;
-					byte[] b = new byte[4096];
-					in = new BufferedInputStream(
-						new FileInputStream(tname));
-					OutputStream out = null;
-					try {
-						// gzipで圧縮する.
-						out = new GZIPOutputStream(new BufferedOutputStream(
-							new FileOutputStream(tname + ".gz")));
-						while ((len = in.read(b)) != -1) {
-							out.write(b, 0, len);
-						}
-						out.flush();
-						out.close();
-						out = null;
-						in.close();
-						in = null;
-						// ファイル削除.
-						tstat.delete();
-					} catch (Exception e) {
-					} finally {
-						if (out != null) {
-							try {
-								out.close();
-							} catch (Exception e) {}
-						}
-					}
-				} catch (Exception e) {
-				} finally {
-					if (in != null) {
-						try {
-							in.close();
-						} catch (Exception e) {}
-					}
-				}
-			}
-		};
-		t.setDaemon(false);
-		t.start();
 	}
 }

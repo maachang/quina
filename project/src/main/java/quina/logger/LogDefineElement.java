@@ -1,10 +1,14 @@
 package quina.logger;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import quina.annotation.log.LogConfig;
 
@@ -12,6 +16,9 @@ import quina.annotation.log.LogConfig;
  * ログ定義要素.
  */
 public class LogDefineElement {
+	// ID管理.
+	private static final AtomicInteger idMan = new AtomicInteger(0);
+	
 	// 出力可能なログレベル.
 	private LogLevel logLevel;
 
@@ -23,18 +30,25 @@ public class LogDefineElement {
 
 	// 出力先ログディレクトリ.
 	private String directory;
+	
+	// ログ定義ID.
+	private int id;
+	
+	// ログ書き込み中オブジェクト.
+	private OutputStream out;
+	
+	// ログFlashフラグ.
+	private boolean flushOutFlag = false;
 
 	// 設定確定フラグ.
 	private final AtomicBoolean finalizedFlag = new AtomicBoolean(false);
-
-	// 書き込みロックオブジェクト.
-	private final Object sync = new Object();
 
 	/**
 	 * コンストラクタ.
 	 */
 	public LogDefineElement() {
 		set();
+		setId();
 	}
 
 	/**
@@ -43,6 +57,7 @@ public class LogDefineElement {
 	 */
 	public LogDefineElement(LogDefineElement defaultInfo) {
 		set(defaultInfo);
+		setId();
 	}
 
 	/**
@@ -51,6 +66,7 @@ public class LogDefineElement {
 	 */
 	public LogDefineElement(Map<String, Object> map) {
 		set(map).set();
+		setId();
 	}
 
 	/**
@@ -63,6 +79,7 @@ public class LogDefineElement {
 	public LogDefineElement(
 		Object level, Boolean cons, Long fileSize, String directory) {
 		set(level, cons, fileSize, directory).set();
+		setId();
 	}
 	
 	/**
@@ -71,6 +88,7 @@ public class LogDefineElement {
 	 */
 	public LogDefineElement(LogConfig config) {
 		set(config);
+		setId();
 	}
 
 	/**
@@ -81,6 +99,7 @@ public class LogDefineElement {
 	public LogDefineElement(LogDefineElement defaultInfo,
 		Map<String, Object> map) {
 		set(defaultInfo).set(map);
+		setId();
 	}
 
 	/**
@@ -94,6 +113,7 @@ public class LogDefineElement {
 	public LogDefineElement(LogDefineElement defaultInfo,
 		Object level, Boolean cons, Object fileSize, String directory) {
 		set(defaultInfo).set(level, cons, fileSize, directory);
+		setId();
 	}
 	
 	/**
@@ -104,6 +124,7 @@ public class LogDefineElement {
 	public LogDefineElement(LogDefineElement defaultInfo,
 		LogConfig config) {
 		set(defaultInfo).set(config);
+		setId();
 	}
 	
 	// ログ定義確定済みの場合はエラー出力.
@@ -187,7 +208,7 @@ public class LogDefineElement {
 	 * デフォルト条件を設定.
 	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
-	public LogDefineElement set() {
+	private LogDefineElement set() {
 		defaultDefine();
 		return this;
 	}
@@ -197,7 +218,7 @@ public class LogDefineElement {
 	 * @param defaultInfo
 	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
-	public LogDefineElement set(LogDefineElement defaultInfo) {
+	private LogDefineElement set(LogDefineElement defaultInfo) {
 		if(defaultInfo != null) {
 			setDirectory(defaultInfo.getDirectory());
 			setLogLevel(defaultInfo.getLogLevel());
@@ -213,7 +234,7 @@ public class LogDefineElement {
 	 * @param map
 	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
-	public LogDefineElement set(Map<String, Object> map) {
+	private LogDefineElement set(Map<String, Object> map) {
 		checkFinalized();
 		Object n;
 		String dir = null;
@@ -242,9 +263,9 @@ public class LogDefineElement {
 			n = map.get("maxFileSize");
 			if(n instanceof Number) {
 				size = ((Number)n).longValue();
-			} else if (LogFactory.isNumeric(n)) {
+			} else if (LogUtil.isNumeric(n)) {
 				try {
-					size = LogFactory.convertLong(n);
+					size = LogUtil.convertLong(n);
 				} catch(Exception e) {
 					size = null;
 				}
@@ -272,7 +293,7 @@ public class LogDefineElement {
 	 * @param directory ログ出力先のディレクトリを設定します.
 	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
-	public LogDefineElement set(
+	private LogDefineElement set(
 		Object level, Boolean cons, Object fileSize, String directory) {
 		checkFinalized();
 		String dir = null;
@@ -300,7 +321,7 @@ public class LogDefineElement {
 	 * @param config LogConfigアノテーションを設定します.
 	 * @return LogDefineElement このオブジェクトが返却されます.
 	 */
-	public LogDefineElement set(LogConfig config) {
+	private LogDefineElement set(LogConfig config) {
 		checkFinalized();
 		setConsoleOut(config.console());
 		if(!config.size().isEmpty()) {
@@ -312,6 +333,23 @@ public class LogDefineElement {
 		setLogLevel(config.level());
 		defaultDefine();
 		return this;
+	}
+	
+	/**
+	 * このLogDefineElementのIDを設定します.
+	 * @return LogDefineElement このオブジェクトが返却されます.
+	 */
+	private LogDefineElement setId() {
+		id = idMan.getAndIncrement();
+		return this;
+	}
+	
+	/**
+	 * このLogDefineElementのIDを取得します.
+	 * @return int IDが返却されます.
+	 */
+	public int getId() {
+		return id;
 	}
 
 	/**
@@ -403,13 +441,56 @@ public class LogDefineElement {
 		}
 		return this;
 	}
-
+	
 	/**
-	 * 書き込み同期オブジェクトを取得.
+	 * ログ書き込み.
+	 * @param fileName ログファイルを設定します.
+	 * @param message ログ出力内容を設定します.
 	 * @return
 	 */
-	public Object getSync() {
-		return sync;
+	protected LogDefineElement writeLog(String fileName, String message) {
+		try {
+			if(out == null) {
+				out = new BufferedOutputStream(
+					new FileOutputStream(directory + fileName));
+			}
+			out.write(message.getBytes("UTF8"));
+			flushOutFlag = true;
+		} catch(Exception e) {
+		}
+		return this;
+	}
+	
+	/**
+	 * キャッシュ書き込みされてるログ内容を書き込む.
+	 * @return
+	 */
+	protected LogDefineElement flushLog() {
+		boolean f = flushOutFlag;
+		flushOutFlag = false;
+		if(out != null && f) {
+			try {
+				out.flush();
+			} catch(Exception e) {
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * ログをクローズ.
+	 * @return
+	 */
+	protected LogDefineElement closeLog() {
+		flushOutFlag = false;
+		try {
+			if(out != null) {
+				out.close();
+				out = null;
+			}
+		} catch(Exception e) {
+		}
+		return this;
 	}
 
 	/**

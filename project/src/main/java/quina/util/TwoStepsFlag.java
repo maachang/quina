@@ -1,5 +1,7 @@
 package quina.util;
 
+import quina.net.nio.tcp.Wait;
+
 /**
  * ２段階フラグ.
  * 
@@ -42,6 +44,9 @@ public class TwoStepsFlag {
 	// 3: 失敗.
 	private final AtomicNumber status = new AtomicNumber(0);
 	
+	// wait.
+	private final Wait wait = new Wait();
+	
 	/**
 	 * 未実行かチェック.
 	 * @return boolean true の場合未実行です.
@@ -77,15 +82,8 @@ public class TwoStepsFlag {
 				// 現在のステータスが"実行開始"(1)の場合.
 				// (他のスレッドで実行中(1)である場合).
 				case 1:
-					// 一定時間スリープして、待機.
-					try {
-						Thread.sleep(5L);
-					} catch(InterruptedException e) {
-						// Thread.interrupted()実行が検出された
-						// ので、処理を中断.
-						status.set(2); // 成功(2)扱い.
-						return false; // 実行済みとして返却.
-					}
+					// 一定時間待機.
+					wait.await(500L);
 					break;
 				// ステータスが"実行成功"(2)の場合
 				// 実行済みとして返却.
@@ -114,14 +112,23 @@ public class TwoStepsFlag {
 	 */
 	public boolean success() {
 		// 実行中(1)の場合のみ成功(2)をセット.
-		return status.compareAndSet(1, 2);
+		if(status.compareAndSet(1, 2)) {
+			// シグナル.
+			wait.signal();
+			return true;
+		}
+		return false;
 	}
 	
 	/**
 	 * 強制的な成功通知.
 	 */
 	public void forcedSuccess() {
-		status.set(2);
+		// 前回が成功(2)以外の場合のみセット.
+		if(status.put(2) != 2) {
+			// シグナル.
+			wait.signal();
+		}
 	}
 	
 	/**
@@ -129,7 +136,10 @@ public class TwoStepsFlag {
 	 */
 	public void failure() {
 		// 成功(2)と失敗(3)以外の場合のみ設定.
-		status.compareAndSet(0, 3);
-		status.compareAndSet(1, 3);
+		if(status.compareAndSet(0, 3) ||
+			status.compareAndSet(1, 3)) {
+			// シグナル.
+			wait.signal();
+		}
 	}
 }

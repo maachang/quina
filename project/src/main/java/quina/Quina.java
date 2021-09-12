@@ -577,6 +577,8 @@ public final class Quina {
 			(qs = quinaServiceManager.get(i)).stopService();
 			qs.awaitExit();
 		}
+		// ログの停止.
+		LogFactory.getInstance().stopLogWriteWorker();
 		return this;
 	}
 
@@ -595,7 +597,8 @@ public final class Quina {
 		}
 		// 基本サービスの停止チェック.
 		return httpWorkerService.isExit() &&
-			httpServerService.isExit();
+			httpServerService.isExit() &&
+			LogFactory.getInstance().isExitLogWriteWorker();
 	}
 
 	/**

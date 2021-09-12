@@ -53,7 +53,7 @@ public @interface LogConfig {
 	/**
 	 * ログレベル.
 	 */
-	public LogLevel level() default LogLevel.DEBUG;
+	public LogLevel level() default LogLevel.INFO;
 	
 	/**
 	 * コンソール出力モード.

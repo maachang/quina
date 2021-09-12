@@ -94,7 +94,9 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	@Override
 	public void startThreadCall(int no) {
 		if(LOG.isInfoEnabled()) {
-			LOG.info("*** start worker(" + no + ") thread.");
+			if(LOG.isDebugEnabled()) {
+				LOG.debug("*** start worker(" + no + ") thread.");
+			}
 		}
 	}
 
@@ -105,7 +107,9 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	@Override
 	public void endThreadCall(int no) {
 		if(LOG.isInfoEnabled()) {
-			LOG.info("*** end worker(" + no + ") thread.");
+			if(LOG.isDebugEnabled()) {
+				LOG.debug("*** end worker(" + no + ") thread.");
+			}
 		}
 	}
 

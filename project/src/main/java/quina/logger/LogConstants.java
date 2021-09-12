@@ -13,10 +13,10 @@ public class LogConstants {
 
 	// デフォルトの出力可能なログレベル.
 	// 0: trace, 1: debug, 2: info, 3: warn, 4: error, 5: fatal.
-	private static final LogLevel DEFAULT_LOG_LEVEL = LogLevel.DEBUG;
+	private static final LogLevel DEFAULT_LOG_LEVEL = LogLevel.INFO;
 
-	// デフォルトのログ１ファイルの書き込みファイルサイズ(1MByte).
-	private static final long DEFAULT_OUT_FILE_SIZE = 0x00100000;
+	// デフォルトのログ１ファイルの書き込みファイルサイズ(5MByte).
+	private static final long DEFAULT_OUT_FILE_SIZE = 0x00100000 * 5;
 
 	// デフォルトのコンソール出力モード.
 	private static final boolean DEFAULT_CONSOLE_OUT = true;

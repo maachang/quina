@@ -110,9 +110,9 @@ public enum LogLevel {
 			return (LogLevel)level;
 		} else if(level instanceof Number) {
 			return LogLevel.getLogLevel(((Number)level).intValue());
-		} else if(LogFactory.isNumeric(level)) {
+		} else if(LogUtil.isNumeric(level)) {
 			try {
-				LogLevel.getLogLevel(LogFactory.convertInt(level));
+				LogLevel.getLogLevel(LogUtil.convertInt(level));
 			} catch(Exception e) {
 				return null;
 			}
