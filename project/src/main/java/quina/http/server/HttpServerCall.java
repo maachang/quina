@@ -38,21 +38,14 @@ public class HttpServerCall extends NioServerCall {
 	// MimeTypes.
 	private MimeTypes mimeTypes = null;
 
-	// エラー４０４等のレスポンスをJson返却するモード.
-	private boolean defaultResultJsonMode;
-
 	/**
 	 * コンストラクタ.
 	 * @param custom HttpRequestでのBodyの解釈をするオブジェクトを設定します.
 	 * @param mimeTypes mimeTypesを設定します.
-	 * @param defaultResultJsonMode エラー４０４等のレスポンスを
-	 *                              Json返却するモードを設定します.
 	 */
-	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes,
-		boolean defaultResultJsonMode) {
+	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes) {
 		this.custom = custom;
 		this.mimeTypes = mimeTypes;
-		this.defaultResultJsonMode = defaultResultJsonMode;
 	}
 
 	/**
@@ -190,19 +183,18 @@ public class HttpServerCall extends NioServerCall {
 	 * @param url
 	 */
 	public final void execComponent(String url, HttpElement em) {
-		execComponent(url, em, defaultResultJsonMode, mimeTypes, custom);
+		execComponent(url, em, mimeTypes, custom);
 	}
 
 	/**
 	 * URLを指定してコンポーネントを実行.
 	 * @param em Httpy要素を設定します.
 	 * @param url URLを設定します.
-	 * @param json デフォルトのエラー返信がJSONの場合trueを設定します.
 	 * @param mime MimeTypesを設定します.
 	 * @param custom パラメータ解析のカスタム条件を設定します.
 	 */
 	public static final void execComponent(
-		String url, HttpElement em, boolean json, MimeTypes mime,
+		String url, HttpElement em, MimeTypes mime,
 		HttpCustomAnalysisParams custom) {
 		String[] urls;
 		Params params;
@@ -239,13 +231,11 @@ public class HttpServerCall extends NioServerCall {
 					res = new NormalResponseImpl(em, mime);
 				}
 				res.setStatus(404);
-				HttpServerUtil.sendError(json, req, res, null);
+				HttpServerUtil.sendError(req, res, null);
 				return;
 			}
 			// コンポーネントタイプを取得.
 			final ComponentType ctype = comp.getType();
-			// RESTfulか取得.
-			json = ctype.isRESTful();
 			// Elementにレスポンスがない場合.
 			if(res == null) {
 				switch(ctype.getAttributeType()) {
@@ -326,7 +316,7 @@ public class HttpServerCall extends NioServerCall {
 				}
 			}
 			// エラー返却.
-			HttpServerUtil.sendError(json, req, res, e);
+			HttpServerUtil.sendError(req, res, e);
 		}
 	}
 }

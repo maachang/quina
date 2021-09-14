@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpStatus;
 import quina.http.Request;
@@ -200,8 +201,8 @@ public final class EtagManager {
 				return null;
 			}
 		} catch(Exception ex) {
-			if(ex instanceof QuinaException) {
-				throw (QuinaException)ex;
+			if(ex instanceof CoreException) {
+				throw (CoreException)ex;
 			}
 			throw new QuinaException(ex);
 		}
@@ -225,8 +226,8 @@ public final class EtagManager {
 				// EtagElementを生成.
 				return new EtagElement(convertEtag(etagBin, 0), lastTime);
 			} catch(Exception ex) {
-				if(ex instanceof QuinaException) {
-					throw (QuinaException)ex;
+				if(ex instanceof CoreException) {
+					throw (CoreException)ex;
 				}
 				throw new QuinaException(ex);
 			}

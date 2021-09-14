@@ -8,11 +8,8 @@ import quina.http.HttpException;
 import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
 import quina.http.server.response.NormalResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
-import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
 import quina.net.nio.tcp.NioSendData;
 
@@ -145,7 +142,7 @@ public final class HttpServerUtil {
 	 * @param res httpResponseを設置します.
 	 */
 	public static final void sendError(Request req, Response<?> res) {
-		sendError(((AbstractResponse<?>)res).getComponentType().isRESTful(), req, res, null);
+		sendError(req, res, null);
 	}
 
 	/**
@@ -155,44 +152,9 @@ public final class HttpServerUtil {
 	 * @param e 例外を設定します.
 	 */
 	public static final void sendError(Request req, Response<?> res, Throwable e) {
-		sendError(((AbstractResponse<?>)res).getComponentType().isRESTful(), req, res, e);
-	}
-
-	/**
-	 * HttpErrorを送信.
-	 * @param json [true]の場合はjson形式でエラー返却します.
-	 * @param req HttpRequestを設定します.
-	 * @param res httpResponseを設置します.
-	 * @param e 例外を設定します.
-	 */
-	@SuppressWarnings("resource")
-	public static final void sendError(boolean json, Request req, Response<?> res, Throwable e) {
-		// json返却の場合.
-		if(json) {
-			// JSON返却条件を設定.
-			res.setContentType("application/json");
-		} else {
-			// HTML返却条件を設定.
-			res.setContentType("text/html");
-		}
-		
 		// エラーコンポーネントを取得.
 		ErrorComponent component =
 			Quina.router().getError(res.getStatusNo());
-		// 対象エラーコンポーネントが[同期]の場合.
-		if(component.getType().isSync()) {
-			// ResponseがSyncResponseでない場合は変換.
-			if(!(res instanceof SyncResponse)) {
-				res = syncResponse(res);
-			}
-		// 対象エラーコンポーネントが[非同期]の場合.
-		} else {
-			// ResponseがNormalResponseでない場合は変換.
-			if(!(res instanceof NormalResponse)) {
-				res = defaultResponse(res);
-			}
-		}
-		
 		// エラー実行.
 		if(e == null) {
 			// ステータスが４００未満の場合.
@@ -201,8 +163,7 @@ public final class HttpServerUtil {
 				res.setStatus(500);
 			}
 			// エラー出力.
-			component.call(
-				res.getStatusNo(), json, req, res);
+			component.call(res.getStatusNo(), req, res);
 		} else {
 			// Nio例外の場合.
 			if(e instanceof CoreException) {
@@ -213,8 +174,7 @@ public final class HttpServerUtil {
 				res.setStatus(500, e.getMessage());
 			}
 			// エラー出力.
-			component.call(
-				res.getStatusNo(), json, req, (NormalResponse)res, e);
+			component.call(res.getStatusNo(), req, res, e);
 		}
 	}
 

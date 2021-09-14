@@ -8,13 +8,19 @@ import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 
 import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.util.Flag;
 
 /**
  * Nio要素.
  */
 public class NioElement implements Closeable {
+	/**
+	 * 割り当てられてないワーカースレッド.
+	 */
 	public static final int NON_WORKER_NO = -1;
-	protected volatile boolean connectionFlag = false;
+	
+	// コネクションフラグ.
+	protected final Flag connectionFlag = new Flag(false);
 	protected final Number32 ops = new Number32(SelectionKey.OP_READ);
 	protected final Number32 workerNo = new Number32(NON_WORKER_NO);
 	protected NioSelector selector;
@@ -38,7 +44,7 @@ public class NioElement implements Closeable {
 	 */
 	@Override
 	public void close() throws IOException {
-		connectionFlag = false;
+		connectionFlag.set(false);
 		selector = null;
 		access = null;
 		if (less != null) {
@@ -86,30 +92,28 @@ public class NioElement implements Closeable {
 	 * @return boolean [true]の場合、接続中です.
 	 */
 	public boolean isConnection() {
-		return connectionFlag;
+		return connectionFlag.get();
 	}
 
 	/**
 	 * 対象要素と、対象Socket情報を、セレクタに登録.
 	 *
-	 * @param selector
-	 *            登録先のセレクタを設定します.
-	 * @param channel
-	 *            対象のソケットチャネルを設定します.
-	 * @param op
-	 *            対象の処理モードを設定します.
+	 * @param sc 登録先のセレクタを設定します.
+	 * @param ch 対象のソケットチャネルを設定します.
+	 * @param op 対象の処理モードを設定します.
 	 * @return SelectionKey 生成されたSelectionKeyを返却します.
-	 * @exception Exception
-	 *                O例外.
+	 * @exception Exception 例外.
 	 */
-	public SelectionKey registor(NioSelector selector, SocketChannel channel, int op)
+	public SelectionKey registor(NioSelector sc, SocketChannel ch, int op)
 		throws Exception {
-		SelectionKey ret = selector.register(channel, op, this);
-		this.key = ret;
-		this.selector = selector;
-		this.connectionFlag = true;
-		this.access = (InetSocketAddress) channel.getRemoteAddress();
-		return ret;
+		if(!this.connectionFlag.setToGetBefore(true)) {
+			SelectionKey ret = sc.register(ch, op, this);
+			this.key = ret;
+			this.selector = sc;
+			this.access = (InetSocketAddress) ch.getRemoteAddress();
+			return ret;
+		}
+		return null;
 	}
 
 	/**

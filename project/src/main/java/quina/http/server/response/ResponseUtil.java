@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.util.zip.GZIPOutputStream;
 
 import quina.Quina;
+import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
@@ -60,6 +61,7 @@ public final class ResponseUtil {
 			// 送信開始.
 			res.element.startWrite();
 		} catch(Exception e) {
+			//e.printStackTrace();
 			// 例外の場合は要素とResponseをクローズして終了.
 			try {
 				res.element.close();
@@ -67,10 +69,13 @@ public final class ResponseUtil {
 			try {
 				res.close();
 			} catch(Exception ee) {}
-			if(e instanceof QuinaException) {
-				throw (QuinaException)e;
+			
+			// Core例外の場合.
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
 			}
-			throw new HttpException(e);
+			// 通常例外の理由で送信処理登録に失敗した場合.
+			// コネクションが切れた例外は無視する.
 		}
 	}
 

@@ -36,9 +36,7 @@ public class HttpServerInfo implements QuinaInfo {
 		// サーバーソケット最大接続数.
 		"backLog", TypesClass.Integer, NioServerConstants.getBacklog(),
 		// サーバーソケット受信バッファ長.
-		"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer(),
-		// エラー４０４返却に対するjson返信モード.
-		"errorResultJsonMode", TypesClass.Boolean, HttpServerConstants.isErrorResltJsonMode()
+		"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer()
 	);
 
 	// カスタムなPostBody解析.

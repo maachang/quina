@@ -21,9 +21,6 @@ public class HttpServerConstants {
 	// サーバーソケットのバインドポート番号.
 	private static final int DEF_BIND_SERVER_SOCKET_PORT = 3333;
 
-	// エラー４０４等のレスポンスをJson返却するモード.
-	private static final boolean DEF_ERROR_JSON_MODE = false;
-
 	// HttpResponseのNoCacheのモード.
 	private static final Bool noCacheMode = new Bool(DEF_NO_CACHE_MODE);
 
@@ -36,9 +33,6 @@ public class HttpServerConstants {
 	// サーバーソケットのバインドポート番号.
 	private static final Number32 bindServerSocketPort =
 		new Number32(DEF_BIND_SERVER_SOCKET_PORT);
-
-	// エラー４０４等のレスポンスをJson返却するモード.
-	private static final Bool errorResltJsonMode = new Bool(DEF_ERROR_JSON_MODE);
 
 	/**
 	 * デフォルトの条件でHttpレスポンスでキャッシュなしの定義をするか取得.
@@ -102,21 +96,5 @@ public class HttpServerConstants {
 	 */
 	public static final void setBindServerSocketPort(int port) {
 		bindServerSocketPort.set(port);
-	}
-
-	/**
-	 * デフォルトのエラー４０４等のレスポンスをJson返却するモードを取得.
-	 * @return boolean エラー４０４等のレスポンスをJson返却するモードを取得します.
-	 */
-	public static final boolean isErrorResltJsonMode() {
-		return errorResltJsonMode.get();
-	}
-
-	/**
-	 * デフォルトのエラー４０４等のレスポンスをJson返却するモードを設定.
-	 * @param mode エラー４０４等のレスポンスをJson返却するモードを設定します.
-	 */
-	public static final void setErrorResltJsonMode(boolean mode) {
-		errorResltJsonMode.set(mode);
 	}
 }
