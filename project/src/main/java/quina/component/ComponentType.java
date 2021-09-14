@@ -7,7 +7,7 @@ import static quina.component.ComponentConstants.*;
  */
 public enum ComponentType {
 	/** Anyコンポーネント. **/
-	NORMAL(ATTRIBUTE_NORMAL, ATTRIBUTE_NORMAL, "normal"),
+	NORMAL(ATTRIBUTE_NORMAL, ATTRIBUTE_NORMAL, "Normal"),
 
 	/** [同期]Anyコンポーネント. **/
 	Sync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC, "Sync"),
@@ -51,10 +51,15 @@ public enum ComponentType {
 		"RESTfulPatchSync"),
 
 	/** ファイルコンポーネント. **/
-	FILE(ATTRIBUTE_FILE, ATTRIBUTE_FILE, "file"),
+	File(ATTRIBUTE_FILE, ATTRIBUTE_FILE, "File"),
 
 	/** エラーコンポーネント. **/
-	ERROR(ATTRIBUTE_ERROR, ATTRIBUTE_ERROR, "error");
+	Error(ATTRIBUTE_ERROR, ATTRIBUTE_ERROR, "Error"),
+	
+	/** [同期]エラーコンポーネント. **/
+	ErrorSync(ATTRIBUTE_ERROR, ATTRIBUTE_SYNC + ATTRIBUTE_ERROR,
+		"ErrorSync")
+	;
 
 	private int attributeType;
 	private int type;

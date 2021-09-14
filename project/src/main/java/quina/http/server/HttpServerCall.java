@@ -326,7 +326,6 @@ public class HttpServerCall extends NioServerCall {
 				}
 			}
 			// エラー返却.
-			res = HttpServerUtil.defaultResponse(em, mime, res);
 			HttpServerUtil.sendError(json, req, res, e);
 		}
 	}

@@ -30,7 +30,7 @@ public interface FileAttributeComponent extends Component {
 	 */
 	@Override
 	default ComponentType getType() {
-		return ComponentType.FILE;
+		return ComponentType.File;
 	}
 
 	/**

@@ -6,14 +6,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * ErrorAttributeComponentを設定するアノテーション.
+ * ErrorComponentを設定するアノテーション.
  * 
- * quina.component.ErrorAttributeComponentインターフェイスを継承した
+ * quina.component.ErrorComponentインターフェイスを継承した
  * コンポーネントに対してAnyパスを設定します.
  * <例>
  * 
  * @ErrorRoute
- * public class NewErrorAttributeComponent implements ErrorAttributeComponent {
+ * public class NewErrorComponent implements ErrorComponent {
  *   public void call(int state, boolean restful, Request req, NormalResponse res, Throwable e);
  *     String message = "error!!";
  *     if(e != null) {
@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * 上記内容をqRouteOutコマンドからAutoRoute可能な設定を行う事で、
  * GraalVMのNative-Imageでコンパイルが可能となります.
  * 
- * これによりエラーが発生した場合にNewErrorAttributeComponentが呼び出されます.
+ * これによりエラーが発生した場合にNewErrorComponentが呼び出されます.
  * 
  * また設定方法として以下の３通りの設定方法があります。
  * 

@@ -1,7 +1,7 @@
 package quina.annotation.route;
 
 import quina.component.Component;
-import quina.component.ErrorAttributeComponent;
+import quina.component.ErrorComponent;
 import quina.exception.QuinaException;
 
 /**
@@ -69,7 +69,7 @@ public class LoadAnnotationRoute {
 	 * @param c エラーコンポーネントを設定します.
 	 * @return int[] {start, end} の条件で返却されます.
 	 */
-	public static final int[] loadErrorRoute(ErrorAttributeComponent c) {
+	public static final int[] loadErrorRoute(ErrorComponent c) {
 		if(c == null) {
 			throw new QuinaException("The specified component is Null.");
 		}

@@ -18,22 +18,22 @@ import quina.validate.Validation;
 public class ComponentManager {
 
 	// デフォルトのエラー処理コンポーネント.
-	private static final class DefaultErrorAttributeComponent
-		implements ErrorAttributeComponent {
-		private static final DefaultErrorAttributeComponent INST = new DefaultErrorAttributeComponent();
+	private static final class DefaultErrorComponent
+		implements ErrorComponent {
+		private static final DefaultErrorComponent INST = new DefaultErrorComponent();
 
 		/**
 		 * 標準エラーコンポーネントを取得.
-		 * @return ErrorAttributeComponent 標準エラーコンポーネントが返却されます.
+		 * @return ErrorComponent 標準エラーコンポーネントが返却されます.
 		 */
-		public static final ErrorAttributeComponent getInstance() {
+		public static final ErrorComponent getInstance() {
 			return INST;
 		}
 
 		/**
 		 * コンストラクタ.
 		 */
-		private DefaultErrorAttributeComponent() {
+		private DefaultErrorComponent() {
 		}
 
 		@Override
@@ -55,16 +55,16 @@ public class ComponentManager {
 	protected static final class RangeStatusElement {
 		private int startStatus;
 		private int endStatus;
-		private ErrorAttributeComponent ErrorAttributeComponent;
+		private ErrorComponent ErrorComponent;
 		
 		/**
 		 * コンストラクタ.
 		 * @param startStatus
 		 * @param endStatus
-		 * @param ErrorAttributeComponent
+		 * @param ErrorComponent
 		 */
 		public RangeStatusElement(
-			int startStatus, int endStatus, ErrorAttributeComponent ErrorAttributeComponent) {
+			int startStatus, int endStatus, ErrorComponent ErrorComponent) {
 			if(startStatus > endStatus) {
 				int n = startStatus;
 				startStatus = endStatus;
@@ -72,7 +72,7 @@ public class ComponentManager {
 			}
 			this.startStatus = startStatus;
 			this.endStatus = endStatus;
-			this.ErrorAttributeComponent = ErrorAttributeComponent;
+			this.ErrorComponent = ErrorComponent;
 		}
 		
 		/**
@@ -104,8 +104,8 @@ public class ComponentManager {
 		 * エラーコンポーネント.
 		 * @return
 		 */
-		public ErrorAttributeComponent getErrorAttributeComponent() {
-			return ErrorAttributeComponent;
+		public ErrorComponent getErrorComponent() {
+			return ErrorComponent;
 		}
 		
 		@Override
@@ -119,29 +119,29 @@ public class ComponentManager {
 	/**
 	 * エラーコンポーネントマネージャ.
 	 */
-	protected static final class ErrorAttributeComponentManager {
+	protected static final class ErrorComponentManager {
 		// 指定ステータスでエラーコンポーネントを管理.
-		private IndexKeyValueList<Integer, ErrorAttributeComponent> singleManager =
-			new IndexKeyValueList<Integer, ErrorAttributeComponent>();
+		private IndexKeyValueList<Integer, ErrorComponent> singleManager =
+			new IndexKeyValueList<Integer, ErrorComponent>();
 		
 		// 範囲指定のステータスでエラーコンポーネントを管理.
 		private ObjectList<RangeStatusElement> rangeManager =
 			new ObjectList<RangeStatusElement>();
 		
 		// 登録ステータス以外のステータスに対応するエラーコンポーネント.
-		private ErrorAttributeComponent anyErrorAttributeComponent;
+		private ErrorComponent anyErrorComponent;
 		
 		/**
 		 * コンストラクタ.
 		 */
-		public ErrorAttributeComponentManager() {}
+		public ErrorComponentManager() {}
 		
 		/**
 		 * 指定ステータスでエラーコンポーネント登録.
 		 * @param state 
 		 * @param cmp
 		 */
-		public void putSingle(int state, ErrorAttributeComponent cmp) {
+		public void putSingle(int state, ErrorComponent cmp) {
 			if(cmp == null) {
 				throw new QuinaException("No error component is specified.");
 			}
@@ -154,7 +154,7 @@ public class ComponentManager {
 		 * @param endState
 		 * @param cmp
 		 */
-		public void putRange(int startState, int endState, ErrorAttributeComponent cmp) {
+		public void putRange(int startState, int endState, ErrorComponent cmp) {
 			if(cmp == null) {
 				throw new QuinaException("No error component is specified.");
 			}
@@ -165,8 +165,8 @@ public class ComponentManager {
 		 * 登録ステータス以外のステータスに対応するエラーコンポーネント登録.
 		 * @param cmp
 		 */
-		public void any(ErrorAttributeComponent cmp) {
-			anyErrorAttributeComponent = cmp;
+		public void any(ErrorComponent cmp) {
+			anyErrorComponent = cmp;
 		}
 		
 		/**
@@ -174,9 +174,9 @@ public class ComponentManager {
 		 * @param state
 		 * @return
 		 */
-		public ErrorAttributeComponent get(int state) {
+		public ErrorComponent get(int state) {
 			// 単一ステータスで検索.
-			ErrorAttributeComponent ret = singleManager.get(state);
+			ErrorComponent ret = singleManager.get(state);
 			if(ret != null) {
 				return ret;
 			}
@@ -187,14 +187,14 @@ public class ComponentManager {
 			for(int i = 0; i < len; i ++) {
 				rse = rangeManager.get(i);
 				if(rse.match(state)) {
-					return rse.getErrorAttributeComponent();
+					return rse.getErrorComponent();
 				}
 			}
 			
 			// その他ステータス内容を返却.
-			return anyErrorAttributeComponent == null ?
-				DefaultErrorAttributeComponent.getInstance() :
-				anyErrorAttributeComponent;
+			return anyErrorComponent == null ?
+				DefaultErrorComponent.getInstance() :
+				anyErrorComponent;
 		}
 		
 		/**
@@ -228,7 +228,7 @@ public class ComponentManager {
 			buf.append("\n");
 			
 			toSpace(buf, space).append("any: ")
-				.append(anyErrorAttributeComponent == null ? "default" : "original")
+				.append(anyErrorComponent == null ? "default" : "original")
 				.append("\n");
 			return buf;
 		}
@@ -1000,8 +1000,8 @@ public class ComponentManager {
 	private RegisterComponent notFoundUrlComponent = null;
 
 	// エラー発生時に呼び出すコンポーネントマネージャ.
-	private ErrorAttributeComponentManager ErrorAttributeComponentManager =
-		new ErrorAttributeComponentManager();
+	private ErrorComponentManager ErrorComponentManager =
+		new ErrorComponentManager();
 
 	// Etagマネージャ.
 	private EtagManager etagManager = null;
@@ -1020,7 +1020,7 @@ public class ComponentManager {
 		staticComponent.clear();
 		rootAnyElement = new AnyElement(0, null);
 		notFoundUrlComponent = null;
-		ErrorAttributeComponentManager = new ErrorAttributeComponentManager();
+		ErrorComponentManager = new ErrorComponentManager();
 		etagManager = null;
 	}
 
@@ -1117,26 +1117,26 @@ public class ComponentManager {
 	 * @param endState 終了Httpステータスを設定します.
 	 * @param component 対象のコンポーネントを設定します.
 	 */
-	public void putError(int startState, int endState, ErrorAttributeComponent component) {
+	public void putError(int startState, int endState, ErrorComponent component) {
 		if(startState <= 0) {
 			// 全ステータス対応エラーとして登録.
-			ErrorAttributeComponentManager.any(component);
+			ErrorComponentManager.any(component);
 		} else if(endState <= 0) {
 			// 指定ステータスのエラーとして登録.
-			ErrorAttributeComponentManager.putSingle(startState, component);
+			ErrorComponentManager.putSingle(startState, component);
 		} else {
 			// 範囲指定のエラーとして登録.
-			ErrorAttributeComponentManager.putRange(startState, endState, component);
+			ErrorComponentManager.putRange(startState, endState, component);
 		}
 	}
 	
 	/**
 	 * エラー時の登録コンポーネントを取得.
 	 * @param state 対象のHttpステータスを設定します.
-	 * @return ErrorAttributeComponent エラー時のコンポーネントが返却されます.
+	 * @return ErrorComponent エラー時のコンポーネントが返却されます.
 	 */
-	public ErrorAttributeComponent getError(int state) {
-		return ErrorAttributeComponentManager.get(state);
+	public ErrorComponent getError(int state) {
+		return ErrorComponentManager.get(state);
 	}
 
 	/**
@@ -1235,8 +1235,8 @@ public class ComponentManager {
 			.append(notFoundUrlComponent != null)
 			.append("\n");
 		// エラー発生時のコンポーネントマネージャ.
-		buf.append("*ErrorAttributeComponentManager: ");
-		ErrorAttributeComponentManager.toString(2, buf)
+		buf.append("*ErrorComponentManager: ");
+		ErrorComponentManager.toString(2, buf)
 			.append("\n");
 		return buf.toString();
 	}

@@ -2,6 +2,7 @@ package quina.http.server.response;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -375,6 +376,44 @@ public final class ResponseUtil {
 		Json.encode(
 			new OutputStreamJsonBuilder(
 				sendOutInStream(res, charset), charset), value);
+	}
+	
+	/**
+	 * 同期での処理結果を返信.
+	 * @param res レスポンスオブジェクトを設定します.
+	 * @param value 同期処理で返却されたオブジェクトを設定します.
+	 */
+	public static final void sendSync(AbstractResponse<?> res, Object value) {
+		// 送信なしを示す場合.
+		if(SyncResponse.NOSEND == value) {
+			return;
+		// 返却内容が空の場合.
+		} else if(value == null) {
+			// 空の返却.
+			ResponseUtil.send((AbstractResponse<?>)res);
+		// 返却条件がバイナリの場合.
+		} else if(value instanceof byte[]) {
+			// バイナリ送信.
+			ResponseUtil.send((AbstractResponse<?>)res, (byte[])value);
+		// 返却条件が文字列の場合.
+		} else if(value instanceof String) {
+			// 文字列送信.
+			ResponseUtil.send((AbstractResponse<?>)res, (String)value);
+		// 返却条件がファイルオブジェクトの場合.
+		} else if(value instanceof File) {
+			// ファイル送信.
+			String name;
+			try {
+				name = ((File)value).getCanonicalPath();
+			} catch(Exception ex) {
+				throw new QuinaException(ex);
+			}
+			ResponseUtil.sendFile((AbstractResponse<?>)res, name);
+		// 返却条件が上記以外の場合.
+		} else {
+			// JSON返却.
+			ResponseUtil.sendJSON((AbstractResponse<?>)res, value);
+		}
 	}
 
 	/**

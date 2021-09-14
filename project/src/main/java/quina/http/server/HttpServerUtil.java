@@ -1,6 +1,7 @@
 package quina.http.server;
 
 import quina.Quina;
+import quina.component.ErrorComponent;
 import quina.exception.CoreException;
 import quina.http.HttpElement;
 import quina.http.HttpException;
@@ -11,6 +12,7 @@ import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.NormalResponse;
 import quina.http.server.response.NormalResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
+import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
 import quina.net.nio.tcp.NioSendData;
 
@@ -163,6 +165,7 @@ public final class HttpServerUtil {
 	 * @param res httpResponseを設置します.
 	 * @param e 例外を設定します.
 	 */
+	@SuppressWarnings("resource")
 	public static final void sendError(boolean json, Request req, Response<?> res, Throwable e) {
 		// json返却の場合.
 		if(json) {
@@ -172,10 +175,24 @@ public final class HttpServerUtil {
 			// HTML返却条件を設定.
 			res.setContentType("text/html");
 		}
-		// ResponseがNormalResponseでない場合は変換.
-		if(!(res instanceof NormalResponse)) {
-			res = defaultResponse(res);
+		
+		// エラーコンポーネントを取得.
+		ErrorComponent component =
+			Quina.router().getError(res.getStatusNo());
+		// 対象エラーコンポーネントが[同期]の場合.
+		if(component.getType().isSync()) {
+			// ResponseがSyncResponseでない場合は変換.
+			if(!(res instanceof SyncResponse)) {
+				res = syncResponse(res);
+			}
+		// 対象エラーコンポーネントが[非同期]の場合.
+		} else {
+			// ResponseがNormalResponseでない場合は変換.
+			if(!(res instanceof NormalResponse)) {
+				res = defaultResponse(res);
+			}
 		}
+		
 		// エラー実行.
 		if(e == null) {
 			// ステータスが４００未満の場合.
@@ -184,8 +201,8 @@ public final class HttpServerUtil {
 				res.setStatus(500);
 			}
 			// エラー出力.
-			Quina.router().getError(res.getStatusNo())
-				.call(res.getStatusNo(), json, req, res);
+			component.call(
+				res.getStatusNo(), json, req, res);
 		} else {
 			// Nio例外の場合.
 			if(e instanceof CoreException) {
@@ -196,8 +213,8 @@ public final class HttpServerUtil {
 				res.setStatus(500, e.getMessage());
 			}
 			// エラー出力.
-			Quina.router().getError(res.getStatusNo())
-				.call(res.getStatusNo(), json, req, (NormalResponse)res, e);
+			component.call(
+				res.getStatusNo(), json, req, (NormalResponse)res, e);
 		}
 	}
 
