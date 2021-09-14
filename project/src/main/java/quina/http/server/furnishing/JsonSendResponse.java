@@ -17,7 +17,7 @@ public interface JsonSendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param json 送信するJSONオブジェクトを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendJSON(Object json) {
 		return sendJSON(json, null);
@@ -27,7 +27,7 @@ public interface JsonSendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * @param json 送信するJSONオブジェクトを設定します.
 	 * @param charset 変換対象の文字コードが設定されます.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendJSON(Object json, String charset) {
 		if(!isCallSendMethod()) {
@@ -49,7 +49,7 @@ public interface JsonSendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * 大きめのJSONデータを送信する場合に利用します.
 	 * @param json 送信するJSONオブジェクトを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendLargeJSON(Object json) {
 		return sendLargeJSON(json, null);
@@ -60,7 +60,7 @@ public interface JsonSendResponse<T> extends CoreSendResponse<T> {
 	 * 大きめのJSONデータを送信する場合に利用します.
 	 * @param json 送信するJSONオブジェクトを設定します.
 	 * @param charset 変換対象の文字コードが設定されます.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendLargeJSON(Object json, String charset) {
 		if(!isCallSendMethod()) {

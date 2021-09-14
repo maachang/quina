@@ -451,8 +451,10 @@ public class LogDefineElement {
 	protected LogDefineElement writeLog(String fileName, String message) {
 		try {
 			if(out == null) {
+				// 追加書き込み.
 				out = new BufferedOutputStream(
-					new FileOutputStream(directory + fileName));
+					new FileOutputStream(
+						directory + fileName, true));
 			}
 			out.write(message.getBytes("UTF8"));
 			flushOutFlag = true;
@@ -460,6 +462,30 @@ public class LogDefineElement {
 		}
 		return this;
 	}
+	
+	/**
+	 * ログ書き込み.
+	 * @param fileName ログファイルを設定します.
+	 * @param utf8Buf UTF8からbinary変換されたバッファを設定します.
+	 * @param len UTF8からbinary変換されたバッファ長を設定します.
+	 * @return
+	 */
+	protected LogDefineElement writeLog(
+		String fileName, byte[] utf8Buf, int len) {
+		try {
+			if(out == null) {
+				// 追加書き込み.
+				out = new BufferedOutputStream(
+					new FileOutputStream(
+						directory + fileName, true));
+			}
+			out.write(utf8Buf, 0, len);
+			flushOutFlag = true;
+		} catch(Exception e) {
+		}
+		return this;
+	}
+
 	
 	/**
 	 * キャッシュ書き込みされてるログ内容を書き込む.

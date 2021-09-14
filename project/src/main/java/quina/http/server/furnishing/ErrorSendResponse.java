@@ -11,7 +11,7 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 
 	/**
 	 * エラー送信.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendError() {
 		return sendError(-1, null);
@@ -20,7 +20,7 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * エラー送信.
 	 * @param status Httpステータスを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendError(int status) {
 		return sendError(status, null);
@@ -29,7 +29,7 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * エラー送信.
 	 * @param value エラーデータを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendError(Object value) {
 		return sendError(-1, value);
@@ -39,7 +39,7 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 	 * エラー送信.
 	 * @param status Httpステータスを設定します.
 	 * @param value エラーデータを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendError(int status, Object value) {
 		if(!isCallSendMethod()) {

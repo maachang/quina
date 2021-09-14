@@ -8,7 +8,7 @@ import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.validate.LoadAnnotationValidate;
 import quina.component.Component;
 import quina.component.ComponentManager;
-import quina.component.ErrorComponent;
+import quina.component.ErrorAttributeComponent;
 import quina.component.EtagManager;
 import quina.component.EtagManagerInfo;
 import quina.component.RegisterComponent;
@@ -52,8 +52,8 @@ public class Router {
 		return LoadAnnotationComponent.loadResponse(component);
 	}
 	
-	// ErrorComponentにAnnotationを注入.
-	private static final void injectComponent(ErrorComponent component) {
+	// ErrorAttributeComponentにAnnotationを注入.
+	private static final void injectComponent(ErrorAttributeComponent component) {
 		// アノテーションを注入.
 		Quina.get().injectAnnotation(component);
 	}
@@ -107,10 +107,10 @@ public class Router {
 
 	/**
 	 * エラーが発生した時の実行コンポーネントを設定します.
-	 * @param component 実行コンポーネントを設定します.
+	 * @param component エラーコンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
-	public Router error(ErrorComponent component) {
+	public Router error(ErrorAttributeComponent component) {
 		// annotationの定義からHttpステータス条件を取得.
 		int[] startEndStatus = LoadAnnotationRoute.loadErrorRoute(component);
 		if(startEndStatus == null) {
@@ -127,7 +127,7 @@ public class Router {
 	 * @param component 実行コンポーネントを設定します.
 	 * @return Router このオブジェクトが返却されます.
 	 */
-	public Router error(int status, ErrorComponent component) {
+	public Router error(int status, ErrorAttributeComponent component) {
 		if(status <= 0) {
 			throw new QuinaException(
 				"The specified Http status is out of range.");
@@ -143,7 +143,7 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router error(int startStatus, int endStatus,
-		ErrorComponent component) {
+		ErrorAttributeComponent component) {
 		// Annotationを注入.
 		injectComponent(component);
 		// エラー登録.
@@ -257,9 +257,9 @@ public class Router {
 	/**
 	 * エラー発生時に呼び出されるコンポーネントを取得.
 	 * @param status 対象のHTTPエラーステータスを設定します.
-	 * @return ErrorComponent エラーコンポーネントが返却されます.
+	 * @return ErrorAttributeComponent エラーコンポーネントが返却されます.
 	 */
-	public ErrorComponent getError(int status) {
+	public ErrorAttributeComponent getError(int status) {
 		return manager.getError(status);
 	}
 

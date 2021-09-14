@@ -21,7 +21,7 @@ import quina.annotation.route.ErrorRoute;
 import quina.annotation.route.LoadAnnotationRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
-import quina.component.ErrorComponent;
+import quina.component.ErrorAttributeComponent;
 import quina.util.Args;
 import quina.util.FileUtil;
 
@@ -354,7 +354,7 @@ public class GenerateCdi {
 						continue;
 					}
 					// アノテーションなしのコンポーネントの場合.
-					if(o instanceof Component || o instanceof ErrorComponent) {
+					if(o instanceof Component || o instanceof ErrorAttributeComponent) {
 						// Reflectリストに追加.
 						params.refList.add(className);
 					}
@@ -385,7 +385,7 @@ public class GenerateCdi {
 					// Reflectリストに追加.
 					params.refList.add(className);
 				// 対象がエラーコンポーネントの場合.
-				} else if(o instanceof ErrorComponent) {
+				} else if(o instanceof ErrorAttributeComponent) {
 					// @Error付属のコンポーネントを登録.
 					if(c.isAnnotationPresent(ErrorRoute.class)) {
 						int[] es = LoadAnnotationRoute.loadErrorRoute(c);

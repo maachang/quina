@@ -14,7 +14,7 @@ public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param value 送信データを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(InputStream value) {
 		return send(value, -1L, null);
@@ -24,7 +24,7 @@ public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * @param value 送信データを設定します.
 	 * @param length 対象の送信データ長を設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(InputStream value, long length) {
 		return send(value, length, null);
@@ -34,7 +34,7 @@ public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * @param value 送信データを設定します.
 	 * @param length 対象の送信データ長を設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(InputStream value, int length) {
 		return send(value, (long)length, null);
@@ -45,7 +45,7 @@ public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
 	 * @param value 送信データを設定します.
 	 * @param length 対象の送信データ長を設定します.
 	 * @param charset 変換文字コードが設定されます.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(InputStream value, int length, String charset) {
 		return send(value, (long)length, charset);
@@ -56,7 +56,7 @@ public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
 	 * @param value 送信データを設定します.
 	 * @param length 対象の送信データ長を設定します.
 	 * @param charset 文字コードを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(InputStream value, long length, String charset) {
 		if(!isCallSendMethod()) {

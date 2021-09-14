@@ -1,7 +1,7 @@
 package quina.annotation.cdi;
 
 import quina.component.Component;
-import quina.component.ErrorComponent;
+import quina.component.ErrorAttributeComponent;
 import quina.exception.QuinaException;
 
 /**
@@ -52,7 +52,7 @@ public enum CdiObjectType {
 		if(o == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
-		if(o instanceof Component || o instanceof ErrorComponent) {
+		if(o instanceof Component || o instanceof ErrorAttributeComponent) {
 			return Component;
 		} else if(LoadAnnotationCdi.loadServiceScoped(o)) {
 			return Service;

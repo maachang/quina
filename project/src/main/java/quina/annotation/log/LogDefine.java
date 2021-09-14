@@ -9,24 +9,24 @@ import java.lang.annotation.Target;
  * 指定フィールドのLog定義を指定するアノテーション.<br>
  * <br>
  * 以下のように定義することで、Logの初期定義を行います.<br>
- * <例><br>
+ * <pre>{@code
+ * // クラスにアノテーション定義.
+ * ＠LogDefine("service")
+ * public class LogExample {
+ *   private Log log;
+ * }
+ * 
+ * // フィールドにアノテーション定義.
+ * public class LogExample {
+ *   ＠LogDefine
+ *   private Log sysLog;
+ *
+ *   ＠LogDefine("service")
+ *   private Log srvLog;
+ *
+ * }
+ * }</pre>
  * <br>
- * // クラスにアノテーション定義.<br>
- * ＠LogDefine("service")<br>
- * public class LogExample {<br>
- *   private Log log;<br>
- * }<br>
- * <br>
- * // フィールドにアノテーション定義.<br>
- * public class LogExample {<br>
- *   ＠LogDefine()<br>
- *   private Log sysLog;<br>
- *<br>
- *   ＠LogDefine("service")<br>
- *   private Log srvLog;<br>
- *<br>
- * }<br>
- *<br>
  * // LogDefineアノテーションを反映.<br>
  * LogExample exp = LogAnnotationLog.loadLogDefine(<br>
  *   new LogExample());<br>

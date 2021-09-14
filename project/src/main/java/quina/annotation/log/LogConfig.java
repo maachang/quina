@@ -13,8 +13,7 @@ import quina.logger.LogLevel;
  * <br>
  * Quinaを実行するmainクラスに対して、LogConfigアノテーションを
  * 設定しQuina.init()処理を行う事で、Log定義が行えます.<br>
- * <pre>
- * {@code
+ * <pre>{@code
  * ＠LogConfig(name="hoge", level=LogLevel.Trace,
  *     console=false, size="50m" directory="./log")
  * public class QuinaTest {
@@ -25,8 +24,8 @@ import quina.logger.LogLevel;
  *     //(略).....
  *   }
  * }
- * }
- * </pre>
+ * }</pre>
+ * <br>
  * これによって LogFactory.log("hoge") で設定されたログ条件のログが
  * 取得できます.<br>
  * <br>

@@ -12,7 +12,7 @@ public interface FileSendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param name 送信するファイル名を設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendFile(String name) {
 		return sendFile(name, null);
@@ -22,7 +22,7 @@ public interface FileSendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * @param name 送信するファイル名を設定します.
 	 * @param charset 変換対象の文字コードが設定されます.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T sendFile(String name, String charset) {
 		if(!isCallSendMethod()) {

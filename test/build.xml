@@ -38,12 +38,30 @@
   <!-- ===================================================================== -->
   <!-- all.                                                                  -->
   <!-- ===================================================================== -->
-  <target name="all" depends="genCdi, compile, jar"/>
+  <target name="all" depends="clean, compile, genCdi, nextGenCdiCompile, jar"/>
   
   <!-- ===================================================================== -->
   <!-- compile.                                                              -->
   <!-- ===================================================================== -->
   <target name="compile">
+    <delete dir="${dest.dir}" />
+    <delete file="${jar.name}" />
+    <mkdir dir="${dest.dir}" />
+    <javac includeantruntime="false"
+           srcdir="${src.dir}"
+           destdir="${dest.dir}"
+           encoding="UTF8"
+           debug="${debug}"
+           deprecation="${deprecation}"
+           optimize="${optimize}"
+           nowarn="${nowarn}"
+    >
+      <classpath refid="path.lib" />
+    </javac>
+  </target>
+  
+  <!-- next genCdi compile. -->
+  <target name="nextGenCdiCompile">
     <delete dir="${dest.dir}" />
     <delete file="${jar.name}" />
     <mkdir dir="${dest.dir}" />

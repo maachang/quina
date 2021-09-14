@@ -1,6 +1,7 @@
 package quina.logger;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,7 +25,13 @@ public class LogConstants {
 
 	// デフォルトの出力先ログディレクトリを設定.
 	private static final String DEFAULT_DIR = "./log";
-
+	
+	// デフォルトのログ文字列変換の再評価カウント.
+	private static final int DEFAULT_UTF8_BUFFER_REVALUATIO = 64;
+	
+	// デフォルトのログ文字列変換の初期バッファサイズ.
+	private static final int DEFAULT_UTF8_BUFFER_LENGTH = 4096;
+	
 	/**
 	 * デフォルトのシステムログ名.
 	 */
@@ -46,6 +53,14 @@ public class LogConstants {
 	// 基本設定の出力先ログディレクトリ.
 	private static final AtomicReference<String> logDirectory =
 		new AtomicReference<String>(DEFAULT_DIR);
+	
+	// 基本設定のログ文字列変換の再評価カウント.
+	private static final AtomicInteger ut8BufferRevaluatio = new
+		AtomicInteger(DEFAULT_UTF8_BUFFER_REVALUATIO);
+	
+	// 基本設定のログ文字列変換の初期バッファサイズ.
+	private static final AtomicInteger ut8BufferLength = new
+		AtomicInteger(DEFAULT_UTF8_BUFFER_LENGTH);
 
 	/**
 	 * 基本設定の出力可能なログレベルを取得.
@@ -68,7 +83,7 @@ public class LogConstants {
 	}
 
 	/**
-	 * 基本設定のログ１ファイルの書き込みファイルサイズを取得.
+	 * 基本設定のログの１ファイルの書き込みファイルサイズを取得.
 	 * @return
 	 */
 	public static final long getLogSize() {
@@ -76,7 +91,7 @@ public class LogConstants {
 	}
 
 	/**
-	 * 基本設定のログ１ファイルの書き込みファイルサイズを設定.
+	 * 基本設定のログの１ファイルの書き込みファイルサイズを設定.
 	 * @param size
 	 */
 	public static final void setLogSize(long size) {
@@ -113,5 +128,45 @@ public class LogConstants {
 	 */
 	public static final void setLogDirectory(String dir) {
 		while (!logDirectory.compareAndSet(logDirectory.get(), dir));
+	}
+	
+	/**
+	 * 基本設定のログ文字列変換の再評価カウントを取得.
+	 * @return
+	 */
+	public static final int getUt8BufferRevaluatio() {
+		return ut8BufferRevaluatio.get();
+	}
+
+	/**
+	 * 基本設定のログ文字列変換の再評価カウントを設定.
+	 * @param size
+	 */
+	public static final void setUt8BufferRevaluatio(int size) {
+		if(size < 32) {
+			size = 32;
+		}
+		while (!ut8BufferRevaluatio.compareAndSet(
+			ut8BufferRevaluatio.get(), size));
+	}
+	
+	/**
+	 * 基本設定のログ文字列変換の初期バッファサイズを取得.
+	 * @return
+	 */
+	public static final int getUt8BufferLength() {
+		return ut8BufferLength.get();
+	}
+
+	/**
+	 * 基本設定のログ文字列変換の初期バッファサイズを設定.
+	 * @param size
+	 */
+	public static final void setUt8BufferLength(int size) {
+		if(size < 1024) {
+			size = 1024;
+		}
+		while (!ut8BufferLength.compareAndSet(
+				ut8BufferLength.get(), size));
 	}
 }

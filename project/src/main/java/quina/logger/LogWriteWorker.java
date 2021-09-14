@@ -41,7 +41,7 @@ final class LogWriteWorker extends Thread {
 		}
 	}
 	
-	// boolean 管理.
+	// boolean Atomic 管理.
 	private static final class Bool {
 		private final AtomicInteger ato = new AtomicInteger(0);
 		public Bool(final boolean n) {
@@ -54,7 +54,6 @@ final class LogWriteWorker extends Thread {
 			while (!ato.compareAndSet(ato.get(), n ? 1 : 0));
 		}
 	}
-
 	
 	// waitObject.
 	private static class WaitObject {
@@ -97,6 +96,96 @@ final class LogWriteWorker extends Thread {
 			} finally {
 				sync.unlock();
 			}
+		}
+	}
+	
+	// LogUtf8変換バッファ管理.
+	private static final class Utf8Buffer {
+		// 初期バッファ長.
+		private int initBufLength;
+		// 再評価カウント.
+		private int revaluationCount;
+		
+		// 対象バッファ.
+		private byte[] buf;
+		// 現在までに書き込まれたバイナリ数.
+		private int allLength;
+		// 現在までの書き込み回数.
+		private int count;
+		
+		/**
+		 * コンストラクタ.
+		 * @param revaluationCount バッファサイズの再評価カウント値を設定します.
+		 * @param initBufLength 初期バッファサイズを設定します.
+		 */
+		public Utf8Buffer(int revaluationCount, int initBufLength) {
+			this.revaluationCount = revaluationCount;
+			this.initBufLength = initBufLength;
+			this.buf = new byte[initBufLength];
+			this.allLength = 0;
+			this.count = 0;
+		}
+		
+		/**
+		 * バッファ情報を取得.
+		 * @return byte バッファ情報が返却されます.
+		 */
+		public byte[] buffer() {
+			return buf;
+		}
+		
+		/**
+		 * バッファ情報に文字列をUTF8変換.
+		 * @param str 文字列を設定します.
+		 * @return int 変換されたバッファ長が返却されます.
+		 *             -1 の場合変換に失敗しました.
+		 */
+		public int convert(String str) {
+			final int strLen = str.length();
+			int ret = -1;
+			try {
+				// 変換.
+				ret = toUtf8(buf, 0, str, 0, strLen);
+			} catch(Exception e) {
+				try {
+					// 変換に失敗した場合、バッファサイズを
+					// 増やして再実行.
+					byte[] b = new byte[strLen << 2];
+					ret = toUtf8(b, 0, str, 0, strLen);
+					buf = b;
+				} catch(Exception ee) {
+					// 失敗した場合は処理しない.
+					return -1;
+				}
+			}
+			// 書き込みサイズとカウントを追加.
+			allLength += ret;
+			count ++;
+			// カウントが再評価カウントに達した場合.
+			if(count > revaluationCount) {
+				// 現状のバッファサイズが初期バッファ
+				// サイズの場合.
+				if(buf.length <= initBufLength) {
+					// 再作成はしない.
+					allLength = 0;
+					count = 0;
+				// 再評価が必要な場合.
+				} else {
+					// これまでの平均書き込み数を取得.
+					int newLen = allLength / count;
+					// 再評価サイズが初期バッファ
+					// サイズ以下の場合.
+					if(newLen <= initBufLength) {
+						// 初期バッファサイズをセット.
+						newLen = initBufLength;
+					}
+					// 再生成.
+					buf = new byte[newLen];
+					allLength = 0;
+					count = 0;
+				}
+			}
+			return ret;
 		}
 	}
 	
@@ -250,6 +339,9 @@ final class LogWriteWorker extends Thread {
 	 */
 	protected final ThreadDeath execute() {
 		int i, len;
+		final Utf8Buffer utf8Buf = new Utf8Buffer(
+			LogConstants.getUt8BufferRevaluatio(),
+			LogConstants.getUt8BufferLength());
 		LogDefineElement logEm = null;
 		LogWorkerElement em = null;
 		ThreadDeath ret = null;
@@ -277,7 +369,8 @@ final class LogWriteWorker extends Thread {
 					}
 					// ログ出力.
 					try {
-						write(em.name, em.element, em.typeNo, em.args);
+						write(utf8Buf, em.name, em.element, em.typeNo,
+							em.args);
 						logDefineIndex.put(em.element);
 					} catch(Exception e) {}
 				}
@@ -307,7 +400,8 @@ final class LogWriteWorker extends Thread {
 				break;
 			}
 			try {
-				write(em.name, em.element, em.typeNo, em.args);
+				write(utf8Buf, em.name, em.element, em.typeNo,
+					em.args);
 				logDefineIndex.put(em.element);
 			} catch(Exception e) {}
 		}
@@ -316,7 +410,8 @@ final class LogWriteWorker extends Thread {
 	
 	// ログ出力処理.
 	@SuppressWarnings("deprecation")
-	private static final void write(final String name, final LogDefineElement element,
+	private static final void write(Utf8Buffer utf8Buf,
+		final String name, final LogDefineElement element,
 		final LogLevel typeNo, final Object[] args) {
 		final LogLevel logLevel = element.getLogLevel();
 		// 指定されたログレベル以下はログ出力させない場合.
@@ -386,14 +481,20 @@ final class LogWriteWorker extends Thread {
 			toGzip(tname, renameToStat);
 			renameToStat = null;
 		}
-
+		
+		// UTF8文字列変換.
+		int utf8Len = utf8Buf.convert(format);
+		
 		// ログ出力.
-		element.writeLog(fileName, format);
+		if(utf8Len > 0) {
+			element.writeLog(fileName, utf8Buf.buffer(), utf8Len);
+		}
 		// コンソール出力が許可されている場合.
 		if(consoleOut) {
 			// ログ情報をコンソールアウト.
 			System.out.print(format);
 		}
+		return;
 	}
 	
 	// ログフォーマット情報を作成.
@@ -479,5 +580,53 @@ final class LogWriteWorker extends Thread {
 		};
 		t.setDaemon(false);
 		t.start();
+	}
+	
+	/**
+	 * UTF8文字列をバイナリ変換.
+	 * @param out 受け取るバイナリ情報を設定します.
+	 *            この値は len の４倍の長さを設定します.
+	 * @param oOff 受け取るバイナリのオフセット値を設定します.
+	 * @param value 対象の文字列を設定します.
+	 * @param off 文字列のオフセット値を設定します.
+	 * @param len 文字列の長さを設定します.
+	 * @return int 変換したバイナリ長が返却されます.
+	 * @exception Exception 例外.
+	 */
+	private static final int toUtf8(final byte[] out, final int oOff,
+		final String value, final int off, final int len)
+		throws Exception {
+		if (value == null || len == 0) {
+			return 0;
+		}
+		int c;
+		int o = oOff;
+		for (int i = 0; i < len; i++) {
+			c = (int) value.charAt(off + i);
+
+			// サロゲートペア処理.
+			if (c >= 0xd800 && c <= 0xdbff) {
+				c = 0x10000 + (((c - 0xd800) << 10) |
+					((int) value.charAt(off + i + 1) - 0xdc00));
+				i++;
+			}
+
+			if ((c & 0xffffff80) == 0) {
+				out[o ++] = (byte)c;
+			} else if (c < 0x800) {
+				out[o ++] = (byte) ((c >> 6) | 0xc0);
+				out[o ++] = (byte) ((c & 0x3f) | 0x80);
+			} else if (c < 0x10000) {
+				out[o ++] = (byte) ((c >> 12) | 0xe0);
+				out[o ++] = (byte) (((c >> 6) & 0x3f) | 0x80);
+				out[o ++] = (byte) ((c & 0x3f) | 0x80);
+			} else {
+				out[o ++] = (byte) ((c >> 18) | 0xf0);
+				out[o ++] = (byte) (((c >> 12) & 0x3f) | 0x80);
+				out[o ++] = (byte) (((c >> 6) & 0x3f) | 0x80);
+				out[o ++] = (byte) ((c & 0x3f) | 0x80);
+			}
+		}
+		return o - oOff;
 	}
 }

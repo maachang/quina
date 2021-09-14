@@ -13,7 +13,7 @@ public interface MemorySendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param value 送信データを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(byte[] value) {
 		return send(value, null);
@@ -23,7 +23,7 @@ public interface MemorySendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * @param value 送信データを設定します.
 	 * @param charset 文字コードを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(byte[] value, String charset) {
 		if(!isCallSendMethod()) {
@@ -43,7 +43,7 @@ public interface MemorySendResponse<T> extends CoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param value 送信データを設定します.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(String value) {
 		return send(value, null);
@@ -53,7 +53,7 @@ public interface MemorySendResponse<T> extends CoreSendResponse<T> {
 	 * 送信処理.
 	 * @param value 送信データを設定します.
 	 * @param charset 変換対象の文字コードが設定されます.
-	 * @return T PromiseActionオブジェクトが返却されます.
+	 * @return T オブジェクトが返却されます.
 	 */
 	default T send(String value, String charset) {
 		if(!isCallSendMethod()) {
