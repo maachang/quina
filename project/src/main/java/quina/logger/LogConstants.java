@@ -61,7 +61,7 @@ public class LogConstants {
 	// 基本設定のログ文字列変換の初期バッファサイズ.
 	private static final AtomicInteger ut8BufferLength = new
 		AtomicInteger(DEFAULT_UTF8_BUFFER_LENGTH);
-
+	
 	/**
 	 * 基本設定の出力可能なログレベルを取得.
 	 * @return

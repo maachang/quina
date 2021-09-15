@@ -27,10 +27,10 @@ final class LogWriteWorker extends Thread {
 	
 	// 1つのLogワーカー要素.
 	private static final class LogWorkerElement {
-		protected final String name;
-		protected final LogDefineElement element;
-		protected final LogLevel typeNo;
-		protected final Object[] args;
+		protected String name;
+		protected LogDefineElement element;
+		protected LogLevel typeNo;
+		protected Object[] args;
 		
 		protected LogWorkerElement(String name, LogDefineElement element,
 			LogLevel typeNo, Object[] args) {
@@ -192,7 +192,7 @@ final class LogWriteWorker extends Thread {
 	/**
 	 * LogDefineの管理情報.
 	 */
-	private static final class LogDefineIndex {
+	private static final class LogDefineList {
 		private static final int DEF_LEN = 8;
 		private LogDefineElement[] list = null;
 		private int[] idList = null;
@@ -201,7 +201,7 @@ final class LogWriteWorker extends Thread {
 		/**
 		 * コンストラクタ.
 		 */
-		public LogDefineIndex() {
+		public LogDefineList() {
 			list = new LogDefineElement[DEF_LEN];
 			idList = new int[DEF_LEN];
 		}
@@ -346,20 +346,19 @@ final class LogWriteWorker extends Thread {
 		LogWorkerElement em = null;
 		ThreadDeath ret = null;
 		boolean endFlag = false;
-		final LogDefineIndex logDefineIndex = new LogDefineIndex();
+		final LogDefineList logDefineList = new LogDefineList();
 
 		// スレッド開始完了.
 		startThreadFlag.set(true);
 		while (!endFlag && !stopFlag) {
 			try {
 				while (!endFlag && !stopFlag) {
-					em = null;
 					// 実行ワーカー要素を取得.
 					if ((em = queue.poll()) == null) {
 						// Flush処理.
-						len = logDefineIndex.size();
+						len = logDefineList.size();
 						for(i = 0; i < len; i ++) {
-							logEm = logDefineIndex.getLogDefineElement(i);
+							logEm = logDefineList.getLogDefineElement(i);
 							if(logEm != null) {
 								logEm.flushLog();
 							}
@@ -367,12 +366,14 @@ final class LogWriteWorker extends Thread {
 						waitObject.await(TIMEOUT);
 						continue;
 					}
-					// ログ出力.
 					try {
+						// ログ出力.
 						write(utf8Buf, em.name, em.element, em.typeNo,
 							em.args);
-						logDefineIndex.put(em.element);
+						// ファイルOpenしたLogDefineElementをセット.
+						logDefineList.put(em.element);
 					} catch(Exception e) {}
+					em = null;
 				}
 			} catch (Throwable to) {
 				// スレッド中止.
@@ -387,12 +388,13 @@ final class LogWriteWorker extends Thread {
 		}
 		// ワーカースレッド処理後、残ったログを出力.
 		while (true) {
-			em = null;
 			if ((em = queue.poll()) == null) {
 				// Close処理.
-				len = logDefineIndex.size();
+				len = logDefineList.size();
 				for(i = 0; i < len; i ++) {
-					logEm = logDefineIndex.getLogDefineElement(i);
+					// LogDefineListに管理されてるLogDefineElementの
+					// OutputStreamをクローズする.
+					logEm = logDefineList.getLogDefineElement(i);
 					if(logEm != null) {
 						logEm.closeLog();
 					}
@@ -400,10 +402,13 @@ final class LogWriteWorker extends Thread {
 				break;
 			}
 			try {
+				// ログ出力.
 				write(utf8Buf, em.name, em.element, em.typeNo,
 					em.args);
-				logDefineIndex.put(em.element);
+				// ファイルOpenしたLogDefineElementをセット.
+				logDefineList.put(em.element);
 			} catch(Exception e) {}
+			em = null;
 		}
 		return ret;
 	}

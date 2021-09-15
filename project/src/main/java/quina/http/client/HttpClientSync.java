@@ -41,6 +41,8 @@ public class HttpClientSync {
 	// -Djdk.tls.client.protocols=TLSv1.2
 	//              or
 	// System.setProperty("jdk.tls.client.protocols", "TLSv1.2");
+	//              or
+	// ＠SystemProperty(key="jdk.tls.client.protocols", value="TLSv1.2")
 	//
 
 	protected HttpClientSync() {
@@ -52,7 +54,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult get(String url, HttpClientOption option) {
+	public static final HttpResult get(
+		String url, HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
@@ -65,7 +68,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult post(String url, HttpClientOption option) {
+	public static final HttpResult post(
+		String url, HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
@@ -79,7 +83,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult json(String url, Object json, HttpClientOption option) {
+	public static final HttpResult json(
+		String url, Object json, HttpClientOption option) {
 		return json(Method.POST, url, json, option);
 	}
 
@@ -91,7 +96,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult json(Method method, String url, Object json,
+	public static final HttpResult json(
+		Method method, String url, Object json,
 		HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
@@ -106,7 +112,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult delete(String url, HttpClientOption option) {
+	public static final HttpResult delete(
+		String url, HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
@@ -119,7 +126,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult put(String url, HttpClientOption option) {
+	public static final HttpResult put(
+		String url, HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
@@ -132,7 +140,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult patch(String url, HttpClientOption option) {
+	public static final HttpResult patch(
+		String url, HttpClientOption option) {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
@@ -140,7 +149,8 @@ public class HttpClientSync {
 	}
 
 	// MethodがGETやDELETEの場合、URLに対してFormDataを付与.
-	private static final String appendUrlParams(String url, HttpClientOption option) {
+	private static final String appendUrlParams(
+		String url, HttpClientOption option) {
 		Method method = option.getMethod();
 		if(option.isFormData() &&
 			(Method.GET == method || Method.DELETE == method)) {
@@ -166,7 +176,8 @@ public class HttpClientSync {
 		if(pp == -1) {
 			return url + (!path.startsWith("/") ? "/" : "") + path;
 		}
-		return url.substring(0, pp) + (!path.startsWith("/") ? "/" : "") + path;
+		return url.substring(0, pp) +
+			(!path.startsWith("/") ? "/" : "") + path;
 	}
 
 	/**
@@ -176,7 +187,8 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult fetch(String url, HttpClientOption option) {
+	public static final HttpResult fetch(
+		String url, HttpClientOption option) {
 		String accessUrl;
 		HttpStatus state;
 		String location;
@@ -203,16 +215,19 @@ public class HttpClientSync {
 				HttpStatus.PermanentRedirect == state) {
 				// リダイレクトが許可されていない場合.
 				if(RedirectMode.error == option.getRedirect()) {
-					throw new HttpClientException("Redirection is not allowed.");
+					throw new HttpClientException(
+						"Redirection is not allowed.");
 				}
 				// locationを取得.
 				location = ret.getHeader().get("location");
 				// locationが存在しない場合.
 				if(location == null || location.isEmpty()) {
-					throw new HttpClientException("Detects rogue redirects.");
+					throw new HttpClientException(
+						"Detects rogue redirects.");
 				}
 				// リダイレクト先のURLがフルパスじゃない場合.
-				if(!location.startsWith("http://") && !location.startsWith("https://")) {
+				if(!location.startsWith("http://") &&
+					!location.startsWith("https://")) {
 					location = margeUrl(accessUrl, location);
 				}
 				// GETでリダイレクト必須のステータスの場合.
@@ -230,7 +245,8 @@ public class HttpClientSync {
 				url = location;
 				// 規定回数を超えるリダイレクトの場合.
 				if (cnt ++ > maxRetry) {
-					throw new HttpClientException("Retry limit exceeded.");
+					throw new HttpClientException(
+						"Retry limit exceeded.");
 				}
 				continue;
 			}
@@ -241,7 +257,8 @@ public class HttpClientSync {
 	}
 
 	// 接続処理.
-	private static final HttpResultSync accessHttp(String url, HttpClientOption option) {
+	private static final HttpResultSync accessHttp(
+		String url, HttpClientOption option) {
 		Socket socket = null;
 		InputStream in = null;
 		OutputStream out = null;
@@ -302,7 +319,8 @@ public class HttpClientSync {
 	}
 
 	// URLをパース.
-	private static final String[] parseUrl(String url) throws IOException {
+	private static final String[] parseUrl(String url)
+		throws IOException {
 		int b = 0;
 		int p = url.indexOf("://");
 		if (p == -1) {
@@ -311,7 +329,8 @@ public class HttpClientSync {
 		String protocol = url.substring(0, p);
 		String domain = null;
 		String path = null;
-		String port = "http".equals(protocol) ? "80" : "443";
+		String port = "http".equals(protocol) ?
+			"80" : "443";
 		b = p + 3;
 		p = url.indexOf(":", b);
 		int pp = url.indexOf("/", b);
@@ -336,15 +355,18 @@ public class HttpClientSync {
 			path = url.substring(p);
 		}
 		if (!NumberUtil.isNumeric(port)) {
-			throw new IOException("Port number is not a number: " + port);
+			throw new IOException("Port number is not a number: " +
+				port);
 		}
 		return new String[] { protocol, domain, port, path };
 	}
 
 	// ソケット生成.
-	private static final Socket createSocket(String[] urlArray) throws IOException {
+	private static final Socket createSocket(String[] urlArray)
+		throws IOException {
 		return NioClientSocket.create(
-			"https".equals(urlArray[0]), urlArray[1], NumberUtil.parseInt(urlArray[2]),
+			"https".equals(urlArray[0]), urlArray[1], 
+				NumberUtil.parseInt(urlArray[2]),
 				NioClientConstants.getTimeout());
 	}
 
@@ -358,7 +380,8 @@ public class HttpClientSync {
 	}
 
 	// HTTPリクエストを作成.
-	private static final void createRequest(String[] urlArray, OutputStream out, HttpClientOption option)
+	private static final void createRequest(
+		String[] urlArray, OutputStream out, HttpClientOption option)
 		throws IOException {
 		Header header = option.getHeaders();
 		Method method = option.getMethod();
@@ -387,7 +410,8 @@ public class HttpClientSync {
 		}
 		buf.append("\r\n");
 		if (header == null || !header.containsKey("User-Agent")) {
-			buf.append("User-Agent:").append(HttpConstants.getServerName()).append("\r\n");
+			buf.append("User-Agent:").append(HttpConstants.getServerName())
+				.append("\r\n");
 		}
 		buf.append("Accept-Encoding:gzip,deflate\r\n");
 		buf.append("Connection:close\r\n");
@@ -401,7 +425,8 @@ public class HttpClientSync {
 				v = header.getValue(i);
 				// 登録できない内容を削除.
 				if (k == null ||
-					Alphabet.eqArray(k, "host", "connection") != -1) {
+					Alphabet.eqArray(k, "host", "connection") != -1
+				) {
 					continue;
 				// コンテンツタイプが設定されている場合.
 				} else if(Alphabet.eq(k, "content-type")) {
@@ -414,8 +439,10 @@ public class HttpClientSync {
 			if(!contentType && option.getBody() != null &&
 				option.getBody() instanceof NioSendFileData) {
 				// 拡張子からmimeTypeを取得する.
-				String name = ((NioSendFileData)option.getBody()).getFileName();
-				String mime = MimeTypes.getInstance().getFileNameToMimeType(name);
+				String name = ((NioSendFileData)option.getBody())
+					.getFileName();
+				String mime = MimeTypes.getInstance()
+					.getFileNameToMimeType(name);
 				if(mime != null) {
 					buf.append("Content-Type:").append(mime);
 				}
@@ -476,11 +503,13 @@ public class HttpClientSync {
 
 	// データ受信.
 	@SuppressWarnings("resource")
-	private static final HttpResultSync receiveHttp(String url, InputStream in, HttpClientOption option)
+	private static final HttpResultSync receiveHttp(
+		String url, InputStream in, HttpClientOption option)
 		throws IOException {
 		int len, p;
 		boolean memFlg = true;
-		final long maxBodyLength = HttpConstants.getMaxRecvMemoryBodyLength();
+		final long maxBodyLength = HttpConstants
+			.getMaxRecvMemoryBodyLength();
 		final byte[] binary = new byte[NioConstants.getBufferSize()];
 		NioBuffer recvBuf = new NioBuffer(NioConstants.getBufferSize());
 		HttpReceiveChunked recvChunked = null;
@@ -502,7 +531,8 @@ public class HttpClientSync {
 						if ((p = recvBuf.indexOf(CFLF)) != -1) {
 							// HTTP/1.1 {Status} {MESSAGE}\r\n
 							int pp, ppp;
-							b = binary.length > p + 2 ? binary : new byte[p + 2];
+							b = binary.length > p + 2 ?
+								binary : new byte[p + 2];
 							recvBuf.read(b, 0, p + 2);
 							String top = new String(b, 0, p + 2, "UTF8");
 							b = null;
@@ -516,7 +546,8 @@ public class HttpClientSync {
 								status = 200;
 								message = "OK";
 							} else {
-								status = NumberUtil.parseInt(top.substring(pp + 1, ppp));
+								status = NumberUtil.parseInt(
+									top.substring(pp + 1, ppp));
 								message = top.substring(ppp + 1).trim();
 							}
 						} else {

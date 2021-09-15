@@ -4,7 +4,7 @@ import java.io.Closeable;
 
 /**
  * Nioワーカ要素.
- * NioWorkerThreadで実行されるワーカー要素をです.
+ * NioWorkerThreadで実行されるワーカー要素です.
  */
 public interface WorkerElement extends Closeable {
 	/**
