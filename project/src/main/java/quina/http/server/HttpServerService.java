@@ -79,8 +79,7 @@ public class HttpServerService implements QuinaService {
 			// サーバーコア生成.
 			this.core = new NioServerCore(info.getByteBufferLength(), info.getSendBuffer(),
 				info.getRecvBuffer(), info.isKeepAlive(), info.isTcpNoDeley(),
-				server, c, httpWorkerService.getServerPoolingManager(),
-				httpWorkerService.getNioWorkerThreadManager());
+				server, c, httpWorkerService.getNioWorkerThreadManager());
 			// サーバーコールを設定.
 			httpServerCall.set(c);
 			// サーバスレッド開始.

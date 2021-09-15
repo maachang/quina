@@ -3,7 +3,6 @@ package quina.http.worker;
 import quina.QuinaInfo;
 import quina.QuinaService;
 import quina.exception.QuinaException;
-import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 import quina.util.Flag;
 
@@ -13,12 +12,6 @@ import quina.util.Flag;
 public class HttpWorkerService implements QuinaService {
 	// ワーカースレッドマネージャ.
 	private NioWorkerThreadManager manager;
-
-	// サーバープーリングマネージャ.
-	private NioWorkerPoolingManager serverPoolingManager;
-
-	// クライアントプーリングマネージャ.
-	private NioWorkerPoolingManager clientPoolingManager;
 
 	// NioWorker定義.
 	private final HttpWorkerInfo info = new HttpWorkerInfo();
@@ -58,14 +51,8 @@ public class HttpWorkerService implements QuinaService {
 			throw new QuinaException(this.getClass().getName() + " has already started.");
 		}
 		try {
-			// プーリングマネージャサイズを生成.
-			this.serverPoolingManager = new NioWorkerPoolingManager(
-				info.getServerPoolingManagerLength());
-			this.clientPoolingManager = new NioWorkerPoolingManager(
-				info.getClientPoolingManagerLength());
 			// HttpWorkerHandlerを生成.
-			HttpWorkerHandler handler = new HttpWorkerHandler(info.getRecvTmpBuffer(),
-				serverPoolingManager, clientPoolingManager);
+			HttpWorkerHandler handler = new HttpWorkerHandler(info.getRecvTmpBuffer());
 			// マネージャを生成して開始処理.
 			this.manager = new NioWorkerThreadManager(
 				info.getWorkerThreadLength(), handler);
@@ -101,14 +88,6 @@ public class HttpWorkerService implements QuinaService {
 		if(manager != null) {
 			manager.stopThread();
 		}
-		if(serverPoolingManager != null) {
-			serverPoolingManager.clear();
-			serverPoolingManager = null;
-		}
-		if(clientPoolingManager != null) {
-			clientPoolingManager.clear();
-			clientPoolingManager = null;
-		}
 		startFlag.set(false);
 	}
 
@@ -143,21 +122,5 @@ public class HttpWorkerService implements QuinaService {
 	public synchronized NioWorkerThreadManager getNioWorkerThreadManager() {
 		check(false);
 		return manager;
-	}
-
-	/**
-	 * サーバープーリングマネージャを取得.
-	 * @return NioWorkerPoolingManager サーバープーリングマネージャが返却されます.
-	 */
-	public synchronized NioWorkerPoolingManager getServerPoolingManager() {
-		return serverPoolingManager;
-	}
-
-	/**
-	 * クライアントプーリングマネージャを取得.
-	 * @return NioWorkerPoolingManager クライアントプーリングマネージャが返却されます.
-	 */
-	public synchronized NioWorkerPoolingManager getClientPoolingManager() {
-		return clientPoolingManager;
 	}
 }

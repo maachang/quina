@@ -14,10 +14,7 @@ public class HttpWorkerInfo implements QuinaInfo {
 	private QuinaConfig config = new QuinaConfig(
 		// ワーカースレッド管理サイズ.
 		"workerThreadLength", TypesClass.Integer, NioWorkerConstants.getWorkerThreadLength(),
-		// サーバープーリング管理サイズ.
-		"serverPoolingManagerLength", TypesClass.Integer, NioWorkerConstants.getPoolingManageLength(),
-		// クライアントプーリング管理サイズ.
-		"clientPoolingManagerLength", TypesClass.Integer, NioWorkerConstants.getPoolingManageLength(),
+		
 		// 受信テンポラリバッファサイズ.
 		"recvTmpBuffer", TypesClass.Integer, NioConstants.getByteBufferLength()
 	);
@@ -53,38 +50,6 @@ public class HttpWorkerInfo implements QuinaInfo {
 	 */
 	public void setWorkerThreadLength(int workerThreadLength) {
 		config.set("workerThreadLength", workerThreadLength);
-	}
-
-	/**
-	 * サーバープーリングマネージャサイズを取得.
-	 * @return
-	 */
-	public int getServerPoolingManagerLength() {
-		return config.get("serverPoolingManagerLength").getInt();
-	}
-
-	/**
-	 * サーバープーリングマネージャサイズを設定.
-	 * @param serverPoolingManagerLength
-	 */
-	public void setServerPoolingManagerLength(int serverPoolingManagerLength) {
-		config.set("serverPoolingManagerLength", serverPoolingManagerLength);
-	}
-
-	/**
-	 * クライアントプーリングマネージャサイズを取得.
-	 * @return
-	 */
-	public int getClientPoolingManagerLength() {
-		return config.get("clientPoolingManagerLength").getInt();
-	}
-
-	/**
-	 * クライアントプーリングマネージャサイズを設定.
-	 * @param poolingManagerLength
-	 */
-	public void setClientPoolingManagerLength(int clientPoolingManagerLength) {
-		config.set("clientPoolingManagerLength", clientPoolingManagerLength);
 	}
 
 	/**

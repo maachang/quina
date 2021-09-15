@@ -41,6 +41,7 @@ public class HttpServerInfo implements QuinaInfo {
 
 	// カスタムなPostBody解析.
 	private HttpCustomAnalysisParams custom = null;
+	
 	// MimeTypes.
 	private MimeTypes mimeTypes = null;
 

@@ -16,7 +16,6 @@ import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.NioSendLess;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 
 /**
@@ -49,32 +48,25 @@ public class NioClientCore extends Thread {
 	// ワーカースレッドマネージャ.
 	private NioWorkerThreadManager workerMan;
 
-	// ワーカープーリングマネージャ.
-	private NioWorkerPoolingManager pooling;
-
 	/**
 	 * コンストラクタ.
 	 * @param call NioClientコール処理を設定します.
-	 * @param pooling ワーカープーリングマネージャを設定します.
 	 * @param workerMan ワーカースレッドマネージャを設定します.
 	 */
-	public NioClientCore(NioClientCall call,
-		NioWorkerPoolingManager pooling, NioWorkerThreadManager workerMan) {
-		this(NioConstants.getByteBufferLength(), call, pooling, workerMan);
+	public NioClientCore(NioClientCall call,NioWorkerThreadManager workerMan) {
+		this(NioConstants.getByteBufferLength(), call, workerMan);
 	}
 
 	/**
 	 * コンストラクタ.
 	 * @param byteBufferLength Nioで利用するByteBufferのサイズを設定します.
 	 * @param call NioClientコール処理を設定します.
-	 * @param pooling ワーカープーリングマネージャを設定します.
 	 * @param workerMan ワーカースレッドマネージャを設定します.
 	 */
 	public NioClientCore(int byteBufferLength, NioClientCall call,
-		NioWorkerPoolingManager pooling, NioWorkerThreadManager workerMan) {
+		NioWorkerThreadManager workerMan) {
 		this.byteBufferLength = byteBufferLength;
 		this.call = call;
-		this.pooling = pooling;
 		this.workerMan = workerMan;
 	}
 
@@ -385,12 +377,7 @@ public class NioClientCore extends Thread {
 									if(buf.remaining() > 0) {
 										rb = new byte[buf.remaining()];
 										buf.get(rb);
-										// ワーカー要素をプーリングマネージャから取得.
-										wem = (NioReceiveWorkerElement)pooling.poll();
-										if(wem == null) {
-											// 存在しない場合は生成.
-											wem = new NioReceiveWorkerElement(nc);
-										}
+										wem = new NioReceiveWorkerElement(nc);
 										// ワーカー要素に受信データをセット.
 										wem.setReceiveData(em, rb);
 										rb = null;

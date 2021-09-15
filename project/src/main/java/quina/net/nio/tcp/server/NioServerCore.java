@@ -14,7 +14,6 @@ import quina.net.nio.tcp.NioSelector;
 import quina.net.nio.tcp.NioSendLess;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 
 /**
@@ -47,24 +46,19 @@ public class NioServerCore extends Thread {
 	// ワーカースレッドマネージャ.
 	private NioWorkerThreadManager workerMan;
 
-	// ワーカープーリングマネージャ.
-	private NioWorkerPoolingManager pooling;
-
 	/**
 	 * コンストラクタ.
 	 *
 	 * @param server ServerSocketChannelを設定します.
 	 * @param call NioServerCallを設定します.
-	 * @param pooling ワーカープーリングマネージャを設定します.
 	 * @param workerMan ワーカースレッドマネージャを設定します.
 	 * @exception IOException I/O例外.
 	 */
 	public NioServerCore(ServerSocketChannel server, NioServerCall call,
-		NioWorkerPoolingManager pooling, NioWorkerThreadManager workerMan)
+		NioWorkerThreadManager workerMan)
 		throws IOException {
 		this(NioConstants.getByteBufferLength()
-			, server, call
-			, pooling, workerMan);
+			, server, call, workerMan);
 	}
 
 	/**
@@ -73,12 +67,11 @@ public class NioServerCore extends Thread {
 	 * @param byteBufferLength Nioで利用するByteBufferのサイズを設定します.
 	 * @param server ServerSocketChannelを設定します.
 	 * @param call NioServerCallを設定します.
-	 * @param pooling ワーカープーリングマネージャを設定します.
 	 * @param workerMan ワーカースレッドマネージャを設定します.
 	 * @exception IOException I/O例外.
 	 */
 	public NioServerCore(int byteBufferLength, ServerSocketChannel server,
-		NioServerCall call, NioWorkerPoolingManager pooling, NioWorkerThreadManager workerMan)
+		NioServerCall call, NioWorkerThreadManager workerMan)
 
 		throws IOException {
 		this(byteBufferLength
@@ -86,8 +79,7 @@ public class NioServerCore extends Thread {
 			, NioServerConstants.getRecvBuffer()
 			, NioServerConstants.isKeepAlive()
 			, NioServerConstants.isTcpNoDeley()
-			, server, call
-			, pooling, workerMan);
+			, server, call, workerMan);
 	}
 
 	/**
@@ -100,14 +92,13 @@ public class NioServerCore extends Thread {
 	 * @param tcpNoDeley tcpNoDeleyモードを設定します.
 	 * @param server ServerSocketChannelを設定します.
 	 * @param call NioServerCallを設定します.
-	 * @param pooling ワーカープーリングマネージャを設定します.
 	 * @param workerMan ワーカースレッドマネージャを設定します.
 	 * @exception IOException I/O例外.
 	 */
 	public NioServerCore(int byteBufferLength, int sendBuffer,
 		int recvBuffer, boolean keepAlive, boolean tcpNoDeley,
 		ServerSocketChannel server, NioServerCall call,
-		NioWorkerPoolingManager pooling, NioWorkerThreadManager workerMan)
+		NioWorkerThreadManager workerMan)
 		throws IOException {
 		if(server.isBlocking()) {
 			server.configureBlocking(false);
@@ -120,7 +111,6 @@ public class NioServerCore extends Thread {
 		this.server = server;
 		this.call = call;
 		this.workerMan = workerMan;
-		this.pooling = pooling;
 		call.init();
 	}
 
@@ -443,12 +433,7 @@ public class NioServerCore extends Thread {
 									if(buf.remaining() > 0) {
 										rb = new byte[buf.remaining()];
 										buf.get(rb);
-										// ワーカー要素をプーリングマネージャから取得.
-										wem = (NioReceiveWorkerElement)pooling.poll();
-										if(wem == null) {
-											// 存在しない場合は生成.
-											wem = new NioReceiveWorkerElement(nc);
-										}
+										wem = new NioReceiveWorkerElement(nc);
 										// ワーカー要素に受信データをセット.
 										wem.setReceiveData(em, rb);
 										rb = null;

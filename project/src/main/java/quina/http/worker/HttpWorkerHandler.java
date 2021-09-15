@@ -2,14 +2,10 @@ package quina.http.worker;
 
 import quina.logger.Log;
 import quina.logger.LogFactory;
-import quina.net.nio.tcp.NioCall;
 import quina.net.nio.tcp.NioConstants;
-import quina.net.nio.tcp.client.NioClientCall;
-import quina.net.nio.tcp.server.NioServerCall;
 import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
-import quina.net.nio.tcp.worker.WorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerPoolingManager;
 import quina.net.nio.tcp.worker.NioWorkerThreadHandler;
+import quina.net.nio.tcp.worker.WorkerElement;
 
 /**
  * Http用ワーカーハンドラ.
@@ -17,12 +13,6 @@ import quina.net.nio.tcp.worker.NioWorkerThreadHandler;
 public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	// ログ出力.
 	private static final Log LOG = LogFactory.getInstance().get();
-
-	// nioサーバ用プーリングマネージャ.
-	private NioWorkerPoolingManager serverPooling;
-
-	// nioクライアント用プーリングマネージャ.
-	private NioWorkerPoolingManager clientPooling;
 
 	// 受信用テンポラリバッファ長.
 	private int tmpBufLen;
@@ -36,22 +26,8 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	 * @param serverPooling nioサーバ用プーリングマネージャを設定します.
 	 * @param clientPooling nioクライアント用プーリングマネージャを設定します.
 	 */
-	public HttpWorkerHandler(int tmpBufLen, NioWorkerPoolingManager serverPooling,
-			NioWorkerPoolingManager clientPooling) {
+	public HttpWorkerHandler(int tmpBufLen) {
 		setTmpRecvBufLength(tmpBufLen);
-		setPoolingManagers(serverPooling, clientPooling);
-	}
-
-
-	/**
-	 * プーリングマネージャを設定.
-	 * @param serverPooling nioサーバ用プーリングマネージャを設定します.
-	 * @param clientPooling nioクライアント用プーリングマネージャを設定します.
-	 */
-	public void setPoolingManagers(NioWorkerPoolingManager serverPooling,
-		NioWorkerPoolingManager clientPooling) {
-		this.serverPooling = serverPooling;
-		this.clientPooling = clientPooling;
 	}
 
 	/**
@@ -139,27 +115,8 @@ public class HttpWorkerHandler implements NioWorkerThreadHandler {
 	 */
 	@Override
 	public void endWorkerElement(WorkerElement em) {
-		// 対象要素が「nio受信用ワーカ要素」の場合.
-		if(em instanceof NioReceiveWorkerElement) {
-			// プーリングにセット.
-			final NioReceiveWorkerElement rem = (NioReceiveWorkerElement)em;
-			try {
-				NioCall call = rem.getCall();
-				// NioCallの型がサーバ用の場合.
-				if(call instanceof NioServerCall) {
-					rem.close();
-					if(serverPooling != null) {
-						serverPooling.offer(rem);
-					}
-				// NioCallの型がクライアントの場合.
-				} else if(call instanceof NioClientCall) {
-					rem.close();
-					if(clientPooling != null) {
-						clientPooling.offer(rem);
-					}
-				}
-			} catch(Exception e) {}
-			return;
-		}
+		try {
+			em.close();
+		} catch(Exception e) {}
 	}
 }

@@ -138,11 +138,11 @@ public class QuinaConfig {
 	protected QuinaConfig() {}
 
 	/**
-	 * 予約キー定義.
-	 * @param defines [キー名, 型, デフォルト値, キー名, 型, デフォルト値, ...]
-	 *                のように連続して定義します.
-	 *                キー名は文字列で設定します.
-	 *                型は TypesClass で定義します.
+	 * 予約キー定義.<br>
+	 * @param defines [キー名, 型, デフォルト値, キー名, 型, デフォルト値, ...]<br>
+	 *                のように連続して定義します.<br>
+	 *                キー名は文字列で設定します.<br>
+	 *                型は TypesClass で定義します.<br>
 	 *                デフォルト値が存在しない場合はnullを設定します.
 	 */
 	public QuinaConfig(Object... defines) {
