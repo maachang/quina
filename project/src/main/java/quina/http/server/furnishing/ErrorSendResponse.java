@@ -55,7 +55,7 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 				state = 500;
 			}
 			// エラー送信ではDefaultレスポンスに変換して送信.
-			res = (AbstractResponse<?>)HttpServerUtil.defaultResponse(res);
+			res = (AbstractResponse<?>)HttpServerUtil.normalResponse(res);
 			// エラーが存在しない場合.
 			if(value == null) {
 				// エラー返却.

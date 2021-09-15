@@ -61,7 +61,6 @@ public final class ResponseUtil {
 			// 送信開始.
 			res.element.startWrite();
 		} catch(Exception e) {
-			//e.printStackTrace();
 			// 例外の場合は要素とResponseをクローズして終了.
 			try {
 				res.element.close();

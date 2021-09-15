@@ -2,28 +2,15 @@ package quina.http.server;
 
 import java.io.IOException;
 
-import quina.Quina;
-import quina.component.ComponentConstants;
-import quina.component.ComponentManager;
-import quina.component.ComponentType;
-import quina.component.RegisterComponent;
-import quina.exception.CoreException;
 import quina.http.CsMode;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
-import quina.http.Method;
 import quina.http.MimeTypes;
-import quina.http.Params;
-import quina.http.Response;
-import quina.http.server.response.NormalResponseImpl;
-import quina.http.server.response.RESTfulResponseImpl;
-import quina.http.server.response.SyncResponseImpl;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
 import quina.net.nio.tcp.server.NioServerCall;
-import quina.validate.Validation;
 
 /**
  * Httpサーバコール.
@@ -183,140 +170,6 @@ public class HttpServerCall extends NioServerCall {
 	 * @param url
 	 */
 	public final void execComponent(String url, HttpElement em) {
-		execComponent(url, em, mimeTypes, custom);
-	}
-
-	/**
-	 * URLを指定してコンポーネントを実行.
-	 * @param em Httpy要素を設定します.
-	 * @param url URLを設定します.
-	 * @param mime MimeTypesを設定します.
-	 * @param custom パラメータ解析のカスタム条件を設定します.
-	 */
-	public static final void execComponent(
-		String url, HttpElement em, MimeTypes mime,
-		HttpCustomAnalysisParams custom) {
-		String[] urls;
-		Params params;
-		RegisterComponent comp;
-		Validation validation;
-		// requestを取得.
-		HttpServerRequest req = (HttpServerRequest)em.getRequest();
-		// レスポンスはnull.
-		Response<?> res = em.getResponse();
-		// methodがoptionかチェック.
-		if(Method.OPTIONS.equals(req.getMethod())) {
-			// Option送信.
-			HttpServerUtil.sendOptions(em, req);
-			return;
-		}
-		try {
-			// urlが指定されてない場合はURLを取得.
-			if(url == null) {
-				url = req.getUrl();
-			// URLが存在する場合は作成されたRequestのURLを変更してコピー処理.
-			} else {
-				req = new HttpServerRequest(req, url);
-				em.setRequest(req);
-			}
-			// urlを[/]でパース.
-			urls = ComponentManager.getUrls(url);
-			// URLに対するコンテンツ取得.
-			comp = Quina.router().get(url, urls, req.getMethod());
-			url = null;
-			// コンポーネントが取得できない場合.
-			if(comp == null) {
-				// エラー404返却.
-				if(res == null) {
-					res = new NormalResponseImpl(em, mime);
-				}
-				res.setStatus(404);
-				HttpServerUtil.sendError(req, res, null);
-				return;
-			}
-			// コンポーネントタイプを取得.
-			final ComponentType ctype = comp.getType();
-			// Elementにレスポンスがない場合.
-			if(res == null) {
-				switch(ctype.getAttributeType()) {
-				// このコンポーネントは同期コンポーネントの場合.
-				case ComponentConstants.ATTRIBUTE_SYNC:
-					res = new SyncResponseImpl(em, mime);
-					break;
-				// このコンポーネントはRESTful系の場合.
-				case ComponentConstants.ATTRIBUTE_RESTFUL:
-					res = new RESTfulResponseImpl(em, mime);
-					break;
-				// デフォルトレスポンス.
-				default:
-					res = new NormalResponseImpl(em, mime);
-				}
-				// レスポンスをセット.
-				em.setResponse(res);
-			}
-			// パラメータを取得.
-			params = HttpAnalysis.convertParams(req, custom);
-			// URLパラメータ条件が存在する場合.
-			if(comp.isUrlParam()) {
-				// パラメータが存在しない場合は生成.
-				if(params == null) {
-					params = new Params();
-				}
-				// URLパラメータを解析.
-				comp.getUrlParam(params, urls);
-			}
-			urls = null;
-			// パラメータが存在する場合はリクエストセット.
-			if(params != null) {
-				req.setParams(params);
-			// パラメータが存在しない場合は空のパラメータをセット.
-			} else {
-				req.setParams(new Params(0));
-			}
-			// validationが存在する場合はValidation処理.
-			if((validation = comp.getValidation()) != null) {
-				// validation実行.
-				params = validation.execute(req, req.getParams());
-				// 新しく生成されたパラメータを再セット.
-				req.setParams(params);
-			}
-			// コンポーネント実行.
-			comp.call(req.getMethod(), req, res);
-		} catch(Exception e) {
-			// ワーニング以上のログ通知が認められてる場合.
-			if(LOG.isWarnEnabled()) {
-				int status = -1;
-				boolean noErrorFlag = false;
-				// CoreExceptionで、ステータスが５００以下の場合は
-				// エラー表示なし.
-				if(e instanceof CoreException) {
-					if((status = ((CoreException)e).getStatus()) > 500) {
-						noErrorFlag = true;
-					}
-				// それ以外の例外の場合はエラー表示.
-				} else {
-					noErrorFlag = true;
-				}
-				// エラー表示の場合.
-				if(noErrorFlag && LOG.isErrorEnabled()) {
-					if(status >= 0) {
-						LOG.error("# error (status: "
-							+ status + " url: \"" + req.getUrl() + "\").", e);
-					} else {
-						LOG.error("# error (url: \"" + req.getUrl() + "\").", e);
-					}
-				// ワーニング表示の場合.
-				} else if(LOG.isWarnEnabled()) {
-					if(status >= 0) {
-						LOG.warn("# warning (status: "
-							+ status + " url: \"" + req.getUrl() + "\").");
-					} else {
-						LOG.warn("# warning (url: \"" + req.getUrl() + "\").");
-					}
-				}
-			}
-			// エラー返却.
-			HttpServerUtil.sendError(req, res, e);
-		}
+		HttpServerUtil.execComponent(url, em, mimeTypes, custom);
 	}
 }

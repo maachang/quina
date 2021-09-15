@@ -62,7 +62,7 @@ public interface ErrorComponent {
 		}
 		// ResponseがNormalResponseでない場合は変換.
 		if(!(res instanceof NormalResponse)) {
-			res = HttpServerUtil.defaultResponse(res);
+			res = HttpServerUtil.normalResponse(res);
 		}
 		// 実行処理.
 		call(state, json, req, (NormalResponse)res, e);
@@ -79,7 +79,7 @@ public interface ErrorComponent {
 	default void call(int state, boolean restful, Request req, Response<?> res) {
 		// ResponseがNormalResponseでない場合は変換.
 		if(!(res instanceof NormalResponse)) {
-			res = HttpServerUtil.defaultResponse(res);
+			res = HttpServerUtil.normalResponse(res);
 		}
 		call(state, restful, req, (NormalResponse)res, null);
 	}

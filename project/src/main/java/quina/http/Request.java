@@ -9,6 +9,12 @@ import quina.net.nio.tcp.NioBuffer;
  * Httpリクエスト.
  */
 public interface Request extends Closeable {
+	
+	/**
+	 * コネクションが有効か取得.
+	 * @return boolean true の場合有効です.
+	 */
+	public boolean isConnection();
 
 	/**
 	 * Httpメソッドを取得.

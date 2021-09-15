@@ -1,53 +1,68 @@
 package quina.http.server;
 
 import quina.Quina;
+import quina.component.ComponentConstants;
+import quina.component.ComponentManager;
+import quina.component.ComponentType;
 import quina.component.ErrorComponent;
+import quina.component.RegisterComponent;
 import quina.exception.CoreException;
+import quina.http.HttpAnalysis;
+import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
 import quina.http.HttpException;
+import quina.http.Method;
 import quina.http.MimeTypes;
+import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.NormalResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponseImpl;
+import quina.logger.Log;
+import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioSendData;
+import quina.net.nio.tcp.NioUtil;
+import quina.validate.Validation;
 
 /**
  * HttpServerユーティリティ.
  */
 public final class HttpServerUtil {
 	private HttpServerUtil() {}
+	
+	// ログ出力.
+	private static final Log LOG = LogFactory.getInstance().get();
 
 	/**
-	 * デフォルトレスポンスに作り変える.
+	 * ノーマルレスポンスに作り変える.
 	 * @param res
 	 * @return
 	 */
-	public static final Response<?> defaultResponse(Response<?> res) {
+	public static final Response<?> normalResponse(Response<?> res) {
 		return (Response<?>)NormalResponseImpl.newResponse(res);
 	}
 
 	/**
-	 * デフォルトレスポンスに作り変える.
+	 * ノーマルレスポンスに作り変える.
 	 * @param em
 	 * @param mimeTypes
 	 * @return
 	 */
-	public static final Response<?> defaultResponse(HttpElement em, MimeTypes mimeTypes) {
+	public static final Response<?> normalResponse(HttpElement em, MimeTypes mimeTypes) {
 		Response<?> res = new NormalResponseImpl(em, mimeTypes);
 		em.setResponse(res);
 		return res;
 	}
 
 	/**
-	 * デフォルトレスポンスに作り変える.
+	 * ノーマルレスポンスに作り変える.
 	 * @param em
 	 * @param mimeTypes
 	 * @param res
 	 * @return
 	 */
-	public static final Response<?> defaultResponse(
+	public static final Response<?> normalResponse(
 		HttpElement em, MimeTypes mimeTypes, Response<?> res) {
 		if(res == null) {
 			res = new NormalResponseImpl(em, mimeTypes);
@@ -135,6 +150,144 @@ public final class HttpServerUtil {
 			return (Response<?>)SyncResponseImpl.newResponse(res);
 		}
 	}
+	
+	/**
+	 * URLを指定してコンポーネントを実行.
+	 * @param em Httpy要素を設定します.
+	 * @param url URLを設定します.
+	 * @param mime MimeTypesを設定します.
+	 * @param custom パラメータ解析のカスタム条件を設定します.
+	 */
+	public static final void execComponent(
+		String url, HttpElement em, MimeTypes mime,
+		HttpCustomAnalysisParams custom) {
+		// 接続が切断されてる場合は処理しない.
+		if(!em.isConnection()) {
+			return;
+		}
+		String[] urls;
+		Params params;
+		RegisterComponent comp;
+		Validation validation;
+		// requestを取得.
+		HttpServerRequest req = (HttpServerRequest)em.getRequest();
+		// レスポンスはnull.
+		Response<?> res = em.getResponse();
+		// methodがoptionかチェック.
+		if(Method.OPTIONS.equals(req.getMethod())) {
+			// Option送信.
+			HttpServerUtil.sendOptions(em, req);
+			return;
+		}
+		try {
+			// urlが指定されてない場合はURLを取得.
+			if(url == null) {
+				url = req.getUrl();
+			// URLが存在する場合は作成されたRequestのURLを変更してコピー処理.
+			} else {
+				req = new HttpServerRequest(req, url);
+				em.setRequest(req);
+			}
+			// urlを[/]でパース.
+			urls = ComponentManager.getUrls(url);
+			// URLに対するコンテンツ取得.
+			comp = Quina.router().get(url, urls, req.getMethod());
+			url = null;
+			// コンポーネントが取得できない場合.
+			if(comp == null) {
+				// エラー404返却.
+				if(res == null) {
+					res = new NormalResponseImpl(em, mime);
+				}
+				res.setStatus(404);
+				HttpServerUtil.sendError(req, res, null);
+				return;
+			}
+			// コンポーネントタイプを取得.
+			final ComponentType ctype = comp.getType();
+			// Elementにレスポンスがない場合.
+			if(res == null) {
+				switch(ctype.getAttributeType()) {
+				// このコンポーネントは同期コンポーネントの場合.
+				case ComponentConstants.ATTRIBUTE_SYNC:
+					res = new SyncResponseImpl(em, mime);
+					break;
+				// このコンポーネントはRESTful系の場合.
+				case ComponentConstants.ATTRIBUTE_RESTFUL:
+					res = new RESTfulResponseImpl(em, mime);
+					break;
+				// デフォルトレスポンス.
+				default:
+					res = new NormalResponseImpl(em, mime);
+				}
+				// レスポンスをセット.
+				em.setResponse(res);
+			}
+			// パラメータを取得.
+			params = HttpAnalysis.convertParams(req, custom);
+			// URLパラメータ条件が存在する場合.
+			if(comp.isUrlParam()) {
+				// パラメータが存在しない場合は生成.
+				if(params == null) {
+					params = new Params();
+				}
+				// URLパラメータを解析.
+				comp.getUrlParam(params, urls);
+			}
+			urls = null;
+			// パラメータが存在する場合はリクエストセット.
+			if(params != null) {
+				req.setParams(params);
+			// パラメータが存在しない場合は空のパラメータをセット.
+			} else {
+				req.setParams(new Params(0));
+			}
+			// validationが存在する場合はValidation処理.
+			if((validation = comp.getValidation()) != null) {
+				// validation実行.
+				params = validation.execute(req, req.getParams());
+				// 新しく生成されたパラメータを再セット.
+				req.setParams(params);
+			}
+			// コンポーネント実行.
+			comp.call(req.getMethod(), req, res);
+		} catch(Exception e) {
+			// ワーニング以上のログ通知が認められてる場合.
+			if(LOG.isWarnEnabled()) {
+				int status = -1;
+				boolean noErrorFlag = false;
+				// CoreExceptionで、ステータスが５００以下の場合は
+				// エラー表示なし.
+				if(e instanceof CoreException) {
+					if((status = ((CoreException)e).getStatus()) > 500) {
+						noErrorFlag = true;
+					}
+				// それ以外の例外の場合はエラー表示.
+				} else {
+					noErrorFlag = true;
+				}
+				// エラー表示の場合.
+				if(noErrorFlag && LOG.isErrorEnabled()) {
+					if(status >= 0) {
+						LOG.error("# error (status: "
+							+ status + " url: \"" + req.getUrl() + "\").", e);
+					} else {
+						LOG.error("# error (url: \"" + req.getUrl() + "\").", e);
+					}
+				// ワーニング表示の場合.
+				} else if(LOG.isWarnEnabled()) {
+					if(status >= 0) {
+						LOG.warn("# warning (status: "
+							+ status + " url: \"" + req.getUrl() + "\").");
+					} else {
+						LOG.warn("# warning (url: \"" + req.getUrl() + "\").");
+					}
+				}
+			}
+			// エラー返却.
+			HttpServerUtil.sendError(req, res, e);
+		}
+	}
 
 	/**
 	 * HttpErrorを送信.
@@ -152,6 +305,10 @@ public final class HttpServerUtil {
 	 * @param e 例外を設定します.
 	 */
 	public static final void sendError(Request req, Response<?> res, Throwable e) {
+		// NioElementが閉じられてる場合は処理しない.
+		if(!req.isConnection()) {
+			return;
+		}
 		// エラーコンポーネントを取得.
 		ErrorComponent component =
 			Quina.router().getError(res.getStatusNo());
@@ -183,10 +340,15 @@ public final class HttpServerUtil {
 	 * @param em
 	 * @param req
 	 */
-	public static final void sendOptions(HttpElement em, HttpServerRequest req) {
+	public static final void sendOptions(HttpElement em, Request req) {
+		// 接続が切断されてる場合は処理しない.
+		if(!em.isConnection()) {
+			return;
+		}
 		try {
 			// optionのデータを取得.
-			final NioSendData options = CreateResponseHeader.createOptionsHeader(true, false);
+			final NioSendData options = CreateResponseHeader.createOptionsHeader(
+				true, false);
 			// NioElementに送信データを登録.
 			em.setSendData(options);
 			// 送信開始.
@@ -194,7 +356,7 @@ public final class HttpServerUtil {
 		} catch(Exception e) {
 			// 例外の場合は要素をクローズして終了.
 			try {
-				em.close();
+				NioUtil.closeNioElement(em);
 			} catch(Exception ee) {}
 			try {
 				req.close();
@@ -202,7 +364,8 @@ public final class HttpServerUtil {
 			if(e instanceof HttpException) {
 				throw (HttpException)e;
 			}
-			throw new HttpException(e);
+			// NioElementをクローズさせてるので
+			// 通信切断されたので、例外は出さない.
 		}
 	}
 }

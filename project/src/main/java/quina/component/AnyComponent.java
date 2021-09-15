@@ -39,7 +39,7 @@ public interface AnyComponent extends Component {
 	default void call(Method method, Request req, Response<?> res) {
 		// ResponseがNormalResponseでない場合は変換.
 		if(!(res instanceof NormalResponse)) {
-			res = HttpServerUtil.defaultResponse(res);
+			res = HttpServerUtil.normalResponse(res);
 		}
 		call(req, (NormalResponse)res);
 	}

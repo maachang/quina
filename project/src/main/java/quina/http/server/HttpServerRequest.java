@@ -104,6 +104,12 @@ public class HttpServerRequest implements Request {
 		this.element = null;
 		this.params = null;
 	}
+	
+	@Override
+	public boolean isConnection() {
+		return element != null &&
+			element.isConnection();
+	}
 
 	@Override
 	public Method getMethod() {
