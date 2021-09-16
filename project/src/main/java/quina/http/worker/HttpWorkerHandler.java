@@ -3,7 +3,6 @@ package quina.http.worker;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioConstants;
-import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
 import quina.net.nio.tcp.worker.NioWorkerThreadHandler;
 import quina.net.nio.tcp.worker.WorkerElement;
 

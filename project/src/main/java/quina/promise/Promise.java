@@ -8,24 +8,28 @@ import quina.util.Flag;
 /**
  * Quina専用のPromise処理.
  *
- * ベースはjavascriptのPromiseを模倣した形での実装ですが、最低限の実装です.
+ * javascriptのPromiseを模倣した形での実装で、内容は最低限の実装
+ * となります.
  *
  * 使い方はこんな感じです.
- * Promise promise = new Promise("hoge");
- * promise.then((action, value) -> {
- *   action.resolve(value + " moge");
- * });
- * promise.then((action, value) -> {
- *   response.setContentType("text/html");
- *   action.send(value);
- * });
- * promise.exception((action, error) -> {
- *   action.sendError(error);
- * });
- * promise.start();
+ * Router router = Quina.router();
+ * router.route("/", (RESTfulGetSync)(req, res, params) -> {
+ *   Promise promise = new Promise("hoge");
+ *   promise.then((action, value) -> {
+ *     action.resolve(value + " moge");
+ *   });
+ *   promise.then((action, value) -> {
+ *     response.setContentType("text/html");
+ *     response.send(value);
+ *   });
+ *   promise.error((action, error) -> {
+ *     response.sendError(error);
+ *   });
+ *   promise.start();
+ * }
  *
  * 基本的にはコールバック地獄を回避するための
- * "最低限"のPromise実装を提供します.
+ * 最低限のPromise実装を提供します.
  *
  * またPromiseはコンポーネントは、基本的に「非同期モード」のものしか
  * 実行出来ません.
@@ -35,7 +39,7 @@ import quina.util.Flag;
  *
  * Quina.getRouter().route("/promiseSync",
  * (SyncComponent)(request, response) -> {
- *   Promise p = Promise.ins("abc")
+ *   Promise p = Promise.form("abc")
  *     .then((action, value) -> {
  *       action.resolve(value + " def");
  *   })
@@ -50,7 +54,7 @@ public class Promise {
 	protected PromiseFromEndWorker firstCall = null;
 	// promiseアクション.
 	protected PromiseActionImpl action;
-
+	
 	/**
 	 * コンストラクタ.
 	 */
@@ -88,6 +92,32 @@ public class Promise {
 		for(int i = 0; i < len; i ++) {
 			checkStartPromise(list[i]);
 		}
+	}
+
+	/**
+	 * インスタンス生成.
+	 * @return Promise Promiseオブジェクトが返却されます.
+	 */
+	public static final Promise form() {
+		return new Promise();
+	}
+	
+	/**
+	 * インスタンス生成.
+	 * @param param パラメータを設定します.
+	 * @return Promise Promiseオブジェクトが返却されます.
+	 */
+	public static final Promise form(Object param) {
+		return new Promise(param);
+	}
+	
+	/**
+	 * インスタンス生成.
+	 * @param call 初期実行処理を設定します.
+	 * @return Promise Promiseオブジェクトが返却されます.
+	 */
+	public static final Promise form(PromiseFromEndCall call) {
+		return new Promise(call);
 	}
 
 	/**

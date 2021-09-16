@@ -40,8 +40,11 @@ public interface NioWorkerThreadHandler {
 
 	/**
 	 * ワーカー要素の利用終了時の呼び出し処理.
-	 * ここで、ワーカーがプーリング化したい場合は、その実装を行う.
-	 * @param em 利用済みのワーカー要素が返却されます.
+	 * @param em 処理済みのワーカー要素を設定します.
 	 */
-	public void endWorkerElement(WorkerElement em);
+	default void endWorkerElement(WorkerElement em) {
+		try {
+			em.close();
+		} catch(Exception e) {}
+	}
 }

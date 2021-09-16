@@ -5,22 +5,26 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import quina.exception.QuinaException;
 import quina.json.Json;
 import quina.util.collection.IndexKeyValueList;
+import quina.util.collection.IndexMap;
 import quina.util.collection.TreeKey;
 import quina.util.collection.TypesClass;
 import quina.util.collection.TypesElement;
+import quina.util.collection.TypesKeyValue;
 
 /**
  * QuinaConfig.
  *
  * QuinaInfo内で管理するコンフィグ情報です.
  */
-public class QuinaConfig {
+public class QuinaConfig implements TypesKeyValue<String, Object> {
 	/**
 	 * QuinaConfig要素.
 	 */
-	public static final class QuinaConfigElement implements TypesElement<Object> {
+	public static final class QuinaConfigElement
+		implements TypesElement<Object> {
 		// 管理データ.
 		private Object value;
 		// 変換型.
@@ -69,7 +73,8 @@ public class QuinaConfig {
 		 * @param clz 定義された型を設定します.
 		 * @param def デフォルト値を設定します.
 		 */
-		protected QuinaConfigElement set(Object val, TypesClass clz, Object def) {
+		protected QuinaConfigElement set(
+			Object val, TypesClass clz, Object def) {
 			this.value = val;
 			this.clazz = clz;
 			this.defaultValue = def;
@@ -123,6 +128,8 @@ public class QuinaConfig {
 		}
 	}
 
+	// コンフィグ名.
+	private String name;
 
 	// コンフィグパラメータ.
 	private final Map<Object, QuinaConfigElement> config =
@@ -139,19 +146,25 @@ public class QuinaConfig {
 
 	/**
 	 * 予約キー定義.<br>
+	 * @param name 対象のコンフィグ名を設定します.
 	 * @param defines [キー名, 型, デフォルト値, キー名, 型, デフォルト値, ...]<br>
 	 *                のように連続して定義します.<br>
 	 *                キー名は文字列で設定します.<br>
 	 *                型は TypesClass で定義します.<br>
 	 *                デフォルト値が存在しない場合はnullを設定します.
 	 */
-	public QuinaConfig(Object... defines) {
+	public QuinaConfig(String name, Object... defines) {
 		TreeKey key;
 		TypesClass clazz;
 		Object k, v;
+		if(name == null || name.isEmpty()) {
+			throw new QuinaException("The config name has not been set.");
+		}
+		this.name = name;
 		int len = defines.length;
 		for(int i = 0; i < len; i += 3) {
-			if((k = defines[i]) == null || (v = defines[i+1]) == null) {
+			if((k = defines[i]) == null ||
+				(v = defines[i+1]) == null) {
 				continue;
 			}
 			key = new TreeKey("" + k);
@@ -180,6 +193,18 @@ public class QuinaConfig {
 	public void clear() {
 		config.clear();
 	}
+	
+	/**
+	 * コンフィグ情報を読み込む.
+	 * @param configDir コンフィグファイル読み込み先のディレクトリを設定します.
+	 */
+	public void readConfig(String configDir) {
+		final IndexMap<String, Object> json = QuinaUtil.loadJson(
+			configDir, name);
+		if(json != null) {
+			setConfig(json);
+		}
+	}
 
 	/**
 	 * コンフィグデータをセット.
@@ -187,13 +212,22 @@ public class QuinaConfig {
 	 */
 	public void setConfig(Map<String, Object> json) {
 		Entry<String, Object> e;
-		Iterator<Entry<String, Object>> it = json.entrySet().iterator();
+		Iterator<Entry<String, Object>> it = json
+			.entrySet().iterator();
 		while(it.hasNext()) {
 			try {
 				e = it.next();
 				set(e.getKey(), e.getValue());
 			} catch(Exception ex) {}
 		}
+	}
+	
+	/**
+	 * コンフィグ名を取得.
+	 * @return String コンフィグ名が返却されます.
+	 */
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -203,7 +237,8 @@ public class QuinaConfig {
 	 * @retrun boolean 設定に成功した場合trueが返却されます.
 	 */
 	public boolean set(String key, Object value) {
-		final QuinaConfigElement c = reservationKeys.get(key);
+		final QuinaConfigElement c = reservationKeys
+			.get(key);
 		if(c == null) {
 			return false;
 		}
@@ -215,31 +250,14 @@ public class QuinaConfig {
 		em.set(value, c.getTypesClass(), c.getDefaultValue());
 		return true;
 	}
-
-	/**
-	 * 指定キーに対する定義された型を取得.
-	 * @param key 対象のキー名を設定します.
-	 * @return TypesClass 定義されている型が返却されます.
-	 */
-	public TypesClass getTypesClass(String key) {
-		final QuinaConfigElement ret = reservationKeys.get(key);
-		if(ret == null) {
+	
+	@Override
+	public Object get(Object key) {
+		QuinaConfigElement em = getElement(key.toString());
+		if(em == null) {
 			return null;
 		}
-		return ret.getTypesClass();
-	}
-
-	/**
-	 * 指定キーに対する定義されたデフォルト値を取得.
-	 * @param key 対象のキー名を設定します.
-	 * @return Object 定義されているデフォルト値が返却されます.
-	 */
-	public Object getDefaultValue(String key) {
-		final QuinaConfigElement ret = reservationKeys.get(key);
-		if(ret == null) {
-			return null;
-		}
-		return ret.getDefaultValue();
+		return em.get();
 	}
 
 	/**
@@ -247,10 +265,10 @@ public class QuinaConfig {
 	 * @param key 対象のキー名を設定します.
 	 * @return QuinaConfigElement コンフィグ要素が返却されます.
 	 */
-	public QuinaConfigElement get(String key) {
-		QuinaConfigElement ret = config.get(key);
+	public QuinaConfigElement getElement(Object key) {
+		QuinaConfigElement ret = config.get(key.toString());
 		if(ret == null) {
-			return reservationKeys.get(key);
+			return reservationKeys.get(key.toString());
 		}
 		return ret;
 	}
@@ -275,13 +293,21 @@ public class QuinaConfig {
 		}
 		return ((TreeKey)ret).getKey();
 	}
-
+	
 	/**
 	 * コンフィグの内容を文字出力.
 	 * @param out 出力先のStringBuilderオブジェクトを設定します.
 	 * @param space 行出力時のインデント値を設定します.
 	 */
 	public void toString(StringBuilder out, int space) {
+		int k;
+		// スペースセット.
+		for(k = 0; k < space; k ++) {
+			out.append(" ");
+		}
+		// コンフィグ名を出力.
+		out.append("configName: ").append(name).append("\n");
+		space += 2;
 		TreeKey key;
 		final int len = reservationKeys.size();
 		boolean f = false;
@@ -294,7 +320,7 @@ public class QuinaConfig {
 					f = true;
 				}
 				// スペースセット.
-				for(int k = 0; k < space; k ++) {
+				for(k = 0; k < space; k ++) {
 					out.append(" ");
 				}
 				out.append(key).append(": ");

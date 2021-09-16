@@ -1,5 +1,7 @@
 package quina;
 
+import quina.exception.QuinaException;
+
 /**
  * QuinaService.
  */
@@ -9,20 +11,35 @@ public interface QuinaService {
 	 * コンフィグ情報を読み込む.
 	 * @param configDir コンフィグディレクトリを設定します.
 	 */
-	public void readConfig(String configDir);
+	public void loadConfig(String configDir);
 
 	/**
-	 * QuinaInfoを取得.
-	 * @return QuinaInfo QuinaInfoが返却されます.
+	 * QuinaConfigを取得.
+	 * @return QuinaConfig QuinaConfigが返却されます.
 	 */
-	public QuinaInfo getInfo();
+	public QuinaConfig getConfig();
 
 	/**
-	 * 既にサービスが稼働/停止している場合はエラー返却.
-	 * @param flg [true]の場合、開始中 [false]の場合、停止中の場合、
-	 *            エラーが発生します.
+	 * サービスの状態チェック.
+	 * @param mode [true]を指定した場合、開始中の場合、
+	 *             エラーが発生します.
+	 *             [false]を指定した場合、停止中の場合、
+	 *             エラーが発生します.
 	 */
-	public void check(boolean flg);
+	default void checkService(boolean mode) {
+		// 指定したフラグ条件と開始フラグが一致した場合.
+		if(isStartService() == mode) {
+			if(mode) {
+				throw new QuinaException(
+					this.getClass().getName() +
+					" service has already started.");
+			}
+			throw new QuinaException(
+				this.getClass().getName() +
+				" service is already stopped.");
+		}
+	}
+
 
 	/**
 	 * サービス開始処理[startService()]が実行されたかチェック.

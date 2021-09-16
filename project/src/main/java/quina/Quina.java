@@ -7,9 +7,7 @@ import quina.component.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.server.HttpServerCall;
-import quina.http.server.HttpServerInfo;
 import quina.http.server.HttpServerService;
-import quina.http.worker.HttpWorkerInfo;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioUtil;
@@ -260,19 +258,21 @@ public final class Quina {
 	}
 	
 	/**
-	 * 既にサービスが稼働/停止している場合はエラー返却.
-	 * @param flg [true]の場合、開始中 [false]の場合、停止中の場合、
-	 *            エラーが発生します.
+	 * サービスの状態チェック.
+	 * @param mode [true]を指定した場合、開始中の場合、
+	 *             エラーが発生します.
+	 *             [false]を指定した場合、停止中の場合、
+	 *             エラーが発生します.
 	 */
-	protected void check(boolean flg) {
+	protected void checkService(boolean mode) {
 		checkInit();
 		// 基本サービスのチェック.
-		httpWorkerService.check(flg);
-		httpServerService.check(flg);
+		httpWorkerService.checkService(mode);
+		httpServerService.checkService(mode);
 		// 登録サービスのチェック.
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {
-			quinaServiceManager.get(i).check(flg);
+			quinaServiceManager.get(i).checkService(mode);
 		}
 	}
 
@@ -284,7 +284,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina setConfigDirectory(String configDir) {
-		check(true);
+		checkService(true);
 		try {
 			if(configDir == null || configDir.isEmpty()) {
 				this.configDir = null;
@@ -324,7 +324,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina loadConfig(String configDir) {
-		check(true);
+		checkService(true);
 		// 存在する場合コンフィグディレクトリを設定.
 		if(configDir != null && !configDir.isEmpty()) {
 			setConfigDirectory(configDir);
@@ -339,12 +339,12 @@ public final class Quina {
 		// Etagマネージャのコンフィグ定義.
 		loadEtagManagerConfig(configDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
-		httpWorkerService.readConfig(configDir);
-		httpServerService.readConfig(configDir);
+		httpWorkerService.loadConfig(configDir);
+		httpServerService.loadConfig(configDir);
 		// 登録サービスのコンフィグ情報を読み込む.
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {
-			quinaServiceManager.get(i).readConfig(this.configDir);
+			quinaServiceManager.get(i).loadConfig(this.configDir);
 		}
 		return this;
 	}
@@ -439,21 +439,21 @@ public final class Quina {
 	}
 
 	/**
-	 * HttpWorkerInfoを取得.
-	 * @return HttpWorkerInfo HttpWorkerInfoが返却されます.
+	 * HttpWorkerのConfig情報を取得.
+	 * @return QuinaConfig HttpWorkerのConfigが返却されます.
 	 */
-	public HttpWorkerInfo getHttpWorkerInfo() {
+	public QuinaConfig getHttpWorkerConfig() {
 		checkInit();
-		return (HttpWorkerInfo)httpWorkerService.getInfo();
+		return httpWorkerService.getConfig();
 	}
 
 	/**
-	 * HttpServerInfoを取得.
-	 * @return HttpServerInfo HttpServerInfoが返却されます.
+	 * HttpServerのConfig情報を取得.
+	 * @return QuinaConfig HttpServerのConfigが返却されます.
 	 */
-	public HttpServerInfo getHttpServerInfo() {
+	public QuinaConfig getHttpServerConfig() {
 		checkInit();
-		return (HttpServerInfo)httpServerService.getInfo();
+		return httpServerService.getConfig();
 	}
 	
 	/**
@@ -461,7 +461,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina start() {
-		check(true);
+		checkService(true);
 		try {
 			// AutoRouter読み込みを実行.
 			router.autoRoute();

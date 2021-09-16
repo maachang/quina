@@ -10,34 +10,6 @@ import quina.net.nio.tcp.NioException;
  * データ受信用ワーカー要素.
  * このオブジェクトはデータ受信処理の采配をNioWorkerThreadに委託する
  * ための要素です.
- *
- * この処理はNioPooringManagerで管理されて、
- * ＜例＞
- * // pool NioPoolingManager.
- * // em = NioElement.
- * // recvBin = Nioで受信したbyte[].
- * // nioMan = NioWorkerThredManager.
- * // call = NioCallを継承した実装コールバック.
- *
- * // NioWorkerThreadHandle.endWorkerElementで、
- * // NioReceiveWorkerElementをNioPoolingManagerでプーリングされた
- * // 実装されたもので実装する必要がある.
- * NioWorkerThreadHandle handle = new NioWorkerThreadXXXHandle(pool);
- *
- * // NioWorkerThreadManager生成.
- * NioWorkerThreadManager nioMan = new NioWorkerThreadManager(5, handle);
- *
- * // プーリングされた要素を取得.
- * NioReceiveWorkerElement rem = (NioReceiveWorkerElement)pool.poll();
- * if(rem == null) {
- *   // プーリング情報が無い場合は受信ワーカーを生成.
- *   rem = new NioReceiveWorkerElement(call);
- * }
- * // ワーカスレッドで実行に対して処理を行う今回の定義をセット.
- * rem.setReceiveData(em, recvBin);
- *
- * // プーリングマネージャに登録.
- * nioMan.push(em, rem);
  */
 public class NioReceiveWorkerElement implements WorkerElement {
 	private NioCall call;

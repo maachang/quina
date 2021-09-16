@@ -1,10 +1,15 @@
 package quina.http.worker;
 
-import quina.QuinaInfo;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.exception.QuinaException;
+import quina.net.nio.tcp.NioConstants;
+import quina.net.nio.tcp.worker.NioWorkerConstants;
 import quina.net.nio.tcp.worker.NioWorkerThreadManager;
 import quina.util.Flag;
+import quina.util.collection.TypesClass;
 
 /**
  * Httpワーカースレッドサービス.
@@ -13,11 +18,24 @@ public class HttpWorkerService implements QuinaService {
 	// ワーカースレッドマネージャ.
 	private NioWorkerThreadManager manager;
 
-	// NioWorker定義.
-	private final HttpWorkerInfo info = new HttpWorkerInfo();
+	// HttpWorkerコンフィグ定義.
+	private final QuinaConfig config = new QuinaConfig(
+		// コンフィグ名.
+		"httpWorker"
+		// ワーカースレッド管理サイズ.
+		,"workerThreadLength", TypesClass.Integer,
+			NioWorkerConstants.getWorkerThreadLength()
+		
+		// 受信テンポラリバッファサイズ.
+		,"recvTmpBuffer", TypesClass.Integer,
+			NioConstants.getByteBufferLength()
+	);
 
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
+	
+	// Read-Writeロックオブジェクト.
+	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
 	/**
 	 * コンストラクタ.
@@ -26,36 +44,35 @@ public class HttpWorkerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized void readConfig(String configDir) {
-		info.readConfig(configDir);
-	}
-
-	@Override
-	public void check(boolean flg) {
-		if(startFlag.get() == flg) {
-			if(flg) {
-				throw new QuinaException(this.getClass().getName() + " has already started.");
-			}
-			throw new QuinaException(this.getClass().getName() + " is already stopped.");
+	public void loadConfig(String configDir) {
+		lock.writeLock().lock();
+		try {
+			config.readConfig(configDir);
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
 	@Override
-	public synchronized boolean isStartService() {
+	public boolean isStartService() {
 		return startFlag.get();
 	}
 
 	@Override
-	public synchronized void startService() {
+	public void startService() {
+		// 既に開始してる場合はエラー.
 		if(startFlag.setToGetBefore(true)) {
-			throw new QuinaException(this.getClass().getName() + " has already started.");
+			throw new QuinaException(this.getClass().getName() +
+				" service has already started.");
 		}
+		lock.writeLock().lock();
 		try {
 			// HttpWorkerHandlerを生成.
-			HttpWorkerHandler handler = new HttpWorkerHandler(info.getRecvTmpBuffer());
+			HttpWorkerHandler handler = new HttpWorkerHandler(
+				config.getInt("recvTmpBuffer"));
 			// マネージャを生成して開始処理.
 			this.manager = new NioWorkerThreadManager(
-				info.getWorkerThreadLength(), handler);
+				config.getInt("workerThreadLength"), handler);
 			this.manager.startThread();
 		} catch(QuinaException qe) {
 			stopService();
@@ -63,47 +80,83 @@ public class HttpWorkerService implements QuinaService {
 		} catch(Exception e) {
 			stopService();
 			throw new QuinaException(e);
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
 	@Override
-	public synchronized boolean isStarted() {
-		if(manager != null) {
-			return manager.isStartupThread();
+	public boolean isStarted() {
+		lock.readLock().lock();
+		try {
+			if(manager != null) {
+				return manager.isStartupThread();
+			}
+			return false;
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public boolean awaitStartup(long timeout) {
+		NioWorkerThreadManager m = null;
+		lock.readLock().lock();
+		try {
+			m = manager;
+		} finally {
+			lock.readLock().unlock();
+		}
+		if(m != null) {
+			return m.awaitStartup(timeout);
 		}
 		return false;
 	}
 
 	@Override
-	public synchronized boolean awaitStartup(long timeout) {
-		if(manager != null) {
-			return manager.awaitStartup(timeout);
-		}
-		return false;
-	}
-
-	@Override
-	public synchronized void stopService() {
-		// 停止処理.
-		if(manager != null) {
-			manager.stopThread();
+	public void stopService() {
+		lock.writeLock().lock();
+		try {
+			// 停止処理.
+			if(manager != null) {
+				manager.stopThread();
+			}
+		} finally {
+			lock.writeLock().unlock();
 		}
 		startFlag.set(false);
 	}
 
 	@Override
-	public synchronized boolean isExit() {
-		if(manager != null) {
-			return manager.isExitThread();
+	public boolean isExit() {
+		lock.readLock().lock();
+		try {
+			if(manager != null) {
+				return manager.isExitThread();
+			}
+			return true;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return true;
 	}
 
 	@Override
-	public synchronized boolean awaitExit(long timeout) {
-		if(manager != null) {
-			if(manager.awaitExit(timeout)) {
-				manager = null;
+	public boolean awaitExit(long timeout) {
+		NioWorkerThreadManager m = null;
+		lock.readLock().lock();
+		try {
+			m = manager;
+		} finally {
+			lock.readLock().unlock();
+		}
+		if(m != null) {
+			if(m.awaitExit(timeout)) {
+				lock.writeLock().lock();
+				try {
+					manager = null;
+				} finally {
+					lock.writeLock().unlock();
+				}
 				return true;
 			}
 		}
@@ -111,16 +164,26 @@ public class HttpWorkerService implements QuinaService {
 	}
 
 	@Override
-	public synchronized QuinaInfo getInfo() {
-		return info;
+	public QuinaConfig getConfig() {
+		lock.readLock().lock();
+		try {
+			return config;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
 	 * 稼働中のワーカースレッドマネージャを取得.
 	 * @return NioWorkerThreadManager ワーカースレッドマネージャが返却されます.
 	 */
-	public synchronized NioWorkerThreadManager getNioWorkerThreadManager() {
-		check(false);
-		return manager;
+	public NioWorkerThreadManager getNioWorkerThreadManager() {
+		checkService(false);
+		lock.readLock().lock();
+		try {
+			return manager;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 }
