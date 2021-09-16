@@ -1,10 +1,12 @@
 package quina.annotation.quina;
 
 import quina.annotation.AnnotationUtil;
+import quina.annotation.Switch;
 import quina.exception.QuinaException;
+import quina.http.MimeTypes;
 
 /**
- * QuinaのAnnotationを取得して、Quina初期設定
+ * Quina関連のAnnotationを取得して、Quina初期設定
  * を取得します.
  */
 public class LoadAnnotationQuina {
@@ -100,5 +102,68 @@ public class LoadAnnotationQuina {
 			return s.substring(0, s.length() - 1);
 		}
 		return s;
+	}
+	
+	/**
+	 * Annotationで定義されてるAppendMimeTypeを読み込んで
+	 * MimeTypesに設定します.
+	 * @param c 対象のObjectを設定します.
+	 * @return boolean 正しく読み込まれた場合 true が返却されます.
+	 */
+	public static final boolean loadAppendMimeType(Object c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return loadAppendMimeType(c.getClass());
+	}
+	
+	/**
+	 * Annotationで定義されてるAppendMimeTypeを読み込んで
+	 * MimeTypesに設定します.
+	 * @param c 対象のクラスを設定します.
+	 * @return boolean 正しく読み込まれた場合 true が返却されます.
+	 */
+	public static final boolean loadAppendMimeType(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		// MimeTypes を取得.
+		MimeTypes mime = MimeTypes.getInstance();
+		// 対象コンポーネントからAppendMimeTypeArrayアノテーション定義を取得.
+		AppendMimeTypeArray array = c.getAnnotation(
+				AppendMimeTypeArray.class);
+		// 存在しない場合.
+		if(array == null) {
+			// 単体で取得.
+			AppendMimeType m = c.getAnnotation(AppendMimeType.class);
+			if(m != null) {
+				// MimeTypeに追加.
+				setMimeTypes(mime, m);
+				return true;
+			}
+			return false;
+		}
+		// 複数のAppendMimeTypeアノテーション定義を取得.
+		AppendMimeType[] list = array.value();
+		// 存在しない場合.
+		if(list == null || list.length == 0) {
+			return false;
+		}
+		// System.setPropertyの登録を実行.
+		int len = list.length;
+		for(int i = 0; i < len; i ++) {
+			// MimeTypeに追加.
+			setMimeTypes(mime, list[i]);
+		}
+		return len > 0;
+	}
+	
+	// AppendMimeTypeをMimeTypesに反映.
+	private static final void setMimeTypes(MimeTypes mime, AppendMimeType type) {
+		if(type.charset() == Switch.None) {
+			mime.put(type.extension(), type.mimeType());
+		} else {
+			mime.put(type.extension(), type.mimeType(), type.charset().getMode());
+		}
 	}
 }

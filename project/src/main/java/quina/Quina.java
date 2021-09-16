@@ -127,6 +127,8 @@ public final class Quina {
 			if(args != null) {
 				this.args = new Args(args);
 			}
+			// AppendMimeのAnnotationを読み込む.
+			LoadAnnotationQuina.loadAppendMimeType(mainClass);
 			// シャットダウンデフォルトトークンを設定.
 			ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
 			// ルーターオブジェクト生成.

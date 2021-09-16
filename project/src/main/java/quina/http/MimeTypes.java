@@ -17,13 +17,16 @@ public class MimeTypes {
 	public static final String UNKNONW_MIME_TYPE = "application/octet-stream";
 
 	/** 拡張子に対するMimeType定義. **/
-	private final IndexKeyValueList<String, String> extensionToMimeTypes = new IndexKeyValueList<String, String>();
+	private final IndexKeyValueList<String, String> extensionToMimeTypes =
+		new IndexKeyValueList<String, String>();
 
 	/** 文字コードが付与可能なMimeType定義. **/
-	private final IndexKeyValueList<String, Boolean> appendCharsetToMimeTypes = new IndexKeyValueList<String, Boolean>();
+	private final IndexKeyValueList<String, Boolean> appendCharsetToMimeTypes =
+		new IndexKeyValueList<String, Boolean>();
 
 	// デフォルト内容の初期化.
-	private static final void init(IndexKeyValueList<String, String> mime, IndexKeyValueList<String, Boolean> charset) {
+	private static final void defaultMimeType(IndexKeyValueList<String, String> mime,
+		IndexKeyValueList<String, Boolean> charset) {
 		// デフォルトMimeType.
 		mime.put("htm", "text/html");
 		mime.put("html", "text/html");
@@ -109,7 +112,8 @@ public class MimeTypes {
 	 * コンストラクタ.
 	 */
 	private MimeTypes() {
-		init(extensionToMimeTypes, appendCharsetToMimeTypes);
+		defaultMimeType(extensionToMimeTypes,
+			appendCharsetToMimeTypes);
 	}
 
 	// シングルトン.
@@ -129,7 +133,8 @@ public class MimeTypes {
 	public void reset() {
 		extensionToMimeTypes.clear();
 		appendCharsetToMimeTypes.clear();
-		init(extensionToMimeTypes, appendCharsetToMimeTypes);
+		defaultMimeType(extensionToMimeTypes,
+			appendCharsetToMimeTypes);
 	}
 
 	/**
@@ -184,16 +189,16 @@ public class MimeTypes {
 	 * MimeTypeをセット.
 	 * @param extension 拡張子を設定します.
 	 * @param mime mimeTypeを設定します.
-	 * @param appendCharsetFLag このmimeTypeにcharset追加可能な場合はtrueを設定します.
+	 * @param appendCharsetFlag このmimeTypeにcharset追加可能な場合はtrueを設定します.
 	 */
-	public void put(String extension, String mime, boolean appendCharsetFLag) {
+	public void put(String extension, String mime, boolean appendCharsetFlag) {
 		if(extension == null || extension.isEmpty()) {
 			throw new HttpException("You cannot set an empty extension. ");
 		} else if(mime == null || mime.isEmpty()) {
 			throw new HttpException("Empty MimeType cannot be set.");
 		}
 		extensionToMimeTypes.put(extension, mime);
-		if(appendCharsetFLag) {
+		if(appendCharsetFlag) {
 			appendCharsetToMimeTypes.put(mime, true);
 		}
 	}
