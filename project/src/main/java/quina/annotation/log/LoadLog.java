@@ -14,8 +14,8 @@ import quina.logger.LogFactory;
  * LogのAnnotationを取得して、Logに関する定義処理を
  * 実現します.
  */
-public class LoadAnnotationLog {
-	private LoadAnnotationLog() {}
+public class LoadLog {
+	private LoadLog() {}
 
 	/**
 	 * Annotationで定義されてるLogConfigを読み込んで

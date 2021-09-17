@@ -7,8 +7,8 @@ import quina.exception.QuinaException;
 /**
  * RouteのAnnotationを読み込んでPathを取得.
  */
-public class LoadAnnotationRoute {
-	private LoadAnnotationRoute() {}
+public class LoadRoute {
+	private LoadRoute() {}
 	
 	/**
 	 * Annotationに定義されてるRouteのパスを取得.

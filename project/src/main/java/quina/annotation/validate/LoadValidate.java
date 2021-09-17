@@ -8,8 +8,8 @@ import quina.validate.Validation;
 /**
  * ValidateのAnnotationを読み込んで、Validationオブジェクトを作成.
  */
-public class LoadAnnotationValidate {
-	private LoadAnnotationValidate() {}
+public class LoadValidate {
+	private LoadValidate() {}
 	
 	/**
 	 * Annotationで定義されてるValidationを読み込む.

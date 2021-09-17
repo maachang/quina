@@ -2,10 +2,11 @@ package quina;
 
 import java.lang.reflect.InvocationTargetException;
 
-import quina.annotation.component.LoadAnnotationComponent;
+import quina.annotation.component.LoadComponent;
 import quina.annotation.component.ResponseInitialSetting;
-import quina.annotation.route.LoadAnnotationRoute;
-import quina.annotation.validate.LoadAnnotationValidate;
+import quina.annotation.quina.LoadQuina;
+import quina.annotation.route.LoadRoute;
+import quina.annotation.validate.LoadValidate;
 import quina.component.Component;
 import quina.component.ComponentManager;
 import quina.component.ErrorComponent;
@@ -47,15 +48,15 @@ public class Router {
 	private static final ResponseInitialSetting injectComponent(
 		Component component) {
 		// アノテーションを注入.
-		Quina.get().injectAnnotation(component);
+		LoadQuina.loadCdi(Quina.get().getCdiManager(), component);
 		// annotationのResponse初期設定を取得.
-		return LoadAnnotationComponent.loadResponse(component);
+		return LoadComponent.loadResponse(component);
 	}
 	
 	// ErrorComponentにAnnotationを注入.
 	private static final void injectComponent(ErrorComponent component) {
 		// アノテーションを注入.
-		Quina.get().injectAnnotation(component);
+		LoadQuina.loadCdi(Quina.get().getCdiManager(), component);
 	}
 	
 	/**
@@ -96,7 +97,7 @@ public class Router {
 		// validationが直接指定されてない場合.
 		if(validation == null) {
 			// annotationのvalidationを取得.
-			validation = LoadAnnotationValidate.loadValidation(component);
+			validation = LoadValidate.loadValidation(component);
 		}
 		// annotationのResponse初期設定を取得.
 		ResponseInitialSetting responseInitialSetting = injectComponent(component);
@@ -112,7 +113,7 @@ public class Router {
 	 */
 	public Router error(ErrorComponent component) {
 		// annotationの定義からHttpステータス条件を取得.
-		int[] startEndStatus = LoadAnnotationRoute.loadErrorRoute(component);
+		int[] startEndStatus = LoadRoute.loadErrorRoute(component);
 		if(startEndStatus == null) {
 			// 存在しない場合は共通エラー登録.
 			return error(0, 0, component);
@@ -159,7 +160,7 @@ public class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router route(Component component) {
-		final String path = LoadAnnotationRoute.loadRoute(component);
+		final String path = LoadRoute.loadRoute(component);
 		if(path == null) {
 			throw new QuinaException(
 				"Route annotation definition does not exist " +
@@ -194,7 +195,7 @@ public class Router {
 		// validationが直接指定されてない場合.
 		if(validation == null) {
 			// annotationのvalidationを取得.
-			validation = LoadAnnotationValidate.loadValidation(component);
+			validation = LoadValidate.loadValidation(component);
 		}
 		// annotationのResponse初期設定を取得.
 		ResponseInitialSetting responseInitialSetting = injectComponent(component);

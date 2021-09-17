@@ -10,8 +10,8 @@ import quina.exception.QuinaException;
  * Cdi(Contexts and Dependency Injection)に対する
  * アノテーション処理を行います.
  */
-public class LoadAnnotationCdi {
-	private LoadAnnotationCdi() {}
+public class LoadCdi {
+	private LoadCdi() {}
 	
 	/**
 	 * Annotationに定義されてるServiceScopeが定義されてるか取得.
@@ -39,7 +39,7 @@ public class LoadAnnotationCdi {
 	
 	/**
 	 * 対象オブジェクトに対してInjectアノテーションを反映.
-	 * @param man サービスマネージャを設定します.
+	 * @param man Cdiマネージャを設定します.
 	 * @param o 対象のオブジェクトを設定します.
 	 */
 	public static final void loadInject(CdiManager man, Object o) {
@@ -51,9 +51,8 @@ public class LoadAnnotationCdi {
 	
 	/**
 	 * 対象オブジェクトのstaticフィールドに対してInjectアノテーションを反映.
-	 * @param man サービスマネージャを設定します.
+	 * @param man Cdiマネージャを設定します.
 	 * @param c 対象のクラスを設定します.
-	 * @param o 対象のオブジェクトを設定します.
 	 */
 	public static final void loadInject(CdiManager man, Class<?> c) {
 		if(man == null || c == null) {

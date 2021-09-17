@@ -7,8 +7,8 @@ import quina.exception.QuinaException;
  * ComponentのAnnotationを取得して、Response初期設定
  * を取得します.
  */
-public class LoadAnnotationComponent {
-	private LoadAnnotationComponent() {}
+public class LoadComponent {
+	private LoadComponent() {}
 	
 	/**
 	 * Annotationに定義されてるResponse初期設定を取得.

@@ -1,8 +1,7 @@
 package quina;
 
-import quina.annotation.cdi.LoadAnnotationCdi;
-import quina.annotation.log.LoadAnnotationLog;
-import quina.annotation.quina.LoadAnnotationQuina;
+import quina.annotation.log.LoadLog;
+import quina.annotation.quina.LoadQuina;
 import quina.component.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
@@ -121,14 +120,14 @@ public final class Quina {
 			NioUtil.initNet();
 			
 			// SystemPropertyの初期処理.
-			LoadAnnotationQuina.loadSystemProperty(mainClass);
+			LoadQuina.loadSystemProperty(mainClass);
 			// CdiReflectManager読み込み.
 			cdiRefrectManager.autoCdiReflect();
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
 			
 			// コンフィグディレクトリを取得.
-			String configDir = LoadAnnotationQuina.loadConfigDirectory(
+			String configDir = LoadQuina.loadConfigDirectory(
 				mainClass);
 			// 外部コンフィグファイルからログ定義を反映.
 			if(!loadLogConfig(configDir)) {
@@ -141,7 +140,7 @@ public final class Quina {
 				this.args = new Args(args);
 			}
 			// AppendMimeのAnnotationを読み込む.
-			LoadAnnotationQuina.loadAppendMimeType(mainClass);
+			LoadQuina.loadAppendMimeType(mainClass);
 			// シャットダウンデフォルトトークンを設定.
 			ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
 			// ルーターオブジェクト生成.
@@ -164,11 +163,12 @@ public final class Quina {
 			// annotation関連のService反映.
 			updateAnnotationService();
 			// CdiScopedアノテーションを反映.
-			if(mainObject != null) {
-				LoadAnnotationQuina.loadCdiScoped(
+			if(mainObject != null &&
+				LoadQuina.isCdiScoped(mainObject)) {
+				LoadQuina.loadCdi(
 						cdiManager, mainObject);
-			} else {
-				LoadAnnotationQuina.loadCdiScoped(
+			} else if(LoadQuina.isCdiScoped(mainClass)) {
+				LoadQuina.loadCdi(
 					cdiManager, mainClass);
 			}
 			
@@ -197,23 +197,13 @@ public final class Quina {
 		}
 	}
 	
-	/**
-	 * 指定オブジェクトにアノテーションを注入.
-	 * @param o 対象のオブジェクトを設定します.
-	 */
-	protected final void injectAnnotation(Object o) {
-		// objectにserviceを注入.
-		LoadAnnotationCdi.loadInject(cdiManager, o);
-		// serviceにlogを注入.
-		LoadAnnotationLog.loadLogDefine(o);
-	}
-	
 	// サービス群に対してAnnotation関連を反映.
 	private final void updateAnnotationService() {
 		final int len = cdiManager.size();
 		for(int i = 0; i < len; i ++) {
 			// アノテーションを注入.
-			injectAnnotation(cdiManager.getService(i));
+			LoadQuina.loadCdi(
+				cdiManager, cdiManager.getService(i));
 		}
 	}
 	
@@ -412,7 +402,7 @@ public final class Quina {
 			return true;
 		}
 		// LogConfigの初期処理.
-		if(LoadAnnotationLog.loadLogConfig(mainClass)) {
+		if(LoadLog.loadLogConfig(mainClass)) {
 			// 正しく設定された場合はFixさせる.
 			LogFactory.getInstance().fixConfig();
 			return true;
