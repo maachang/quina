@@ -48,7 +48,7 @@ public class LoadAnnotationLog {
 			// 単体で取得.
 			LogConfig conf = c.getAnnotation(LogConfig.class);
 			if(conf != null) {
-				regLogConfig(conf);
+				regLogElement(conf);
 				return true;
 			}
 			return false;
@@ -62,12 +62,13 @@ public class LoadAnnotationLog {
 		// LogFactoryにLogConfigの登録を実行.
 		int len = list.length;
 		for(int i = 0; i < len; i ++) {
-			regLogConfig(list[i]);
+			regLogElement(list[i]);
 		}
 		return len > 0;
 	}
 	
-	private static final void regLogConfig(LogConfig conf) {
+	// LogElementを登録.
+	private static final void regLogElement(LogConfig conf) {
 		// LogConfigからLogDefineElementを生成.
 		LogDefineElement em = new LogDefineElement(conf);
 		if(conf.name().isEmpty()) {
@@ -82,10 +83,8 @@ public class LoadAnnotationLog {
 	/**
 	 * 指定オブジェクトのLogDefineアノテーションを反映.
 	 * @param o オブジェクトを設定します.
-	 * @return Object LogDefineアノテーションが反映されたオブジェクトが
-	 *                返却されます.
 	 */
-	public static final Object loadLogDefine(Object o) {
+	public static final void loadLogDefine(Object o) {
 		if(o == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
@@ -93,18 +92,39 @@ public class LoadAnnotationLog {
 		LogDefine def = o.getClass().getAnnotation(LogDefine.class);
 		if(def != null) {
 			// クラス定義のLogDefineを割り当てる.
-			return loadLogDefineByClass(o, def);
+			loadLogDefineByClass(o, o.getClass(), def);
+		} else {
+			// フィールド定義のLogDefinewo割り当てる.
+			loadLogDefineByField(o, o.getClass());
 		}
-		// フィールド定義のLogDefinewo割り当てる.
-		return loadLogDefineByField(o);
 	}
 	
+	/**
+	 * 指定オブジェクトのLogDefineアノテーションを反映.
+	 * @param c クラスを設定します.
+	 */
+	public static final void loadLogDefine(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is null.");
+		}
+		// クラス定義の場合.
+		LogDefine def = c.getAnnotation(LogDefine.class);
+		if(def != null) {
+			// クラス定義のLogDefineを割り当てる.
+			loadLogDefineByClass(null, c, def);
+		} else {
+			// フィールド定義のLogDefinewo割り当てる.
+			loadLogDefineByField(null, c);
+		}
+	}
+
+	
 	// クラス定義されてるLogDefineアノテーションの定義処理.
-	private static final Object loadLogDefineByClass(Object o, LogDefine def) {
+	private static final void loadLogDefineByClass(Object o, Class<?> c, LogDefine def) {
 		Field targetField = null;
-		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(c);
 		if(list == null) {
-			return o;
+			return;
 		}
 		final int len = list.size();
 		final Class<?> log = Log.class;
@@ -122,7 +142,7 @@ public class LoadAnnotationLog {
 		}
 		// ログクラスが存在しない場合.
 		if(targetField == null) {
-			return o;
+			return;
 		}
 		// 存在する場合、フィールドにLog定義を設定.
 		try {
@@ -134,16 +154,16 @@ public class LoadAnnotationLog {
 		} catch(Exception e) {
 			throw new LogException(e);
 		}
-		return o;
 	}
 	
 	// フィールド定義されてるLogDefineアノテーションの定義処理.
-	private static final Object loadLogDefineByField(Object o) {
+	private static final void loadLogDefineByField(Object o, Class<?> c) {
 		LogDefine def;
 		Field targetField;
-		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		final CdiReflectElement list = Quina.get()
+			.getCdiReflectManager().get(c);
 		if(list == null) {
-			return o;
+			return;
 		}
 		final int len = list.size();
 		final Class<?> log = Log.class;
@@ -156,9 +176,9 @@ public class LoadAnnotationLog {
 					// 存在する場合、フィールドにLog定義を設定.
 					try {
 						if(def.value() == null || def.value().isEmpty()) {
-							targetField.set(o, LogFactory.log());
+							list.setValue(i, o, LogFactory.log());
 						} else {
-							targetField.set(o, LogFactory.log(def.value()));
+							list.setValue(i, o, LogFactory.log(def.value()));
 						}
 					} catch(Exception e) {
 						throw new LogException(e);
@@ -166,6 +186,5 @@ public class LoadAnnotationLog {
 				}
 			}
 		}
-		return o;
 	}
 }

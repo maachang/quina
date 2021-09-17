@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import quina.CdiReflectManager;
 import quina.QuinaConstants;
 import quina.Router;
 import quina.annotation.AnnotationUtil;
+import quina.annotation.cdi.CdiScoped;
 import quina.annotation.cdi.ServiceScoped;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
@@ -320,6 +323,15 @@ public class GenerateCdi {
 			, Thread.currentThread().getContextClassLoader());
 	}
 	
+	// クラスからインスタンスを生成.
+	private static final Object newInstance(Class<?> c)
+		throws Exception {
+		// クラスのインスタンスを生成.
+		final Constructor<?> cons = c.getDeclaredConstructor();
+		cons.setAccessible(true);
+		return cons.newInstance();
+	}
+	
 	// 1つのディレクトリに対して@Route指定されてるComponentを抽出.
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static final void extractionClass(String dir, String packageName,
@@ -333,23 +345,27 @@ public class GenerateCdi {
 			// 対象がディレクトリの場合.
 			if(new File(target).isDirectory()) {
 				// 今回のディレクトリで再帰処理.
-				extractionClass(target, createPackageName(packageName, list[i]), params);
+				extractionClass(target,
+					createPackageName(packageName, list[i]),
+					params);
 			// クラスファイルの場合.
 			} else if(list[i].endsWith(".class")) {
 				// クラス名を取得.
 				className = createClassName(packageName, list[i]);
 				// クラスを取得.
-				final Class c = Class.forName(className, true, params.cl);
-				// RouteやAnyやErrorやServiceScopedのアノテーションが
-				// 設定されていない場合.
+				final Class c = Class.forName(
+					className, true, params.cl);
+				// RouteやAnyやErrorやServiceScopedやCdiScopedの
+				// アノテーションが設定されていない場合.
 				if(!c.isAnnotationPresent(Route.class) &&
 					!c.isAnnotationPresent(AnyRoute.class) &&
 					!c.isAnnotationPresent(ErrorRoute.class) &&
-					!c.isAnnotationPresent(ServiceScoped.class)) {
+					!c.isAnnotationPresent(ServiceScoped.class) &&
+					!c.isAnnotationPresent(CdiScoped.class)) {
 					// クラスのインスタンスを生成.
 					Object o;
 					try {
-						o = c.getDeclaredConstructor().newInstance();
+						o = newInstance(c);
 					} catch(Exception e) {
 						continue;
 					}
@@ -360,16 +376,23 @@ public class GenerateCdi {
 					}
 					continue;
 				}
+				// CdiScoped定義のクラスの場合.
+				if(c.isAnnotationPresent(CdiScoped.class)) {
+					System.out.println("  > cdiScoped: '" + className + "'");
+					// Reflectリストに追加.
+					params.refList.add(className);
+				}
 				// ServiceScoped定義のCdiServiceの場合.
 				if(c.isAnnotationPresent(ServiceScoped.class)) {
 					System.out.println("  > cdiService: '" + className + "'");
+					// Cdiリストに追加.
 					params.cdiList.add(className);
 					// Reflectリストに追加.
 					params.refList.add(className);
 					continue;
 				}
 				// クラスのインスタンスを生成.
-				final Object o = c.getDeclaredConstructor().newInstance();
+				final Object o = newInstance(c);
 				// 対象がコンポーネントクラスの場合.
 				if(o instanceof Component) {
 					// @Route付属のコンポーネントを登録.
@@ -622,6 +645,8 @@ public class GenerateCdi {
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
+			println(w, 0, "import java.lang.reflect.Field;");
+			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
 			println(w, 0, "import quina.CdiReflectManager;");
 			println(w, 0, "import quina.annotation.cdi.CdiReflectElement;");
@@ -645,8 +670,9 @@ public class GenerateCdi {
 			println(w, 2, "// Get the Cdi Reflect to be registered.");
 			println(w, 2, "final CdiReflectManager refManager = Quina.get().getCdiReflectManager();");
 			println(w, 2, "");
-			println(w, 2, "Object o = null;");
 			println(w, 2, "Class<?> cls = null;");
+			println(w, 2, "Field field = null;");
+			println(w, 2, "boolean staticFlag = false;");
 			println(w, 2, "CdiReflectElement element = null;");
 			
 			Class<?> c;
@@ -663,18 +689,18 @@ public class GenerateCdi {
 				println(w, 2, "");
 				println(w, 2, "// Register the field group of the target class");
 				println(w, 2, "// \""+ clazzName + "\"");
-				println(w, 2, "o = new " + clazzName + "();");
-				println(w, 2, "element = refManager.register(o);");
+				println(w, 2, "cls = " + clazzName + ".class;");
+				println(w, 2, "element = refManager.register(cls);");
 				println(w, 2, "if(element != null) {");
-				println(w, 3, "cls = o.getClass();");
 
 				for(int j = 0; j < lenJ; j ++) {
-					println(w, 3, "element.add(cls.getDeclaredField(\"" +
-						list[j].getName() + "\"));");
+					println(w, 3, "");
+					println(w, 3, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
+					println(w, 3, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
+					println(w, 3, "element.add(staticFlag, field);");
 				}
 				println(w, 3, "cls = null; element = null;");
 				println(w, 2, "}");
-				println(w, 2, "o = null;");
 			}
 			
 			println(w, 1, "}");

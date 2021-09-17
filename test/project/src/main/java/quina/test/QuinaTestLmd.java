@@ -12,9 +12,9 @@ import quina.validate.VType;
 import quina.validate.Validation;
 
 /**
- * QuinaTest2.
+ * Routerにラムダでコンポーネント登録でのQuinaテスト.
  */
-public class QuinaTest2 {
+public class QuinaTestLmd {
 
 	/**
 	 * テストメイン.
@@ -23,19 +23,13 @@ public class QuinaTest2 {
 	 */
 	public static final void main(String[] args) throws Exception {
 		// Quina初期処理.
-		Quina.get().initialize(QuinaTest2.class, args);
-		try {
-			// ログの定義を直接セット(Linux).
-			LogFactory.getInstance().register(
-				new LogDefineElement().setDirectory("${HOME}/project/test/log/"));
-		} catch(Exception e) {
-			// Windows.
-			LogFactory.getInstance().register(
-					new LogDefineElement().setDirectory("${HOMEPATH}/log/"));
-		}
+		Quina.get().initialize(QuinaTestLmd.class, args);
+		// ログの定義を直接セット.
+		LogFactory.getInstance().register(
+			new LogDefineElement().setDirectory(".log/"));
 
 		// テストプログラムの実行.
-		QuinaTest2 quinaTest = new QuinaTest2(args);
+		QuinaTestLmd quinaTest = new QuinaTestLmd(args);
 
 		// テスト開始.
 		quinaTest.startTest();
@@ -45,7 +39,7 @@ public class QuinaTest2 {
 	protected String[] args = null;
 
 	// コンストラクタ.
-	private QuinaTest2(String[] args) {
+	private QuinaTestLmd(String[] args) {
 		this.args = args;
 	}
 

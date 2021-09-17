@@ -10,37 +10,42 @@ import quina.util.collection.ObjectList;
  * 管理する要素.
  */
 public class CdiReflectElement {
-	private CdiObjectType type;
-	private ObjectList<Field> list;
+	// Cdi フィールド要素.
+	private static final class CdiFieldElement {
+		// アクセスがstaticの場合 true.
+		protected final boolean staticFlag;
+		// 対象フィールド情報.
+		protected final Field field;
+		
+		// コンストラクタ.
+		protected CdiFieldElement(boolean staticFlag, Field field) {
+			this.staticFlag = staticFlag;
+			this.field = field;
+		}
+	}
+	
+	// Cdi オブジェクトのフィールド要素群管理.
+	private ObjectList<CdiFieldElement> list;
 	
 	/**
 	 * コンストラクタ.
-	 * @param type
 	 */
-	public CdiReflectElement(CdiObjectType type) {
-		this.type = type;
-		this.list = new ObjectList<Field>();
-	}
-	
-	/**
-	 * このオブジェクトのタイプを取得.
-	 * @return CdiObjectType CdiObjectTypeが返却されます.
-	 */
-	public CdiObjectType getCdiType() {
-		return type;
+	public CdiReflectElement() {
+		this.list = new ObjectList<CdiFieldElement>();
 	}
 	
 	/**
 	 * フィールド追加.
-	 * @param f
-	 * @return
+	 * @param staticFlag 対象フィールドが static な場合は true を設定します.
+	 * @param field 対象のフィールドオブジェクトを設定します.
+	 * @return CdiReflectElement このオブジェクトが返却されます.
 	 */
-	public CdiReflectElement add(Field f) {
-		if(f == null) {
+	public CdiReflectElement add(boolean staticFlag, Field field) {
+		if(field == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
-		f.setAccessible(true);
-		list.add(f);
+		field.setAccessible(true);
+		list.add(new CdiFieldElement(staticFlag, field));
 		return this;
 	}
 	
@@ -58,7 +63,15 @@ public class CdiReflectElement {
 	 * @return Field 対象のフィールドオブジェクトが設定されます.
 	 */
 	public Field get(int no) {
-		return list.get(no);
+		// 対象要素を取得.
+		final CdiFieldElement em = list.get(no);
+		if(em != null) {
+			return em.field;
+		}
+		// null の場合 例外.
+		throw new QuinaException(
+			"The specified item number (" +
+			no + ") is out of range. ");
 	}
 	
 	/**
@@ -67,7 +80,52 @@ public class CdiReflectElement {
 	 * @return Class<?> フィールドのクラスが返却されます.
 	 */
 	public Class<?> getType(int no) {
-		return list.get(no).getType();
+		return get(no).getType();
+	}
+	
+	/**
+	 * 項番を指定してフィールドがstatic定義かを取得.
+	 * @param no 項番を設定します.
+	 * @return boolean の場合static定義です.
+	 */
+	public boolean isStatic(int no) {
+		// 対象要素を取得.
+		final CdiFieldElement em = list.get(no);
+		if(em != null) {
+			return em.staticFlag;
+		}
+		// null の場合 例外.
+		throw new QuinaException(
+			"The specified item number (" +
+			no + ") is out of range. ");
+	}
+	
+	/**
+	 * 対象フィールドの情報を取得.
+	 * @param no 項番を設定します.
+	 * @param target 設定対象のオブジェクトを設定します
+	 * @return Object フィールドの内容が返却されます.
+	 */
+	public Object getValue(int no, Object target) {
+		try {
+			final CdiFieldElement em = list.get(no);
+			if(em != null) {
+				if(em.staticFlag) {
+					// static フィールドにアクセス.
+					return em.field.get(null);
+				} else {
+					// クラスフィールドにアクセス.
+					return em.field.get(target);
+				}
+			} else {
+				// null の場合 例外.
+				throw new QuinaException(
+					"The specified item number (" +
+					no + ") is out of range. ");
+			}
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
 	}
 	
 	/**
@@ -76,13 +134,26 @@ public class CdiReflectElement {
 	 * @param target 設定対象のオブジェクトを設定します
 	 * @param value フィールドに設定する内容を設定します.
 	 */
-	public void setField(int no, Object target, Object value) {
+	public void setValue(int no, Object target, Object value) {
 		try {
-			list.get(no).set(target, value);
+			final CdiFieldElement em = list.get(no);
+			if(em != null) {
+				if(em.staticFlag) {
+					// static フィールドにアクセス.
+					em.field.set(null, value);
+				} else {
+					// クラスフィールドにアクセス.
+					em.field.set(target, value);
+				}
+			} else {
+				// null の場合 例外.
+				throw new QuinaException(
+					"The specified item number (" +
+					no + ") is out of range. ");
+			}
 		} catch(Exception e) {
 			throw new QuinaException(e);
 		}
 	}
-	
 }
 

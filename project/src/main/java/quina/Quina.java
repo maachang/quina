@@ -79,25 +79,38 @@ public final class Quina {
 
 	/**
 	 * Quina初期設定.
-	 * この処理はQuinaを利用する場合、基本的に１度
-	 * 呼び出す必要があります.
-	 * @param mainObject main()メソッドのオブジェクトを設定します.
+	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
+	 * 
+	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
+	 * 場合は内の＠Injectと＠LogDefineが定義されたフィールドに内容が反映
+	 * されます.
+	 * 
+	 * @param mainObject Quinaを初期化するオブジェクトを設定します.
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina initialize(Object mainObject, String[] args) {
-		return initialize(mainObject.getClass(), args);
+		return initialize(mainObject.getClass(), mainObject, args);
 	}
 	
 	/**
 	 * Quina初期設定.
-	 * この処理はQuinaを利用する場合、基本的に１度
-	 * 呼び出す必要があります.
-	 * @param mainClass main()メソッドのクラスを設定します.
+	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
+	 * 
+	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
+	 * 場合は内の＠Injectと＠LogDefineが定義されたstaticフィールドに
+	 * 内容が反映されます.
+	 * 
+	 * @param mainClass Quinaを初期化するクラスを設定します.
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public Quina initialize(Class<?> mainClass, String[] args) {
+	private Quina initialize(Class<?> mainClass, String[] args) {
+		return initialize(mainClass, null, args);
+	}
+
+	// Quina初期設定.
+	private Quina initialize(Class<?> mainClass, Object mainObject, String[] args) {
 		try {
 			// 初期化処理開始.
 			if(!initFlag.start()) {
@@ -106,14 +119,14 @@ public final class Quina {
 			}
 			// ネットワーク初期処理.
 			NioUtil.initNet();
+			
 			// SystemPropertyの初期処理.
 			LoadAnnotationQuina.loadSystemProperty(mainClass);
 			// CdiReflectManager読み込み.
 			cdiRefrectManager.autoCdiReflect();
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
-			// annotation関連のService反映.
-			updateAnnotationService();
+			
 			// コンフィグディレクトリを取得.
 			String configDir = LoadAnnotationQuina.loadConfigDirectory(
 				mainClass);
@@ -147,6 +160,18 @@ public final class Quina {
 				// 登録してQuinaのコンフィグ情報をロードする.
 				this.loadConfig(configDir);
 			}
+			
+			// annotation関連のService反映.
+			updateAnnotationService();
+			// CdiScopedアノテーションを反映.
+			if(mainObject != null) {
+				LoadAnnotationQuina.loadCdiScoped(
+						cdiManager, mainObject);
+			} else {
+				LoadAnnotationQuina.loadCdiScoped(
+					cdiManager, mainClass);
+			}
+			
 			// 初期化成功.
 			initFlag.forcedSuccess();
 			return this;
@@ -194,9 +219,13 @@ public final class Quina {
 	
 	/**
 	 * Quina初期設定.
-	 * この処理はQuinaを利用する場合、基本的に１度
-	 * 呼び出す必要があります.
-	 * @param mainObject main()メソッドのオブジェクトを設定します.
+	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
+	 * 
+	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
+	 * 場合は内の＠Injectと＠LogDefineが定義されたフィールドに内容が反映
+	 * されます.
+	 * 
+	 * @param mainObject Quinaを初期化するオブジェクトを設定します.
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
@@ -206,9 +235,13 @@ public final class Quina {
 	
 	/**
 	 * Quina初期設定.
-	 * この処理はQuinaを利用する場合、基本的に１度
-	 * 呼び出す必要があります.
-	 * @param mainClass main()メソッドのクラスを設定します.
+	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
+	 * 
+	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
+	 * 場合は内の＠Injectと＠LogDefineが定義されたstaticフィールドに
+	 * 内容が反映されます.
+	 * 
+	 * @param mainClass Quinaを初期化するクラスを設定します.
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */

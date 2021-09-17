@@ -1,13 +1,17 @@
 package quina.annotation.quina;
 
+import quina.CdiManager;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.Switch;
+import quina.annotation.cdi.CdiScoped;
+import quina.annotation.cdi.LoadAnnotationCdi;
+import quina.annotation.log.LoadAnnotationLog;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
 
 /**
- * Quina関連のAnnotationを取得して、Quina初期設定
- * を取得します.
+ * Quina.init で処理される annotationの読み込み処理を
+ * 行います.
  */
 public class LoadAnnotationQuina {
 	private LoadAnnotationQuina() {}
@@ -164,6 +168,83 @@ public class LoadAnnotationQuina {
 			mime.put(type.extension(), type.mimeType());
 		} else {
 			mime.put(type.extension(), type.mimeType(), type.charset().getMode());
+		}
+	}
+	
+	/**
+	 * AnnotationにCdiScopedが定義されてるか取得.
+	 * @param o オブジェクトを設定します.
+	 * @return boolean true の場合 CdiScopedが定義されています.
+	 */
+	public static final boolean isCdiScoped(CdiManager man, Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return o.getClass().isAnnotationPresent(CdiScoped.class);
+	}
+	
+	/**
+	 * AnnotationにCdiScopedが定義されてるか取得.
+	 * @param c コンポーネントクラスを設定します.
+	 * @return boolean true の場合 CdiScopedが定義されています.
+	 */
+	public static final boolean isCdiScoped(CdiManager man, Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return c.isAnnotationPresent(CdiScoped.class);
+	}
+
+	
+	/**
+	 * AnnotationにCdiScopedが定義されている場合、Injectと
+	 * LogDefineが定義されてる場合読み込まれます.
+	 * 
+	 * @param o オブジェクトを設定します.
+	 */
+	public static final void loadCdiScoped(CdiManager man, Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		loadCdiScoped(man, o, o.getClass());
+	}
+	
+	/**
+	 * AnnotationにCdiScopedが定義されている場合、Injectと
+	 * LogDefineが定義されてる場合読み込まれます.
+	 * 
+	 * @param c コンポーネントクラスを設定します.
+	 */
+	public static final void loadCdiScoped(CdiManager man, Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		loadCdiScoped(man, null, c);
+	}
+	
+	/**
+	 * AnnotationにCdiScopedが定義されている場合、Injectと
+	 * LogDefineが定義されてる場合読み込まれます.
+	 * 
+	 * @param c コンポーネントクラスを設定します.
+	 */
+	private static final void loadCdiScoped(CdiManager man, Object o, Class<?> c) {
+		// quinaMainアノテーションが存在しない場合.
+		if(!c.isAnnotationPresent(CdiScoped.class)) {
+			return;
+		}
+		// Objectが存在する場合.
+		if(o != null) {
+			// Cdiの条件を読み込む.
+			LoadAnnotationCdi.loadInject(man, o);
+			// Logの条件を読み込む.
+			LoadAnnotationLog.loadLogDefine(o);
+		// Objectが存在しない場合.
+		} else {
+			// Cdiの条件を読み込む.
+			LoadAnnotationCdi.loadInject(man, c);
+			// Logの条件を読み込む.
+			LoadAnnotationLog.loadLogDefine(c);
 		}
 	}
 }

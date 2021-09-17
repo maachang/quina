@@ -15,7 +15,7 @@ public class LoadAnnotationCdi {
 	
 	/**
 	 * Annotationに定義されてるServiceScopeが定義されてるか取得.
-	 * @param c コンポーネントを設定します.
+	 * @param c オブジェクトを設定します.
 	 * @return boolean ServiceScopeが定義されてる場合 true が返却されます.
 	 */
 	public static final boolean loadServiceScoped(Object c) {
@@ -27,7 +27,7 @@ public class LoadAnnotationCdi {
 	
 	/**
 	 * Annotationに定義されてるServiceScopeが定義されてるか取得.
-	 * @param c コンポーネントクラスを設定します.
+	 * @param クラスを設定します.
 	 * @return boolean ServiceScopeが定義されてる場合 true が返却されます.
 	 */
 	public static final boolean loadServiceScoped(Class<?> c) {
@@ -41,19 +41,40 @@ public class LoadAnnotationCdi {
 	 * 対象オブジェクトに対してInjectアノテーションを反映.
 	 * @param man サービスマネージャを設定します.
 	 * @param o 対象のオブジェクトを設定します.
-	 * @return Object 反映されたオブジェクトが返却されます.
 	 */
-	public static final Object loadInject(CdiManager man, Object o) {
+	public static final void loadInject(CdiManager man, Object o) {
 		if(man == null || o == null) {
+			throw new QuinaException("The specified argument is null.");
+		}
+		loadInject(man, o, o.getClass());
+	}
+	
+	/**
+	 * 対象オブジェクトのstaticフィールドに対してInjectアノテーションを反映.
+	 * @param man サービスマネージャを設定します.
+	 * @param c 対象のクラスを設定します.
+	 * @param o 対象のオブジェクトを設定します.
+	 */
+	public static final void loadInject(CdiManager man, Class<?> c) {
+		if(man == null || c == null) {
+			throw new QuinaException("The specified argument is null.");
+		}
+		loadInject(man, null, c);
+	}
+	
+	// 対象オブジェクトに対してInjectアノテーションを反映.
+	private static final void loadInject(CdiManager man, Object o, Class<?> c) {
+		if(man == null || c == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
 		Inject inj;
 		String clazz;
 		Field targetField;
 		Object serviceObject;
-		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(o);
+		final CdiReflectElement list = Quina.get()
+			.getCdiReflectManager().get(c);
 		if(list == null) {
-			return o;
+			return;
 		}
 		final int len = list.size();
 		for(int i = 0; i < len; i ++) {
@@ -78,7 +99,8 @@ public class LoadAnnotationCdi {
 							"The target service class definition (" + clazz +
 							") does not exist.");
 					}
-					targetField.set(o, serviceObject);
+					// セットする.
+					list.setValue(i, o, serviceObject);
 				} catch(QuinaException qe) {
 					throw qe;
 				} catch(Exception e) {
@@ -86,6 +108,5 @@ public class LoadAnnotationCdi {
 				}
 			}
 		}
-		return o;
 	}
 }

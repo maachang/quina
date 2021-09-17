@@ -2,7 +2,6 @@ package quina;
 
 import java.lang.reflect.InvocationTargetException;
 
-import quina.annotation.cdi.CdiObjectType;
 import quina.annotation.cdi.CdiReflectElement;
 import quina.exception.QuinaException;
 import quina.util.collection.IndexKeyValueList;
@@ -65,23 +64,18 @@ public class CdiReflectManager {
 	
 	/**
 	 * オブジェクトを登録してCdiReflectElementを
-	 * @param o 対象のオブジェクトを設定します.
+	 * @param c 対象のクラスを設定します.
 	 * @return CdiReflectElement 要素が返却されます.
 	 */
-	public CdiReflectElement register(Object o) {
-		if(o == null) {
+	public CdiReflectElement register(Class<?> c) {
+		if(c == null) {
 			throw new QuinaException(
 				"The specified argument is Null.");
 		}
-		CdiObjectType type = CdiObjectType.getType(o);
-		if(type == CdiObjectType.Unknown) {
-			// Cdiオブジェクトで無い不明な場合はnull返却.
-			return null;
-		}
-		String name = o.getClass().getName();
+		String name = c.getName();
 		CdiReflectElement ret = manager.get(name);
 		if(ret == null) {
-			ret = new CdiReflectElement(type);
+			ret = new CdiReflectElement();
 			manager.put(name, ret);
 		}
 		return ret;
@@ -97,7 +91,20 @@ public class CdiReflectManager {
 			throw new QuinaException(
 				"The specified argument is Null.");
 		}
-		String name = o.getClass().getName();
+		return get(o.getClass());
+	}
+	
+	/**
+	 * CdiReflectElementを取得.
+	 * @param c 対象ののクラスを設定します.
+	 * @return CdiReflectElement 要素が返却されます.
+	 */
+	public CdiReflectElement get(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException(
+				"The specified argument is Null.");
+		}
+		String name = c.getName();
 		return manager.get(name);
 	}
 	
