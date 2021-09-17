@@ -1,7 +1,7 @@
 package quina;
 
-import quina.annotation.log.LoadLog;
-import quina.annotation.quina.LoadQuina;
+import quina.annotation.log.AnnotationLog;
+import quina.annotation.quina.AnnotationQuina;
 import quina.component.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
@@ -120,14 +120,14 @@ public final class Quina {
 			NioUtil.initNet();
 			
 			// SystemPropertyの初期処理.
-			LoadQuina.loadSystemProperty(mainClass);
+			AnnotationQuina.loadSystemProperty(mainClass);
 			// CdiReflectManager読み込み.
 			cdiRefrectManager.autoCdiReflect();
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
 			
 			// コンフィグディレクトリを取得.
-			String configDir = LoadQuina.loadConfigDirectory(
+			String configDir = AnnotationQuina.loadConfigDirectory(
 				mainClass);
 			// 外部コンフィグファイルからログ定義を反映.
 			if(!loadLogConfig(configDir)) {
@@ -140,7 +140,7 @@ public final class Quina {
 				this.args = new Args(args);
 			}
 			// AppendMimeのAnnotationを読み込む.
-			LoadQuina.loadAppendMimeType(mainClass);
+			AnnotationQuina.loadAppendMimeType(mainClass);
 			// シャットダウンデフォルトトークンを設定.
 			ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
 			// ルーターオブジェクト生成.
@@ -164,11 +164,11 @@ public final class Quina {
 			updateAnnotationService();
 			// CdiScopedアノテーションを反映.
 			if(mainObject != null &&
-				LoadQuina.isCdiScoped(mainObject)) {
-				LoadQuina.loadCdi(
+				AnnotationQuina.isCdiScoped(mainObject)) {
+				AnnotationQuina.loadCdi(
 						cdiManager, mainObject);
-			} else if(LoadQuina.isCdiScoped(mainClass)) {
-				LoadQuina.loadCdi(
+			} else if(AnnotationQuina.isCdiScoped(mainClass)) {
+				AnnotationQuina.loadCdi(
 					cdiManager, mainClass);
 			}
 			
@@ -202,7 +202,7 @@ public final class Quina {
 		final int len = cdiManager.size();
 		for(int i = 0; i < len; i ++) {
 			// アノテーションを注入.
-			LoadQuina.loadCdi(
+			AnnotationQuina.loadCdi(
 				cdiManager, cdiManager.getService(i));
 		}
 	}
@@ -402,7 +402,7 @@ public final class Quina {
 			return true;
 		}
 		// LogConfigの初期処理.
-		if(LoadLog.loadLogConfig(mainClass)) {
+		if(AnnotationLog.loadLogConfig(mainClass)) {
 			// 正しく設定された場合はFixさせる.
 			LogFactory.getInstance().fixConfig();
 			return true;

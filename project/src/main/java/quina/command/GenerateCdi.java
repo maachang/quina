@@ -21,7 +21,7 @@ import quina.annotation.cdi.CdiScoped;
 import quina.annotation.cdi.ServiceScoped;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
-import quina.annotation.route.LoadRoute;
+import quina.annotation.route.AnnotationRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
 import quina.component.ErrorComponent;
@@ -411,7 +411,7 @@ public class GenerateCdi {
 				} else if(o instanceof ErrorComponent) {
 					// @Error付属のコンポーネントを登録.
 					if(c.isAnnotationPresent(ErrorRoute.class)) {
-						int[] es = LoadRoute.loadErrorRoute(c);
+						int[] es = AnnotationRoute.loadErrorRoute(c);
 						if(es[0] == 0) {
 							System.out.println("  > error: '" + className + "'");
 						} else if(es[1] == 0) {
@@ -533,7 +533,7 @@ public class GenerateCdi {
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.errList.get(i);
 				c = Class.forName(clazzName, true, params.cl);
-				int[] es = LoadRoute.loadErrorRoute(c);
+				int[] es = AnnotationRoute.loadErrorRoute(c);
 				println(w, 2, "");
 				if(es[0] == 0) {
 					println(w, 2, "// Register the \""+ clazzName + "\"");

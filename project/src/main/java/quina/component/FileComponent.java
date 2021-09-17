@@ -1,6 +1,6 @@
 package quina.component;
 
-import quina.annotation.route.LoadRoute;
+import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
 import quina.http.Method;
 import quina.http.Request;
@@ -50,7 +50,7 @@ public class FileComponent implements FileAttributeComponent {
 	 */
 	public FileComponent(Boolean cacheMode) {
 		// Annotationからファイルパスを取得.
-		String dir = LoadRoute.loadFilePath(this);
+		String dir = AnnotationRoute.loadFilePath(this);
 		if(dir == null) {
 			// 設定されてない場合はエラー.
 			throw new QuinaException("@FilePath annotation is not set.");

@@ -1,11 +1,12 @@
 package quina.annotation.quina;
 
 import quina.CdiManager;
+import quina.Quina;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.Switch;
 import quina.annotation.cdi.CdiScoped;
-import quina.annotation.cdi.LoadCdi;
-import quina.annotation.log.LoadLog;
+import quina.annotation.cdi.AnnotationCdi;
+import quina.annotation.log.AnnotationLog;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
 
@@ -13,8 +14,8 @@ import quina.http.MimeTypes;
  * Quina.init で処理される annotationの読み込み処理を
  * 行います.
  */
-public class LoadQuina {
-	private LoadQuina() {}
+public class AnnotationQuina {
+	private AnnotationQuina() {}
 	
 	/**
 	 * Annotationで定義されてるSystemPropertyを読み込んで
@@ -172,7 +173,30 @@ public class LoadQuina {
 	}
 	
 	/**
-	 * AnnotationのInjectとLogDefineが定義されてる場合反映します.
+	 * AnnotationのCdi定義を反映されます.
+	 * @param o オブジェクトを設定します.
+	 */
+	public static final void loadCdi(Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		loadCdi(Quina.get().getCdiManager(), o, o.getClass());
+	}
+	
+	/**
+	 * AnnotationのCdi定義を反映されます.
+	 * @param c コンポーネントクラスを設定します.
+	 */
+	public static final void loadCdi(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		loadCdi(Quina.get().getCdiManager(), null, c);
+	}
+
+	
+	/**
+	 * AnnotationのCdi定義を反映されます.
 	 * @param man Cdiマネージャを設定します.
 	 * @param o オブジェクトを設定します.
 	 */
@@ -184,7 +208,7 @@ public class LoadQuina {
 	}
 	
 	/**
-	 * AnnotationのInjectとLogDefineが定義されてる場合反映します.
+	 * AnnotationのCdi定義を反映されます.
 	 * @param man Cdiマネージャを設定します.
 	 * @param c コンポーネントクラスを設定します.
 	 */
@@ -195,20 +219,20 @@ public class LoadQuina {
 		loadCdi(man, null, c);
 	}
 	
-	// AnnotationのInjectとLogDefineが定義されてる場合反映します.
+	// AnnotationのCdi定義を反映されます.
 	private static final void loadCdi(CdiManager man, Object o, Class<?> c) {
 		// Objectが存在する場合.
 		if(o != null) {
 			// Cdiの条件を読み込む.
-			LoadCdi.loadInject(man, o);
+			AnnotationCdi.loadInject(man, o);
 			// Logの条件を読み込む.
-			LoadLog.loadLogDefine(o);
+			AnnotationLog.loadLogDefine(o);
 		// Objectが存在しない場合.
 		} else {
 			// Cdiの条件を読み込む.
-			LoadCdi.loadInject(man, c);
+			AnnotationCdi.loadInject(man, c);
 			// Logの条件を読み込む.
-			LoadLog.loadLogDefine(c);
+			AnnotationLog.loadLogDefine(c);
 		}
 	}
 	

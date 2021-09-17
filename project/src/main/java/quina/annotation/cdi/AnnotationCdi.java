@@ -10,8 +10,8 @@ import quina.exception.QuinaException;
  * Cdi(Contexts and Dependency Injection)に対する
  * アノテーション処理を行います.
  */
-public class LoadCdi {
-	private LoadCdi() {}
+public class AnnotationCdi {
+	private AnnotationCdi() {}
 	
 	/**
 	 * Annotationに定義されてるServiceScopeが定義されてるか取得.

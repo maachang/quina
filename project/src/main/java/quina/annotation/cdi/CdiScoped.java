@@ -8,17 +8,17 @@ import java.lang.annotation.Target;
 /**
  * CdiScopedを示すAnnotation.
  * 
- * この内容を設定することで、＠LogDefineや＠Injectなどの
+ * この内容を設定することで＠LogDefineや＠Injectなどの
  * annotation定義が利用可能になります.
  * 
  * <例>
  * ＠CdiScoped
  * public class QuinaMain {
  *   ＠LogDefine
- *   private static final Log log;
+ *   private static Log log;
  *   
  *   ＠Inject
- *   private static final HogeSample hogeSample;
+ *   private static HogeSample hogeSample;
  *   
  *   public static final void main(String[] args) {
  *     // quina 初期化.
@@ -40,6 +40,26 @@ import java.lang.annotation.Target;
  * <例>
  *     QuinaMain obj = new QuinaMain();
  *     Quina.init(obj, args);
+ * 
+ * また、通常のオブジェクトでCdiScopedを有効にする場合は、
+ * 以下のように実装することで、対応出来ます.
+ * 
+ * ＠CdiScoped
+ * public class Exsample {
+ *   
+ *   ＠LogDefine("exsample")
+ *   private Log log;
+ *   
+ *   ＠Inject
+ *   private HogeSample hogeSample;
+ *   
+ *   public Exsample() {
+ *     // Cdiの内容を読み込む.
+ *     AnnotationQuina.loadCdi(this);
+ *   }
+ * }
+ * 
+ * Exsample ex = new Exsample();
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

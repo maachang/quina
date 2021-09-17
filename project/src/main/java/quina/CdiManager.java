@@ -2,7 +2,7 @@ package quina;
 
 import java.lang.reflect.InvocationTargetException;
 
-import quina.annotation.cdi.LoadCdi;
+import quina.annotation.cdi.AnnotationCdi;
 import quina.exception.QuinaException;
 import quina.util.collection.IndexKeyValueList;
 
@@ -43,7 +43,7 @@ public class CdiManager {
 	 * @return CidServiceManager このオブジェクトが返却されます.
 	 */
 	public synchronized CdiManager put(Class<?> c, Object service) {
-		if(!LoadCdi.loadServiceScoped(service)) {
+		if(!AnnotationCdi.loadServiceScoped(service)) {
 			throw new QuinaException(
 				"The specified object is not a service object.");
 		}
@@ -57,7 +57,7 @@ public class CdiManager {
 	 * @return CidServiceManager このオブジェクトが返却されます.
 	 */
 	public synchronized CdiManager put(String name, Object service) {
-		if(!LoadCdi.loadServiceScoped(service)) {
+		if(!AnnotationCdi.loadServiceScoped(service)) {
 			throw new QuinaException(
 				"The specified object is not a service object.");
 		}
