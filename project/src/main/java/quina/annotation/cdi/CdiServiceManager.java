@@ -1,15 +1,14 @@
-package quina;
+package quina.annotation.cdi;
 
 import java.lang.reflect.InvocationTargetException;
 
-import quina.annotation.cdi.AnnotationCdi;
 import quina.exception.QuinaException;
 import quina.util.collection.IndexKeyValueList;
 
 /**
  * CDI(Contexts and Dependency Injection)サービス管理.
  */
-public class CdiManager {
+public class CdiServiceManager {
 	/**
 	 * CDIServiceアノテーション自動読み込み実行用クラス名.
 	 */
@@ -24,7 +23,7 @@ public class CdiManager {
 	private IndexKeyValueList<String, Object> manager =
 		new IndexKeyValueList<String, Object>();
 	
-	public CdiManager() {
+	public CdiServiceManager() {
 	}
 	
 	/**
@@ -32,7 +31,7 @@ public class CdiManager {
 	 * @param service サービスオブジェクトを設定します.
 	 * @return CidServiceManager このオブジェクトが返却されます.
 	 */
-	public CdiManager put(Object service) {
+	public CdiServiceManager put(Object service) {
 		return put(service.getClass(), service);
 	}
 	
@@ -42,7 +41,7 @@ public class CdiManager {
 	 * @param service サービスオブジェクトを設定します.
 	 * @return CidServiceManager このオブジェクトが返却されます.
 	 */
-	public synchronized CdiManager put(Class<?> c, Object service) {
+	public synchronized CdiServiceManager put(Class<?> c, Object service) {
 		if(!AnnotationCdi.loadServiceScoped(service)) {
 			throw new QuinaException(
 				"The specified object is not a service object.");
@@ -56,7 +55,7 @@ public class CdiManager {
 	 * @param service サービスオブジェクトを設定します.
 	 * @return CidServiceManager このオブジェクトが返却されます.
 	 */
-	public synchronized CdiManager put(String name, Object service) {
+	public synchronized CdiServiceManager put(String name, Object service) {
 		if(!AnnotationCdi.loadServiceScoped(service)) {
 			throw new QuinaException(
 				"The specified object is not a service object.");
@@ -113,13 +112,14 @@ public class CdiManager {
 	 * autoCdiService実行.
 	 * @return CdiManager このオブジェクトが返却されます.
 	 */
-	protected CdiManager autoCdiService() {
+	public CdiServiceManager autoCdiService() {
 		java.lang.Class<?> clazz;
 		java.lang.reflect.Method method;
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
-				QuinaConstants.CDI_PACKAGE_NAME + "." + AUTO_READ_CDI_SERVICE_CLASS);
+				AnnotationCdiConstants.CDI_PACKAGE_NAME + "." +
+				AUTO_READ_CDI_SERVICE_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_CDI_SERVICE_METHOD);
 		} catch(Exception e) {

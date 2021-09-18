@@ -1,7 +1,7 @@
 package quinax;
 
 import quina.Quina;
-import quina.CdiManager;
+import quina.annotation.cdi.CdiServiceManager;
 
 /**
  * ServiceScoped Annotation Registers the defined service object.
@@ -17,7 +17,7 @@ public final class LoadCdiService {
 	public static final void load() throws Exception {
 		
 		// Get the Service Manager to be registered.
-		final CdiManager cdiManager = Quina.get().getCdiManager();
+		final CdiServiceManager cdiManager = Quina.get().getCdiServiceManager();
 		
 		// Register the "quina.test.service.UppercaseService"
 		// object in the @ServiceScoped.

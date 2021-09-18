@@ -6,22 +6,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import quina.CdiManager;
-import quina.CdiReflectManager;
-import quina.QuinaConstants;
 import quina.Router;
 import quina.annotation.AnnotationUtil;
+import quina.annotation.cdi.AnnotationCdiConstants;
+import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiScoped;
+import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.cdi.ServiceScoped;
+import quina.annotation.route.AnnotationRoute;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
-import quina.annotation.route.AnnotationRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
 import quina.component.ErrorComponent;
@@ -65,7 +66,7 @@ public class GenerateCdi {
 	
 	// AutoRoute出力先ディレクトリ名.
 	private static final String CDI_DIRECTORY_NAME = packageNameToDirectory(
-		QuinaConstants.CDI_PACKAGE_NAME);
+		AnnotationCdiConstants.CDI_PACKAGE_NAME);
 	
 	// AutoRoute出力先Javaソースファイル名.
 	private static final String AUTO_ROUTE_SOURCE_NAME =
@@ -73,7 +74,7 @@ public class GenerateCdi {
 	
 	// AutoCdiService出力先Javaソースファイル名.
 	private static final String CDI_SERVICE_SOURCE_NAME =
-		CdiManager.AUTO_READ_CDI_SERVICE_CLASS + ".java";
+		CdiServiceManager.AUTO_READ_CDI_SERVICE_CLASS + ".java";
 	
 	// AutoCdiReflect出力先Javaソースファイル名.
 	private static final String CDI_REFLECT_SOURCE_NAME =
@@ -291,6 +292,52 @@ public class GenerateCdi {
 		System.exit(0);
 	}
 	
+	// 指定annotationが対象クラスに一致するか継承している
+	// アノテーションであるかチェック.
+	// 
+	// <例>
+	// @CdiScoped
+	// @Target(ElementType.TYPE)
+	// @Retention(RetentionPolicy.RUNTIME)
+	// public @interface TestesAnnotation {}
+	//
+	// @TestesAnnotation
+	// public class Hoge {}
+	//
+	// boolean res = isAnnotation(Hoge.class, CdiScoped.class);
+	// System.out.println(res);
+	//
+	// > true
+	//
+	// このような場合、TestesAnnotationアノテーションに対して@CdiScopedを継承
+	// しているとみなします.
+	@SuppressWarnings("rawtypes")
+	private static final boolean isAnnotation(Class c, Class at) {
+		return isAnnotation(0, c, at);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static final boolean isAnnotation(int count, Class c, Class at) {
+		// 対象クラスに指定アノテーションが含まれてる場合.
+		if(c.isAnnotationPresent(at)) {
+			return true;
+		// 対象アノテーションの１つ下のアノテーション定義を参照する.
+		} else if(count >= 1) {
+			return false;
+		}
+		// 対象クラスに定義されてるアノテーション一覧を取得.
+		Annotation[] list = c.getAnnotations();
+		int len = list == null ? 0 : list.length;
+		for(int i = 0; i < len; i ++) {
+			// このアノテーションに指定アノテーションが含まれてるか.
+			if(isAnnotation(count + 1, list[i].annotationType(), at)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	
 	// パッケージ名をディレクトリ名に変換.
 	private static final String packageNameToDirectory(String name) {
 		char c;
@@ -355,13 +402,17 @@ public class GenerateCdi {
 				// クラスを取得.
 				final Class c = Class.forName(
 					className, true, params.cl);
+				// 対象がAnnotationの場合は処理しない.
+				if(c.isAnnotation()) {
+					continue;
+				}
 				// RouteやAnyやErrorやServiceScopedやCdiScopedの
 				// アノテーションが設定されていない場合.
-				if(!c.isAnnotationPresent(Route.class) &&
-					!c.isAnnotationPresent(AnyRoute.class) &&
-					!c.isAnnotationPresent(ErrorRoute.class) &&
-					!c.isAnnotationPresent(ServiceScoped.class) &&
-					!c.isAnnotationPresent(CdiScoped.class)) {
+				if(!isAnnotation(c, Route.class) &&
+					!isAnnotation(c, AnyRoute.class) &&
+					!isAnnotation(c, ErrorRoute.class) &&
+					!isAnnotation(c, ServiceScoped.class) &&
+					!isAnnotation(c, CdiScoped.class)) {
 					// クラスのインスタンスを生成.
 					Object o;
 					try {
@@ -377,13 +428,13 @@ public class GenerateCdi {
 					continue;
 				}
 				// CdiScoped定義のクラスの場合.
-				if(c.isAnnotationPresent(CdiScoped.class)) {
+				if(isAnnotation(c, CdiScoped.class)) {
 					System.out.println("  > cdiScoped: '" + className + "'");
 					// Reflectリストに追加.
 					params.refList.add(className);
 				}
 				// ServiceScoped定義のCdiServiceの場合.
-				if(c.isAnnotationPresent(ServiceScoped.class)) {
+				if(isAnnotation(c, ServiceScoped.class)) {
 					System.out.println("  > cdiService: '" + className + "'");
 					// Cdiリストに追加.
 					params.cdiList.add(className);
@@ -396,12 +447,17 @@ public class GenerateCdi {
 				// 対象がコンポーネントクラスの場合.
 				if(o instanceof Component) {
 					// @Route付属のコンポーネントを登録.
-					if(c.isAnnotationPresent(Route.class)) {
-						System.out.println("  > route: '" + className + "' path: '" +
-							((Route)c.getAnnotation(Route.class)).value() + "'");
+					if(isAnnotation(c, Route.class)) {
+						Route r = (Route)c.getAnnotation(Route.class);
+						if(r != null) {
+							System.out.println("  > route: '" + className + "' path: '" +
+								r.value() + "'");
+						} else {
+							System.out.println("  > route: '" + className + "'");
+						}
 						params.routeList.add(className);
 					// @Any付属のコンポーネントを登録.
-					} else if(c.isAnnotationPresent(AnyRoute.class)) {
+					} else if(isAnnotation(c, AnyRoute.class)) {
 						System.out.println("  > any:   '" + className + "'");
 						params.any = className;
 					}
@@ -409,16 +465,18 @@ public class GenerateCdi {
 					params.refList.add(className);
 				// 対象がエラーコンポーネントの場合.
 				} else if(o instanceof ErrorComponent) {
-					// @Error付属のコンポーネントを登録.
-					if(c.isAnnotationPresent(ErrorRoute.class)) {
+					// @ErrorRoute付属のコンポーネントを登録.
+					if(isAnnotation(c, ErrorRoute.class)) {
 						int[] es = AnnotationRoute.loadErrorRoute(c);
-						if(es[0] == 0) {
+						if(es != null && es[0] == 0) {
 							System.out.println("  > error: '" + className + "'");
 						} else if(es[1] == 0) {
 							System.out.println("  > error: '" + className + "' status: " +
 								es[0]);
 							System.out.println("  > error: '" + className + "' status: " +
 								es[0] + "-" + es[1]);
+						} else {
+							System.out.println("  > error: '" + className + "'");
 						}
 						params.errList.add(className);
 					}
@@ -487,7 +545,7 @@ public class GenerateCdi {
 		try {
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
+			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
 			println(w, 0, "import quina.Router;");
@@ -579,16 +637,16 @@ public class GenerateCdi {
 		try {
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
+			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
-			println(w, 0, "import quina.CdiManager;");
+			println(w, 0, "import quina.annotation.cdi.CdiServiceManager;");
 			println(w, 0, "");
 			println(w, 0, "/**");
 			println(w, 0, " * ServiceScoped Annotation Registers the defined service object.");
 			println(w, 0, " */");
-			println(w, 0, "public final class " + CdiManager.AUTO_READ_CDI_SERVICE_CLASS + " {");
-			println(w, 1, "private " + CdiManager.AUTO_READ_CDI_SERVICE_CLASS + "() {}");
+			println(w, 0, "public final class " + CdiServiceManager.AUTO_READ_CDI_SERVICE_CLASS + " {");
+			println(w, 1, "private " + CdiServiceManager.AUTO_READ_CDI_SERVICE_CLASS + "() {}");
 			
 			println(w, 1, "");
 			println(w, 1, "/**");
@@ -596,12 +654,12 @@ public class GenerateCdi {
 			println(w, 1, " *");
 			println(w, 1, " * @exception Exception If the service registration fails.");
 			println(w, 1, " */");
-			println(w, 1, "public static final void " + CdiManager.AUTO_READ_CDI_SERVICE_METHOD +
+			println(w, 1, "public static final void " + CdiServiceManager.AUTO_READ_CDI_SERVICE_METHOD +
 				"() throws Exception {");
 			
 			println(w, 2, "");
 			println(w, 2, "// Get the Service Manager to be registered.");
-			println(w, 2, "final CdiManager cdiManager = Quina.get().getCdiManager();");
+			println(w, 2, "final CdiServiceManager cdiManager = Quina.get().getCdiServiceManager();");
 			
 			String clazzName;
 			int len = params.cdiList.size();
@@ -629,6 +687,20 @@ public class GenerateCdi {
 		}
 	}
 	
+	// クラス名からメソッド名変換.
+	private static final String convClassByMethodName(String clazz) {
+		final StringBuilder buf = new StringBuilder();
+		int len = clazz.length();
+		for(int i = 0; i < len; i ++) {
+			if(clazz.charAt(i) == '.') {
+				buf.append("_");
+			} else {
+				buf.append(clazz.charAt(i));
+			}
+		}
+		return buf.toString();
+	}
+	
 	// 抽出した@ServiceScoped定義されたオブジェクトをJavaファイルに出力.
 	private static final void outputCdiReflect(String outSourceDirectory,
 		GenerateCdiParams params)
@@ -643,12 +715,12 @@ public class GenerateCdi {
 		try {
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + QuinaConstants.CDI_PACKAGE_NAME + ";");
+			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import java.lang.reflect.Field;");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
-			println(w, 0, "import quina.CdiReflectManager;");
+			println(w, 0, "import quina.annotation.cdi.CdiReflectManager;");
 			println(w, 0, "import quina.annotation.cdi.CdiReflectElement;");
 			println(w, 0, "");
 			println(w, 0, "/**");
@@ -666,15 +738,6 @@ public class GenerateCdi {
 			println(w, 1, "public static final void " + CdiReflectManager.AUTO_READ_CDI_REFLECT_METHOD +
 				"() throws Exception {");
 			
-			println(w, 2, "");
-			println(w, 2, "// Get the Cdi Reflect to be registered.");
-			println(w, 2, "final CdiReflectManager refManager = Quina.get().getCdiReflectManager();");
-			println(w, 2, "");
-			println(w, 2, "Class<?> cls = null;");
-			println(w, 2, "Field field = null;");
-			println(w, 2, "boolean staticFlag = false;");
-			println(w, 2, "CdiReflectElement element = null;");
-			
 			Class<?> c;
 			String clazzName;
 			int len = params.refList.size();
@@ -689,21 +752,40 @@ public class GenerateCdi {
 				println(w, 2, "");
 				println(w, 2, "// Register the field group of the target class");
 				println(w, 2, "// \""+ clazzName + "\"");
-				println(w, 2, "cls = " + clazzName + ".class;");
-				println(w, 2, "element = refManager.register(cls);");
-				println(w, 2, "if(element != null) {");
-
-				for(int j = 0; j < lenJ; j ++) {
-					println(w, 3, "");
-					println(w, 3, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
-					println(w, 3, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
-					println(w, 3, "element.add(staticFlag, field);");
-				}
-				println(w, 3, "cls = null; element = null;");
-				println(w, 2, "}");
+				
+				println(w, 2, convClassByMethodName(clazzName) + "();");
 			}
 			
 			println(w, 1, "}");
+			
+			for(int i = 0; i < len; i ++) {
+				clazzName = params.refList.get(i);
+				c = Class.forName(clazzName, true, params.cl);
+				final Field[] list = c.getDeclaredFields();
+				int lenJ = list.length;
+				if(lenJ == 0) {
+					continue;
+				}
+				println(w, 0, "");
+				println(w, 1, "// Register the field group of the target class \""+ clazzName + "\"");
+				println(w, 1, "private static final void " + convClassByMethodName(clazzName) + "()");
+				println(w, 2, "throws Exception {");
+				
+				
+				println(w, 2, "CdiReflectManager refManager = Quina.get().getCdiReflectManager();");
+				println(w, 2, "Class<?> cls = " + clazzName + ".class;");
+				println(w, 2, "CdiReflectElement element = refManager.register(cls);");
+				println(w, 2, "Field field = null;");
+				println(w, 2, "boolean staticFlag = false;");
+	
+				for(int j = 0; j < lenJ; j ++) {
+					println(w, 2, "");
+					println(w, 2, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
+					println(w, 2, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
+					println(w, 2, "element.add(staticFlag, field);");
+				}
+				println(w, 1, "}");
+			}
 			
 			println(w, 0, "}");
 			

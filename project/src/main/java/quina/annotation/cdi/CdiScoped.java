@@ -55,11 +55,21 @@ import java.lang.annotation.Target;
  *   
  *   public Exsample() {
  *     // Cdiの内容を読み込む.
- *     AnnotationQuina.loadCdi(this);
+ *     Quina.loadCdi(this);
+ *   }
+ *   
+ *   public void hello() {
+ *     log.info("hello " + hogeSample.hoge());
  *   }
  * }
  * 
  * Exsample ex = new Exsample();
+ * ex.hello();
+ * 
+ * > hello hoge
+ * 
+ * ※ただし、これらの利用は Quina.init();処理を先に読み込む
+ *   必要があります。
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

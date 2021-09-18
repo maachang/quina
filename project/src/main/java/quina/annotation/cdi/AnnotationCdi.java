@@ -2,7 +2,6 @@ package quina.annotation.cdi;
 
 import java.lang.reflect.Field;
 
-import quina.CdiManager;
 import quina.Quina;
 import quina.exception.QuinaException;
 
@@ -39,37 +38,36 @@ public class AnnotationCdi {
 	
 	/**
 	 * 対象オブジェクトに対してInjectアノテーションを反映.
-	 * @param man Cdiマネージャを設定します.
 	 * @param o 対象のオブジェクトを設定します.
 	 */
-	public static final void loadInject(CdiManager man, Object o) {
-		if(man == null || o == null) {
+	public static final void loadInject(Object o) {
+		if(o == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
-		loadInject(man, o, o.getClass());
+		loadInject(o, o.getClass());
 	}
 	
 	/**
 	 * 対象オブジェクトのstaticフィールドに対してInjectアノテーションを反映.
-	 * @param man Cdiマネージャを設定します.
 	 * @param c 対象のクラスを設定します.
 	 */
-	public static final void loadInject(CdiManager man, Class<?> c) {
-		if(man == null || c == null) {
+	public static final void loadInject(Class<?> c) {
+		if(c == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
-		loadInject(man, null, c);
+		loadInject(null, c);
 	}
 	
 	// 対象オブジェクトに対してInjectアノテーションを反映.
-	private static final void loadInject(CdiManager man, Object o, Class<?> c) {
-		if(man == null || c == null) {
+	private static final void loadInject(Object o, Class<?> c) {
+		if(c == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
 		Inject inj;
 		String clazz;
 		Field targetField;
 		Object serviceObject;
+		final CdiServiceManager man = Quina.get().getCdiServiceManager();
 		final CdiReflectElement list = Quina.get()
 			.getCdiReflectManager().get(c);
 		if(list == null) {

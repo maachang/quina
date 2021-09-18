@@ -2,9 +2,9 @@ package quina;
 
 import java.lang.reflect.InvocationTargetException;
 
+import quina.annotation.cdi.AnnotationCdiConstants;
 import quina.annotation.component.AnnotationComponent;
 import quina.annotation.component.ResponseInitialSetting;
-import quina.annotation.quina.AnnotationQuina;
 import quina.annotation.route.AnnotationRoute;
 import quina.annotation.validate.AnnotationValidate;
 import quina.component.Component;
@@ -48,7 +48,8 @@ public class Router {
 	private static final ResponseInitialSetting injectComponent(
 		Component component) {
 		// アノテーションを注入.
-		AnnotationQuina.loadCdi(Quina.get().getCdiManager(), component);
+		Quina.get().getCdiAnnotationManager()
+			.load(component);
 		// annotationのResponse初期設定を取得.
 		return AnnotationComponent.loadResponse(component);
 	}
@@ -56,7 +57,8 @@ public class Router {
 	// ErrorComponentにAnnotationを注入.
 	private static final void injectComponent(ErrorComponent component) {
 		// アノテーションを注入.
-		AnnotationQuina.loadCdi(Quina.get().getCdiManager(), component);
+		Quina.get().getCdiAnnotationManager()
+			.load(component);
 	}
 	
 	/**
@@ -214,7 +216,8 @@ public class Router {
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
-				QuinaConstants.CDI_PACKAGE_NAME + "." + AUTO_READ_ROUTE_CLASS);
+				AnnotationCdiConstants.CDI_PACKAGE_NAME + "." +
+				AUTO_READ_ROUTE_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_ROUTE_METHOD);
 		} catch(Exception e) {

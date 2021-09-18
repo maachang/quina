@@ -32,6 +32,8 @@ import java.lang.annotation.Target;
  * 
  * このようにパッケージ名＋クラス名を指定することで正常にInjectする
  * 事ができます.
+ * 
+ * ※対象のフィールドに final をつけると設定されないので注意が必要です.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

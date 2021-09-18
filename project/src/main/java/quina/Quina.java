@@ -1,5 +1,8 @@
 package quina;
 
+import quina.annotation.cdi.CdiAnnotationManager;
+import quina.annotation.cdi.CdiReflectManager;
+import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
 import quina.annotation.quina.AnnotationQuina;
 import quina.component.EtagManagerInfo;
@@ -21,6 +24,7 @@ import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
+import quina.util.Flag;
 import quina.util.TwoStepsFlag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.ObjectList;
@@ -67,10 +71,13 @@ public final class Quina {
 		new AtomicObject<NioWorkerThreadManager>();
 	
 	// CDIサービスマネージャ.
-	private final CdiManager cdiManager = new CdiManager();
+	private final CdiServiceManager cdiManager = new CdiServiceManager();
 	
 	// CDIリフレクションマネージャ.
 	private final CdiReflectManager cdiRefrectManager = new CdiReflectManager();
+	
+	// CDIアノテーションマネージャ.
+	private final CdiAnnotationManager cdiAnnotationManager = new CdiAnnotationManager();
 
 	// コンストラクタ.
 	private Quina() {
@@ -160,16 +167,17 @@ public final class Quina {
 				this.loadConfig(configDir);
 			}
 			
+			// CdiAnnotationManagerをFix.
+			cdiAnnotationManager.fix();
+			
 			// annotation関連のService反映.
 			updateAnnotationService();
 			// CdiScopedアノテーションを反映.
 			if(mainObject != null &&
 				AnnotationQuina.isCdiScoped(mainObject)) {
-				AnnotationQuina.loadCdi(
-						cdiManager, mainObject);
+				cdiAnnotationManager.load(mainObject);
 			} else if(AnnotationQuina.isCdiScoped(mainClass)) {
-				AnnotationQuina.loadCdi(
-					cdiManager, mainClass);
+				cdiAnnotationManager.load(mainClass);
 			}
 			
 			// 初期化成功.
@@ -202,8 +210,7 @@ public final class Quina {
 		final int len = cdiManager.size();
 		for(int i = 0; i < len; i ++) {
 			// アノテーションを注入.
-			AnnotationQuina.loadCdi(
-				cdiManager, cdiManager.getService(i));
+			cdiAnnotationManager.load(cdiManager.getService(i));
 		}
 	}
 	
@@ -240,6 +247,32 @@ public final class Quina {
 	}
 	
 	/**
+	 * 指定オブジェクトにCDIを反映.
+	 * @param o 対象のオブジェクトを設定します.
+	 * @return 
+	 */
+	public static final Quina loadCdi(Object o) {
+		if(!SNGL.cdiAnnotationManager.isFix()) {
+			throw new QuinaException("Not completed. ");
+		}
+		SNGL.cdiAnnotationManager.load(o);
+		return SNGL;
+	}
+	
+	/**
+	 * 指定オブジェクトにCDIを反映.
+	 * @param c 対象のクラスを設定します.
+	 * @return 
+	 */
+	public static final Quina loadCdi(Class<?> c) {
+		if(!SNGL.cdiAnnotationManager.isFix()) {
+			throw new QuinaException("Not completed. ");
+		}
+		SNGL.cdiAnnotationManager.load(c);
+		return SNGL;
+	}
+	
+	/**
 	 * quinaを取得.
 	 * @return Quina quinaが返却されます.
 	 */
@@ -265,21 +298,39 @@ public final class Quina {
 	}
 	
 	/**
+	 * QuinaServiceManagerを取得.
+	 * @return QuinaServiceManager QuinaServiceManagerga返却されます.
+	 */
+	public QuinaServiceManager getQuinaServiceManager() {
+		checkInit();
+		return quinaServiceManager;
+	}
+	
+	/**
 	 * CDI（Contexts and Dependency Injection）
-	 * サービスマネージャを取得..
+	 * サービスマネージャを取得.
 	 * @return CidManager CDIサービスマネージャが返却されます.
 	 */
-	public CdiManager getCdiManager() {
+	public CdiServiceManager getCdiServiceManager() {
 		return cdiManager;
 	}
 	
 	/**
 	 * CDI（Contexts and Dependency Injection）
-	 * リフレクションマネージャを取得..
+	 * リフレクションマネージャを取得.
 	 * @return CdiReflectManager CDIリフレクションマネージャが返却されます.
 	 */
 	public CdiReflectManager getCdiReflectManager() {
 		return cdiRefrectManager;
+	}
+	
+	/**
+	 * CDI（Contexts and Dependency Injection）
+	 * アノテーションマネージャを取得.
+	 * @return CdiAnnotationManager CDIアノテーションマネージャが返却されます.
+	 */
+	public CdiAnnotationManager getCdiAnnotationManager() {
+		return cdiAnnotationManager;
 	}
 	
 	/**
@@ -497,6 +548,8 @@ public final class Quina {
 			if(!etagManagerInfo.isDone()) {
 				etagManagerInfo.done();
 			}
+			// QuinaServiceManagerを完了させる.
+			quinaServiceManager.fix();
 			// 登録されたQuinaServiceを起動.
 			QuinaService qs;
 			final int len = quinaServiceManager.size();
@@ -748,9 +801,10 @@ public final class Quina {
 	/**
 	 * QuinaService管理オブジェクト.
 	 */
-	protected static final class QuinaServiceManager {
+	public static final class QuinaServiceManager {
 		private final ObjectList<QuinaServiceEntry> list =
 			new ObjectList<QuinaServiceEntry>();
+		private final Flag fixFlag = new Flag(false);
 
 		/**
 		 * コンストラクタ.
@@ -768,6 +822,21 @@ public final class Quina {
 			}
 			return -1;
 		}
+		
+		/**
+		 * 登録を完了させる.
+		 */
+		public void fix() {
+			fixFlag.set(true);
+		}
+		
+		/**
+		 * 登録が完了済みかチェック.
+		 * @return
+		 */
+		public boolean isFix() {
+			return fixFlag.get();
+		}
 
 		/**
 		 * データセット.
@@ -776,6 +845,9 @@ public final class Quina {
 		 * @return QuinaService 前回登録されていたサービスが返却されます.
 		 */
 		public QuinaService put(String name, QuinaService service) {
+			if(fixFlag.get()) {
+				throw new QuinaException("Already completed.");
+			}
 			if(name == null || service == null) {
 				return null;
 			}
@@ -838,6 +910,9 @@ public final class Quina {
 		 * @return QuinaService 削除されたサービスが返却されます.
 		 */
 		public QuinaService remove(String name) {
+			if(fixFlag.get()) {
+				throw new QuinaException("Already completed.");
+			}
 			if(name != null) {
 				final int p = search(list, name);
 				if(p != -1) {

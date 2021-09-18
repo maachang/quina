@@ -1,8 +1,7 @@
-package quina;
+package quina.annotation.cdi;
 
 import java.lang.reflect.InvocationTargetException;
 
-import quina.annotation.cdi.CdiReflectElement;
 import quina.exception.QuinaException;
 import quina.util.collection.IndexKeyValueList;
 
@@ -130,13 +129,14 @@ public class CdiReflectManager {
 	 * autoCdiService実行.
 	 * @return CdiManager このオブジェクトが返却されます.
 	 */
-	protected CdiReflectManager autoCdiReflect() {
+	public CdiReflectManager autoCdiReflect() {
 		java.lang.Class<?> clazz;
 		java.lang.reflect.Method method;
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
-				QuinaConstants.CDI_PACKAGE_NAME + "." + AUTO_READ_CDI_REFLECT_CLASS);
+				AnnotationCdiConstants.CDI_PACKAGE_NAME + "." +
+				AUTO_READ_CDI_REFLECT_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_CDI_REFLECT_METHOD);
 		} catch(Exception e) {

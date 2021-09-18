@@ -3,7 +3,7 @@ package quina;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.exception.QuinaException;
 import quina.json.Json;
@@ -19,7 +19,8 @@ import quina.util.collection.TypesKeyValue;
  *
  * QuinaInfo内で管理するコンフィグ情報です.
  */
-public class QuinaConfig implements TypesKeyValue<String, Object> {
+public class QuinaConfig implements
+	TypesKeyValue<String, Object> {
 	/**
 	 * QuinaConfig要素.
 	 */
@@ -132,12 +133,15 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 	private String name;
 
 	// コンフィグパラメータ.
-	private final Map<Object, QuinaConfigElement> config =
-		new ConcurrentHashMap<Object, QuinaConfigElement>();
+	private final IndexKeyValueList<Object, QuinaConfigElement> config =
+		new IndexKeyValueList<Object, QuinaConfigElement>();
 
 	// 予約キー情報.
 	private final IndexKeyValueList<Object, QuinaConfigElement> reservationKeys =
 		new IndexKeyValueList<Object, QuinaConfigElement>();
+	
+	// Read-Writeロックオブジェクト.
+	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
 	/**
 	 * コンストラクタ.
@@ -154,9 +158,7 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 	 *                デフォルト値が存在しない場合はnullを設定します.
 	 */
 	public QuinaConfig(String name, Object... defines) {
-		TreeKey key;
-		TypesClass clazz;
-		Object k, v;
+		Object k, t;
 		if(name == null || name.isEmpty()) {
 			throw new QuinaException("The config name has not been set.");
 		}
@@ -164,34 +166,56 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 		int len = defines.length;
 		for(int i = 0; i < len; i += 3) {
 			if((k = defines[i]) == null ||
-				(v = defines[i+1]) == null) {
+				(t = defines[i + 1]) == null) {
 				continue;
 			}
-			key = new TreeKey("" + k);
-			if(v instanceof TypesClass) {
-				clazz = (TypesClass)v;
-			} else if(v instanceof String) {
-				clazz = TypesClass.get((String)v);
-			} else if(v instanceof Number) {
-				clazz = TypesClass.get(((Number)v).intValue());
-			} else {
-				clazz = TypesClass.get(v.toString());
-			}
-			if(clazz != null) {
-				// 型とデフォルト値をセット.
-				reservationKeys.put(key, new QuinaConfigElement().
-					set(null, clazz, defines[i + 2]));
-			}
-			key = null;
-			clazz = null;
+			putReservation(k, t, defines[i + 2]);
 		}
+	}
+	
+	/**
+	 * １つの予約キー情報を追加.
+	 * @param key Key名を設定します.
+	 * @param type Type情報を設定します.
+	 * @param defVal デフォルト値を設定します.
+	 * @return QuinaConfig オブジェクトが返却されます.
+	 */
+	public QuinaConfig putReservation(Object key, Object type, Object defVal) {
+		TypesClass clazz = null;
+		if(!(key instanceof TreeKey)) {
+			key = new TreeKey("" + key);
+		}
+		if(type instanceof TypesClass) {
+			clazz = (TypesClass)type;
+		} else if(type instanceof String) {
+			clazz = TypesClass.get((String)type);
+		} else if(type instanceof Number) {
+			clazz = TypesClass.get(((Number)type).intValue());
+		} else {
+			clazz = TypesClass.get(type.toString());
+		}
+		if(clazz != null) {
+			lock.writeLock().lock();
+			try {
+				reservationKeys.put(key, new QuinaConfigElement().
+					set(null, clazz, defVal));
+			} finally {
+				lock.writeLock().unlock();
+			}
+		}
+		return this;
 	}
 
 	/**
 	 * データをクリア.
 	 */
 	public void clear() {
-		config.clear();
+		lock.writeLock().lock();
+		try {
+			config.clear();
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -234,30 +258,38 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 	 * コンフィグデータをセット.
 	 * @param key 対象のキー名を設定します.
 	 * @param value 対象の要素を設定します.
-	 * @retrun boolean 設定に成功した場合trueが返却されます.
+	 * @return boolean 設定に成功した場合trueが返却されます.
 	 */
 	public boolean set(String key, Object value) {
-		final QuinaConfigElement c = reservationKeys
-			.get(key);
-		if(c == null) {
-			return false;
-		}
-		QuinaConfigElement em = config.get(key);
-		if(em == null) {
-			em = new QuinaConfigElement();
+		lock.writeLock().lock();
+		try {
+			QuinaConfigElement rsv;
+			rsv = reservationKeys.get(key);
+			if(rsv == null) {
+				return false;
+			}
+			QuinaConfigElement em = new QuinaConfigElement();
 			config.put(new TreeKey(key), em);
+			em.set(value, rsv.getTypesClass(), rsv.getDefaultValue());
+		} finally {
+			lock.writeLock().unlock();
 		}
-		em.set(value, c.getTypesClass(), c.getDefaultValue());
 		return true;
 	}
 	
 	@Override
 	public Object get(Object key) {
-		QuinaConfigElement em = getElement(key.toString());
-		if(em == null) {
-			return null;
+		lock.readLock().lock();
+		try {
+			QuinaConfigElement em =
+				getElement(key.toString());
+			if(em == null) {
+				return null;
+			}
+			return em.get();
+		} finally {
+			lock.readLock().unlock();
 		}
-		return em.get();
 	}
 
 	/**
@@ -266,11 +298,18 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 	 * @return QuinaConfigElement コンフィグ要素が返却されます.
 	 */
 	public QuinaConfigElement getElement(Object key) {
-		QuinaConfigElement ret = config.get(key.toString());
-		if(ret == null) {
-			return reservationKeys.get(key.toString());
+		lock.readLock().lock();
+		try {
+			// 設定値を取得.
+			QuinaConfigElement em = config.get(key);
+			if(em == null) {
+				// 存在しない場合はデフォルト値を取得.
+				em = reservationKeys.get(key);
+			}
+			return em;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return ret;
 	}
 
 	/**
@@ -278,20 +317,12 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 	 * @return int 定義されているコンフィグ要素の数が返却されます.
 	 */
 	public int size() {
-		return reservationKeys.size();
-	}
-
-	/**
-	 * 定義されているコンフィグ要素のキー名を取得します.
-	 * @param no 指定項番を設定します.
-	 * @return String キー名が返却されます.
-	 */
-	public String keyAt(int no) {
-		Object ret = reservationKeys.keyAt(no);
-		if(ret == null) {
-			return null;
+		lock.readLock().lock();
+		try {
+			return reservationKeys.size();
+		} finally {
+			lock.readLock().unlock();
 		}
-		return ((TreeKey)ret).getKey();
 	}
 	
 	/**
@@ -311,21 +342,26 @@ public class QuinaConfig implements TypesKeyValue<String, Object> {
 		TreeKey key;
 		final int len = reservationKeys.size();
 		boolean f = false;
-		for(int i = 0; i < len; i ++) {
-			key = (TreeKey)reservationKeys.keyAt(i);
-			try {
-				if(f) {
-					out.append("\n");
-				} else {
-					f = true;
-				}
-				// スペースセット.
-				for(k = 0; k < space; k ++) {
-					out.append(" ");
-				}
-				out.append(key).append(": ");
-				out.append(config.get(key));
-			} catch(Exception e) {}
+		lock.readLock().lock();
+		try {
+			for(int i = 0; i < len; i ++) {
+				key = (TreeKey)reservationKeys.keyAt(i);
+				try {
+					if(f) {
+						out.append("\n");
+					} else {
+						f = true;
+					}
+					// スペースセット.
+					for(k = 0; k < space; k ++) {
+						out.append(" ");
+					}
+					out.append(key).append(": ");
+					out.append(config.get(key));
+				} catch(Exception e) {}
+			}
+		} finally {
+			lock.readLock().unlock();
 		}
 	}
 }

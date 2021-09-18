@@ -1,12 +1,8 @@
 package quina.annotation.quina;
 
-import quina.CdiManager;
-import quina.Quina;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.Switch;
 import quina.annotation.cdi.CdiScoped;
-import quina.annotation.cdi.AnnotationCdi;
-import quina.annotation.log.AnnotationLog;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
 
@@ -169,70 +165,6 @@ public class AnnotationQuina {
 			mime.put(type.extension(), type.mimeType());
 		} else {
 			mime.put(type.extension(), type.mimeType(), type.charset().getMode());
-		}
-	}
-	
-	/**
-	 * AnnotationのCdi定義を反映されます.
-	 * @param o オブジェクトを設定します.
-	 */
-	public static final void loadCdi(Object o) {
-		if(o == null) {
-			throw new QuinaException("The specified component is Null.");
-		}
-		loadCdi(Quina.get().getCdiManager(), o, o.getClass());
-	}
-	
-	/**
-	 * AnnotationのCdi定義を反映されます.
-	 * @param c コンポーネントクラスを設定します.
-	 */
-	public static final void loadCdi(Class<?> c) {
-		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
-		}
-		loadCdi(Quina.get().getCdiManager(), null, c);
-	}
-
-	
-	/**
-	 * AnnotationのCdi定義を反映されます.
-	 * @param man Cdiマネージャを設定します.
-	 * @param o オブジェクトを設定します.
-	 */
-	public static final void loadCdi(CdiManager man, Object o) {
-		if(o == null) {
-			throw new QuinaException("The specified component is Null.");
-		}
-		loadCdi(man, o, o.getClass());
-	}
-	
-	/**
-	 * AnnotationのCdi定義を反映されます.
-	 * @param man Cdiマネージャを設定します.
-	 * @param c コンポーネントクラスを設定します.
-	 */
-	public static final void loadCdi(CdiManager man, Class<?> c) {
-		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
-		}
-		loadCdi(man, null, c);
-	}
-	
-	// AnnotationのCdi定義を反映されます.
-	private static final void loadCdi(CdiManager man, Object o, Class<?> c) {
-		// Objectが存在する場合.
-		if(o != null) {
-			// Cdiの条件を読み込む.
-			AnnotationCdi.loadInject(man, o);
-			// Logの条件を読み込む.
-			AnnotationLog.loadLogDefine(o);
-		// Objectが存在しない場合.
-		} else {
-			// Cdiの条件を読み込む.
-			AnnotationCdi.loadInject(man, c);
-			// Logの条件を読み込む.
-			AnnotationLog.loadLogDefine(c);
 		}
 	}
 	
