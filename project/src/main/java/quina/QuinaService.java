@@ -11,7 +11,9 @@ public interface QuinaService {
 	 * コンフィグ情報を読み込む.
 	 * @param configDir コンフィグディレクトリを設定します.
 	 */
-	public void loadConfig(String configDir);
+	default void loadConfig(String configDir) {
+		getConfig().loadConfig(configDir);
+	}
 
 	/**
 	 * QuinaConfigを取得.

@@ -86,7 +86,7 @@ public class HttpServerService implements QuinaService {
 		lock.writeLock().lock();
 		try {
 			// コンフィグ情報を読み込む.
-			config.readConfig(configDir);
+			config.loadConfig(configDir);
 			// mimeTypeのコンフィグ読み込み.
 			IndexMap<String, Object> json = QuinaUtil.loadJson(
 				configDir, MIME_CONFIG_FILE);

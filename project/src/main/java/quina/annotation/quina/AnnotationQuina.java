@@ -1,7 +1,10 @@
 package quina.annotation.quina;
 
+import quina.QuinaService;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.Switch;
+import quina.annotation.cdi.CdiHandle;
+import quina.annotation.cdi.CdiHandleScoped;
 import quina.annotation.cdi.CdiScoped;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
@@ -191,4 +194,77 @@ public class AnnotationQuina {
 		}
 		return c.isAnnotationPresent(CdiScoped.class);
 	}
+	
+	/**
+	 * Annotationに定義されてるQuinaServiceScopedのサービス名を取得.
+	 * @param c QuinaServiceを設定します.
+	 * @return String サービス名が返却されます.
+	 *                nullの場合、QuinaServiceScopedが設定されていません.
+	 */
+	public static final String loadQunaServiceScoped(QuinaService c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return loadQunaServiceScoped(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるQuinaServiceScopedのサービス名を取得.
+	 * @param c クラスオブジェクトを設定します.
+	 * @return String サービス名が返却されます.
+	 *                nullの場合、QuinaServiceScopedが設定されていません.
+	 */
+	public static final String loadQunaServiceScoped(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		QuinaServiceScoped service = c.getAnnotation(QuinaServiceScoped.class);
+		if(service == null) {
+			return null;
+		}
+		return service.value();
+	}
+	
+	/**
+	 * AnnotationにQuinaServiceScoped定義されてるか取得.
+	 * @param c QuinaServiceを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isQunaServiceScoped(QuinaService c) {
+		return loadQunaServiceScoped(c) != null;
+	}
+	
+	/**
+	 * AnnotationにQuinaServiceScoped定義されてるか取得.
+	 * @param c クラスオブジェクトを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isQunaServiceScoped(Class<?> c) {
+		return loadQunaServiceScoped(c) != null;
+	}
+	
+	/**
+	 * AnnotationにCdiAnnotationScoped定義されてるか取得.
+	 * @param c CdiAnnotationHandleを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isCdiAnnotationScoped(CdiHandle c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return c.getClass().isAnnotationPresent(CdiHandleScoped.class);
+	}
+	
+	/**
+	 * AnnotationにQuinaServiceScoped定義されてるか取得.
+	 * @param c クラスオブジェクトを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isCdiAnnotationScoped(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified component is Null.");
+		}
+		return c.isAnnotationPresent(CdiHandleScoped.class);
+	}
+
 }

@@ -47,7 +47,7 @@ public class HttpWorkerService implements QuinaService {
 	public void loadConfig(String configDir) {
 		lock.writeLock().lock();
 		try {
-			config.readConfig(configDir);
+			config.loadConfig(configDir);
 		} finally {
 			lock.writeLock().unlock();
 		}

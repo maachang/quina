@@ -222,7 +222,7 @@ public class QuinaConfig implements
 	 * コンフィグ情報を読み込む.
 	 * @param configDir コンフィグファイル読み込み先のディレクトリを設定します.
 	 */
-	public void readConfig(String configDir) {
+	public void loadConfig(String configDir) {
 		final IndexMap<String, Object> json = QuinaUtil.loadJson(
 			configDir, name);
 		if(json != null) {

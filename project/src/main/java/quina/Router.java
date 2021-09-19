@@ -48,7 +48,7 @@ public class Router {
 	private static final ResponseInitialSetting injectComponent(
 		Component component) {
 		// アノテーションを注入.
-		Quina.get().getCdiAnnotationManager()
+		Quina.get().getCdiHandleManager()
 			.load(component);
 		// annotationのResponse初期設定を取得.
 		return AnnotationComponent.loadResponse(component);
@@ -57,7 +57,7 @@ public class Router {
 	// ErrorComponentにAnnotationを注入.
 	private static final void injectComponent(ErrorComponent component) {
 		// アノテーションを注入.
-		Quina.get().getCdiAnnotationManager()
+		Quina.get().getCdiHandleManager()
 			.load(component);
 	}
 	

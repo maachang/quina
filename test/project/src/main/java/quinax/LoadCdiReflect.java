@@ -30,6 +30,10 @@ public final class LoadCdiReflect {
 		// Register the field group of the target class
 		// "quina.test.route.GreetingJsonGet"
 		quina_test_route_GreetingJsonGet();
+		
+		// Register the field group of the target class
+		// "quina.test.QuinaServiceTest"
+		quina_test_QuinaServiceTest();
 	}
 
 	// Register the field group of the target class "quina.test.service.GreetingService"
@@ -74,6 +78,28 @@ public final class LoadCdiReflect {
 		element.add(staticFlag, field);
 		
 		field = cls.getDeclaredField("service");
+		staticFlag = false;
+		element.add(staticFlag, field);
+	}
+
+	// Register the field group of the target class "quina.test.QuinaServiceTest"
+	private static final void quina_test_QuinaServiceTest()
+		throws Exception {
+		CdiReflectManager refManager = Quina.get().getCdiReflectManager();
+		Class<?> cls = quina.test.QuinaServiceTest.class;
+		CdiReflectElement element = refManager.register(cls);
+		Field field = null;
+		boolean staticFlag = false;
+		
+		field = cls.getDeclaredField("log");
+		staticFlag = false;
+		element.add(staticFlag, field);
+		
+		field = cls.getDeclaredField("config");
+		staticFlag = false;
+		element.add(staticFlag, field);
+		
+		field = cls.getDeclaredField("startFlag");
 		staticFlag = false;
 		element.add(staticFlag, field);
 	}

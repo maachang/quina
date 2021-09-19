@@ -32,7 +32,7 @@ JAR_DIR=..
 JAR_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`
 
 rm -f ${NATIVE_OUT}
-echo native-image -H:+ReportExceptionStackTraces -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
-native-image -H:+ReportExceptionStackTraces -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
+echo native-image --no-fallback --verbose -H:+ReportExceptionStackTraces -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
+native-image --no-fallback --verbose -H:+ReportExceptionStackTraces -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
 
 rm -f ${NATIVE_OUT}.build_artifacts.txt

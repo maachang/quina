@@ -1,6 +1,7 @@
 package quina;
 
-import quina.annotation.cdi.CdiAnnotationManager;
+import quina.annotation.cdi.CdiHandle;
+import quina.annotation.cdi.CdiHandleManager;
 import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
@@ -24,10 +25,8 @@ import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
-import quina.util.Flag;
 import quina.util.TwoStepsFlag;
 import quina.util.collection.IndexMap;
-import quina.util.collection.ObjectList;
 
 /**
  * Quina.
@@ -57,9 +56,6 @@ public final class Quina {
 	// Httpワーカースレッド関連を管理します.
 	private HttpWorkerService httpWorkerService;
 
-	// Quinaサービス管理.
-	private QuinaServiceManager quinaServiceManager;
-
 	// シャットダウンマネージャー.
 	private ShutdownManager shutdownManager;
 
@@ -70,6 +66,10 @@ public final class Quina {
 	private final AtomicObject<NioWorkerThreadManager> workerManager =
 		new AtomicObject<NioWorkerThreadManager>();
 	
+	// Quinaサービス管理.
+	private final QuinaServiceManager quinaServiceManager = new
+		QuinaServiceManager();
+	
 	// CDIサービスマネージャ.
 	private final CdiServiceManager cdiManager = new CdiServiceManager();
 	
@@ -77,7 +77,7 @@ public final class Quina {
 	private final CdiReflectManager cdiRefrectManager = new CdiReflectManager();
 	
 	// CDIアノテーションマネージャ.
-	private final CdiAnnotationManager cdiAnnotationManager = new CdiAnnotationManager();
+	private final CdiHandleManager cdiHandleManager = new CdiHandleManager();
 
 	// コンストラクタ.
 	private Quina() {
@@ -128,56 +128,69 @@ public final class Quina {
 			
 			// SystemPropertyの初期処理.
 			AnnotationQuina.loadSystemProperty(mainClass);
+			
 			// CdiReflectManager読み込み.
 			cdiRefrectManager.autoCdiReflect();
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
+			// AutoQuinaService読み込みを実行.
+			quinaServiceManager.autoQuinaService();
+			
+			// CdiAnnotationScopedアノテーションを反映.
+			cdiHandleManager.autoCdiHandleManager();
+			// CdiHandleManagerをFix.
+			cdiHandleManager.fix();
 			
 			// コンフィグディレクトリを取得.
-			String configDir = AnnotationQuina.loadConfigDirectory(
-				mainClass);
-			// 外部コンフィグファイルからログ定義を反映.
+			String configDir = AnnotationQuina
+				.loadConfigDirectory(mainClass);
+			// 最初にログ定義だけを反映.
 			if(!loadLogConfig(configDir)) {
 				// 外部コンフィグファイルが存在しない場合は
 				// LogConfigの初期処理.
 				loadLogConfigByAnnotation(mainClass);
 			}
+			
 			// Argsを設定.
 			if(args != null) {
 				this.args = new Args(args);
 			}
-			// AppendMimeのAnnotationを読み込む.
-			AnnotationQuina.loadAppendMimeType(mainClass);
+			
 			// シャットダウンデフォルトトークンを設定.
 			ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
+			
 			// ルーターオブジェクト生成.
 			this.router = new Router();
+			
 			// シャットダウンマネージャを生成し、quinaシャットダウンコールをセット.
 			this.shutdownManager = new ShutdownManager();
 			this.shutdownManager.getInfo().register(new QuinaShutdownCall());
-			// quinaServiceを管理するマネージャを生成.
-			this.quinaServiceManager = new QuinaServiceManager();
+			
 			// HTTP関連サービスを生成.
 			this.httpWorkerService = new HttpWorkerService();
 			this.httpServerService = new HttpServerService(this.httpWorkerService);
+			
+			// AppendMimeのAnnotationを読み込む.
+			AnnotationQuina.loadAppendMimeType(mainClass);
+			
+			// ServiceScopedアノテーションを反映.
+			updateAnnotationService();
+			
+			// QuinaServiceScopedアノテーションを反映.
+			updateAnnotationQuinaService();
+			
+			// CdiScopedアノテーションを反映.
+			if(mainObject != null &&
+				AnnotationQuina.isCdiScoped(mainObject)) {
+				cdiHandleManager.load(mainObject);
+			} else if(AnnotationQuina.isCdiScoped(mainClass)) {
+				cdiHandleManager.load(mainClass);
+			}
 			
 			// コンフィグディレクトリが設定されてる場合.
 			if(configDir != null && !configDir.isEmpty()) {
 				// 登録してQuinaのコンフィグ情報をロードする.
 				this.loadConfig(configDir);
-			}
-			
-			// CdiAnnotationManagerをFix.
-			cdiAnnotationManager.fix();
-			
-			// annotation関連のService反映.
-			updateAnnotationService();
-			// CdiScopedアノテーションを反映.
-			if(mainObject != null &&
-				AnnotationQuina.isCdiScoped(mainObject)) {
-				cdiAnnotationManager.load(mainObject);
-			} else if(AnnotationQuina.isCdiScoped(mainClass)) {
-				cdiAnnotationManager.load(mainClass);
 			}
 			
 			// 初期化成功.
@@ -210,7 +223,17 @@ public final class Quina {
 		final int len = cdiManager.size();
 		for(int i = 0; i < len; i ++) {
 			// アノテーションを注入.
-			cdiAnnotationManager.load(cdiManager.getService(i));
+			cdiHandleManager.load(cdiManager.getService(i));
+		}
+	}
+	
+	// QuinaService群に対してAnnotation関連を反映.
+	private final void updateAnnotationQuinaService() {
+		final int len = quinaServiceManager.size();
+		for(int i = 0; i < len; i ++) {
+			// アノテーションを注入.
+			cdiHandleManager.load(
+				quinaServiceManager.get(i));
 		}
 	}
 	
@@ -251,11 +274,11 @@ public final class Quina {
 	 * @param o 対象のオブジェクトを設定します.
 	 * @return 
 	 */
-	public static final Quina loadCdi(Object o) {
-		if(!SNGL.cdiAnnotationManager.isFix()) {
+	public static final Quina loadCdi(CdiHandle o) {
+		if(!SNGL.cdiHandleManager.isFix()) {
 			throw new QuinaException("Not completed. ");
 		}
-		SNGL.cdiAnnotationManager.load(o);
+		SNGL.cdiHandleManager.load(o);
 		return SNGL;
 	}
 	
@@ -265,10 +288,10 @@ public final class Quina {
 	 * @return 
 	 */
 	public static final Quina loadCdi(Class<?> c) {
-		if(!SNGL.cdiAnnotationManager.isFix()) {
+		if(!SNGL.cdiHandleManager.isFix()) {
 			throw new QuinaException("Not completed. ");
 		}
-		SNGL.cdiAnnotationManager.load(c);
+		SNGL.cdiHandleManager.load(c);
 		return SNGL;
 	}
 	
@@ -302,7 +325,6 @@ public final class Quina {
 	 * @return QuinaServiceManager QuinaServiceManagerga返却されます.
 	 */
 	public QuinaServiceManager getQuinaServiceManager() {
-		checkInit();
 		return quinaServiceManager;
 	}
 	
@@ -327,10 +349,10 @@ public final class Quina {
 	/**
 	 * CDI（Contexts and Dependency Injection）
 	 * アノテーションマネージャを取得.
-	 * @return CdiAnnotationManager CDIアノテーションマネージャが返却されます.
+	 * @return CdiHandleManager CDIアノテーションマネージャが返却されます.
 	 */
-	public CdiAnnotationManager getCdiAnnotationManager() {
-		return cdiAnnotationManager;
+	public CdiHandleManager getCdiHandleManager() {
+		return cdiHandleManager;
 	}
 	
 	/**
@@ -751,196 +773,6 @@ public final class Quina {
 	public HttpServerCall getHttpServerCall() {
 		checkInit();
 		return httpServerService.getHttpServerCall();
-	}
-
-	/**
-	 * 1つのQuinaService要素.
-	 */
-	protected static final class QuinaServiceEntry {
-		private String name;
-		private QuinaService service;
-
-		/**
-		 * コンストラクタ.
-		 * @param name サービス登録名を設定します.
-		 * @param service 登録サービスを設定します.
-		 */
-		protected QuinaServiceEntry(String name, QuinaService service) {
-			this.name = name;
-			this.service = service;
-		}
-
-		/**
-		 * サービス登録名を取得.
-		 * @return String サービス登録名が返却されます.
-		 */
-		public String getName() {
-			return name;
-		}
-
-		/**
-		 * QuinaServiceを取得.
-		 * @return QuinaService QuinaServiceが返却されます.
-		 */
-		public QuinaService getService() {
-			return service;
-		}
-
-		/**
-		 * QuinaServiceを設定.
-		 * @param newService 新しいQuinaServiceを設定します.
-		 * @return QuinaService 前回登録されていたQuinaServiceが返却されます.
-		 */
-		protected QuinaService setService(QuinaService newService) {
-			QuinaService ret = service;
-			service = newService;
-			return ret;
-		}
-	}
-
-	/**
-	 * QuinaService管理オブジェクト.
-	 */
-	public static final class QuinaServiceManager {
-		private final ObjectList<QuinaServiceEntry> list =
-			new ObjectList<QuinaServiceEntry>();
-		private final Flag fixFlag = new Flag(false);
-
-		/**
-		 * コンストラクタ.
-		 */
-		public QuinaServiceManager() {}
-
-		// 検索.
-		private static final int search(
-			ObjectList<QuinaServiceEntry> list, String name) {
-			final int len = list.size();
-			for(int i = 0; i < len; i ++) {
-				if(name.equals(list.get(i).getName())) {
-					return i;
-				}
-			}
-			return -1;
-		}
-		
-		/**
-		 * 登録を完了させる.
-		 */
-		public void fix() {
-			fixFlag.set(true);
-		}
-		
-		/**
-		 * 登録が完了済みかチェック.
-		 * @return
-		 */
-		public boolean isFix() {
-			return fixFlag.get();
-		}
-
-		/**
-		 * データセット.
-		 * @param name サービス登録名を設定します.
-		 * @param service 登録サービスを設定します.
-		 * @return QuinaService 前回登録されていたサービスが返却されます.
-		 */
-		public QuinaService put(String name, QuinaService service) {
-			if(fixFlag.get()) {
-				throw new QuinaException("Already completed.");
-			}
-			if(name == null || service == null) {
-				return null;
-			}
-			final int p = search(list, name);
-			if(p == -1) {
-				list.add(new QuinaServiceEntry(name, service));
-				return null;
-			}
-			// 一番最後に再設定して返却.
-			QuinaServiceEntry e = list.remove(p);
-			list.add(e);
-			return e.setService(service);
-		}
-
-		/**
-		 * 登録名を指定して取得.
-		 * @param name 取得したい登録名を設定します.
-		 * @return QuinaService 対象のサービスが返却されます.
-		 */
-		public QuinaService get(String name) {
-			if(name != null) {
-				final int p = search(list, name);
-				if(p != -1) {
-					return list.get(p).getService();
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * 登録名を指定して登録項番を取得.
-		 * @param name 取得したい登録名を設定します.
-		 * @return int 登録項番が返却されます.
-		 */
-		public int getNo(String name) {
-			if(name != null) {
-				final int p = search(list, name);
-				if(p != -1) {
-					return p;
-				}
-			}
-			return -1;
-		}
-
-		/**
-		 * 項番を設定して取得.
-		 * @param no 対象の項番を設定します.
-		 * @return QuinaService 対象のサービスが返却されます.
-		 */
-		public QuinaService get(int no) {
-			if(no >= 0 && no < list.size()) {
-				return list.get(no).getService();
-			}
-			return null;
-		}
-
-		/**
-		 * 登録名を指定して削除.
-		 * @param name 削除対象の登録名を設定します.
-		 * @return QuinaService 削除されたサービスが返却されます.
-		 */
-		public QuinaService remove(String name) {
-			if(fixFlag.get()) {
-				throw new QuinaException("Already completed.");
-			}
-			if(name != null) {
-				final int p = search(list, name);
-				if(p != -1) {
-					return list.remove(p).getService();
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * 登録数を取得.
-		 * @return int サービスの登録数が返却されます.
-		 */
-		public int size() {
-			return list.size();
-		}
-
-		/**
-		 * 項番を指定して登録名を取得.
-		 * @param no 対象の項番を設定します.
-		 * @return String 登録名が返却されます.
-		 */
-		public String nameAt(int no) {
-			if(no >= 0 && no < list.size()) {
-				return list.get(no).getName();
-			}
-			return null;
-		}
 	}
 
 	// QuinaShutdownCall.

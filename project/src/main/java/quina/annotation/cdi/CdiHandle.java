@@ -3,8 +3,13 @@ package quina.annotation.cdi;
 /**
  * Cdi(Contexts and Dependency Injection)の定義アノテーション
  * をカスタムローディングを行うハンドル.
+ * 
+ * CdiHandleはCdiScopeやServiceScopedなどのアノテーションに
+ * 対して、フィールドにCdi(注入処理)を行いますが、これに
+ * 対してオリジナルの設定定義を行うための拡張機能を実装する
+ * ためのハンドルです.
  */
-public interface CdiAnnotationHandle {
+public interface CdiHandle {
 	/**
 	 * カスタムなCdi定義アノテーションをローディング.
 	 * @param man CdiReflectManagerが設定されます.
