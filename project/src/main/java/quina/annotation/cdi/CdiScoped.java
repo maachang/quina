@@ -54,8 +54,8 @@ import java.lang.annotation.Target;
  *   private HogeSample hogeSample;
  *   
  *   public Exsample() {
- *     // Cdiの内容を読み込む.
- *     Quina.loadCdi(this);
+ *     // CdiScopedを読み込む.
+ *     Quina.loadCdiScoped(this);
  *   }
  *   
  *   public void hello() {

@@ -56,9 +56,13 @@ public class GCdiOutputJavaSrc {
 		return buf.toString();
 	}
 	
-	// 出力作のディレクトリ内の自動生成のJavaソースを削除.
+	/**
+	 * 出力作のディレクトリ内の自動生成のJavaソースを削除.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @throws IOException I/O例外.
+	 */
 	public static final void removeOutAutoJavaSource(String outSourceDirectory)
-		throws Exception {
+		throws IOException {
 		String[] javaSrcs = OUTPUT_SOURCE_ARRAY;
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME + "/";
 		int len = javaSrcs.length;
@@ -69,10 +73,16 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
-	// 抽出した@Route定義されたComponentをJavaファイルに出力.
-	public static final void componentRoute(String outSourceDirectory,
+	/**
+	 * 抽出したRoute定義されたComponentをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
+	 */
+	public static final void routerScoped(String outSourceDirectory,
 		GCdiParams params)
-		throws Exception {
+		throws IOException, ClassNotFoundException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
@@ -128,7 +138,7 @@ public class GCdiOutputJavaSrc {
 			len = params.errList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.errList.get(i);
-				c = Class.forName(clazzName, true, params.cl);
+				c = GCdiUtil.getClass(clazzName, params);
 				int[] es = AnnotationRoute.loadErrorRoute(c);
 				println(w, 2, "");
 				if(es[0] == 0) {
@@ -161,10 +171,15 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
-	// 抽出した@ServiceScoped定義されたオブジェクトをJavaファイルに出力.
-	public static final void cdiService(String outSourceDirectory,
+	/**
+	 * 抽出したServiceScoped定義されたオブジェクトをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 */
+	public static final void serviceScoped(String outSourceDirectory,
 		GCdiParams params)
-		throws Exception {
+		throws IOException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
@@ -225,110 +240,15 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
-	// 抽出した@ServiceScoped定義されたオブジェクトをJavaファイルに出力.
-	public static final void cdiReflect(String outSourceDirectory,
+	/**
+	 * 抽出したQuinaServiceScoped定義されたオブジェクトをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 */
+	public static final void quinaServiceScoped(String outSourceDirectory,
 		GCdiParams params)
-		throws Exception {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
-		
-		// ソース出力先ディレクトリを作成.
-		new File(outDir).mkdirs();
-		
-		String outFileName = outDir + "/" + CDI_REFLECT_SOURCE_NAME;
-		BufferedWriter w = null;
-		try {
-			// ソースコードを出力.
-			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
-			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
-			println(w, 0, "");
-			println(w, 0, "import java.lang.reflect.Field;");
-			println(w, 0, "");
-			println(w, 0, "import quina.Quina;");
-			println(w, 0, "import quina.annotation.cdi.CdiReflectManager;");
-			println(w, 0, "import quina.annotation.cdi.CdiReflectElement;");
-			println(w, 0, "");
-			println(w, 0, "/**");
-			println(w, 0, " * Reads the CDI reflection information.");
-			println(w, 0, " */");
-			println(w, 0, "public final class " + CdiReflectManager.AUTO_READ_CDI_REFLECT_CLASS + " {");
-			println(w, 1, "private " + CdiReflectManager.AUTO_READ_CDI_REFLECT_CLASS + "() {}");
-			
-			println(w, 1, "");
-			println(w, 1, "/**");
-			println(w, 1, " * Reads the CDI reflection information.");
-			println(w, 1, " *");
-			println(w, 1, " * @exception Exception If the cdi reflect registration fails.");
-			println(w, 1, " */");
-			println(w, 1, "public static final void " + CdiReflectManager.AUTO_READ_CDI_REFLECT_METHOD +
-				"() throws Exception {");
-			
-			Class<?> c;
-			String clazzName;
-			int len = params.refList.size();
-			for(int i = 0; i < len; i ++) {
-				clazzName = params.refList.get(i);
-				c = Class.forName(clazzName, true, params.cl);
-				final Field[] list = c.getDeclaredFields();
-				int lenJ = list.length;
-				if(lenJ == 0) {
-					continue;
-				}
-				println(w, 2, "");
-				println(w, 2, "// Register the field group of the target class");
-				println(w, 2, "// \""+ clazzName + "\"");
-				
-				println(w, 2, convClassByMethodName(clazzName) + "();");
-			}
-			
-			println(w, 1, "}");
-			
-			for(int i = 0; i < len; i ++) {
-				clazzName = params.refList.get(i);
-				c = Class.forName(clazzName, true, params.cl);
-				final Field[] list = c.getDeclaredFields();
-				int lenJ = list.length;
-				if(lenJ == 0) {
-					continue;
-				}
-				println(w, 0, "");
-				println(w, 1, "// Register the field group of the target class \""+ clazzName + "\"");
-				println(w, 1, "private static final void " + convClassByMethodName(clazzName) + "()");
-				println(w, 2, "throws Exception {");
-				
-				
-				println(w, 2, "CdiReflectManager refManager = Quina.get().getCdiReflectManager();");
-				println(w, 2, "Class<?> cls = " + clazzName + ".class;");
-				println(w, 2, "CdiReflectElement element = refManager.register(cls);");
-				println(w, 2, "Field field = null;");
-				println(w, 2, "boolean staticFlag = false;");
-	
-				for(int j = 0; j < lenJ; j ++) {
-					println(w, 2, "");
-					println(w, 2, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
-					println(w, 2, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
-					println(w, 2, "element.add(staticFlag, field);");
-				}
-				println(w, 1, "}");
-			}
-			
-			println(w, 0, "}");
-			
-			w.close();
-			w = null;
-			
-		} finally {
-			if(w != null) {
-				try {
-					w.close();
-				} catch(Exception e) {}
-			}
-		}
-	}
-	
-	// 抽出した@QuinaServiceScoped定義されたオブジェクトをJavaファイルに出力.
-	public static final void quinaService(String outSourceDirectory,
-		GCdiParams params)
-		throws Exception {
+		throws IOException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
@@ -389,10 +309,121 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
-	// 抽出した@CdiHandleScoped定義されたオブジェクトをJavaファイルに出力.
+	/**
+	 * 抽出したCdiReflect定義されたオブジェクトをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
+	 */
+	public static final void cdiReflect(String outSourceDirectory,
+		GCdiParams params)
+		throws IOException, ClassNotFoundException {
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		
+		// ソース出力先ディレクトリを作成.
+		new File(outDir).mkdirs();
+		
+		String outFileName = outDir + "/" + CDI_REFLECT_SOURCE_NAME;
+		BufferedWriter w = null;
+		try {
+			// ソースコードを出力.
+			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
+			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
+			println(w, 0, "");
+			println(w, 0, "import java.lang.reflect.Field;");
+			println(w, 0, "");
+			println(w, 0, "import quina.Quina;");
+			println(w, 0, "import quina.annotation.cdi.CdiReflectManager;");
+			println(w, 0, "import quina.annotation.cdi.CdiReflectElement;");
+			println(w, 0, "");
+			println(w, 0, "/**");
+			println(w, 0, " * Reads the CDI reflection information.");
+			println(w, 0, " */");
+			println(w, 0, "public final class " + CdiReflectManager.AUTO_READ_CDI_REFLECT_CLASS + " {");
+			println(w, 1, "private " + CdiReflectManager.AUTO_READ_CDI_REFLECT_CLASS + "() {}");
+			
+			println(w, 1, "");
+			println(w, 1, "/**");
+			println(w, 1, " * Reads the CDI reflection information.");
+			println(w, 1, " *");
+			println(w, 1, " * @exception Exception If the cdi reflect registration fails.");
+			println(w, 1, " */");
+			println(w, 1, "public static final void " + CdiReflectManager.AUTO_READ_CDI_REFLECT_METHOD +
+				"() throws Exception {");
+			
+			Class<?> c;
+			String clazzName;
+			int len = params.refList.size();
+			for(int i = 0; i < len; i ++) {
+				clazzName = params.refList.get(i);
+				c = GCdiUtil.getClass(clazzName, params);
+				final Field[] list = c.getDeclaredFields();
+				int lenJ = list.length;
+				if(lenJ == 0) {
+					continue;
+				}
+				println(w, 2, "");
+				println(w, 2, "// Register the field group of the target class");
+				println(w, 2, "// \""+ clazzName + "\"");
+				
+				println(w, 2, convClassByMethodName(clazzName) + "();");
+			}
+			
+			println(w, 1, "}");
+			
+			for(int i = 0; i < len; i ++) {
+				clazzName = params.refList.get(i);
+				c = GCdiUtil.getClass(clazzName, params);
+				final Field[] list = c.getDeclaredFields();
+				int lenJ = list.length;
+				if(lenJ == 0) {
+					continue;
+				}
+				println(w, 0, "");
+				println(w, 1, "// Register the field group of the target class \""+ clazzName + "\"");
+				println(w, 1, "private static final void " + convClassByMethodName(clazzName) + "()");
+				println(w, 2, "throws Exception {");
+				
+				
+				println(w, 2, "CdiReflectManager refManager = Quina.get().getCdiReflectManager();");
+				println(w, 2, "Class<?> cls = " + clazzName + ".class;");
+				println(w, 2, "CdiReflectElement element = refManager.register(cls);");
+				println(w, 2, "Field field = null;");
+				println(w, 2, "boolean staticFlag = false;");
+				
+				for(int j = 0; j < lenJ; j ++) {
+					println(w, 2, "");
+					println(w, 2, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
+					println(w, 2, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
+					println(w, 2, "element.add(staticFlag, field);");
+				}
+				println(w, 1, "}");
+			}
+			
+			println(w, 0, "}");
+			
+			w.close();
+			w = null;
+			
+		} finally {
+			if(w != null) {
+				try {
+					w.close();
+				} catch(Exception e) {}
+			}
+		}
+	}
+	
+	/**
+	 * 抽出したCdiHandleScoped定義されたオブジェクトをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 */
 	public static final void cdiHandle(String outSourceDirectory,
 		GCdiParams params)
-		throws Exception {
+		throws IOException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.

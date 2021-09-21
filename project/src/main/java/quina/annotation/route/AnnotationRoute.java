@@ -18,7 +18,7 @@ public class AnnotationRoute {
 	 */
 	public static final String loadRoute(Component c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return loadRoute(c.getClass());
 	}
@@ -31,7 +31,7 @@ public class AnnotationRoute {
 	 */
 	public static final String loadRoute(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		Route route = c.getAnnotation(Route.class);
 		if(route == null) {
@@ -47,7 +47,7 @@ public class AnnotationRoute {
 	 */
 	public static final boolean loadAnyRoute(Component c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return loadAnyRoute(c.getClass());
 	}
@@ -59,7 +59,7 @@ public class AnnotationRoute {
 	 */
 	public static final boolean loadAnyRoute(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return c.isAnnotationPresent(AnyRoute.class);
 	}
@@ -71,7 +71,7 @@ public class AnnotationRoute {
 	 */
 	public static final int[] loadErrorRoute(ErrorComponent c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return loadErrorRoute(c.getClass());
 	}
@@ -83,7 +83,7 @@ public class AnnotationRoute {
 	 */
 	public static final int[] loadErrorRoute(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		ErrorRoute error = c.getAnnotation(ErrorRoute.class);
 		if(error == null) {
@@ -114,7 +114,7 @@ public class AnnotationRoute {
 	 */
 	public static final String loadFilePath(Component c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return loadFilePath(c.getClass());
 	}
@@ -127,7 +127,7 @@ public class AnnotationRoute {
 	 */
 	public static final String loadFilePath(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		FilePath filePath = c.getAnnotation(FilePath.class);
 		if(filePath == null) {

@@ -19,7 +19,7 @@ public class AnnotationValidate {
 	 */
 	public static final Validation loadValidation(Component c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return loadValidation(c.getClass());
 	}
@@ -32,7 +32,7 @@ public class AnnotationValidate {
 	 */
 	public static final Validation loadValidation(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		// 対象コンポーネントからValidateアノテーション定義を取得.
 		ValidateArray array = c.getAnnotation(

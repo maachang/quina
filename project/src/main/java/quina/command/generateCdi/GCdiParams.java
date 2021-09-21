@@ -7,15 +7,21 @@ import java.util.List;
  * GenerateCdiパラメータ.
  */
 public class GCdiParams {
+	// verbose..
+	public boolean verbose = false;
+	
 	// Route.
 	public final List<String> routeList = new ArrayList<String>();
+	
 	// RouteAny.
 	public String any = null;
+	
 	// RouteError.
 	public final List<String> errList = new ArrayList<String>();
 	
 	// CdiService.
 	public final List<String> cdiList = new ArrayList<String>();
+	
 	// CdiReflect.
 	public final List<String> refList = new ArrayList<String>();
 	
@@ -28,9 +34,14 @@ public class GCdiParams {
 	// classLoader.
 	public ClassLoader cl;
 	
-	public GCdiParams(String clazzDir, String[] jarDirArray)
+	public GCdiParams(String clazzDir, boolean verbose, String... jarDirArray)
 		throws Exception {
-		cl = GCdiUtil.createClassLoader(clazzDir, jarDirArray);
+		this.cl = GCdiUtil.createClassLoader(clazzDir, jarDirArray);
+		this.verbose = verbose;
+	}
+	
+	public boolean isVerbose() {
+		return verbose;
 	}
 	
 	public boolean isEmpty() {

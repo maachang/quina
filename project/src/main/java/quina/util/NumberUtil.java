@@ -474,6 +474,68 @@ public class NumberUtil {
 	}
 	
 	/**
+	 * 容量を指定する文字列であるかチェック.
+	 * @param num 対象のサイズの文字列を設定します.
+	 * @return boolean parseCapacityByLong で変換が可能です.
+	 */
+	public static final boolean isCapacityString(String num) {
+		// 最後の情報が数字の単位のアルファベットの場合.
+		boolean dotFlag = false;
+		int lastPos = num.length() - 1;
+		char c = num.charAt(lastPos);
+		if(Alphabet.oneEq(c, 'k') || Alphabet.oneEq(c, 'm') ||
+			Alphabet.oneEq(c, 'g') || Alphabet.oneEq(c, 't') ||
+			Alphabet.oneEq(c, 'p')) {
+			// 最後の情報以外が数字の場合.
+			final int len = num.length() - 1;
+			for(int i = num.charAt(0) == '-' ? 1 : 0;
+				i < len; i ++) {
+				c = num.charAt(i);
+				if(c == '.') {
+					if(dotFlag || i == 0 || i + 1 >= len) {
+						return false;
+					}
+					dotFlag = true;
+				} else if(!(c >= '0' && c <= '9')) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	// 小数点表記の場合は小数点で計算して返却.
+	private static final long convertLongOrDouble(
+		String num, long value, int len) {
+		char c;
+		boolean dotFlag = false;
+		boolean minusFlag = num.charAt(0) == '-';
+		for(int i = minusFlag ? 1 : 0; i < len; i ++) {
+			c = num.charAt(i);
+			if(c == '.') {
+				if(dotFlag || i == 0 || i + 1 >= len) {
+					throw new NumberException("Long conversion failed: " + num);
+				}
+				dotFlag = true;
+			} else if(!(c >= '0' && c <= '9')) {
+				throw new NumberException("Long conversion failed: " + num);
+			}
+		}
+		if(dotFlag) {
+			if(minusFlag) {
+				return ((long)(parseDouble(
+					num.substring(1, len)) * (double)value)) * -1L;
+			}
+			return (long)(parseDouble(
+				num.substring(0, len)) * (double)value);
+		} else if(minusFlag) {
+			return (parseLong(num.substring(1, len)) * value) * -1L;
+		}
+		return parseLong(num.substring(0, len)) * value;
+	}
+	
+	/**
 	 * 容量を指定する文字列からlong値に変換.
 	 * 以下のように キロ,メガ,ギガ,テラ のような単位を
 	 * long値に変換します.
@@ -492,16 +554,16 @@ public class NumberUtil {
 		int lastPos = num.length() - 1;
 		char c = num.charAt(lastPos);
 		if(Alphabet.oneEq(c, 'k')) {
-			return parseLong(num.substring(0, lastPos)) * 1024L;
+			return convertLongOrDouble(num, 1024L, lastPos);
 		} else if(Alphabet.oneEq(c, 'm')) {
-			return parseLong(num.substring(0, lastPos)) * 1048576L;
+			return convertLongOrDouble(num, 1048576L, lastPos);
 		} else if(Alphabet.oneEq(c, 'g')) {
-			return parseLong(num.substring(0, lastPos)) * 1073741824L;
+			return convertLongOrDouble(num, 1073741824L, lastPos);
 		} else if(Alphabet.oneEq(c, 't')) {
-			return parseLong(num.substring(0, lastPos)) * 1099511627776L;
+			return convertLongOrDouble(num, 1099511627776L, lastPos);
 		} else if(Alphabet.oneEq(c, 'p')) {
-			return parseLong(num.substring(0, lastPos)) * 1125899906842624L;
+			return convertLongOrDouble(num, 1125899906842624L, lastPos);
 		}
-		return parseLong(num);
+		return convertLongOrDouble(num, 1L, lastPos + 1);
 	}
 }

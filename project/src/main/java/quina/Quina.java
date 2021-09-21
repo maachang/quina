@@ -1,8 +1,8 @@
 package quina;
 
-import quina.annotation.cdi.CdiHandle;
 import quina.annotation.cdi.CdiHandleManager;
 import quina.annotation.cdi.CdiReflectManager;
+import quina.annotation.cdi.CdiScoped;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
 import quina.annotation.quina.AnnotationQuina;
@@ -84,6 +84,29 @@ public final class Quina {
 	}
 
 	/**
+	 * initialize処理が呼ばれてる場合は例外.
+	 */
+	private final void checkExecuteInit() {
+		// 初期化実行済みの場合.
+		if(initFlag.isExecuted()) {
+			throw new QuinaException(
+				"Quina has already been initialized.");
+		}
+	}
+
+	/**
+	 * initialize処理が呼び出されてない場合は例外.
+	 */
+	private final void checkNoneExecuteInit() {
+		// 初期化実行済みでない場合.
+		if(!initFlag.isExecuted()) {
+			throw new QuinaException(
+				"Quina initialization process has not " +
+				"been executed.");
+		}
+	}
+
+	/**
 	 * Quina初期設定.
 	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
 	 * 
@@ -111,16 +134,19 @@ public final class Quina {
 	 * @param args main()メソッドの第一引数を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	private Quina initialize(Class<?> mainClass, String[] args) {
+	public Quina initialize(Class<?> mainClass, String[] args) {
 		return initialize(mainClass, null, args);
 	}
 
 	// Quina初期設定.
-	private Quina initialize(Class<?> mainClass, Object mainObject, String[] args) {
+	private final Quina initialize(Class<?> mainClass, Object mainObject,
+		String[] args) {
+		// 既に実行済みの場合エラー.
+		checkExecuteInit();
 		try {
 			// 初期化処理開始.
 			if(!initFlag.start()) {
-				// 既に実行済みの場合.
+				// 他のスレッドが初期化完了.
 				return this;
 			}
 			// ネットワーク初期処理.
@@ -141,14 +167,26 @@ public final class Quina {
 			// CdiHandleManagerをFix.
 			cdiHandleManager.fix();
 			
-			// コンフィグディレクトリを取得.
-			String configDir = AnnotationQuina
-				.loadConfigDirectory(mainClass);
-			// 最初にログ定義だけを反映.
-			if(!loadLogConfig(configDir)) {
+			// アノテーションからコンフィグディレクトリを取得.
+			String confDir = AnnotationQuina.loadConfigDirectory(
+				mainClass);
+			
+			// アノテーションでコンフィグディレクトリが定義されて
+			// ない場合.
+			if(confDir == null) {
+				// 現在設定されてるフィールドのコンフィグ
+				// ディレクトリをセット.
+				confDir = configDir;
+			}
+			
+			// コンフィグディレクトリが設定されていない場合.
+			if(confDir == null) {
 				// 外部コンフィグファイルが存在しない場合は
 				// LogConfigの初期処理.
 				loadLogConfigByAnnotation(mainClass);
+			} else {
+				// 対象コンフィグに対するログ定義を読み込む.
+				loadLogConfig(confDir);
 			}
 			
 			// Argsを設定.
@@ -162,13 +200,16 @@ public final class Quina {
 			// ルーターオブジェクト生成.
 			this.router = new Router();
 			
-			// シャットダウンマネージャを生成し、quinaシャットダウンコールをセット.
+			// シャットダウンマネージャを生成し、quinaシャットダウン
+			// コールをセット.
 			this.shutdownManager = new ShutdownManager();
-			this.shutdownManager.getInfo().register(new QuinaShutdownCall());
+			this.shutdownManager.getInfo().register(
+				new QuinaShutdownCall());
 			
 			// HTTP関連サービスを生成.
 			this.httpWorkerService = new HttpWorkerService();
-			this.httpServerService = new HttpServerService(this.httpWorkerService);
+			this.httpServerService = new HttpServerService(
+				this.httpWorkerService);
 			
 			// AppendMimeのAnnotationを読み込む.
 			AnnotationQuina.loadAppendMimeType(mainClass);
@@ -188,9 +229,9 @@ public final class Quina {
 			}
 			
 			// コンフィグディレクトリが設定されてる場合.
-			if(configDir != null && !configDir.isEmpty()) {
+			if(confDir != null && !confDir.isEmpty()) {
 				// 登録してQuinaのコンフィグ情報をロードする.
-				this.loadConfig(configDir);
+				this.loadConfig(confDir);
 			}
 			
 			// 初期化成功.
@@ -207,243 +248,33 @@ public final class Quina {
 		}
 	}
 	
-	/**
-	 * initialize処理が呼び出されてない場合は例外.
-	 */
-	protected void checkInit() {
-		// 初期化実行済みでない場合.
-		if(!initFlag.isExecuted()) {
-			throw new QuinaException(
-				"Quina initialization process has not been executed.");
+	// コンフィグ情報を読み込んで反映します.
+	private final Quina loadConfig(String confDir) {
+		// 指定コンフィグディレクトリが存在しない場合.
+		// また指定コンフィグディレクトリが存在しない場合.
+		if(confDir == null || confDir.isEmpty() ||
+			!FileUtil.isDir(confDir)) {
+			return this;
 		}
-	}
-	
-	// サービス群に対してAnnotation関連を反映.
-	private final void updateAnnotationService() {
-		final int len = cdiManager.size();
-		for(int i = 0; i < len; i ++) {
-			// アノテーションを注入.
-			cdiHandleManager.load(cdiManager.getService(i));
-		}
-	}
-	
-	// QuinaService群に対してAnnotation関連を反映.
-	private final void updateAnnotationQuinaService() {
-		final int len = quinaServiceManager.size();
-		for(int i = 0; i < len; i ++) {
-			// アノテーションを注入.
-			cdiHandleManager.load(
-				quinaServiceManager.get(i));
-		}
-	}
-	
-	/**
-	 * Quina初期設定.
-	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
-	 * 
-	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
-	 * 場合は内の＠Injectと＠LogDefineが定義されたフィールドに内容が反映
-	 * されます.
-	 * 
-	 * @param mainObject Quinaを初期化するオブジェクトを設定します.
-	 * @param args main()メソッドの第一引数を設定します.
-	 * @return Quina Quinaオブジェクトが返却されます.
-	 */
-	public static final Quina init(Object mainObject, String[] args) {
-		return SNGL.initialize(mainObject, args);
-	}
-	
-	/**
-	 * Quina初期設定.
-	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
-	 * 
-	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
-	 * 場合は内の＠Injectと＠LogDefineが定義されたstaticフィールドに
-	 * 内容が反映されます.
-	 * 
-	 * @param mainClass Quinaを初期化するクラスを設定します.
-	 * @param args main()メソッドの第一引数を設定します.
-	 * @return Quina Quinaオブジェクトが返却されます.
-	 */
-	public static final Quina init(Class<?> mainClass, String[] args) {
-		return SNGL.initialize(mainClass, args);
-	}
-	
-	/**
-	 * 指定オブジェクトにCDIを反映.
-	 * @param o 対象のオブジェクトを設定します.
-	 * @return 
-	 */
-	public static final Quina loadCdi(CdiHandle o) {
-		if(!SNGL.cdiHandleManager.isFix()) {
-			throw new QuinaException("Not completed. ");
-		}
-		SNGL.cdiHandleManager.load(o);
-		return SNGL;
-	}
-	
-	/**
-	 * 指定オブジェクトにCDIを反映.
-	 * @param c 対象のクラスを設定します.
-	 * @return 
-	 */
-	public static final Quina loadCdi(Class<?> c) {
-		if(!SNGL.cdiHandleManager.isFix()) {
-			throw new QuinaException("Not completed. ");
-		}
-		SNGL.cdiHandleManager.load(c);
-		return SNGL;
-	}
-	
-	/**
-	 * quinaを取得.
-	 * @return Quina quinaが返却されます.
-	 */
-	public static final Quina get() {
-		return SNGL;
-	}
-
-	/**
-	 * routerを取得.
-	 * @return Router ルータが返却されます.
-	 */
-	public static final Router router() {
-		return SNGL.getRouter();
-	}
-	
-	/**
-	 * ルータを取得.
-	 * @return Router ルータが返却されます.
-	 */
-	public Router getRouter() {
-		checkInit();
-		return router;
-	}
-	
-	/**
-	 * QuinaServiceManagerを取得.
-	 * @return QuinaServiceManager QuinaServiceManagerga返却されます.
-	 */
-	public QuinaServiceManager getQuinaServiceManager() {
-		return quinaServiceManager;
-	}
-	
-	/**
-	 * CDI（Contexts and Dependency Injection）
-	 * サービスマネージャを取得.
-	 * @return CidManager CDIサービスマネージャが返却されます.
-	 */
-	public CdiServiceManager getCdiServiceManager() {
-		return cdiManager;
-	}
-	
-	/**
-	 * CDI（Contexts and Dependency Injection）
-	 * リフレクションマネージャを取得.
-	 * @return CdiReflectManager CDIリフレクションマネージャが返却されます.
-	 */
-	public CdiReflectManager getCdiReflectManager() {
-		return cdiRefrectManager;
-	}
-	
-	/**
-	 * CDI（Contexts and Dependency Injection）
-	 * アノテーションマネージャを取得.
-	 * @return CdiHandleManager CDIアノテーションマネージャが返却されます.
-	 */
-	public CdiHandleManager getCdiHandleManager() {
-		return cdiHandleManager;
-	}
-	
-	/**
-	 * サービスの状態チェック.
-	 * @param mode [true]を指定した場合、開始中の場合、
-	 *             エラーが発生します.
-	 *             [false]を指定した場合、停止中の場合、
-	 *             エラーが発生します.
-	 */
-	protected void checkService(boolean mode) {
-		checkInit();
-		// 基本サービスのチェック.
-		httpWorkerService.checkService(mode);
-		httpServerService.checkService(mode);
-		// 登録サービスのチェック.
-		final int len = quinaServiceManager.size();
-		for(int i = 0; i < len; i ++) {
-			quinaServiceManager.get(i).checkService(mode);
-		}
-	}
-
-	/**
-	 * コンフィグディレクトリを設定.
-	 * この処理はコンフィグディレクトリを設定するだけで、
-	 * コンフィグ内容を反映するわけではありません.
-	 * @param configDir コンフィグディレクトリを設定します.
-	 * @return Quina Quinaオブジェクトが返却されます.
-	 */
-	public Quina setConfigDirectory(String configDir) {
-		checkService(true);
-		try {
-			if(configDir == null || configDir.isEmpty()) {
-				this.configDir = null;
-			} else {
-				configDir = FileUtil.getFullPath(Env.path(configDir));
-				if(!configDir.endsWith("/")) {
-					configDir = configDir + "/";
-				}
-				this.configDir = configDir;
-			}
-		} catch(Exception e) {
-			throw new QuinaException(e);
-		}
-		return this;
-	}
-
-	/**
-	 * コンフィグディレクトリを取得.
-	 * @return String 設定されているコンフィグディレクトリが返却されます.
-	 */
-	public String getConfigDirectory() {
-		checkInit();
-		return configDir;
-	}
-
-	/**
-	 * コンフィグ情報を読み込む.
-	 * @return Quina Quinaオブジェクトが返却されます.
-	 */
-	public Quina loadConfig() {
-		return loadConfig(null);
-	}
-
-	/**
-	 * コンフィグ情報を読み込んで反映します.
-	 * @param configDir コンフィグディレクトリを設定します.
-	 * @return Quina Quinaオブジェクトが返却されます.
-	 */
-	public Quina loadConfig(String configDir) {
-		checkService(true);
-		// 存在する場合コンフィグディレクトリを設定.
-		if(configDir != null && !configDir.isEmpty()) {
-			setConfigDirectory(configDir);
-		}
-		configDir = getConfigDirectory();
 		// ログのコンフィグ定義.
-		loadLogConfig(configDir);
+		loadLogConfig(confDir);
 		// Promiseワーカーのコンフィグ設定.
-		PromiseWorkerManager.getInstance().getConfig().loadConfig(configDir);
+		PromiseWorkerManager.getInstance().getConfig()
+			.loadConfig(confDir);
 		// シャットダウンマネージャのコンフィグ定義.
-		loadShutdownManagerConfig(configDir);
+		loadShutdownManagerConfig(confDir);
 		// Etagマネージャのコンフィグ定義.
-		loadEtagManagerConfig(configDir);
+		loadEtagManagerConfig(confDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
-		httpWorkerService.loadConfig(configDir);
-		httpServerService.loadConfig(configDir);
+		httpWorkerService.loadConfig(confDir);
+		httpServerService.loadConfig(confDir);
 		// 登録サービスのコンフィグ情報を読み込む.
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {
-			quinaServiceManager.get(i).loadConfig(this.configDir);
+			quinaServiceManager.get(i).loadConfig(confDir);
 		}
+		// 存在する場合コンフィグディレクトリを設定.
+		setConfigDirectory(confDir);
 		return this;
 	}
 
@@ -517,13 +348,224 @@ public final class Quina {
 		info.config(json);
 		return true;
 	}
+	
+	// サービス群に対してAnnotation関連を反映.
+	private final void updateAnnotationService() {
+		final int len = cdiManager.size();
+		for(int i = 0; i < len; i ++) {
+			// アノテーションを注入.
+			cdiHandleManager.load(cdiManager.getService(i));
+		}
+	}
+	
+	// QuinaService群に対してAnnotation関連を反映.
+	private final void updateAnnotationQuinaService() {
+		final int len = quinaServiceManager.size();
+		for(int i = 0; i < len; i ++) {
+			// アノテーションを注入.
+			cdiHandleManager.load(
+				quinaServiceManager.get(i));
+		}
+	}
+	
+	/**
+	 * Quina初期設定.
+	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
+	 * 
+	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
+	 * 場合は内の＠Injectと＠LogDefineが定義されたフィールドに内容が反映
+	 * されます.
+	 * 
+	 * @param mainObject Quinaを初期化するオブジェクトを設定します.
+	 * @param args main()メソッドの第一引数を設定します.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public static final Quina init(Object mainObject, String[] args) {
+		return SNGL.initialize(mainObject, args);
+	}
+	
+	/**
+	 * Quina初期設定.
+	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
+	 * 
+	 * またこの呼出の場合、対象オブジェクトに＠CdiScopedが定義されてる
+	 * 場合は内の＠Injectと＠LogDefineが定義されたstaticフィールドに
+	 * 内容が反映されます.
+	 * 
+	 * @param mainClass Quinaを初期化するクラスを設定します.
+	 * @param args main()メソッドの第一引数を設定します.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public static final Quina init(Class<?> mainClass, String[] args) {
+		return SNGL.initialize(mainClass, args);
+	}
+	
+	/**
+	 * コンフィグディレクトリを設定.
+	 * この処理はコンフィグディレクトリを定義します.
+	 * この処理はQuina.init() or Quina.get().initialize() 処理の
+	 * 前に定義する必要があります.
+	 * @param configDir コンフィグディレクトリを設定します.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public static final Quina configDirectory(String confDir) {
+		return SNGL.setConfigDirectory(confDir);
+	}
+	
+	/**
+	 * 指定CdioScopedアノテーションが定義されてるオブジェクトに
+	 * CDIを反映.
+	 * @param o 対象のオブジェクトを設定します.
+	 * @return Quina quinaが返却されます.
+	 */
+	public static final Quina loadCdiScoped(Object o) {
+		if(!SNGL.cdiHandleManager.isFix()) {
+			throw new QuinaException("Not completed. ");
+		} else if(o == null) {
+			throw new QuinaException("The specified argument is Null.");
+		} else if(!o.getClass().isAnnotationPresent(CdiScoped.class)) {
+			throw new QuinaException(
+				"CdiScoped annotation is not defined for the specified content.");
+		}
+		SNGL.cdiHandleManager.load(o);
+		return SNGL;
+	}
+	
+	/**
+	 * quinaを取得.
+	 * @return Quina quinaが返却されます.
+	 */
+	public static final Quina get() {
+		return SNGL;
+	}
+
+	/**
+	 * routerを取得.
+	 * @return Router ルータが返却されます.
+	 */
+	public static final Router router() {
+		return SNGL.getRouter();
+	}
+	
+	/**
+	 * ルータを取得.
+	 * @return Router ルータが返却されます.
+	 */
+	public Router getRouter() {
+		checkNoneExecuteInit();
+		return router;
+	}
+	
+	/**
+	 * QuinaServiceManagerを取得.
+	 * @return QuinaServiceManager QuinaServiceManagerga返却されます.
+	 */
+	public QuinaServiceManager getQuinaServiceManager() {
+		return quinaServiceManager;
+	}
+	
+	/**
+	 * CDI（Contexts and Dependency Injection）
+	 * サービスマネージャを取得.
+	 * @return CidManager CDIサービスマネージャが返却されます.
+	 */
+	public CdiServiceManager getCdiServiceManager() {
+		return cdiManager;
+	}
+	
+	/**
+	 * CDI（Contexts and Dependency Injection）
+	 * リフレクションマネージャを取得.
+	 * @return CdiReflectManager CDIリフレクションマネージャが返却されます.
+	 */
+	public CdiReflectManager getCdiReflectManager() {
+		return cdiRefrectManager;
+	}
+	
+	/**
+	 * CDI（Contexts and Dependency Injection）
+	 * アノテーションマネージャを取得.
+	 * @return CdiHandleManager CDIアノテーションマネージャが返却されます.
+	 */
+	public CdiHandleManager getCdiHandleManager() {
+		return cdiHandleManager;
+	}
+	
+	/**
+	 * サービスの状態チェック.
+	 * @param mode [true]を指定した場合、開始中の場合、
+	 *             エラーが発生します.
+	 *             [false]を指定した場合、停止中の場合、
+	 *             エラーが発生します.
+	 */
+	protected final void checkService(boolean mode) {
+		checkNoneExecuteInit();
+		// 基本サービスのチェック.
+		httpWorkerService.checkService(mode);
+		httpServerService.checkService(mode);
+		// 登録サービスのチェック.
+		final int len = quinaServiceManager.size();
+		for(int i = 0; i < len; i ++) {
+			quinaServiceManager.get(i).checkService(mode);
+		}
+	}
+
+	/**
+	 * コンフィグディレクトリを設定.
+	 * この処理はコンフィグディレクトリを定義します.
+	 * この処理はQuina.init() or Quina.get().initialize() 処理の
+	 * 前に定義する必要があります.
+	 * @param configDir コンフィグディレクトリを設定します.
+	 * @return Quina Quinaオブジェクトが返却されます.
+	 */
+	public Quina setConfigDirectory(String confDir) {
+		// init処理前に実行.
+		checkExecuteInit();
+		try {
+			// コンフィグディレクトリが存在しない場合.
+			if(confDir == null || confDir.isEmpty()) {
+				// null で登録.
+				this.configDir = null;
+				return this;
+			}
+			// 存在する場合Env定義を取り入れたパス生成.
+			confDir = Env.path(confDir);
+			// 対象のコンフィグディレクトリが存在しない.
+			if(FileUtil.isDir(confDir)) {
+				throw new QuinaException(
+					"The specified config directory \"" +
+					confDir + "\" does not exist. ");
+			// 存在する場合はコンフィグディレクトリとして
+			// セット.
+			} else {
+				confDir = FileUtil.getFullPath(confDir);
+				if(!confDir.endsWith("/")) {
+					confDir = confDir + "/";
+				}
+				this.configDir = confDir;
+			}
+		} catch(QuinaException qe) {
+			throw qe;
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+		return this;
+	}
+
+	/**
+	 * コンフィグディレクトリを取得.
+	 * @return String 設定されているコンフィグディレクトリが返却されます.
+	 */
+	public String getConfigDirectory() {
+		return configDir;
+	}
 
 	/**
 	 * シャットダウンマネージャ情報を取得.
 	 * @return ShutdownManagerInfo シャットダウンマネージャ情報が返却されます.
 	 */
 	public ShutdownManagerInfo getShutdownManagerInfo() {
-		checkInit();
+		checkNoneExecuteInit();
 		return shutdownManager.getInfo();
 	}
 
@@ -532,7 +574,7 @@ public final class Quina {
 	 * @return EtagManagerInfo Etag管理定義情報が返却されます.
 	 */
 	public EtagManagerInfo getEtagManagerInfo() {
-		checkInit();
+		checkNoneExecuteInit();
 		return router.getEtagManagerInfo();
 	}
 
@@ -541,7 +583,7 @@ public final class Quina {
 	 * @return QuinaConfig HttpWorkerのConfigが返却されます.
 	 */
 	public QuinaConfig getHttpWorkerConfig() {
-		checkInit();
+		checkNoneExecuteInit();
 		return httpWorkerService.getConfig();
 	}
 
@@ -550,7 +592,7 @@ public final class Quina {
 	 * @return QuinaConfig HttpServerのConfigが返却されます.
 	 */
 	public QuinaConfig getHttpServerConfig() {
-		checkInit();
+		checkNoneExecuteInit();
 		return httpServerService.getConfig();
 	}
 	
@@ -610,7 +652,7 @@ public final class Quina {
 	 * @return boolean [true]の場合開始しています.
 	 */
 	public boolean isStart() {
-		checkInit();
+		checkNoneExecuteInit();
 		// 基本サービスの開始処理[start()]が呼び出された場合.
 		if(httpServerService.isStartService() &&
 			httpWorkerService.isStartService()) {
@@ -630,7 +672,7 @@ public final class Quina {
 	 * @return boolean trueの場合、全てのQuinaサービスが起動しています.
 	 */
 	public boolean isStarted() {
-		checkInit();
+		checkNoneExecuteInit();
 		// 基本サービスが起動している場合.
 		if(httpServerService.isStarted() &&
 			httpWorkerService.isStarted()) {
@@ -650,7 +692,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina awaitStarted() {
-		checkInit();
+		checkNoneExecuteInit();
 		// 全てのQuinaサービスが起動済みになるまで待機.
 		while(!isExit()) {
 			QuinaUtil.sleep(50L);
@@ -663,7 +705,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina stop() {
-		checkInit();
+		checkNoneExecuteInit();
 		// 基本サービスを停止.
 		// 最初にサーバ停止で、次にワーカー停止.
 		httpServerService.stopService();
@@ -687,7 +729,7 @@ public final class Quina {
 	 * @return boolean trueの場合、全てのサービスが終了完了しています.
 	 */
 	public boolean isExit() {
-		checkInit();
+		checkNoneExecuteInit();
 		// 登録サービスの停止チェック.
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {
@@ -706,7 +748,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina await() {
-		checkInit();
+		checkNoneExecuteInit();
 		// シャットダウンマネージャが開始されていない場合.
 		if(!shutdownManager.getInfo().isStart()) {
 			// シャットダウンマネージャを開始.
@@ -726,7 +768,7 @@ public final class Quina {
 	 * @return Args コマンドライン引数管理オブジェクトが返却されます.
 	 */
 	public Args getArgs() {
-		checkInit();
+		checkNoneExecuteInit();
 		return args;
 	}
 
@@ -736,7 +778,7 @@ public final class Quina {
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
 	public Quina registerWorker(WorkerElement em) {
-		checkInit();
+		checkNoneExecuteInit();
 		final NioWorkerThreadManager man = workerManager.get();
 		// 開始していない場合.
 		if(man == null) {
@@ -757,7 +799,7 @@ public final class Quina {
 	 * @return boolean trueの場合停止しています.
 	 */
 	public boolean isStopWorker() {
-		checkInit();
+		checkNoneExecuteInit();
 		final NioWorkerThreadManager man = workerManager.get();
 		// 開始していない場合.
 		if(man == null) {
@@ -771,7 +813,7 @@ public final class Quina {
 	 * @return HttpServerCall HttpServerCallが返却されます.
 	 */
 	public HttpServerCall getHttpServerCall() {
-		checkInit();
+		checkNoneExecuteInit();
 		return httpServerService.getHttpServerCall();
 	}
 

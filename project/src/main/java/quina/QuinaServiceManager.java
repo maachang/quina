@@ -107,7 +107,7 @@ public class QuinaServiceManager {
 			throw new QuinaException(
 				"The Quina Service to be registered is null.");
 		}
-		final String name = AnnotationQuina.loadQunaServiceScoped(service);
+		final String name = AnnotationQuina.loadQuinaServiceScoped(service);
 		if(name == null) {
 			throw new QuinaException(
 				"QuinaServiceScoped annotation is not defined for the " +

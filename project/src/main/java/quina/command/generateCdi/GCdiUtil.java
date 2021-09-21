@@ -45,11 +45,11 @@ public class GCdiUtil {
 	 */
 	@SuppressWarnings("rawtypes")
 	public static final boolean isAnnotation(Class c, Class at) {
-		return isAnnotation(0, c, at);
+		return _isAnnotation(0, c, at);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static final boolean isAnnotation(int count, Class c, Class at) {
+	private static final boolean _isAnnotation(int count, Class c, Class at) {
 		// 対象クラスに指定アノテーションが含まれてる場合.
 		if(c.isAnnotationPresent(at)) {
 			return true;
@@ -62,7 +62,7 @@ public class GCdiUtil {
 		int len = list == null ? 0 : list.length;
 		for(int i = 0; i < len; i ++) {
 			// このアノテーションに指定アノテーションが含まれてるか.
-			if(isAnnotation(count + 1, list[i].annotationType(), at)) {
+			if(_isAnnotation(count + 1, list[i].annotationType(), at)) {
 				return true;
 			}
 		}
@@ -100,6 +100,30 @@ public class GCdiUtil {
 		}
 		return new URLClassLoader(urls,
 			Thread.currentThread().getContextClassLoader());
+	}
+	
+	/**
+	 * クラスをローディング.
+	 * @param name クラス名を設定します.
+	 * @param params GenerateCdiのパラメータを設定します.
+	 * @return Class<?> クラスオブジェクトが返却されます.
+	 * @throws ClassNotFoundException クラス読み込み例外.
+	 */
+	public static final Class<?> getClass(String name, GCdiParams params)
+		throws ClassNotFoundException {
+		return getClass(name, params.cl);
+	}
+	
+	/**
+	 * クラスをローディング.
+	 * @param name クラス名を設定します.
+	 * @param cl ClassLoaderを設定します.
+	 * @return Class<?> クラスオブジェクトが返却されます.
+	 * @throws ClassNotFoundException クラス読み込み例外.
+	 */
+	public static final Class<?> getClass(String name, ClassLoader cl)
+		throws ClassNotFoundException {
+		return Class.forName(name, true, cl);
 	}
 	
 	/**

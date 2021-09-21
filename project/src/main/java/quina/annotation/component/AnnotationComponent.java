@@ -18,7 +18,7 @@ public class AnnotationComponent {
 	 */
 	public static final ResponseInitialSetting loadResponse(Component c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		return loadResponse(c.getClass());
 	}
@@ -31,7 +31,7 @@ public class AnnotationComponent {
 	 */
 	public static final ResponseInitialSetting loadResponse(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		Status status = c.getAnnotation(Status.class);
 		ContentType contentType = c.getAnnotation(ContentType.class);

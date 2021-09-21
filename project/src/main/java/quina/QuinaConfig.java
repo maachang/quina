@@ -185,23 +185,23 @@ public class QuinaConfig implements
 		if(!(key instanceof TreeKey)) {
 			key = new TreeKey("" + key);
 		}
-		if(type instanceof TypesClass) {
-			clazz = (TypesClass)type;
-		} else if(type instanceof String) {
-			clazz = TypesClass.get((String)type);
-		} else if(type instanceof Number) {
-			clazz = TypesClass.get(((Number)type).intValue());
-		} else {
-			clazz = TypesClass.get(type.toString());
+		// タイプを取得.
+		clazz = TypesClass.get(type);
+		// 型の定義が不明な場合.
+		if(clazz == null) {
+			throw new QuinaException(
+				"The type cannot be defined for the specified type definition \"" +
+					type + "\".");
 		}
-		if(clazz != null) {
-			lock.writeLock().lock();
-			try {
-				reservationKeys.put(key, new QuinaConfigElement().
-					set(null, clazz, defVal));
-			} finally {
-				lock.writeLock().unlock();
-			}
+		// デフォルトのValueを対象のタイプに変換.
+		defVal = clazz.getValue(defVal);
+		// データーセット.
+		lock.writeLock().lock();
+		try {
+			reservationKeys.put(key, new QuinaConfigElement().
+				set(null, clazz, defVal));
+		} finally {
+			lock.writeLock().unlock();
 		}
 		return this;
 	}
@@ -268,6 +268,9 @@ public class QuinaConfig implements
 			if(rsv == null) {
 				return false;
 			}
+			// valueをTypesClassに合わせて変換.
+			value = rsv.getTypesClass().getValue(value);
+			// valueをconfigに設定.
 			QuinaConfigElement em = new QuinaConfigElement();
 			config.put(new TreeKey(key), em);
 			em.set(value, rsv.getTypesClass(), rsv.getDefaultValue());

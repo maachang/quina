@@ -107,7 +107,7 @@ public class CdiHandleManager {
 		if(fixFlag.get()) {
 			throw new QuinaException("Already completed.");
 		} else if(handle == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		if(search(handle) != -1) {
 			return false;
@@ -125,7 +125,7 @@ public class CdiHandleManager {
 		if(fixFlag.get()) {
 			throw new QuinaException("Already completed.");
 		} else if(handle == null) {
-			throw new QuinaException("The specified component is Null.");
+			throw new QuinaException("The specified argument is Null.");
 		}
 		int p;
 		if((p = search(handle)) == -1) {
@@ -149,6 +149,9 @@ public class CdiHandleManager {
 	 * @exception Exception 例外.
 	 */
 	public void load(Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
 		load(Quina.get().getCdiReflectManager(), o, o.getClass());
 	}
 	
@@ -158,6 +161,9 @@ public class CdiHandleManager {
 	 * @exception Exception 例外.
 	 */
 	public void load(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
 		load(Quina.get().getCdiReflectManager(), null, c);
 	}
 	

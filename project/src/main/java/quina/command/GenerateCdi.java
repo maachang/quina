@@ -72,6 +72,12 @@ public class GenerateCdi {
 		System.out.println("     version information .");
 		System.out.println("  -h [--help]");
 		System.out.println("     the help contents.");
+		System.out.println("  --verbose");
+		System.out.println("     Display detailed information.");
+		System.out.println("  -s [--source] {directory}");
+		System.out.println("     * Settings are required.");
+		System.out.println("     Set the output destination Java source code directory.");
+		System.out.println("     For the directory, specify the top package name directory.");
 		System.out.println("  -c [--class] {directory}");
 		System.out.println("     Set the directory for the target class files.");
 		System.out.println("     If this definition is not specified, one or more");
@@ -81,10 +87,6 @@ public class GenerateCdi {
 		System.out.println("     This definition can be defined more than once.");
 		System.out.println("     If you do not make this definition, you will need");
 		System.out.println("     the -c or --class definition. ");
-		System.out.println("  -s [--source] {directory}");
-		System.out.println("     * Settings are required.");
-		System.out.println("     Set the output destination Java source code directory.");
-		System.out.println("     For the directory, specify the top package name directory.");
 		System.out.println();
 	}
 	
@@ -94,10 +96,8 @@ public class GenerateCdi {
 		return new File(fileName).getCanonicalPath();
 	}
 
-	/**
-	 * コマンド実行.
-	 */
-	public void execute() throws Exception {
+	// コマンド実行.
+	private void execute() throws Exception {
 		// バージョンを表示.
 		if(args.isValue("-v", "--version")) {
 			System.out.println(VERSION);
@@ -108,6 +108,12 @@ public class GenerateCdi {
 			outHelp();
 			System.exit(0);
 			return;
+		}
+		
+		// 詳細表示フラグを設定.
+		boolean verboseFlag = false;
+		if(args.isValue("-verbose")) {
+			verboseFlag = true;
 		}
 		
 		// javaソースディレクトリを取得.
@@ -176,18 +182,22 @@ public class GenerateCdi {
 		// 処理開始.
 		System.out.println("start " + this.getClass().getSimpleName() +
 			" version: " + VERSION);
-		System.out.println(" target outputPath: " + getFullPath(javaSourceDir));
-		System.out.println(" target classPath : " + getFullPath(clazzDir));
-		System.out.print(" target jarPath   : ");
+		System.out.println();
+		System.out.println(" target outputPath : " + getFullPath(javaSourceDir));
+		System.out.println(" target classPath  : " + getFullPath(clazzDir));
+		System.out.print(" target jarPath    : ");
 		if(jarDirArray.length > 0) {
 			System.out.println(getFullPath(jarDirArray[0]));
 			int len = jarDirArray.length;
 			for(int i = 1; i < len; i ++) {
-				System.out.println("                  : " +
+				System.out.println("                   : " +
 					getFullPath(jarDirArray[i]));
 			}
+		} else {
+			System.out.println();
 		}
-		System.out.println("");
+		
+		System.out.println();
 		
 		// 処理開始.
 		long time = System.currentTimeMillis();
@@ -202,7 +212,8 @@ public class GenerateCdi {
 		jarDirArray = null;
 		
 		// params.
-		GCdiParams params = new GCdiParams(clazzDir, jarFileArray);
+		GCdiParams params = new GCdiParams(
+			clazzDir, verboseFlag, jarFileArray);
 		
 		// クラス一覧を取得.
 		List<String> clazzList = new ArrayList<String>();
@@ -237,47 +248,44 @@ public class GenerateCdi {
 			return;
 		}
 		
+		System.out.println();
+		
 		// [Router]ファイル出力.
 		if(!params.isRouteEmpty()) {
-			GCdiOutputJavaSrc.componentRoute(javaSourceDir, params);
-			System.out.println();
-			System.out.println( " routerOutput      : " +
+			GCdiOutputJavaSrc.routerScoped(javaSourceDir, params);
+			System.out.println( " routerScoped      : " +
 				new File(javaSourceDir).getCanonicalPath() +
 				"/" + CDI_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
 		}
 		
 		// [CdiService]ファイル出力.
 		if(!params.isCdiEmpty()) {
-			GCdiOutputJavaSrc.cdiService(javaSourceDir, params);
-			System.out.println();
-			System.out.println( " cdiServiceOutput  : " +
+			GCdiOutputJavaSrc.serviceScoped(javaSourceDir, params);
+			System.out.println( " serviceScoped     : " +
 				new File(javaSourceDir).getCanonicalPath() +
 				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+		}
+		
+		// [QuinaService]ファイル出力.
+		if(!params.isQuinaServiceEmpty()) {
+			GCdiOutputJavaSrc.quinaServiceScoped(javaSourceDir, params);
+			System.out.println( " quinaServiceScoped: " +
+				new File(javaSourceDir).getCanonicalPath() +
+				"/" + CDI_DIRECTORY_NAME + "/" + QUINA_SERVICE_SOURCE_NAME);
 		}
 		
 		// [CdiReflect]ファイル出力.
 		if(!params.isCdiReflectEmpty()) {
 			GCdiOutputJavaSrc.cdiReflect(javaSourceDir, params);
-			System.out.println();
-			System.out.println( " cdiReflectOutput  : " +
+			System.out.println( " cdiReflect        : " +
 				new File(javaSourceDir).getCanonicalPath() +
 				"/" + CDI_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
-		}
-		
-		// [QuinaService]ファイル出力.
-		if(!params.isQuinaServiceEmpty()) {
-			GCdiOutputJavaSrc.quinaService(javaSourceDir, params);
-			System.out.println();
-			System.out.println( " quinaServiceOutput: " +
-				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + QUINA_SERVICE_SOURCE_NAME);
 		}
 		
 		// [CdiHandle]ファイル出力.
 		if(!params.isCdiHandleEmpty()) {
 			GCdiOutputJavaSrc.cdiHandle(javaSourceDir, params);
-			System.out.println();
-			System.out.println( " cdiHandleOutput   : " +
+			System.out.println( " cdiHandle         : " +
 				new File(javaSourceDir).getCanonicalPath() +
 				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
 		}
