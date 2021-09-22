@@ -1,5 +1,6 @@
 package quina.annotation.component;
 
+import quina.annotation.component.Header.HeaderArray;
 import quina.component.Component;
 import quina.exception.QuinaException;
 

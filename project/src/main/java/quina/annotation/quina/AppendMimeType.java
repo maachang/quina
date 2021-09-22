@@ -7,6 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import quina.annotation.Switch;
+import quina.annotation.quina.AppendMimeType.AppendMimeTypeArray;
 
 /**
  * Quina内で利用されるMimeType管理情報に対して新たなMimeTypeを
@@ -33,9 +34,18 @@ import quina.annotation.Switch;
  * またこのAnnotationは複数定義が可能です.
  */
 @Target(ElementType.TYPE)
-@Repeatable(quina.annotation.quina.AppendMimeTypeArray.class)
+@Repeatable(AppendMimeTypeArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AppendMimeType {
+	/**
+	 * 複数のAppendMimeTypeアノテーション.
+	 */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	static @interface AppendMimeTypeArray {
+		public AppendMimeType[] value();
+	}
+	
 	/**
 	 * MimeTypeの拡張子.
 	 */
@@ -50,13 +60,4 @@ public @interface AppendMimeType {
 	 * キャラクターセットの付加が可能かの条件.
 	 */
 	public Switch charset() default Switch.None;
-}
-
-/**
- * 複数のAppendMimeTypeアノテーション.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@interface AppendMimeTypeArray {
-	public AppendMimeType[] value();
 }

@@ -3,7 +3,7 @@ package quina;
 /**
  * Quina定数定義.
  */
-public class QuinaConstants {
+public final class QuinaConstants {
 	private QuinaConstants() {}
 
 	/** HTTPサーバ名. **/

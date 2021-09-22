@@ -6,6 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.annotation.log.LogConfig.LogConfigArray;
 import quina.logger.LogLevel;
 
 /**
@@ -40,9 +41,18 @@ import quina.logger.LogLevel;
  */
 
 @Target(ElementType.TYPE)
-@Repeatable(quina.annotation.log.LogConfigArray.class)
+@Repeatable(LogConfigArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LogConfig {
+	/**
+	 * 複数のLogConfigアノテーション.
+	 */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	static @interface LogConfigArray {
+		public LogConfig[] value();
+	}
+	
 	/**
 	 * ログ定義名.
 	 * 空の場合は "system" ログになります.
@@ -61,13 +71,6 @@ public @interface LogConfig {
 	
 	/**
 	 * １つのログ出力サイズ.
-	 * 
-	 * "1024" = 1,024 byte.
-	 * "1k" = 1,024 byte.
-	 * "1m" = 1,048,576 byte.
-	 * "1g" = 1,073,741,824 byte.
-	 * "1t" = 1,099,511,627,776 byte.
-	 * "1p" = 1,125,899,906,842,624 byte.
 	 */
 	public String size() default "";
 	
@@ -75,14 +78,4 @@ public @interface LogConfig {
 	 * ログ出力先ディレクトリ.
 	 */
 	public String directory() default "";
-
-}
-
-/**
- * 複数のSystemPropertyアノテーション.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@interface LogConfigArray {
-	public LogConfig[] value();
 }

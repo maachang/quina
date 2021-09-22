@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import quina.Quina;
 import quina.annotation.log.AnnotationLog;
+import quina.annotation.quina.AnnotationQuina;
 import quina.exception.QuinaException;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
@@ -11,6 +12,10 @@ import quina.util.collection.ObjectList;
 /**
  * Cdi(Contexts and Dependency Injection)をロードする
  * マネージャー.
+ * 
+ * このオブジェクトによってScoped系のアノテーションに対する
+ * フィールド関連に関するInjectや特殊Inject関連の処理を実現
+ * します.
  */
 public class CdiHandleManager {
 	/**
@@ -148,11 +153,11 @@ public class CdiHandleManager {
 	 * @param o Cdi定義を読み込むオブジェクトを設定します.
 	 * @exception Exception 例外.
 	 */
-	public void load(Object o) {
+	public void inject(Object o) {
 		if(o == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
-		load(Quina.get().getCdiReflectManager(), o, o.getClass());
+		inject(Quina.get().getCdiReflectManager(), o, o.getClass());
 	}
 	
 	/**
@@ -160,11 +165,11 @@ public class CdiHandleManager {
 	 * @param c Cdi定義の読み込みクラスを設定します.
 	 * @exception Exception 例外.
 	 */
-	public void load(Class<?> c) {
+	public void inject(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
-		load(Quina.get().getCdiReflectManager(), null, c);
+		inject(Quina.get().getCdiReflectManager(), null, c);
 	}
 	
 	/**
@@ -175,23 +180,31 @@ public class CdiHandleManager {
 	 *          ローディングされます.
 	 * @param c Cdi定義の読み込みクラスを設定します.
 	 */
-	private void load(CdiReflectManager man, Object o, Class<?> c) {
+	private void inject(CdiReflectManager man, Object o, Class<?> c) {
 		// Objectが存在する場合.
+		// この定義の場合はオブジェクトのフィールドに対して
+		// 注入の処理を実行します.
 		if(o != null) {
 			// Cdiの条件を読み込む.
-			AnnotationCdi.loadInject(o);
+			AnnotationCdi.inject(o);
 			// Logの条件を読み込む.
-			AnnotationLog.loadLogDefine(o);
+			AnnotationLog.injectLogDefine(o);
+			// QuinaConfig条件を読み込む.
+			AnnotationQuina.injectQuinaConfig(o);
 		// Objectが存在しない場合.
+		// この定義の場合はオブジェクトのstaticなフィールドに
+		// 対して注入の処理を実行します.
 		} else {
 			// Cdiの条件を読み込む.
-			AnnotationCdi.loadInject(c);
+			AnnotationCdi.inject(c);
 			// Logの条件を読み込む.
-			AnnotationLog.loadLogDefine(c);
+			AnnotationLog.injectLogDefine(c);
+			// QuinaConfig条件を読み込む.
+			AnnotationQuina.injectQuinaConfig(c);
 		}
+		// カスタムな注入系のローディングを行います.
 		final int len = list.size();
 		try {
-			// カスタム読み込み.
 			for(int i = 0; i < len; i ++) {
 				list.get(i).load(man, o, c);
 			}

@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 
 import quina.Quina;
 import quina.annotation.cdi.CdiReflectElement;
+import quina.annotation.log.LogConfig.LogConfigArray;
 import quina.exception.QuinaException;
 import quina.logger.Log;
 import quina.logger.LogDefineElement;
@@ -84,7 +85,7 @@ public class AnnotationLog {
 	 * 指定オブジェクトのLogDefineアノテーションを反映.
 	 * @param o オブジェクトを設定します.
 	 */
-	public static final void loadLogDefine(Object o) {
+	public static final void injectLogDefine(Object o) {
 		if(o == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
@@ -92,10 +93,10 @@ public class AnnotationLog {
 		LogDefine def = o.getClass().getAnnotation(LogDefine.class);
 		if(def != null) {
 			// クラス定義のLogDefineを割り当てる.
-			loadLogDefineByClass(o, o.getClass(), def);
+			injectLogDefineByClass(o, o.getClass(), def);
 		} else {
 			// フィールド定義のLogDefinewo割り当てる.
-			loadLogDefineByField(o, o.getClass());
+			injectLogDefineByField(o, o.getClass());
 		}
 	}
 	
@@ -103,7 +104,7 @@ public class AnnotationLog {
 	 * 指定オブジェクトのLogDefineアノテーションを反映.
 	 * @param c クラスを設定します.
 	 */
-	public static final void loadLogDefine(Class<?> c) {
+	public static final void injectLogDefine(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
@@ -111,16 +112,17 @@ public class AnnotationLog {
 		LogDefine def = c.getAnnotation(LogDefine.class);
 		if(def != null) {
 			// クラス定義のLogDefineを割り当てる.
-			loadLogDefineByClass(null, c, def);
+			injectLogDefineByClass(null, c, def);
 		} else {
 			// フィールド定義のLogDefinewo割り当てる.
-			loadLogDefineByField(null, c);
+			injectLogDefineByField(null, c);
 		}
 	}
 
 	
 	// クラス定義されてるLogDefineアノテーションの定義処理.
-	private static final void loadLogDefineByClass(Object o, Class<?> c, LogDefine def) {
+	private static final void injectLogDefineByClass(
+		Object o, Class<?> c, LogDefine def) {
 		Field targetField = null;
 		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(c);
 		if(list == null) {
@@ -157,7 +159,7 @@ public class AnnotationLog {
 	}
 	
 	// フィールド定義されてるLogDefineアノテーションの定義処理.
-	private static final void loadLogDefineByField(Object o, Class<?> c) {
+	private static final void injectLogDefineByField(Object o, Class<?> c) {
 		LogDefine def;
 		Field targetField;
 		final CdiReflectElement list = Quina.get()

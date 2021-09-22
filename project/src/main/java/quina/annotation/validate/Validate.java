@@ -6,6 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.annotation.validate.Validate.ValidateArray;
 import quina.validate.VType;
 
 /**
@@ -36,9 +37,18 @@ import quina.validate.VType;
  * これらの定義がquina.validate.Validate.of() の定義と同様に定義されます.
  */
 @Target(ElementType.TYPE)
-@Repeatable(quina.annotation.validate.ValidateArray.class)
+@Repeatable(ValidateArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Validate {
+	/**
+	 * 複数のValidateアノテーション.
+	 */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	static @interface ValidateArray {
+		public Validate[] value();
+	}
+	
 	/**
 	 * Validate対象のパラメーター名を設定します.
 	 * ※必須.
@@ -64,13 +74,4 @@ public @interface Validate {
 	 * エラー時のメッセージを設定します.
 	 */
 	public String message() default "";
-}
-
-/**
- * 複数のValidateアノテーション.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@interface ValidateArray {
-	public Validate[] value();
 }

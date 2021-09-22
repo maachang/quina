@@ -14,6 +14,14 @@ public interface QuinaService {
 	default void loadConfig(String configDir) {
 		getConfig().loadConfig(configDir);
 	}
+	
+	/**
+	 * configデータ呼び出しが１度以上行われてる場合.
+	 * @return boolean true の場合呼び出されています.
+	 */
+	default boolean isLoadConfig() {
+		return getConfig().isLoadConfig();
+	}
 
 	/**
 	 * QuinaConfigを取得.

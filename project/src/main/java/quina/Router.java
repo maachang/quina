@@ -20,7 +20,7 @@ import quina.validate.Validation;
 /**
  * URLアクセスに対するコンポーネントを管理.
  */
-public class Router {
+public final class Router {
 	/**
 	 * Routeアノテーション自動読み込み実行用クラス名.
 	 */
@@ -45,20 +45,22 @@ public class Router {
 	}
 	
 	// ComponentにAnnotationを注入.
-	private static final ResponseInitialSetting injectComponent(
-		Component component) {
+	private static final ResponseInitialSetting
+		injectComponent(Component component) {
 		// アノテーションを注入.
 		Quina.get().getCdiHandleManager()
-			.load(component);
+			.inject(component);
 		// annotationのResponse初期設定を取得.
-		return AnnotationComponent.loadResponse(component);
+		return AnnotationComponent.loadResponse(
+			component);
 	}
 	
 	// ErrorComponentにAnnotationを注入.
-	private static final void injectComponent(ErrorComponent component) {
+	private static final void injectComponent(
+		ErrorComponent component) {
 		// アノテーションを注入.
 		Quina.get().getCdiHandleManager()
-			.load(component);
+			.inject(component);
 	}
 	
 	/**

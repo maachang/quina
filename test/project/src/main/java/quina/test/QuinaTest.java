@@ -4,13 +4,16 @@ import quina.Quina;
 import quina.annotation.cdi.CdiScoped;
 import quina.annotation.log.LogConfig;
 import quina.annotation.log.LogDefine;
+import quina.annotation.quina.ConfigDirectory;
 import quina.logger.Log;
 
 /**
  * CDIを使ったQuinaテスト.
  */
 @CdiScoped
+@ConfigDirectory("./")
 @LogConfig(directory="./logDir")
+@LogConfig(name="greeting", directory="./logDir")
 public class QuinaTest {
 	@LogDefine
 	private static Log log;

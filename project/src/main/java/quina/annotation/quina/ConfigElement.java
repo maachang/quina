@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.annotation.AnnotationConstants;
+import quina.annotation.quina.ConfigElement.ConfigElementArray;
 import quina.util.collection.TypesClass;
 
 /**
@@ -29,7 +31,7 @@ import quina.util.collection.TypesClass;
  *   // コンストラクタ.
  *   public ExsampleObject() {
  *     // CdiScopedを読み込む.
- *     Quina.loadCdiScoped(this);
+ *     Quina.injectScoped(this);
  *   }
  * }
  * 
@@ -44,9 +46,18 @@ import quina.util.collection.TypesClass;
  * またこの場合Configファイルの読み込みも自動で行われます.
  */
 @Target(ElementType.FIELD)
-@Repeatable(quina.annotation.quina.ConfigDefineArray.class)
+@Repeatable(ConfigElementArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigElement {
+	/**
+	 * 複数のConfigElementアノテーション.
+	 */
+	@Target(ElementType.FIELD)
+	@Retention(RetentionPolicy.RUNTIME)
+	static @interface ConfigElementArray {
+		public ConfigElement[] value();
+	}
+	
 	/**
 	 * コンフィグパラメータ名.
 	 */
@@ -61,13 +72,4 @@ public @interface ConfigElement {
 	 * デフォルト値.
 	 */
 	public String defVal() default "";
-}
-
-/**
- * 複数のQuinaConfigDefineアノテーション.
- */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-@interface ConfigDefineArray {
-	public ConfigElement[] value();
 }

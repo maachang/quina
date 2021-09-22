@@ -10,17 +10,26 @@ import quina.util.StringUtil;
  * タイプ変換定義.
  */
 public enum TypesClass {
-	Boolean(1, "boolean", false, false, true, false, false),
-	Byte(2, "byte", true, false, false, false, false),
-	Short(3, "short", true, false, false, false, false),
-	Integer(4, "integer", true, false, false, false, false),
-	Long(5, "long", true, false, false, false, false),
-	Float(6, "float", true, true, false, false, false),
-	Double(7, "double", true, true ,false, false, false),
-	String(8, "string", false, false, false, true, false),
-	Date(9, "date", false, false, false, false, true);
+	Boolean(TypesConstants.TYPENO_BOOLEAN,
+		"boolean", false, false, true, false, false),
+	Byte(TypesConstants.TYPENO_BYTE,
+		"byte", true, false, false, false, false),
+	Short(TypesConstants.TYPENO_SHORT,
+		"short", true, false, false, false, false),
+	Integer(TypesConstants.TYPENO_INTEGER,
+		"integer", true, false, false, false, false),
+	Long(TypesConstants.TYPENO_LONG,
+		"long", true, false, false, false, false),
+	Float(TypesConstants.TYPENO_FLOAT,
+		"float", true, true, false, false, false),
+	Double(TypesConstants.TYPENO_DOUBLE,
+		"double", true, true ,false, false, false),
+	String(TypesConstants.TYPENO_STRING,
+		"string", false, false, false, true, false),
+	Date(TypesConstants.TYPENO_DATE,
+		"date", false, false, false, false, true);
 	
-	private int type;
+	private int typeNo;
 	private String name;
 	private boolean numberFlag;
 	private boolean floatFlag;
@@ -30,12 +39,17 @@ public enum TypesClass {
 	
 	/**
 	 * コンストラクタ.
-	 * @param type
+	 * @param typeNo
 	 * @param name
+	 * @param numberFlag
+	 * @param floatFlag
+	 * @param booleanFlag
+	 * @param stringFlag
+	 * @param dateFlag
 	 */
-	private TypesClass(int type, String name, boolean numberFlag, boolean floatFlag,
+	private TypesClass(int typeNo, String name, boolean numberFlag, boolean floatFlag,
 		boolean booleanFlag, boolean stringFlag, boolean dateFlag) {
-		this.type = type;
+		this.typeNo = typeNo;
 		this.name = name;
 		this.numberFlag = numberFlag;
 		this.floatFlag = floatFlag;
@@ -45,11 +59,11 @@ public enum TypesClass {
 	}
 
 	/**
-	 * タイプを取得.
+	 * タイプNoを取得.
 	 * @return
 	 */
-	public int getType() {
-		return type;
+	public int getTypeNo() {
+		return typeNo;
 	}
 
 	/**
@@ -112,23 +126,49 @@ public enum TypesClass {
 	 * @return Object 変換結果が返却されます.
 	 */
 	public Object getValue(Object v) {
-		// 対象が文字列で容量定義された内容の場合.
-		if(v instanceof String && !(((String)v).isEmpty()) &&
-			NumberUtil.isCapacityString((String)v)) {
-			// 容量変換を行う.
-			v = NumberUtil.parseCapacityByLong((String)v);
+		// nullの場合、そのまま返却.
+		if(v == null) {
+			return null;
+		// 対象が文字列の場合.
+		} else if(v instanceof String) {
+			final String s = (String)v;
+			// 文字列が空の場合.
+			if(s.isEmpty()) {
+				// このenumが文字列以外の場合.
+				if(!isString()) {
+					// null 返却.
+					return null;
+				}
+				// 文字列の場合、空文字を返却.
+				return "";
+			// このenumのタイプが数字系の場合.
+			// 対象文字列が容量変換の形式の場合.
+			} else if(isNumber() &&
+				NumberUtil.isCapacityString(s)) {
+				// 容量変換を行う.
+				v = NumberUtil.parseCapacityByLong(s);
+			}
 		}
 		// 通常変換の場合.
-		switch(type) {
-		case 1: return BooleanUtil.parseBoolean(v);
-		case 2: return NumberUtil.parseByte(v);
-		case 3: return NumberUtil.parseShort(v);
-		case 4: return NumberUtil.parseInt(v);
-		case 5: return NumberUtil.parseLong(v);
-		case 6: return NumberUtil.parseFloat(v);
-		case 7: return NumberUtil.parseDouble(v);
-		case 8: return StringUtil.parseString(v);
-		case 9: return DateUtil.parseDate(v);
+		switch(typeNo) {
+		case TypesConstants.TYPENO_BOOLEAN:
+			return BooleanUtil.parseBoolean(v);
+		case TypesConstants.TYPENO_BYTE:
+			return NumberUtil.parseByte(v);
+		case TypesConstants.TYPENO_SHORT:
+			return NumberUtil.parseShort(v);
+		case TypesConstants.TYPENO_INTEGER:
+			return NumberUtil.parseInt(v);
+		case TypesConstants.TYPENO_LONG:
+			return NumberUtil.parseLong(v);
+		case TypesConstants.TYPENO_FLOAT:
+			return NumberUtil.parseFloat(v);
+		case TypesConstants.TYPENO_DOUBLE:
+			return NumberUtil.parseDouble(v);
+		case TypesConstants.TYPENO_STRING:
+			return StringUtil.parseString(v);
+		case TypesConstants.TYPENO_DATE:
+			return DateUtil.parseDate(v);
 		default: return StringUtil.parseString(v);
 		}
 	}
@@ -150,16 +190,19 @@ public enum TypesClass {
 		} else {
 			clazz = o.toString();
 		}
-		if(clazz == null || (clazz = clazz.trim()).isEmpty()) {
+		if(clazz == null ||
+			(clazz = clazz.trim()).isEmpty()) {
 			// 検出出来ない場合.
 			return null;
 		}
 		clazz = Alphabet.toLowerCase(clazz);
-		if(clazz.equals("int") || clazz.equals("integer")) {
+		if(clazz.equals("int") ||
+			clazz.equals("integer")) {
 			return Integer;
 		} else if(clazz.equals("string")) {
 			return String;
-		} else if(clazz.equals("boolean") || clazz.equals("bool")) {
+		} else if(clazz.equals("boolean") ||
+			clazz.equals("bool")) {
 			return Boolean;
 		} else if(clazz.equals("long")) {
 			return Long;
@@ -186,15 +229,15 @@ public enum TypesClass {
 	 */
 	public static final TypesClass getByTypeNo(int no) {
 		switch(no) {
-		case 1: return Boolean;
-		case 2: return Byte;
-		case 3: return Short;
-		case 4: return Integer;
-		case 5: return Long;
-		case 6: return Float;
-		case 7: return Double;
-		case 8: return String;
-		case 9: return Date;
+		case TypesConstants.TYPENO_BOOLEAN: return Boolean;
+		case TypesConstants.TYPENO_BYTE: return Byte;
+		case TypesConstants.TYPENO_SHORT: return Short;
+		case TypesConstants.TYPENO_INTEGER: return Integer;
+		case TypesConstants.TYPENO_LONG: return Long;
+		case TypesConstants.TYPENO_FLOAT: return Float;
+		case TypesConstants.TYPENO_DOUBLE: return Double;
+		case TypesConstants.TYPENO_STRING: return String;
+		case TypesConstants.TYPENO_DATE: return Date;
 		}
 		// 検出出来ない場合.
 		return null;

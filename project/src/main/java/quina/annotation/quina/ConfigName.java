@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  *   // コンストラクタ.
  *   public ExsampleObject() {
  *     // CdiScopedを読み込む.
- *     Quina.loadCdiScoped(this);
+ *     Quina.injectScoped(this);
  *   }
  * }
  * 

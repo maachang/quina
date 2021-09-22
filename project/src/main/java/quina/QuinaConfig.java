@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.exception.QuinaException;
 import quina.json.Json;
+import quina.util.Flag;
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TreeKey;
@@ -19,7 +20,7 @@ import quina.util.collection.TypesKeyValue;
  *
  * QuinaInfo内で管理するコンフィグ情報です.
  */
-public class QuinaConfig implements
+public final class QuinaConfig implements
 	TypesKeyValue<String, Object> {
 	/**
 	 * QuinaConfig要素.
@@ -140,6 +141,9 @@ public class QuinaConfig implements
 	private final IndexKeyValueList<Object, QuinaConfigElement> reservationKeys =
 		new IndexKeyValueList<Object, QuinaConfigElement>();
 	
+	// loadConfigが呼び出された場合のフラグ.
+	private final Flag loadConfigFlag = new Flag(false);
+	
 	// Read-Writeロックオブジェクト.
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -163,7 +167,7 @@ public class QuinaConfig implements
 			throw new QuinaException("The config name has not been set.");
 		}
 		this.name = name;
-		int len = defines.length;
+		int len = defines == null ? 0 : defines.length;
 		for(int i = 0; i < len; i += 3) {
 			if((k = defines[i]) == null ||
 				(t = defines[i + 1]) == null) {
@@ -208,33 +212,40 @@ public class QuinaConfig implements
 
 	/**
 	 * データをクリア.
+	 * @return QuinaConfig このオブジェクトが返却されます.
 	 */
-	public void clear() {
+	public QuinaConfig clear() {
 		lock.writeLock().lock();
 		try {
 			config.clear();
 		} finally {
 			lock.writeLock().unlock();
 		}
+		return this;
 	}
 	
 	/**
 	 * コンフィグ情報を読み込む.
 	 * @param configDir コンフィグファイル読み込み先のディレクトリを設定します.
 	 */
-	public void loadConfig(String configDir) {
+	public QuinaConfig loadConfig(String configDir) {
 		final IndexMap<String, Object> json = QuinaUtil.loadJson(
 			configDir, name);
-		if(json != null) {
+		if(json != null && json.size() > 0) {
 			setConfig(json);
 		}
+		return this;
 	}
 
 	/**
 	 * コンフィグデータをセット.
 	 * @param json データをセットします.
 	 */
-	public void setConfig(Map<String, Object> json) {
+	public QuinaConfig setConfig(Map<String, Object> json) {
+		if(json == null || json.size() <= 0) {
+			return this;
+		}
+		loadConfigFlag.set(true);
 		Entry<String, Object> e;
 		Iterator<Entry<String, Object>> it = json
 			.entrySet().iterator();
@@ -244,6 +255,15 @@ public class QuinaConfig implements
 				set(e.getKey(), e.getValue());
 			} catch(Exception ex) {}
 		}
+		return this;
+	}
+	
+	/**
+	 * configデータ呼び出しが１度以上行われてる場合.
+	 * @return boolean true の場合呼び出されています.
+	 */
+	public boolean isLoadConfig() {
+		return loadConfigFlag.get();
 	}
 	
 	/**
@@ -366,5 +386,12 @@ public class QuinaConfig implements
 		} finally {
 			lock.readLock().unlock();
 		}
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		toString(buf, 0);
+		return buf.toString();
 	}
 }

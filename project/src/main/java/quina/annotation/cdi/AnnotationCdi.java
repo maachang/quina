@@ -40,26 +40,26 @@ public class AnnotationCdi {
 	 * 対象オブジェクトに対してInjectアノテーションを反映.
 	 * @param o 対象のオブジェクトを設定します.
 	 */
-	public static final void loadInject(Object o) {
+	public static final void inject(Object o) {
 		if(o == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
-		loadInject(o, o.getClass());
+		inject(o, o.getClass());
 	}
 	
 	/**
 	 * 対象オブジェクトのstaticフィールドに対してInjectアノテーションを反映.
 	 * @param c 対象のクラスを設定します.
 	 */
-	public static final void loadInject(Class<?> c) {
+	public static final void inject(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
-		loadInject(null, c);
+		inject(null, c);
 	}
 	
 	// 対象オブジェクトに対してInjectアノテーションを反映.
-	private static final void loadInject(Object o, Class<?> c) {
+	private static final void inject(Object o, Class<?> c) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is null.");
 		}

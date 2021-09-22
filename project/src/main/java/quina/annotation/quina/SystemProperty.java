@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.annotation.quina.SystemProperty.SystemPropertyArray;
+
 /**
  * システムプロパティを設定するAnnotation.
  * 
@@ -26,9 +28,18 @@ import java.lang.annotation.Target;
  * またこのAnnotationは複数定義が可能です.
  */
 @Target(ElementType.TYPE)
-@Repeatable(quina.annotation.quina.SystemPropertyArray.class)
+@Repeatable(SystemPropertyArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SystemProperty {
+	/**
+	 * 複数のSystemPropertyアノテーション.
+	 */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	static @interface SystemPropertyArray {
+		public SystemProperty[] value();
+	}
+	
 	/**
 	 * Key情報.
 	 */
@@ -38,13 +49,4 @@ public @interface SystemProperty {
 	 * Value情報.
 	 */
 	public String value();
-}
-
-/**
- * 複数のSystemPropertyアノテーション.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@interface SystemPropertyArray {
-	public SystemProperty[] value();
 }

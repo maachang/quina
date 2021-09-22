@@ -1,5 +1,6 @@
 package quina.annotation.validate;
 
+import quina.annotation.validate.Validate.ValidateArray;
 import quina.component.Component;
 import quina.exception.QuinaException;
 import quina.validate.VType;

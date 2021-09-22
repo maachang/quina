@@ -1,12 +1,21 @@
 package quina.annotation.quina;
 
+import java.lang.reflect.Field;
+
+import quina.Quina;
+import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.Switch;
 import quina.annotation.cdi.CdiHandleScoped;
+import quina.annotation.cdi.CdiReflectElement;
 import quina.annotation.cdi.CdiScoped;
+import quina.annotation.quina.AppendMimeType.AppendMimeTypeArray;
+import quina.annotation.quina.ConfigElement.ConfigElementArray;
+import quina.annotation.quina.SystemProperty.SystemPropertyArray;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
+import quina.logger.LogException;
 import quina.util.Env;
 import quina.util.FileUtil;
 
@@ -16,6 +25,101 @@ import quina.util.FileUtil;
  */
 public class AnnotationQuina {
 	private AnnotationQuina() {}
+	
+	/**
+	 * AnnotationにQuinaServiceScoped定義されてるか取得.
+	 * @param o オブジェクトを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isQuinaServiceScoped(Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified argument is Null.");
+		} else if(o instanceof QuinaService) {
+			return false;
+		}
+		return o.getClass().isAnnotationPresent(QuinaServiceScoped.class);
+	}
+	
+	/**
+	 * AnnotationにQuinaServiceScoped定義されてるか取得.
+	 * @param c クラスを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isQuinaServiceScoped(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		return c.isAnnotationPresent(QuinaServiceScoped.class);
+	}
+	
+	/**
+	 * Annotationに定義されてるQuinaServiceScopedのサービス名を取得.
+	 * @param o QuinaServiceを設定します.
+	 * @return String サービス名が返却されます.
+	 *                nullの場合、QuinaServiceScopedが設定されていません.
+	 */
+	public static final String loadQuinaServiceScoped(Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified argument is Null.");
+		} else if(!(o instanceof QuinaService)) {
+			throw new QuinaException("The specified argument is not an " +
+				"object that inherits from the QuinaService interface. ");
+		}
+		QuinaServiceScoped service = o.getClass().getAnnotation(
+			QuinaServiceScoped.class);
+		if(service == null) {
+			return null;
+		}
+		return service.value();
+	}
+	
+	/**
+	 * AnnotationにCdiScopedが定義されてるか取得.
+	 * @param o オブジェクトを設定します.
+	 * @return boolean true の場合 CdiScopedが定義されています.
+	 */
+	public static final boolean isCdiScoped(Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		return isCdiScoped(o.getClass());
+	}
+	
+	/**
+	 * AnnotationにCdiScopedが定義されてるか取得.
+	 * @param c コンポーネントクラスを設定します.
+	 * @return boolean true の場合 CdiScopedが定義されています.
+	 */
+	public static final boolean isCdiScoped(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		return c.isAnnotationPresent(CdiScoped.class);
+	}
+	
+	/**
+	 * AnnotationにCdiHandleScoped定義されてるか取得.
+	 * @param c CdiHandleScopedを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isCdiHandleScoped(Object o) {
+		if(o == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		return o.getClass().isAnnotationPresent(CdiHandleScoped.class);
+	}
+	
+	/**
+	 * AnnotationにisCdiHandleScoped定義されてるか取得.
+	 * @param c クラスオブジェクトを設定します.
+	 * @return boolean true の場合定義されています.
+	 */
+	public static final boolean isCdiHandleScoped(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		return c.isAnnotationPresent(CdiHandleScoped.class);
+	}
 	
 	/**
 	 * Annotationで定義されてるSystemPropertyを読み込んで
@@ -209,98 +313,140 @@ public class AnnotationQuina {
 	}
 	
 	/**
-	 * AnnotationにQuinaServiceScoped定義されてるか取得.
-	 * @param o オブジェクトを設定します.
-	 * @return boolean true の場合定義されています.
+	 * フィールド定義されてるQuinaConfigアノテーション定義を
+	 * 読み込んで、QuinaConfigをフィールドに注入します.
+	 * @param o 対象のオブジェクトを設定します.
 	 */
-	public static final boolean isQuinaServiceScoped(Object o) {
+	public static final void injectQuinaConfig(Object o) {
 		if(o == null) {
-			throw new QuinaException("The specified argument is Null.");
-		} else if(o instanceof QuinaService) {
-			return false;
+			throw new QuinaException("The specified argument is null.");
 		}
-		return o.getClass().isAnnotationPresent(QuinaServiceScoped.class);
+		injectQuinaConfig(o, o.getClass());
 	}
 	
 	/**
-	 * AnnotationにQuinaServiceScoped定義されてるか取得.
-	 * @param c クラスを設定します.
-	 * @return boolean true の場合定義されています.
+	 * フィールド定義されてるQuinaConfigアノテーション定義を
+	 * 読み込んで、QuinaConfigをフィールドに注入します.
+	 * @param c 対象のクラスを設定します.
 	 */
-	public static final boolean isQuinaServiceScoped(Class<?> c) {
+	public static final void injectQuinaConfig(Class<?> c) {
 		if(c == null) {
-			throw new QuinaException("The specified argument is Null.");
+			throw new QuinaException("The specified argument is null.");
 		}
-		return c.isAnnotationPresent(QuinaServiceScoped.class);
+		injectQuinaConfig(null, c);
 	}
 	
-	/**
-	 * Annotationに定義されてるQuinaServiceScopedのサービス名を取得.
-	 * @param o QuinaServiceを設定します.
-	 * @return String サービス名が返却されます.
-	 *                nullの場合、QuinaServiceScopedが設定されていません.
-	 */
-	public static final String loadQuinaServiceScoped(Object o) {
-		if(o == null) {
-			throw new QuinaException("The specified argument is Null.");
-		} else if(!(o instanceof QuinaService)) {
-			throw new QuinaException("The specified argument is not an " +
-				"object that inherits from the QuinaService interface. ");
+	// フィールド定義されてるQuinaConfigアノテーション定義を
+	// 読み込んで、QuinaConfigをフィールドに注入します.
+	private static final void injectQuinaConfig(Object o, Class<?> c) {
+		QuinaConfig conf;
+		ConfigElement[] elist;
+		Field targetField;
+		final CdiReflectElement list = Quina.get()
+			.getCdiReflectManager().get(c);
+		if(list == null) {
+			return;
 		}
-		QuinaServiceScoped service = o.getClass().getAnnotation(
-			QuinaServiceScoped.class);
-		if(service == null) {
+		final int len = list.size();
+		final Class<?> clazz = QuinaConfig.class;
+		for(int i = 0; i < len; i ++) {
+			// QuinaConfigクラスを対象とする.
+			if(list.get(i).getType() == clazz) {
+				targetField = list.get(i);
+				// 対象コンフィグ要素を取得.
+				elist = getConfigElementArray(targetField);
+				// 対象のコンフィグ情報を取得.
+				if((conf = getQuinaConfig(targetField)) == null) {
+					// コンフィグ名が設定されてなくて、
+					// コンフィグ要素が存在する場合
+					if(elist != null && elist.length > 0) {
+						throw new QuinaException(
+							"The config name is not defined.");
+					}
+					conf = null;
+					continue;
+				// コンフィグ名が設定されていて、
+				// コンフィグ要素が存在しない場合.
+				} else if(elist == null || elist.length == 0) {
+					throw new QuinaException(
+						"The config element does not exist.");
+				}
+				// コンフィグ要素をセット.
+				setQuinaConfig(conf, elist);
+				
+				// コンフィグファイルを読み込む.
+				loadConfigFile(conf);
+				
+				// コンフィグ情報を登録.
+				try {
+					list.setValue(i, o, conf);
+				} catch(Exception e) {
+					throw new LogException(e);
+				}
+			}
+		}
+	}
+	
+	// QuinaConfigを作成
+	private static final QuinaConfig getQuinaConfig(Field targetField) {
+		ConfigName cname = targetField.getAnnotation(ConfigName.class);
+		if(cname == null || cname.value() == null ||
+			cname.value().isEmpty()) {
 			return null;
 		}
-		return service.value();
+		return new QuinaConfig(cname.value());
 	}
 	
-	/**
-	 * AnnotationにCdiScopedが定義されてるか取得.
-	 * @param o オブジェクトを設定します.
-	 * @return boolean true の場合 CdiScopedが定義されています.
-	 */
-	public static final boolean isCdiScoped(Object o) {
-		if(o == null) {
-			throw new QuinaException("The specified argument is Null.");
+	// 定義されてるConfigElement要素群を取得.
+	private static final ConfigElement[] getConfigElementArray(
+		Field targetField) {
+		// 対象コンポーネントからConfigElementArrayアノテーション定義を取得.
+		ConfigElementArray array = targetField.getAnnotation(
+			ConfigElementArray.class);
+		// 存在しない場合.
+		if(array == null) {
+			// 単体で取得.
+			ConfigElement conf = targetField.getAnnotation(
+				ConfigElement.class);
+			if(conf != null) {
+				return new ConfigElement[] {conf};
+			}
+			return null;
 		}
-		return isCdiScoped(o.getClass());
+		// 複数のConfigElementアノテーション定義を取得.
+		ConfigElement[] list = array.value();
+		// 存在しない場合.
+		if(list == null || list.length == 0) {
+			return null;
+		}
+		return list;
 	}
 	
-	/**
-	 * AnnotationにCdiScopedが定義されてるか取得.
-	 * @param c コンポーネントクラスを設定します.
-	 * @return boolean true の場合 CdiScopedが定義されています.
-	 */
-	public static final boolean isCdiScoped(Class<?> c) {
-		if(c == null) {
-			throw new QuinaException("The specified argument is Null.");
+	// ConfigElement群をQuinaConfigに設定.
+	private static final void setQuinaConfig(
+		QuinaConfig conf, ConfigElement[] elist) {
+		ConfigElement em;
+		int len = elist.length;
+		for(int i = 0; i < len; i ++) {
+			em = elist[i];
+			conf.putReservation(
+				em.name(), em.type(), em.defVal());
 		}
-		return c.isAnnotationPresent(CdiScoped.class);
 	}
 	
-	/**
-	 * AnnotationにCdiHandleScoped定義されてるか取得.
-	 * @param c CdiHandleScopedを設定します.
-	 * @return boolean true の場合定義されています.
-	 */
-	public static final boolean isCdiHandleScoped(Object o) {
-		if(o == null) {
-			throw new QuinaException("The specified argument is Null.");
+	// QuinaConfigに外部ファイルをローディング.
+	private static final void loadConfigFile(QuinaConfig conf) {
+		Quina quina = Quina.get();
+		String dir = quina.getConfigDirectory();
+		// コンフィグディレクトリが設定されていない場合
+		if(dir == null || dir.isEmpty()) {
+			// 処理しない.
+			return;
 		}
-		return o.getClass().isAnnotationPresent(CdiHandleScoped.class);
+		// 初期化済みの場合のみ設定する.
+		if(quina.isInit()) {
+			conf.loadConfig(dir);
+		}
 	}
 	
-	/**
-	 * AnnotationにisCdiHandleScoped定義されてるか取得.
-	 * @param c クラスオブジェクトを設定します.
-	 * @return boolean true の場合定義されています.
-	 */
-	public static final boolean isCdiHandleScoped(Class<?> c) {
-		if(c == null) {
-			throw new QuinaException("The specified argument is Null.");
-		}
-		return c.isAnnotationPresent(CdiHandleScoped.class);
-	}
-
 }

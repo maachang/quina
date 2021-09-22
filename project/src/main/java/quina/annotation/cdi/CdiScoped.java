@@ -55,7 +55,7 @@ import java.lang.annotation.Target;
  *   
  *   public Exsample() {
  *     // CdiScopedを読み込む.
- *     Quina.loadCdiScoped(this);
+ *     Quina.injectScoped(this);
  *   }
  *   
  *   public void hello() {

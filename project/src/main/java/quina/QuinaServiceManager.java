@@ -11,7 +11,7 @@ import quina.util.collection.ObjectList;
 /**
  * QuinaService管理オブジェクト.
  */
-public class QuinaServiceManager {
+public final class QuinaServiceManager {
 	/**
 	 * QuinaServiceScopedアノテーション自動読み込み実行用クラス名.
 	 */
@@ -94,6 +94,24 @@ public class QuinaServiceManager {
 		}
 		return this;
 	}
+	
+	// QuinaServiceにコンフィグ内容をセット.
+	private static final void _quinaServiceByAppendConfig(
+		QuinaService sv) {
+		Quina quina = Quina.get();
+		String dir = quina.getConfigDirectory();
+		// コンフィグディレクトリが設定されていない場合
+		if(dir == null || dir.isEmpty()) {
+			// 処理しない.
+			return;
+		}
+		// 初期化済みの場合のみ設定する.
+		// また１度もloadConfig処理が呼ばれてない場合.
+		if(quina.isInit() && !sv.isLoadConfig()) {
+			// コンフィグ情報をロードする.
+			sv.loadConfig(dir);
+		}
+	}
 
 	/**
 	 * データセット.
@@ -107,12 +125,15 @@ public class QuinaServiceManager {
 			throw new QuinaException(
 				"The Quina Service to be registered is null.");
 		}
-		final String name = AnnotationQuina.loadQuinaServiceScoped(service);
+		final String name = AnnotationQuina.
+			loadQuinaServiceScoped(service);
 		if(name == null) {
 			throw new QuinaException(
 				"QuinaServiceScoped annotation is not defined for the " +
 				"specified QuinaService.");
 		}
+		// コンフィグ読み込み.
+		_quinaServiceByAppendConfig(service);
 		return put(name, service);
 	}
 	
@@ -138,6 +159,8 @@ public class QuinaServiceManager {
 			list.add(new QuinaServiceEntry(name, service));
 			return null;
 		}
+		// コンフィグ読み込み.
+		_quinaServiceByAppendConfig(service);
 		// 一番最後に再設定して返却.
 		QuinaServiceEntry e = list.remove(p);
 		list.add(e);

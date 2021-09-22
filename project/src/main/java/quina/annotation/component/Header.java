@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.annotation.component.Header.HeaderArray;
+
 /**
  * HttpResponse返却のHeader群を設定するAnnotation.
  * 
@@ -29,9 +31,18 @@ import java.lang.annotation.Target;
  * が追加されます.
  */
 @Target(ElementType.TYPE)
-@Repeatable(quina.annotation.component.HeaderArray.class)
+@Repeatable(HeaderArray.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Header {
+	/**
+	 * 複数のHttpHeaderアノテーション.
+	 */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	static @interface HeaderArray {
+		public Header[] value();
+	}
+	
 	/**
 	 * Key情報.
 	 */
@@ -41,13 +52,4 @@ public @interface Header {
 	 * Value情報.
 	 */
 	public String value();
-}
-
-/**
- * 複数のHttpHeaderアノテーション.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@interface HeaderArray {
-	public Header[] value();
 }
