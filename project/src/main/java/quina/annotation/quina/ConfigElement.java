@@ -6,7 +6,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import quina.annotation.AnnotationConstants;
 import quina.annotation.quina.ConfigElement.ConfigElementArray;
 import quina.util.collection.TypesClass;
 
@@ -19,6 +18,7 @@ import quina.util.collection.TypesClass;
  * 
  * ＠CdiScoped
  * public class ExsampleObject {
+ *    
  *   // コンフィグ情報.
  *   ＠ConfigName("exsample")
  *   ＠ConfigElement(name="name", type=TypedClass.String);
@@ -43,7 +43,7 @@ import quina.util.collection.TypesClass;
  * またこのアノテーションを有効にするにはScopedアノテーション
  * を定義する必要があります.
  * 
- * またこの場合Configファイルの読み込みも自動で行われます.
+ * またこの場合QuinaConfigファイルの読み込みも自動で行われます.
  */
 @Target(ElementType.FIELD)
 @Repeatable(ConfigElementArray.class)

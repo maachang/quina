@@ -185,14 +185,16 @@ public final class QuinaConfig implements
 	 * @return QuinaConfig オブジェクトが返却されます.
 	 */
 	public QuinaConfig putReservation(Object key, Object type, Object defVal) {
+		// 対象のキーが存在しない場合.
+		if(key == null) {
+			throw new QuinaException("The specified key does not exist.");
+		}
 		TypesClass clazz = null;
 		if(!(key instanceof TreeKey)) {
 			key = new TreeKey("" + key);
 		}
-		// タイプを取得.
-		clazz = TypesClass.get(type);
 		// 型の定義が不明な場合.
-		if(clazz == null) {
+		if((clazz = TypesClass.get(type)) == null) {
 			throw new QuinaException(
 				"The type cannot be defined for the specified type definition \"" +
 					type + "\".");
@@ -226,36 +228,38 @@ public final class QuinaConfig implements
 	
 	/**
 	 * コンフィグ情報を読み込む.
-	 * @param configDir コンフィグファイル読み込み先のディレクトリを設定します.
+	 * @param boolean true の場合読み込みが成功しました.
 	 */
-	public QuinaConfig loadConfig(String configDir) {
+	public boolean loadConfig(String configDir) {
 		final IndexMap<String, Object> json = QuinaUtil.loadJson(
 			configDir, name);
-		if(json != null && json.size() > 0) {
-			setConfig(json);
-		}
-		return this;
+		return setConfig(json);
 	}
 
 	/**
 	 * コンフィグデータをセット.
 	 * @param json データをセットします.
+	 * @param boolean true の場合読み込みが成功しました.
 	 */
-	public QuinaConfig setConfig(Map<String, Object> json) {
+	public boolean setConfig(Map<String, Object> json) {
 		if(json == null || json.size() <= 0) {
-			return this;
+			return false;
 		}
 		loadConfigFlag.set(true);
 		Entry<String, Object> e;
-		Iterator<Entry<String, Object>> it = json
-			.entrySet().iterator();
+		final Iterator<Entry<String, Object>> it =
+			json.entrySet().iterator();
 		while(it.hasNext()) {
-			try {
-				e = it.next();
-				set(e.getKey(), e.getValue());
-			} catch(Exception ex) {}
+			e = it.next();
+			// 設定に失敗した場合.
+			if(!set(e.getKey(), e.getValue())) {
+				throw new QuinaException(
+					"Failed to set the specified key \"" +
+						e.getKey() + "\" (value = " +
+						e.getValue() + "). ");
+			}
 		}
-		return this;
+		return true;
 	}
 	
 	/**
@@ -281,6 +285,10 @@ public final class QuinaConfig implements
 	 * @return boolean 設定に成功した場合trueが返却されます.
 	 */
 	public boolean set(String key, Object value) {
+		if(key == null || key.isEmpty()) {
+			throw new QuinaException(
+				"The specified key does not exist.");
+		}
 		lock.writeLock().lock();
 		try {
 			QuinaConfigElement rsv;
@@ -302,6 +310,9 @@ public final class QuinaConfig implements
 	
 	@Override
 	public Object get(Object key) {
+		if(key == null) {
+			return null;
+		}
 		lock.readLock().lock();
 		try {
 			QuinaConfigElement em =

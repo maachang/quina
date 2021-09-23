@@ -140,9 +140,10 @@ public class MimeTypes {
 	/**
 	 * 決められたMimeTypeのJSON形式で、MimeTypeを追加.
 	 * @param json 対象のJSON情報を設定します.
+	 * @return boolean trueの場合、読み込みに成功しました.
 	 */
 	@SuppressWarnings("unchecked")
-	public void setMimeTypes(Map<String, Object> json) {
+	public boolean setMimeTypes(Map<String, Object> json) {
 		//
 		// jsonの定義方法
 		// {
@@ -152,6 +153,10 @@ public class MimeTypes {
 		// (1)の登録拡張子とmimeTypeを定義する場合です.
 		// (2)は基本(1)と同じだが、charset付与可能か否かが設定出来ます.
 		//
+		if(json == null || json.size() <= 0) {
+			return false;
+		}
+		int cnt = 0;
 		Map<String, Object> v;
 		Entry<String, Object> e;
 		Iterator<Entry<String, Object>> it = json.entrySet().iterator();
@@ -168,11 +173,14 @@ public class MimeTypes {
 						put(e.getKey(),
 							StringUtil.parseString(v.get("mimeType")));
 					}
+					cnt ++;
 				}
 			} else {
 				put(e.getKey(), StringUtil.parseString(e.getValue()));
+				cnt ++;
 			}
 		}
+		return cnt > 0;
 	}
 
 	/**

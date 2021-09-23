@@ -44,10 +44,10 @@ public class HttpWorkerService implements QuinaService {
 	}
 
 	@Override
-	public void loadConfig(String configDir) {
+	public boolean loadConfig(String configDir) {
 		lock.writeLock().lock();
 		try {
-			config.loadConfig(configDir);
+			return config.loadConfig(configDir);
 		} finally {
 			lock.writeLock().unlock();
 		}

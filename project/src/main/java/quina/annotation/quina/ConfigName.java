@@ -14,6 +14,7 @@ import java.lang.annotation.Target;
  * 
  * ＠CdiScoped
  * public class ExsampleObject {
+ *   
  *   // コンフィグ情報.
  *   ＠ConfigName("exsample")
  *   ＠ConfigElement(name="name", type=TypedClass.String);
@@ -38,7 +39,7 @@ import java.lang.annotation.Target;
  * またこのアノテーションを有効にするにはScopedアノテーション
  * を定義する必要があります.
  * 
- * またこの場合Configファイルの読み込みも自動で行われます.
+ * またこの場合QuinaConfigファイルの読み込みも自動で行われます.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

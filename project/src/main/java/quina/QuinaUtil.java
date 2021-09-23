@@ -48,16 +48,16 @@ public final class QuinaUtil {
 			String[] check;
 			// システムプロパティから取得.
 			check = new String[] {
-				"quina.config.dir",
-				"quina.config.directory",
-				"quina.config.folder",
-				"quina.config.path",
-				"quina.config",
-				"config.dir",
-				"config.directory",
-				"config.folder",
-				"config.path",
-				"config"
+				"quina.config.dir"
+				,"quina.config.directory"
+				,"quina.config.folder"
+				,"quina.config.path"
+				,"quina.config"
+				,"config.dir"
+				,"config.directory"
+				,"config.folder"
+				,"config.path"
+				,"config"
 			};
 			for(int i = 0; i < check.length; i ++) {
 				ret = System.getProperty(check[i]);
@@ -66,14 +66,23 @@ public final class QuinaUtil {
 				}
 			}
 			// 環境変数から取得.
-			ret = System.getenv("QUINA_CONFIG");
-			if(ret != null) {
-				return FileUtil.getFullPath(ret);
+			check = new String[] {
+				"QUINA_CONFIG_DIR"
+				,"QUINA_CONFIG_DIRECTORY"
+				,"QUINA_CONFIG_FOLDER"
+				,"QUINA_CONFIG_PATH"
+			};
+			// 環境変数から取得.
+			for(int i = 0; i < check.length; i ++) {
+				ret = System.getenv(check[i]);
+				if(ret != null) {
+					return FileUtil.getFullPath(ret);
+				}
 			}
 			// ディレクトリが存在する場合.
 			check = new String[] {
-				"./conf/",
-				"./config/"
+				"./conf/"
+				,"./config/"
 			};
 			for(int i = 0; i < check.length; i ++) {
 				if(FileUtil.isDir(check[i])) {
@@ -136,7 +145,8 @@ public final class QuinaUtil {
 	 * @param name ファイル名を設定します.
 	 * @return byte[] リソースバイナリがロードされます.
 	 */
-	public static final byte[] loadResourse(String configDir, String name) {
+	public static final byte[] loadResourse(
+		String configDir, String name) {
 		configDir = getDir(configDir);
 		if(!configDir.endsWith("/")) {
 			configDir += "/";

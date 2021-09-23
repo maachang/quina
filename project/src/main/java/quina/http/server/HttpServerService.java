@@ -82,21 +82,25 @@ public class HttpServerService implements QuinaService {
 	}
 
 	@Override
-	public void loadConfig(String configDir) {
+	public boolean loadConfig(String configDir) {
+		boolean ret = false;
 		lock.writeLock().lock();
 		try {
 			// コンフィグ情報を読み込む.
-			config.loadConfig(configDir);
+			ret = config.loadConfig(configDir);
 			// mimeTypeのコンフィグ読み込み.
 			IndexMap<String, Object> json = QuinaUtil.loadJson(
 				configDir, MIME_CONFIG_FILE);
 			// jsonが取得できた場合.
 			if(json != null) {
-				mimeTypes.setMimeTypes(json);
+				if(mimeTypes.setMimeTypes(json)) {
+					ret = true;
+				}
 			}
 		} finally {
 			lock.writeLock().unlock();
 		}
+		return ret;
 	}
 
 	@Override
