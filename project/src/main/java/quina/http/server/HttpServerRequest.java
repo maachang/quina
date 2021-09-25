@@ -2,6 +2,7 @@ package quina.http.server;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.http.Header;
 import quina.http.HttpAnalysis;
@@ -18,37 +19,41 @@ import quina.http.Request;
  */
 public class HttpServerRequest implements Request {
 	/** Http Method. **/
-	protected Method method;
+	private Method method;
 
 	/** コンポーネントURL. **/
-	protected String componentUrl;
+	private String componentUrl;
 
 	/** コンポーネントスラッシュカウント. **/
-	protected int componentSlashCount;
+	private int componentSlashCount;
 
 	/** 元のUrl. **/
-	protected String baseUrl;
+	private String srcUrl;
 
 	/** urlだけを抽出した情報. **/
-	protected String url;
+	private String url;
 
 	/** Http Version. **/
-	protected String version;
+	private String version;
 
 	/** Bodyサイズ. **/
-	protected long contentLength;
+	private long contentLength;
 
 	/** Http Header Body. **/
-	protected HttpReceiveHeader header;
+	private HttpReceiveHeader header;
 
 	/** HTTP要素. **/
-	protected HttpElement element;
+	private HttpElement element;
 
 	/** Httpパラメータ. **/
-	protected Params params;
+	private Params params;
 
 	/** HttpBody取得フラグ. **/
-	protected boolean readHttpBodyFlag = false;
+	private boolean readHttpBodyFlag = false;
+	
+	// Read-Writeロックオブジェクト.
+	private final ReentrantReadWriteLock lock =
+		new ReentrantReadWriteLock();
 
 	/**
 	 * コンストラクタ.
@@ -62,7 +67,7 @@ public class HttpServerRequest implements Request {
 	public HttpServerRequest(HttpElement element, Method method, String url,
 		String version, long contentLength, HttpIndexHeaders header) {
 		this.method = method;
-		this.baseUrl = url;
+		this.srcUrl = url;
 		this.url = HttpAnalysis.getUrl(url);
 		this.version = version;
 		this.contentLength = contentLength;
@@ -82,7 +87,7 @@ public class HttpServerRequest implements Request {
 		this.method = src.method;
 		this.componentUrl = src.componentUrl;
 		this.componentSlashCount = src.componentSlashCount;
-		this.baseUrl = url;
+		this.srcUrl = url;
 		this.url = HttpAnalysis.getUrl(url);
 		this.version = src.version;
 		this.contentLength = src.contentLength;
@@ -94,83 +99,144 @@ public class HttpServerRequest implements Request {
 
 	@Override
 	public void close() throws IOException {
-		this.method = null;
-		this.componentUrl = null;
-		this.baseUrl = null;
-		this.url = null;
-		this.version = null;
-		this.contentLength = 0L;
-		this.header = null;
-		this.element = null;
-		this.params = null;
+		lock.writeLock().lock();
+		try {
+			this.method = null;
+			this.componentUrl = null;
+			this.srcUrl = null;
+			this.url = null;
+			this.version = null;
+			this.contentLength = 0L;
+			this.header = null;
+			this.element = null;
+			this.params = null;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	@Override
 	public boolean isConnection() {
-		return element != null &&
-			element.isConnection();
+		lock.readLock().lock();
+		try {
+			return element != null &&
+				element.isConnection();
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public Method getMethod() {
-		return method;
+		lock.readLock().lock();
+		try {
+			return method;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public String getUrl() {
-		return url;
+		lock.readLock().lock();
+		try {
+			return url;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
-	public String getBaseUrl() {
-		return baseUrl;
+	public String getSrcUrl() {
+		lock.readLock().lock();
+		try {
+			return srcUrl;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public String getComponentUrl() {
-		return componentUrl;
+		lock.readLock().lock();
+		try {
+			return componentUrl;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public int getComponentUrlSlashCount() {
-		return componentSlashCount;
+		lock.readLock().lock();
+		try {
+			return componentSlashCount;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public String getVersion() {
-		return version;
+		lock.readLock().lock();
+		try {
+			return version;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public long getContentLength() {
-		if(element.getReceiveBody() != null) {
-			return element.getReceiveBody().getLength();
+		lock.readLock().lock();
+		try {
+			if(element.getReceiveBody() != null) {
+				return element.getReceiveBody().getLength();
+			}
+			return contentLength;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return contentLength;
 	}
 
 	@Override
 	public Header getHeader() {
-		return header;
+		lock.readLock().lock();
+		try {
+			return header;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public InputStream getInputStream() {
-		if(!readHttpBodyFlag) {
-			try {
-				InputStream in = element.getReceiveBody().getInputStream();
-				readHttpBodyFlag = true;
-				return in;
-			} catch(Exception e) {
-				throw new HttpException(e);
+		lock.writeLock().lock();
+		try {
+			if(!readHttpBodyFlag) {
+				try {
+					InputStream in = element.getReceiveBody()
+						.getInputStream();
+					readHttpBodyFlag = true;
+					return in;
+				} catch(Exception e) {
+					throw new HttpException(e);
+				}
 			}
+		} finally {
+			lock.writeLock().unlock();
 		}
 		return null;
 	}
 
 	@Override
 	public Params getParams() {
-		return params;
+		lock.readLock().lock();
+		try {
+			return params;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -179,8 +245,13 @@ public class HttpServerRequest implements Request {
 	 * @param componentSlashCount コンポーネントURLのスラッシュの数を設定します
 	 */
 	public void setComponentUrl(String componentUrl, int componentSlashCount) {
-		this.componentUrl = componentUrl;
-		this.componentSlashCount = componentSlashCount;
+		lock.writeLock().lock();
+		try {
+			this.componentUrl = componentUrl;
+			this.componentSlashCount = componentSlashCount;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	/**
@@ -188,7 +259,12 @@ public class HttpServerRequest implements Request {
 	 * @param params
 	 */
 	public void setParams(Params params) {
-		this.params = params;
+		lock.writeLock().lock();
+		try {
+			this.params = params;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	/**
@@ -196,6 +272,11 @@ public class HttpServerRequest implements Request {
 	 * @return
 	 */
 	public HttpElement getElement() {
-		return element;
+		lock.readLock().lock();
+		try {
+			return element;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 }

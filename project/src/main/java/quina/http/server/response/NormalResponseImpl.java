@@ -1,25 +1,31 @@
 package quina.http.server.response;
 
 import quina.component.ComponentType;
-import quina.http.MimeTypes;
+import quina.exception.QuinaException;
 import quina.http.HttpElement;
+import quina.http.MimeTypes;
 import quina.http.Response;
+import quina.http.server.furnishing.AbstractBaseSendResponse;
 
 /**
  * 標準的なレスポンス実装.
  */
-public class NormalResponseImpl extends AbstractResponse<NormalResponse>
-	implements NormalResponse {
-
+public class NormalResponseImpl
+	extends AbstractResponse<NormalResponse>
+	implements NormalResponse,
+		AbstractBaseSendResponse<NormalResponse> {
+	
+	/**
+	 * コンストラクタ.
+	 */
+	protected NormalResponseImpl() {}
+	
 	/***
 	 * コンストラクタ.
 	 * @param res レスポンスオブジェクトを設定します.
 	 */
-	@SuppressWarnings("rawtypes")
 	public NormalResponseImpl(Response<?> res) {
-		AbstractResponse r = (AbstractResponse)res;
-		this.element = r.element;
-		this.mimeTypes = r.mimeTypes;
+		newResponse(res);
 	}
 
 	/**
@@ -27,9 +33,22 @@ public class NormalResponseImpl extends AbstractResponse<NormalResponse>
 	 * @param element Http要素を設定します.
 	 * @param mimeTypes MimeType群を設定します.
 	 */
-	public NormalResponseImpl(HttpElement element, MimeTypes mimeTypes) {
+	public NormalResponseImpl(
+		HttpElement element, MimeTypes mimeTypes) {
+		if(element == null || mimeTypes == null) {
+			throw new QuinaException("The specified argument is null.");
+		}
 		this.element = element;
 		this.mimeTypes = mimeTypes;
+	}
+	
+	/**
+	 * レスポンスオブジェクトを設定します.
+	 * @return Response<?> HttpResponseが返却されます.
+	 */
+	@Override
+	public Response<?> _getResponse() {
+		return this;
 	}
 
 	/**
@@ -46,10 +65,15 @@ public class NormalResponseImpl extends AbstractResponse<NormalResponse>
 	 * @return Response<?> 新しいレスポンスが返却されます.
 	 */
 	public static final Response<?> newResponse(Response<?> response) {
+		if(response == null) {
+			throw new QuinaException("The specified response is null.");
+		}
 		final AbstractResponse<?> res = (AbstractResponse<?>)response;
 		final HttpElement em = res.getElement();
-		response = new NormalResponseImpl(em, res.getMimeTypes());
-		em.setResponse(response);
-		return response;
+		AbstractResponse<?> ret = new NormalResponseImpl(
+			em, res.getMimeTypes());
+		ret.setting(res);
+		em.setResponse(ret);
+		return ret;
 	}
 }

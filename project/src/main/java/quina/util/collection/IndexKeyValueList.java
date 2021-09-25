@@ -14,8 +14,10 @@ import quina.util.NumberUtil;
  * する場合は、こちらを利用することをおすすめします.
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
-	private final ObjectList<Entry<K, V>> list;
+public class IndexKeyValueList<K, V>
+	implements ReadIndexKeyValueList<K, V> {
+	
+	protected final ObjectList<Entry<K, V>> list;
 
 	/**
 	 * コンストラクタ.
@@ -53,7 +55,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	/**
 	 * データクリア.
 	 */
-	public final void clear() {
+	public void clear() {
 		list.clear();
 	}
 
@@ -63,7 +65,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * @param value
 	 * @return
 	 */
-	public final V put(final K key, final V value) {
+	public V put(final K key, final V value) {
 		if(key == null) {
 			return null;
 		} else if(list.size() == 0) {
@@ -101,10 +103,11 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 
 	/**
 	 * 指定データ群の設定.
-	 * @param args args.length == 1 で args[0]にMap属性を設定すると、その内容がセットされます.
-	 *     また、 key, value .... で設定することも可能です.
+	 * @param args args.length == 1 で args[0]にMap属性を設定すると、
+	 *             その内容がセットされます.
+	 *             また、 key, value .... で設定することも可能です.
 	 */
-	public final void putAll(final Object... args) {
+	public void putAll(final Object... args) {
 		if (args == null) {
 			return;
 		} else if(args.length == 1) {
@@ -151,7 +154,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * @param key
 	 * @return
 	 */
-	public final V get(final Object key) {
+	public V get(final Object key) {
 		final Entry<K, V> e = getEntry((K)key);
 		if(e == null) {
 			return null;
@@ -164,7 +167,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * @param key
 	 * @return
 	 */
-	public final boolean containsKey(final K key) {
+	public boolean containsKey(final K key) {
 		return searchKey(key) != -1;
 	}
 
@@ -173,7 +176,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * @param key
 	 * @return
 	 */
-	public final V remove(final K key) {
+	public V remove(final K key) {
 		final int no = searchKey(key);
 		if (no != -1) {
 			return (V)list.remove(no);
@@ -185,7 +188,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * データ数を取得.
 	 * @return
 	 */
-	public final int size() {
+	public int size() {
 		return list.size();
 	}
 
@@ -193,7 +196,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * キー名一覧を取得.
 	 * @return
 	 */
-	public final Object[] names() {
+	public Object[] names() {
 		final int len = list.size();
 		final Object[] ret = new Object[len];
 		for (int i = 0; i < len; i++) {
@@ -207,7 +210,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * @param no
 	 * @return
 	 */
-	public final K keyAt(int no) {
+	public K keyAt(int no) {
 		return list.get(no).key;
 	}
 
@@ -216,7 +219,7 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 	 * @param no
 	 * @return
 	 */
-	public final V valueAt(int no) {
+	public V valueAt(int no) {
 		return list.get(no).value;
 	}
 
@@ -277,6 +280,14 @@ public class IndexKeyValueList<K, V> implements ReadIndexKeyValueList<K, V> {
 			buf.append(list.get(i));
 		}
 		return buf.append("}").toString();
+	}
+	
+	/**
+	 * 同じ内容で別のオブジェクトを作成.
+	 * @return IndexKeyValueList コピーされた内容が返却されます.
+	 */
+	public IndexKeyValueList copy() {
+		return copy(null);
 	}
 
 	/**

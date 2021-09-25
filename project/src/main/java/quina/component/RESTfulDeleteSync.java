@@ -5,10 +5,10 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
+import quina.http.server.response.SyncResponseImpl;
 
 /**
  * [同期]RESTfulメソッドDelete専用のComponent.
@@ -52,7 +52,7 @@ public interface RESTfulDeleteSync extends Component {
 		}
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
-			res = HttpServerUtil.syncResponse(res);
+			res = new SyncResponseImpl(res);
 		}
 		final Object o = delete(req, (SyncResponse)res, req.getParams());
 		// 送信なしを示す場合.

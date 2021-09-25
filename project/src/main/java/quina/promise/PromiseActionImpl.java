@@ -1,11 +1,11 @@
 package quina.promise;
 
 import quina.exception.QuinaException;
-import quina.net.nio.tcp.Wait;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
+import quina.worker.Wait;
 
 /**
  * Promiseアクション実装.

@@ -3,6 +3,7 @@ package quina.http;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.QuinaUtil;
 import quina.util.BooleanUtil;
@@ -126,6 +127,10 @@ public class MimeTypes {
 	public static final MimeTypes getInstance() {
 		return SNGL;
 	}
+	
+	// Read-Writeロックオブジェクト.
+	private final ReentrantReadWriteLock lock =
+		new ReentrantReadWriteLock();
 
 	/**
 	 * 内容のリセット.
@@ -156,31 +161,36 @@ public class MimeTypes {
 		if(json == null || json.size() <= 0) {
 			return false;
 		}
-		int cnt = 0;
-		Map<String, Object> v;
-		Entry<String, Object> e;
-		Iterator<Entry<String, Object>> it = json.entrySet().iterator();
-		while(it.hasNext()) {
-			e = it.next();
-			if(e.getValue() instanceof Map) {
-				v = (Map<String, Object>)e.getValue();
-				if(v.containsKey("mimeType")) {
-					if(v.containsKey("charset")) {
-						put(e.getKey(),
-							StringUtil.parseString(v.get("mimeType")),
-							BooleanUtil.parseBoolean(v.get("charset")));
-					} else {
-						put(e.getKey(),
-							StringUtil.parseString(v.get("mimeType")));
+		lock.writeLock().lock();
+		try {
+			int cnt = 0;
+			Map<String, Object> v;
+			Entry<String, Object> e;
+			Iterator<Entry<String, Object>> it = json.entrySet().iterator();
+			while(it.hasNext()) {
+				e = it.next();
+				if(e.getValue() instanceof Map) {
+					v = (Map<String, Object>)e.getValue();
+					if(v.containsKey("mimeType")) {
+						if(v.containsKey("charset")) {
+							put(e.getKey(),
+								StringUtil.parseString(v.get("mimeType")),
+								BooleanUtil.parseBoolean(v.get("charset")));
+						} else {
+							put(e.getKey(),
+								StringUtil.parseString(v.get("mimeType")));
+						}
+						cnt ++;
 					}
+				} else {
+					put(e.getKey(), StringUtil.parseString(e.getValue()));
 					cnt ++;
 				}
-			} else {
-				put(e.getKey(), StringUtil.parseString(e.getValue()));
-				cnt ++;
 			}
+			return cnt > 0;
+		} finally {
+			lock.writeLock().unlock();
 		}
-		return cnt > 0;
 	}
 
 	/**
@@ -205,9 +215,14 @@ public class MimeTypes {
 		} else if(mime == null || mime.isEmpty()) {
 			throw new HttpException("Empty MimeType cannot be set.");
 		}
-		extensionToMimeTypes.put(extension, mime);
-		if(appendCharsetFlag) {
-			appendCharsetToMimeTypes.put(mime, true);
+		lock.writeLock().lock();
+		try {
+			extensionToMimeTypes.put(extension, mime);
+			if(appendCharsetFlag) {
+				appendCharsetToMimeTypes.put(mime, true);
+			}
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
@@ -219,10 +234,15 @@ public class MimeTypes {
 		if(extension == null || extension.isEmpty()) {
 			return;
 		}
-		String mime = extensionToMimeTypes.get(extension);
-		if(mime != null) {
-			extensionToMimeTypes.remove(extension);
-			appendCharsetToMimeTypes.remove(mime);
+		lock.writeLock().lock();
+		try {
+			String mime = extensionToMimeTypes.get(extension);
+			if(mime != null) {
+				extensionToMimeTypes.remove(extension);
+				appendCharsetToMimeTypes.remove(mime);
+			}
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
@@ -235,13 +255,18 @@ public class MimeTypes {
 			return;
 		}
 		String extension;
-		int len = extensionToMimeTypes.size();
-		for(int i = 0; i < len; i ++) {
-			if(mime.equals(extensionToMimeTypes.valueAt(i))) {
-				extension = extensionToMimeTypes.keyAt(i);
-				extensionToMimeTypes.remove(extension);
-				appendCharsetToMimeTypes.remove(mime);
+		lock.writeLock().lock();
+		try {
+			int len = extensionToMimeTypes.size();
+			for(int i = 0; i < len; i ++) {
+				if(mime.equals(extensionToMimeTypes.valueAt(i))) {
+					extension = extensionToMimeTypes.keyAt(i);
+					extensionToMimeTypes.remove(extension);
+					appendCharsetToMimeTypes.remove(mime);
+				}
 			}
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
@@ -254,7 +279,12 @@ public class MimeTypes {
 		if(extension == null || extension.isEmpty()) {
 			return null;
 		}
-		return extensionToMimeTypes.get(extension);
+		lock.readLock().lock();
+		try {
+			return extensionToMimeTypes.get(extension);
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -266,7 +296,13 @@ public class MimeTypes {
 		if(mime == null || mime.isEmpty()) {
 			return false;
 		}
-		Boolean ret = appendCharsetToMimeTypes.get(mime);
+		Boolean ret;
+		lock.readLock().lock();
+		try {
+			ret = appendCharsetToMimeTypes.get(mime);
+		} finally {
+			lock.readLock().unlock();
+		}
 		if(ret == null) {
 			return false;
 		}
@@ -294,9 +330,14 @@ public class MimeTypes {
 	 * @return
 	 */
 	public String getFileNameToMimeType(String name) {
-		name = getExtension(name);
-		if(name != null) {
-			return getMimeType(name);
+		lock.readLock().lock();
+		try {
+			name = getExtension(name);
+			if(name != null) {
+				return getMimeType(name);
+			}
+		} finally {
+			lock.readLock().unlock();
 		}
 		return null;
 	}
@@ -309,20 +350,25 @@ public class MimeTypes {
 	public void toString(StringBuilder out, int space) {
 		Boolean charset;
 		String extension, mimeType;
-		final int len = extensionToMimeTypes.size();
-		for(int i = 0; i < len; i ++) {
-			if(i != 0) {
-				out.append("\n");
+		lock.readLock().lock();
+		try {
+			final int len = extensionToMimeTypes.size();
+			for(int i = 0; i < len; i ++) {
+				if(i != 0) {
+					out.append("\n");
+				}
+				extension = extensionToMimeTypes.keyAt(i);
+				mimeType = extensionToMimeTypes.valueAt(i);
+				charset = appendCharsetToMimeTypes.get(mimeType);
+				QuinaUtil.setSpace(out, space);
+				out.append("extension: ").append(extension)
+					.append(", mimeType; ").append(mimeType);
+				if(charset != null && charset) {
+					out.append(", charset: ").append(charset);
+				}
 			}
-			extension = extensionToMimeTypes.keyAt(i);
-			mimeType = extensionToMimeTypes.valueAt(i);
-			charset = appendCharsetToMimeTypes.get(mimeType);
-			QuinaUtil.setSpace(out, space);
-			out.append("extension: ").append(extension)
-				.append(", mimeType; ").append(mimeType);
-			if(charset != null && charset) {
-				out.append(", charset: ").append(charset);
-			}
+		} finally {
+			lock.readLock().unlock();
 		}
 	}
 

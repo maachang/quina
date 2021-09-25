@@ -8,7 +8,9 @@ import quina.annotation.quina.AnnotationQuina;
 import quina.component.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
+import quina.http.HttpContext;
 import quina.http.server.HttpServerCall;
+import quina.http.server.HttpServerContext;
 import quina.http.server.HttpServerService;
 import quina.http.worker.HttpWorkerService;
 import quina.logger.LogFactory;
@@ -499,6 +501,14 @@ public final class Quina {
 	 */
 	public static final Router router() {
 		return SNGL.getRouter();
+	}
+	
+	/**
+	 * HttpContextを取得.
+	 * @return HttpContext HttpContextが返却されます.
+	 */
+	public static final HttpContext getContext() {
+		return HttpServerContext.get();
 	}
 	
 	/**

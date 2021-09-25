@@ -5,10 +5,10 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
+import quina.http.server.response.SyncResponseImpl;
 
 /**
  * [同期]RESTfulのComponent.
@@ -48,7 +48,7 @@ public interface RESTfulSync extends Component {
 		final Object o;
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
-			res = HttpServerUtil.syncResponse(res);
+			res = new SyncResponseImpl(res);
 		}
 		final SyncResponse sres = (SyncResponse)res;
 		switch(method) {

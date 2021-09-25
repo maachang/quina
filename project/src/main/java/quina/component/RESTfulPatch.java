@@ -5,8 +5,8 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
 import quina.http.server.response.RESTfulResponse;
+import quina.http.server.response.RESTfulResponseImpl;
 
 /**
  * RESTfulメソッドPatch専用のComponent.
@@ -41,11 +41,12 @@ public interface RESTfulPatch extends Component {
 	default void call(Method method, Request req, Response<?> res) {
 		if(method != Method.PATCH) {
 			throw new HttpException(405,
-				"The specified method: " + method + " cannot be used for this URL.");
+				"The specified method: " + method +
+				" cannot be used for this URL.");
 		}
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof RESTfulResponse)) {
-			res = HttpServerUtil.RESTfulResponse(res);
+			res = new RESTfulResponseImpl(res);
 		}
 		patch(req, (RESTfulResponse)res, req.getParams());
 

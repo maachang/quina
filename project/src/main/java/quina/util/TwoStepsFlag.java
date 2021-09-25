@@ -1,6 +1,6 @@
 package quina.util;
 
-import quina.net.nio.tcp.Wait;
+import quina.worker.Wait;
 
 /**
  * ２段階フラグ.

@@ -8,7 +8,7 @@ import quina.http.server.response.ResponseUtil;
  * ファイル送信実装提供.
  */
 @SuppressWarnings("unchecked")
-public interface FileSendResponse<T> extends CoreSendResponse<T> {
+public interface FileSendResponse<T> extends AbstractCoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param name 送信するファイル名を設定します.
@@ -28,7 +28,8 @@ public interface FileSendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.startSend();
 		try {
 			ResponseUtil.sendFile(res, name, charset);

@@ -5,8 +5,8 @@ import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
 import quina.http.server.response.RESTfulResponse;
+import quina.http.server.response.RESTfulResponseImpl;
 
 /**
  * RESTfulのComponent.
@@ -40,7 +40,7 @@ public interface RESTful extends Component {
 	default void call(Method method, Request req, Response<?> res) {
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof RESTfulResponse)) {
-			res = HttpServerUtil.RESTfulResponse(res);
+			res = new RESTfulResponseImpl(res);
 		}
 		final RESTfulResponse rres = (RESTfulResponse)res;
 		switch(method) {

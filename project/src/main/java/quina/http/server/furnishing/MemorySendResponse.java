@@ -8,7 +8,7 @@ import quina.http.server.response.ResponseUtil;
  * メモリ送信実装提供.
  */
 @SuppressWarnings("unchecked")
-public interface MemorySendResponse<T> extends CoreSendResponse<T> {
+public interface MemorySendResponse<T> extends AbstractCoreSendResponse<T> {
 
 	/**
 	 * 送信処理.
@@ -29,7 +29,8 @@ public interface MemorySendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.startSend();
 		try {
 			ResponseUtil.send(res, value, charset);
@@ -59,7 +60,8 @@ public interface MemorySendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.startSend();
 		try {
 			ResponseUtil.send(res, value, charset);

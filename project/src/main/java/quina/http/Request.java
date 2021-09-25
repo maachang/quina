@@ -33,7 +33,7 @@ public interface Request extends Closeable {
 	 * getUrl()とは違い、GETパラメータ(?xxx=yyy&zzz=xyz)が含まれます.
 	 * @return String 変換されてない元のURLが返却されます.
 	 */
-	public String getBaseUrl();
+	public String getSrcUrl();
 
 	/**
 	 * コンポーネントに紐付けられてるURLを取得.

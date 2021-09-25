@@ -8,7 +8,7 @@ import quina.http.server.response.ResponseUtil;
  * JSON送信実装提供.
  */
 @SuppressWarnings("unchecked")
-public interface JsonSendResponse<T> extends CoreSendResponse<T> {
+public interface JsonSendResponse<T> extends AbstractCoreSendResponse<T> {
 	/**
 	 * JSON専用のコンテンツタイプ.
 	 */
@@ -33,7 +33,8 @@ public interface JsonSendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.setContentType(JSON_CONTENT_TYPE);
 		res.startSend();
 		try {
@@ -66,7 +67,8 @@ public interface JsonSendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.setContentType(JSON_CONTENT_TYPE);
 		res.startSend();
 		try {

@@ -2,9 +2,9 @@ package quina.component;
 
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.NormalResponse;
+import quina.http.server.response.NormalResponseImpl;
 
 /**
  * エラーコンポーネント.
@@ -62,7 +62,7 @@ public interface ErrorComponent {
 		}
 		// ResponseがNormalResponseでない場合は変換.
 		if(!(res instanceof NormalResponse)) {
-			res = HttpServerUtil.normalResponse(res);
+			res = new NormalResponseImpl(res);
 		}
 		// 実行処理.
 		call(state, json, req, (NormalResponse)res, e);
@@ -79,7 +79,7 @@ public interface ErrorComponent {
 	default void call(int state, boolean restful, Request req, Response<?> res) {
 		// ResponseがNormalResponseでない場合は変換.
 		if(!(res instanceof NormalResponse)) {
-			res = HttpServerUtil.normalResponse(res);
+			res = new NormalResponseImpl(res);
 		}
 		call(state, restful, req, (NormalResponse)res, null);
 	}

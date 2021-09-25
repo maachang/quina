@@ -2,6 +2,7 @@ package quina.http;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.ObjectList;
@@ -59,6 +60,10 @@ public class HttpReceiveHeader implements Header {
 
 	// 現在の有効なキー情報群.
 	private String[] keys = null;
+	
+	// Read-Writeロックオブジェクト.
+	private final ReentrantReadWriteLock lock =
+		new ReentrantReadWriteLock();
 
 	/**
 	 * コンストラクタ.
@@ -104,15 +109,20 @@ public class HttpReceiveHeader implements Header {
 
 	@Override
 	public void clear() {
-		// httpIndexHeadersの内容を削除としてputRemoveHeaderに登録する.
-		putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
-		int len = httpIndexHeaders.size();
-		for(int i = 0; i < len; i ++) {
-			putRemoveHeader.put(new TreeKey(httpIndexHeaders.getKey(i)),
-				new PutDeleteValue(MODE_REMOVE, null));
+		lock.writeLock().lock();
+		try {
+			// httpIndexHeadersの内容を削除としてputRemoveHeaderに登録する.
+			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
+			int len = httpIndexHeaders.size();
+			for(int i = 0; i < len; i ++) {
+				putRemoveHeader.put(new TreeKey(httpIndexHeaders.getKey(i)),
+					new PutDeleteValue(MODE_REMOVE, null));
+			}
+			// 有効なキー情報を初期化.
+			keys = null;
+		} finally {
+			lock.writeLock().unlock();
 		}
-		// 有効なキー情報を初期化.
-		keys = null;
 	}
 
 	@Override
@@ -121,30 +131,36 @@ public class HttpReceiveHeader implements Header {
 			return null;
 		}
 		String ret;
-		// put及びremove条件が存在しない場合.
-		if(putRemoveHeader == null) {
-			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
-			ret = httpIndexHeaders.get(key);
-			putRemoveHeader.put(
-				new TreeKey((String)key),
-				new PutDeleteValue(MODE_PUT, value));
-			// 有効なキー情報を初期化.
-			keys = null;
-		// put及びremove条件の条件とhttpIndexHeadersで処理する.
-		} else {
-			PutDeleteValue val = null;
-			val = putRemoveHeader.get(key);
-			// put及びremove条件の条件が存在する場合.
-			if(val != null) {
-				ret = val.getValue();
-			// 存在しない場合はhttpIndexHeaders内容を返却値とする.
-			} else {
+		lock.writeLock().lock();
+		try {
+			// put及びremove条件が存在しない場合.
+			if(putRemoveHeader == null) {
+				putRemoveHeader = new IndexKeyValueList
+					<Object, PutDeleteValue>();
 				ret = httpIndexHeaders.get(key);
+				putRemoveHeader.put(
+					new TreeKey((String)key),
+					new PutDeleteValue(MODE_PUT, value));
+				// 有効なキー情報を初期化.
+				keys = null;
+			// put及びremove条件の条件とhttpIndexHeadersで処理する.
+			} else {
+				PutDeleteValue val = null;
+				val = putRemoveHeader.get(key);
+				// put及びremove条件の条件が存在する場合.
+				if(val != null) {
+					ret = val.getValue();
+				// 存在しない場合はhttpIndexHeaders内容を返却値とする.
+				} else {
+					ret = httpIndexHeaders.get(key);
+				}
+				val = new PutDeleteValue(MODE_PUT, value);
+				putRemoveHeader.put(new TreeKey((String)key), val);
+				// 有効なキー情報を初期化.
+				keys = null;
 			}
-			val = new PutDeleteValue(MODE_PUT, value);
-			putRemoveHeader.put(new TreeKey((String)key), val);
-			// 有効なキー情報を初期化.
-			keys = null;
+		} finally {
+			lock.writeLock().unlock();
 		}
 		return ret;
 	}
@@ -154,14 +170,56 @@ public class HttpReceiveHeader implements Header {
 		if(key == null) {
 			return null;
 		}
-		// put及びremove条件が存在しない場合.
-		if(putRemoveHeader == null) {
+		lock.writeLock().lock();
+		try {
+			// put及びremove条件が存在しない場合.
+			if(putRemoveHeader == null) {
+				// httpIndexHeadersにキー情報が存在しない場合.
+				if(!httpIndexHeaders.contains((String)key)) {
+					return null;
+				}
+				// 削除情報をセット.
+				putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
+				putRemoveHeader.put(
+					new TreeKey((String)key),
+					new PutDeleteValue(MODE_REMOVE, null)
+					);
+				// 有効なキー情報を初期化.
+				keys = null;
+				return httpIndexHeaders.get((String)key);
+			}
+			// put及びremove条件から今回のキー情報を取得.
+			PutDeleteValue val = putRemoveHeader.get(key);
+			if(val != null) {
+				// put条件が存在する場合は削除.
+				if(val.getMode() == MODE_PUT) {
+					putRemoveHeader.remove(key);
+					// httpIndexHeadersに存在する場合.
+					if(httpIndexHeaders.contains((String)key)) {
+						// 削除条件を登録.
+						putRemoveHeader.put(
+							new TreeKey((String)key),
+							new PutDeleteValue(MODE_REMOVE, null)
+							);
+					}
+					// 有効なキー情報を初期化.
+					keys = null;
+					// put及びremove条件内容が０件の場合.
+					if(putRemoveHeader.size() == 0) {
+						// クリア.
+						putRemoveHeader = null;
+					}
+					return val.getValue();
+				// 削除条件が既に存在する場合は処理しない.
+				} else if(val.getMode() == MODE_REMOVE) {
+					return null;
+				}
+			}
 			// httpIndexHeadersにキー情報が存在しない場合.
 			if(!httpIndexHeaders.contains((String)key)) {
 				return null;
 			}
-			// 削除情報をセット.
-			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
+			// 削除条件を登録.
 			putRemoveHeader.put(
 				new TreeKey((String)key),
 				new PutDeleteValue(MODE_REMOVE, null)
@@ -169,66 +227,35 @@ public class HttpReceiveHeader implements Header {
 			// 有効なキー情報を初期化.
 			keys = null;
 			return httpIndexHeaders.get((String)key);
+		} finally {
+			lock.writeLock().unlock();
 		}
-		// put及びremove条件から今回のキー情報を取得.
-		PutDeleteValue val = putRemoveHeader.get(key);
-		if(val != null) {
-			// put条件が存在する場合は削除.
-			if(val.getMode() == MODE_PUT) {
-				putRemoveHeader.remove(key);
-				// httpIndexHeadersに存在する場合.
-				if(httpIndexHeaders.contains((String)key)) {
-					// 削除条件を登録.
-					putRemoveHeader.put(
-						new TreeKey((String)key),
-						new PutDeleteValue(MODE_REMOVE, null)
-						);
-				}
-				// 有効なキー情報を初期化.
-				keys = null;
-				// put及びremove条件内容が０件の場合.
-				if(putRemoveHeader.size() == 0) {
-					// クリア.
-					putRemoveHeader = null;
-				}
-				return val.getValue();
-			// 削除条件が既に存在する場合は処理しない.
-			} else if(val.getMode() == MODE_REMOVE) {
-				return null;
-			}
-		}
-		// httpIndexHeadersにキー情報が存在しない場合.
-		if(!httpIndexHeaders.contains((String)key)) {
-			return null;
-		}
-		// 削除条件を登録.
-		putRemoveHeader.put(
-			new TreeKey((String)key),
-			new PutDeleteValue(MODE_REMOVE, null)
-			);
-		// 有効なキー情報を初期化.
-		keys = null;
-		return httpIndexHeaders.get((String)key);
 	}
 
 	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void putAll(Map<? extends String, ? extends String> m) {
-		if(m == null || m.size() == 0) {
-			return;
-		} else if(putRemoveHeader == null) {
-			putRemoveHeader = new IndexKeyValueList<Object, PutDeleteValue>();
+		lock.writeLock().lock();
+		try {
+			if(m == null || m.size() == 0) {
+				return;
+			} else if(putRemoveHeader == null) {
+				putRemoveHeader = new IndexKeyValueList
+					<Object, PutDeleteValue>();
+			}
+			Entry<String, String> e;
+			Iterator<?> itr = m.entrySet().iterator();
+			while(itr.hasNext()) {
+				e = (Entry)itr.next();
+				putRemoveHeader.put(
+					new TreeKey(e.getKey()),
+					new PutDeleteValue(MODE_PUT, e.getValue()));
+			}
+			// 有効なキー情報を初期化.
+			keys = null;
+		} finally {
+			lock.writeLock().unlock();
 		}
-		Entry<String, String> e;
-		Iterator<?> itr = m.entrySet().iterator();
-		while(itr.hasNext()) {
-			e = (Entry)itr.next();
-			putRemoveHeader.put(
-				new TreeKey(e.getKey()),
-				new PutDeleteValue(MODE_PUT, e.getValue()));
-		}
-		// 有効なキー情報を初期化.
-		keys = null;
 	}
 
 	@Override
@@ -236,21 +263,26 @@ public class HttpReceiveHeader implements Header {
 		if(key == null) {
 			return false;
 		}
-		// put及び削除条件が存在する場合.
-		if(putRemoveHeader != null) {
-			final PutDeleteValue val = putRemoveHeader.get(key);
-			if(val != null) {
-				// putの場合は存在を示す.
-				if(val.getMode() == MODE_PUT) {
-					return true;
-				// remove条件は存在しない.
-				} else if(val.getMode() == MODE_REMOVE) {
-					return false;
+		lock.readLock().lock();
+		try {
+			// put及び削除条件が存在する場合.
+			if(putRemoveHeader != null) {
+				final PutDeleteValue val = putRemoveHeader.get(key);
+				if(val != null) {
+					// putの場合は存在を示す.
+					if(val.getMode() == MODE_PUT) {
+						return true;
+					// remove条件は存在しない.
+					} else if(val.getMode() == MODE_REMOVE) {
+						return false;
+					}
 				}
 			}
+			// httpIndexHeadersから取得.
+			return httpIndexHeaders.contains((String)key);
+		} finally {
+			lock.readLock().unlock();
 		}
-		// httpIndexHeadersから取得.
-		return httpIndexHeaders.contains((String)key);
 	}
 
 	@Override
@@ -258,28 +290,33 @@ public class HttpReceiveHeader implements Header {
 		if(key == null) {
 			return null;
 		}
-		// put及び削除条件が存在する場合.
-		if(putRemoveHeader != null) {
-			final PutDeleteValue val = putRemoveHeader.get(key);
-			if(val != null) {
-				// putの場合はその条件を取得.
-				if(val.getMode() == MODE_PUT) {
-					return val.getValue();
-				// remove条件はnull返却.
-				} else if(val.getMode() == MODE_REMOVE) {
-					return null;
+		lock.readLock().lock();
+		try {
+			// put及び削除条件が存在する場合.
+			if(putRemoveHeader != null) {
+				final PutDeleteValue val = putRemoveHeader.get(key);
+				if(val != null) {
+					// putの場合はその条件を取得.
+					if(val.getMode() == MODE_PUT) {
+						return val.getValue();
+					// remove条件はnull返却.
+					} else if(val.getMode() == MODE_REMOVE) {
+						return null;
+					}
 				}
 			}
+			// httpIndexHeadersから取得.
+			return httpIndexHeaders.get((String)key);
+		} finally {
+			lock.readLock().unlock();
 		}
-		// httpIndexHeadersから取得.
-		return httpIndexHeaders.get((String)key);
 	}
 
 	/**
 	 * 現在の有効なキー情報を取得.
 	 * ただしput及びremove条件が存在しない場合は有効なキーは作成されない.
 	 */
-	private void useKeys() {
+	private void _useKeys() {
 		// 有効なキー情報を再作成する必要はない場合.
 		if(keys != null || putRemoveHeader == null) {
 			return;
@@ -308,34 +345,53 @@ public class HttpReceiveHeader implements Header {
 				list.add(key);
 			}
 		}
-		keys = list.toArray(String.class);
+		len = list.size();
+		keys = new String[len];
+		for(int i = 0; i < len; i ++) {
+			keys[i] = list.get(i);
+		}
 	}
 
 	@Override
 	public String getValue(int no) {
-		useKeys();
-		if(keys == null) {
-			return httpIndexHeaders.getValue(no);
+		lock.writeLock().lock();
+		try {
+			_useKeys();
+			if(keys == null) {
+				return httpIndexHeaders.getValue(no);
+			}
+			return get(keys[no]);
+		} finally {
+			lock.writeLock().unlock();
 		}
-		return get(keys[no]);
 	}
 
 	@Override
 	public String getKey(int no) {
-		useKeys();
-		if(keys == null) {
-			return httpIndexHeaders.getKey(no);
+		lock.writeLock().lock();
+		try {
+			_useKeys();
+			if(keys == null) {
+				return httpIndexHeaders.getKey(no);
+			}
+			return keys[no];
+		} finally {
+			lock.writeLock().unlock();
 		}
-		return keys[no];
 	}
 
 	@Override
 	public int size() {
-		useKeys();
-		if(keys == null) {
-			return httpIndexHeaders.size();
+		lock.writeLock().lock();
+		try {
+			_useKeys();
+			if(keys == null) {
+				return httpIndexHeaders.size();
+			}
+			return keys.length;
+		} finally {
+			lock.writeLock().unlock();
 		}
-		return keys.length;
 	}
 
 	/**
@@ -343,19 +399,29 @@ public class HttpReceiveHeader implements Header {
 	 * @return HttpIndexHeaders HttpIndexHeadersを取得します.
 	 */
 	public HttpIndexHeaders getHttpIndexHeaders() {
-		return httpIndexHeaders;
+		lock.readLock().lock();
+		try {
+			return httpIndexHeaders;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder buf = new StringBuilder();
-		int len = size();
-		for(int i = 0; i < len; i ++) {
-			if(i != 0) {
-				buf.append("\n");
+		lock.readLock().lock();
+		try {
+			StringBuilder buf = new StringBuilder();
+			int len = size();
+			for(int i = 0; i < len; i ++) {
+				if(i != 0) {
+					buf.append("\n");
+				}
+				buf.append(getKey(i)).append(": ").append(getValue(i));
 			}
-			buf.append(getKey(i)).append(": ").append(getValue(i));
+			return buf.toString();
+		} finally {
+			lock.readLock().unlock();
 		}
-		return buf.toString();
 	}
 }

@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
-import quina.net.nio.tcp.Wait;
 import quina.util.Flag;
+import quina.worker.Wait;
 
 /**
  * Promiseワーカーマネージャ.
@@ -351,6 +351,7 @@ public class PromiseWorkerManager {
 						endFlag = true;
 						ret = (ThreadDeath) to;
 					}
+					pcall = null;
 				}
 			}
 			// ワーカースレッド処理後の後始末.

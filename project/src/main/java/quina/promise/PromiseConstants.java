@@ -12,8 +12,18 @@ public final class PromiseConstants {
 	public static final int MIN_WORKER_THREAD_LENGTH = 8;
 
 	/** デフォルトのワーカースレッド数. **/
-	public static final int DEF_WORKER_THREAD_LENGTH =
-		(int)(java.lang.Runtime.getRuntime().availableProcessors() * 4);
+	public static final int DEF_WORKER_THREAD_LENGTH;
+	// MIN_WORKER_THREAD_LENGTHより少ない数になる場合は
+	// MIN_WORKER_THREAD_LENGTH をセット.
+	static {
+		final int len = (int)(java.lang.Runtime.getRuntime().
+			availableProcessors() * 4);
+		if(len < MIN_WORKER_THREAD_LENGTH) {
+			DEF_WORKER_THREAD_LENGTH = MIN_WORKER_THREAD_LENGTH;
+		} else {
+			DEF_WORKER_THREAD_LENGTH = len;
+		}
+	}
 
 	/** 最大ワーカースレッド数. **/
 	public static final int MAX_WORKER_THREAD_LENGTH = 32768;

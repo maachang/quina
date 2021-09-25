@@ -124,7 +124,7 @@ public class ResponseInitialSetting {
 			response.setCacheMode(cache);
 		}
 		if(cors != null) {
-			response.setCrossDomain(cors);
+			response.setCors(cors);
 		}
 	}
 }

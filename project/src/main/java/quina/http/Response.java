@@ -255,11 +255,11 @@ public interface Response<T>
 	 * @param mode trueの場合クロスドメインを許可します.
 	 * @return Response レスポンスオブジェクトが返却されます.
 	 */
-	public T setCrossDomain(boolean mode);
+	public T setCors(boolean mode);
 
 	/**
 	 * クロスドメインを許可するか取得.
 	 * @return boolean trueの場合クロスドメインを許可します.
 	 */
-	public boolean isCrossDomain();
+	public boolean isCors();
 }

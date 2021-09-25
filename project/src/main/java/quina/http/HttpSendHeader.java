@@ -8,28 +8,32 @@ import java.util.Set;
 
 import quina.util.collection.AbstractEntryIterator;
 import quina.util.collection.AbstractKeyIterator;
-import quina.util.collection.IndexKeyValueList;
+import quina.util.collection.IndexKeyValueLockList;
 
 /**
  * Http送信用ヘッダ.
  */
 public class HttpSendHeader implements Header {
-	private IndexKeyValueList<String, String> list = new IndexKeyValueList<String, String>();
+	// ヘッダリスト.
+	private IndexKeyValueLockList<String, String> list;
 
 	/**
 	 * コンストラクタ.
 	 */
 	public HttpSendHeader() {
-		list = new IndexKeyValueList<String, String>();
+		this.list = new IndexKeyValueLockList
+			<String, String>();
 	}
 
 	/**
 	 * コンストラクタ.
 	 * @param list
 	 */
-	public HttpSendHeader(IndexKeyValueList<String, String> list) {
+	public HttpSendHeader(
+		IndexKeyValueLockList<String, String> list) {
 		if (list == null) {
-			list = new IndexKeyValueList<String, String>();
+			list = new IndexKeyValueLockList
+				<String, String>();
 		}
 		this.list = list;
 	}
@@ -39,7 +43,8 @@ public class HttpSendHeader implements Header {
 	 * @param v
 	 */
 	public HttpSendHeader(final Map<String, String> v) {
-		list = new IndexKeyValueList<String, String>(v);
+		this.list = new IndexKeyValueLockList
+			<String, String>(v);
 	}
 
 	/**
@@ -47,7 +52,8 @@ public class HttpSendHeader implements Header {
 	 * @param args
 	 */
 	public HttpSendHeader(final Object... args) {
-		list = new IndexKeyValueList<String, String>(args);
+		this.list = new IndexKeyValueLockList
+			<String, String>(args);
 	}
 
 	@Override

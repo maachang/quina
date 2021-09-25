@@ -22,6 +22,7 @@ public class GreetingJsonGet implements RESTfulGetSync {
 
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
+		
 		log.info("greeting accees: " + params.getString("name"));
 		return ResultJson.of(
 			"geeting", service.greeting(params.getString("name")));

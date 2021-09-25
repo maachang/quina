@@ -8,7 +8,8 @@ import quina.http.server.response.ResponseUtil;
  * 空送信実装提供.
  */
 @SuppressWarnings("unchecked")
-public interface EmptySendResponse<T> extends CoreSendResponse<T> {
+public interface EmptySendResponse<T>
+	extends AbstractCoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @return T オブジェクトが返却されます.
@@ -17,7 +18,8 @@ public interface EmptySendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.startSend();
 		try {
 			ResponseUtil.send(res);

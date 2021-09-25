@@ -2,12 +2,14 @@ package quina.http.server.furnishing;
 
 import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
+import quina.http.server.response.NormalResponseImpl;
 
 /**
  * エラー送信実装提供.
  */
 @SuppressWarnings("unchecked")
-public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
+public interface ErrorSendResponse<T>
+	extends AbstractCoreSendResponse<T> {
 
 	/**
 	 * エラー送信.
@@ -45,7 +47,8 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		// 送信済みにセット.
 		res.startSend(false);
 		try {
@@ -55,7 +58,7 @@ public interface ErrorSendResponse<T> extends CoreSendResponse<T> {
 				state = 500;
 			}
 			// エラー送信ではDefaultレスポンスに変換して送信.
-			res = (AbstractResponse<?>)HttpServerUtil.normalResponse(res);
+			res = (AbstractResponse<?>)new NormalResponseImpl(res);
 			// エラーが存在しない場合.
 			if(value == null) {
 				// エラー返却.

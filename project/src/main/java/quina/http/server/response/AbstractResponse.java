@@ -1,15 +1,16 @@
 package quina.http.server.response;
 
 import java.io.IOException;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.component.ComponentType;
-import quina.http.MimeTypes;
 import quina.http.Header;
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpSendHeader;
 import quina.http.HttpStatus;
+import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.CreateResponseHeader;
@@ -43,29 +44,36 @@ public abstract class AbstractResponse<T>
 	/** gzip圧縮モード. **/
 	protected boolean gzipMode = HttpServerConstants.isGzipMode();
 	/** クロスドメインモード. **/
-	protected boolean crossDomain = HttpServerConstants.isCrossDomainMode();
+	protected boolean corsMode = HttpServerConstants.isCrossDomainMode();
 	/** 送信済みフラグ. **/
 	protected Bool sendFlag = new Bool(false);
 	/** SendData処理フラグ. **/
 	protected Bool execSendDataFlag = new Bool(false);
+	/** Read-Writeロックオブジェクト. **/
+	protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
 	/**
 	 * レスポンスの内容をセット.
 	 * @param res セット元のResponseを設定します.
 	 */
-	public void setting(AbstractResponse<?> res) {
-		element = res.element;
-		mimeTypes = res.mimeTypes;
-		header = res.header;
-		state = res.state;
-		message = res.message;
-		contentType = res.contentType;
-		charset = res.charset;
-		cacheMode = res.cacheMode;
-		gzipMode = res.gzipMode;
-		crossDomain = res.crossDomain;
-		sendFlag.set(res.sendFlag.get());
-		execSendDataFlag.set(res.execSendDataFlag.get());
+	protected void setting(AbstractResponse<?> res) {
+		lock.writeLock().lock();
+		try {
+			element = res.element;
+			mimeTypes = res.mimeTypes;
+			header = res.header;
+			state = res.state;
+			message = res.message;
+			contentType = res.contentType;
+			charset = res.charset;
+			cacheMode = res.cacheMode;
+			gzipMode = res.gzipMode;
+			corsMode = res.corsMode;
+			sendFlag.set(res.sendFlag.get());
+			execSendDataFlag.set(res.execSendDataFlag.get());
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	/**
@@ -102,16 +110,21 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public void close() throws IOException {
-		element = null;
-		mimeTypes = null;
-		header = null;
-		state = null;
-		message = null;
-		contentType = null;
-		charset = null;
-		cacheMode = !HttpServerConstants.isNoCacheMode();
-		gzipMode = HttpServerConstants.isGzipMode();
-		crossDomain = HttpServerConstants.isCrossDomainMode();
+		lock.writeLock().lock();
+		try {
+			element = null;
+			mimeTypes = null;
+			header = null;
+			state = null;
+			message = null;
+			contentType = null;
+			charset = null;
+			cacheMode = !HttpServerConstants.isNoCacheMode();
+			gzipMode = HttpServerConstants.isGzipMode();
+			corsMode = HttpServerConstants.isCrossDomainMode();
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	/**
@@ -119,14 +132,19 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public void reset() {
-		header = null;
-		state = HttpStatus.OK;
-		message = null;
-		contentType = null;
-		charset = HttpConstants.getCharset();
-		cacheMode = !HttpServerConstants.isNoCacheMode();
-		gzipMode = HttpServerConstants.isGzipMode();
-		crossDomain = HttpServerConstants.isCrossDomainMode();
+		lock.writeLock().lock();
+		try {
+			header = null;
+			state = HttpStatus.OK;
+			message = null;
+			contentType = null;
+			charset = HttpConstants.getCharset();
+			cacheMode = !HttpServerConstants.isNoCacheMode();
+			gzipMode = HttpServerConstants.isGzipMode();
+			corsMode = HttpServerConstants.isCrossDomainMode();
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	/**
@@ -135,10 +153,15 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public HttpStatus getStatus() {
-		if(state == null) {
-			return HttpStatus.OK;
+		lock.readLock().lock();
+		try {
+			if(state == null) {
+				return HttpStatus.OK;
+			}
+			return state;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return state;
 	}
 
 	/**
@@ -147,10 +170,15 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public int getStatusNo() {
-		if(state == null) {
-			return 200;
+		lock.readLock().lock();
+		try {
+			if(state == null) {
+				return 200;
+			}
+			return state.getState();
+		} finally {
+			lock.readLock().unlock();
 		}
-		return state.getState();
 	}
 
 	/**
@@ -159,12 +187,17 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public String getMessage() {
-		if(message != null && !message.isEmpty()) {
-			return message;
-		} else if(state != null) {
-			return state.getMessage();
+		lock.readLock().lock();
+		try {
+			if(message != null && !message.isEmpty()) {
+				return message;
+			} else if(state != null) {
+				return state.getMessage();
+			}
+			return "UNKNOWN";
+		} finally {
+			lock.readLock().unlock();
 		}
-		return "UNKNOWN";
 	}
 
 	/**
@@ -173,10 +206,15 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public boolean isContentType() {
-		if(contentType == null || contentType.isEmpty()) {
-			return false;
+		lock.readLock().lock();
+		try {
+			if(contentType == null || contentType.isEmpty()) {
+				return false;
+			}
+			return true;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return true;
 	}
 
 	/**
@@ -185,10 +223,15 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public String getContentType() {
-		if(contentType == null || contentType.isEmpty()) {
-			return MimeTypes.UNKNONW_MIME_TYPE;
+		lock.readLock().lock();
+		try {
+			if(contentType == null || contentType.isEmpty()) {
+				return MimeTypes.UNKNONW_MIME_TYPE;
+			}
+			return contentType;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return contentType;
 	}
 
 	/**
@@ -197,10 +240,15 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public String getCharset() {
-		if(charset == null || charset.isEmpty()) {
-			return HttpConstants.getCharset();
+		lock.readLock().lock();
+		try {
+			if(charset == null || charset.isEmpty()) {
+				return HttpConstants.getCharset();
+			}
+			return charset;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return charset;
 	}
 
 
@@ -209,7 +257,12 @@ public abstract class AbstractResponse<T>
 	 * @return boolean trueの場合はキャッシュモードはONです.
 	 */
 	public boolean isCacheMode() {
-		return cacheMode;
+		lock.readLock().lock();
+		try {
+			return cacheMode;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -218,7 +271,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public boolean isGzip() {
-		return gzipMode;
+		lock.readLock().lock();
+		try {
+			return gzipMode;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -226,8 +284,13 @@ public abstract class AbstractResponse<T>
 	 * @return boolean trueの場合クロスドメインを許可します.
 	 */
 	@Override
-	public boolean isCrossDomain() {
-		return crossDomain;
+	public boolean isCors() {
+		lock.readLock().lock();
+		try {
+			return corsMode;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -236,10 +299,23 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public Header getHeader() {
-		if(header == null) {
-			header = new HttpSendHeader();
+		HttpSendHeader ret = null;
+		lock.readLock().lock();
+		try {
+			ret = header;
+		} finally {
+			lock.readLock().unlock();
 		}
-		return header;
+		if(ret == null) {
+			ret = new HttpSendHeader();
+			lock.writeLock().lock();
+			try {
+				header = ret;
+			} finally {
+				lock.writeLock().unlock();
+			}
+		}
+		return ret;
 	}
 
 	/**
@@ -249,7 +325,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setStatus(HttpStatus state) {
-		this.state = state;
+		lock.writeLock().lock();
+		try {
+			this.state = state;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -260,7 +341,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setMessage(String msg) {
-		this.message = msg;
+		lock.writeLock().lock();
+		try {
+			this.message = msg;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -271,7 +357,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setContentType(String contentType) {
-		this.contentType = contentType;
+		lock.writeLock().lock();
+		try {
+			this.contentType = contentType;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -282,7 +373,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setCharset(String charset) {
-		this.charset = charset;
+		lock.writeLock().lock();
+		try {
+			this.charset = charset;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -293,7 +389,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setCacheMode(boolean mode) {
-		this.cacheMode = !mode;
+		lock.writeLock().lock();
+		try {
+			this.cacheMode = !mode;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -304,7 +405,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setGzip(boolean mode) {
-		this.gzipMode = mode;
+		lock.writeLock().lock();
+		try {
+			this.gzipMode = mode;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -314,8 +420,13 @@ public abstract class AbstractResponse<T>
 	 * @return T レスポンスオブジェクトが返却されます.
 	 */
 	@Override
-	public T setCrossDomain(boolean mode) {
-		this.crossDomain = mode;
+	public T setCors(boolean mode) {
+		lock.writeLock().lock();
+		try {
+			this.corsMode = mode;
+		} finally {
+			lock.writeLock().unlock();
+		}
 		return (T)this;
 	}
 
@@ -325,16 +436,12 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public Request getRequest() {
-		return element.getRequest();
-	}
-
-	/**
-	 * レスポンスオブジェクトを設定します.
-	 * @return Response<?> HttpResponseが返却されます.
-	 */
-	@Override
-	public Response<?> getResponse() {
-		return this;
+		lock.readLock().lock();
+		try {
+			return element.getRequest();
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -342,7 +449,12 @@ public abstract class AbstractResponse<T>
 	 * @return HttpElement HttpElement を取得します.
 	 */
 	public HttpElement getElement() {
-		return element;
+		lock.readLock().lock();
+		try {
+			return element;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -350,7 +462,12 @@ public abstract class AbstractResponse<T>
 	 * @return MimeTypes MimeTypesが返却されます.
 	 */
 	public MimeTypes getMimeTypes() {
-		return mimeTypes;
+		lock.readLock().lock();
+		try {
+			return mimeTypes;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -364,7 +481,8 @@ public abstract class AbstractResponse<T>
 
 	/**
 	 * 送信処理系メソッド[send(..)]が実行可能かチェック.
-	 * @return boolean trueの場合、送信処理系メソッド[send(..)]の実行は可能です.
+	 * @return boolean trueの場合、送信処理系メソッド
+	 *                 [send(..)]の実行は可能です.
 	 */
 	@Override
 	public boolean isCallSendMethod() {
@@ -384,9 +502,14 @@ public abstract class AbstractResponse<T>
 	 * @return
 	 */
 	protected final NioSendData createHeader(long bodyLength, String charset) {
-		return CreateResponseHeader.createHeader(
-			state.getState(), getMessage(), mimeTypes, header,
-			getContentType(), ResponseUtil.lastCharset(charset),
-			!cacheMode, crossDomain, bodyLength);
+		lock.readLock().lock();
+		try {
+			return CreateResponseHeader.createHeader(
+				state.getState(), getMessage(), mimeTypes, header,
+				getContentType(), ResponseUtil.lastCharset(charset),
+				!cacheMode, corsMode, bodyLength);
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 }

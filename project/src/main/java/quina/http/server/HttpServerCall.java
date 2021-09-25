@@ -30,7 +30,8 @@ public class HttpServerCall extends NioServerCall {
 	 * @param custom HttpRequestでのBodyの解釈をするオブジェクトを設定します.
 	 * @param mimeTypes mimeTypesを設定します.
 	 */
-	public HttpServerCall(HttpCustomAnalysisParams custom, MimeTypes mimeTypes) {
+	public HttpServerCall(
+		HttpCustomAnalysisParams custom, MimeTypes mimeTypes) {
 		this.custom = custom;
 		this.mimeTypes = mimeTypes;
 	}

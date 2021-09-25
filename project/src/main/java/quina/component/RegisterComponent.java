@@ -248,19 +248,17 @@ public class RegisterComponent implements Component {
 				switch(type.getAttributeType()) {
 				// コンポーネントタイプが同期系の場合は、同期レスポンス作成.
 				case ComponentConstants.ATTRIBUTE_SYNC:
-					res = new SyncResponseImpl(null, null);
+					res = new SyncResponseImpl(ares);
 					break;
 				// コンポーネントタイプがRESTful系の場合は、RESTfulレスポンス作成.
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
-					res = new RESTfulResponseImpl(null, null);
+					res = new RESTfulResponseImpl(ares);
 					break;
 				default:
 					// それ以外はノーマルタイプのレスポンスを作成.
-					res = new NormalResponseImpl(null, null);
+					res = new NormalResponseImpl(ares);
 					break;
 				}
-				// データセット.
-				((AbstractResponse<?>)res).setting(ares);
 			}
 		}
 		// response初期設定を反映.

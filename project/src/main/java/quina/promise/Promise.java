@@ -1,9 +1,9 @@
 package quina.promise;
 
 import quina.exception.QuinaException;
-import quina.net.nio.tcp.Wait;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
+import quina.worker.Wait;
 
 /**
  * Quina専用のPromise処理.

@@ -48,6 +48,8 @@ public class HttpServerService implements QuinaService {
 		,"backLog", TypesClass.Integer, NioServerConstants.getBacklog()
 		// サーバーソケット受信バッファ長.
 		,"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer()
+		// 受信テンポラリバッファサイズ.
+		,"recvTmpBuffer", TypesClass.Integer, NioConstants.getByteBufferLength()
 	);
 	
 	// Nioサーバコア.

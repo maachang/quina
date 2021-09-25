@@ -67,7 +67,7 @@ public class HttpAnalysis {
 	 * @return
 	 */
 	public static final Params getGetParams(Request req, HttpCustomAnalysisParams custom){
-		final String url = req.getBaseUrl();
+		final String url = req.getSrcUrl();
 		final int p = url.indexOf("?");
 		if (p != -1) {
 			final String v = url.substring(p + 1);

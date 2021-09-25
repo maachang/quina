@@ -820,7 +820,12 @@ public class ComponentManager {
 			}
 			out[0] = plst.size() == 0 ? null : plst.toArray();
 		}
-		return lst.toArray(String.class);
+		len = lst.size();
+		String[] ret = new String[len];
+		for(int i = 0; i < len; i ++) {
+			ret[i] = lst.get(i);
+		}
+		return ret;
 	}
 
 	/**

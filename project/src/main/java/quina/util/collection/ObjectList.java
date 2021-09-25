@@ -1,7 +1,5 @@
 package quina.util.collection;
 
-import java.lang.reflect.Array;
-
 /**
  * オブジェクトリスト.
  */
@@ -190,17 +188,6 @@ public final class ObjectList<T> implements ReadList<T> {
 		Object[] ret = new Object[length];
 		System.arraycopy(list, 0, ret, 0, length);
 		return ret;
-	}
-
-	/**
-	 * 対象要素のクラスを指定して、オブジェクト配列情報を取得.
-	 * @param o 対象要素のクラスを設定します.
-	 * @return T[] 配列情報として取得します.
-	 */
-	public T[] toArray(Class<T> o) {
-		Object ret = Array.newInstance(o, length);
-		System.arraycopy(list, 0, ret, 0, length);
-		return (T[])ret;
 	}
 
 	/**

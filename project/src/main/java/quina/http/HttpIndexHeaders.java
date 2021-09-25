@@ -123,7 +123,7 @@ public class HttpIndexHeaders implements TypesKeyValue<String, String> {
 		byte b;
 		long pos;
 		int i, p, s, e;
-		final int len = headerBin.length - 1;
+		int len = headerBin.length - 1;
 		byte[] line = HttpConstants.END_LINE;
 		Element em = null;
 		final ObjectList<Element> list = new ObjectList<Element>();
@@ -160,7 +160,11 @@ public class HttpIndexHeaders implements TypesKeyValue<String, String> {
 			}
 		}
 		// 生成されたキー要素リストをソート.
-		final Element[] ret = list.toArray(Element.class);
+		len = list.size();
+		final Element[] ret = new Element[len];
+		for(i = 0; i < len; i ++) {
+			ret[i] = list.get(i);
+		}
 		Arrays.sort(ret);
 		return ret;
 	}

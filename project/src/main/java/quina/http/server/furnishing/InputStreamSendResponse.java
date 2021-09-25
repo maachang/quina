@@ -10,7 +10,7 @@ import quina.http.server.response.ResponseUtil;
  * InputStream関連送信実装.
  */
 @SuppressWarnings("unchecked")
-public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
+public interface InputStreamSendResponse<T> extends AbstractCoreSendResponse<T> {
 	/**
 	 * 送信処理.
 	 * @param value 送信データを設定します.
@@ -62,7 +62,8 @@ public interface InputStreamSendResponse<T> extends CoreSendResponse<T> {
 		if(!isCallSendMethod()) {
 			return (T)this;
 		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)getResponse();
+		final AbstractResponse<?> res =
+			(AbstractResponse<?>)_getResponse();
 		res.startSend();
 		try {
 			ResponseUtil.send(res, value, length, charset);

@@ -1,11 +1,12 @@
-package quina.net.nio.tcp;
+package quina.worker;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.util.AtomicNumber;
+import quina.util.Flag;
 
 /**
  * Waitオブジェクト.
@@ -15,7 +16,7 @@ public class Wait {
 	// ロックオブジェクト.
 	private final Lock sync = new ReentrantLock();
 	private final Condition con = sync.newCondition();
-	private final Number32 awaitFlag = new Number32(0);
+	private final AtomicNumber awaitFlag = new AtomicNumber(0);
 
 	/**
 	 * コンストラクタ.
@@ -119,5 +120,28 @@ public class Wait {
 	public final Lock getLock() {
 		return sync;
 	}
-
+	
+	/**
+	 * フラグがtrueになるまで待機処理.
+	 * @param timeout タイムアウト値を設定します.
+	 * @param flg 判別するフラグオブジェクトを設定します.
+	 * @return boolean [false]の場合、タイムアウトが発生しました.
+	 */
+	public static final boolean await(long timeout, Flag flg) {
+		if(!flg.get()) {
+			long first = -1L;
+			if(timeout > 0L) {
+				first = System.currentTimeMillis() + timeout;
+			}
+			while(!flg.get()) {
+				if(first != -1L && first < System.currentTimeMillis()) {
+					return false;
+				}
+				try {
+					Thread.sleep(30L);
+				} catch(Exception e) {}
+			}
+		}
+		return true;
+	}
 }

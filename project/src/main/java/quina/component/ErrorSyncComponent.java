@@ -2,11 +2,11 @@ package quina.component;
 
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.NormalResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
+import quina.http.server.response.SyncResponseImpl;
 
 /**
  * エラーコンポーネント.
@@ -42,7 +42,7 @@ public interface ErrorSyncComponent extends ErrorComponent {
 			.getComponentType().isRESTful();
 		// ResponseがNormalResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
-			res = HttpServerUtil.syncResponse(res);
+			res = new SyncResponseImpl(res);
 		}
 		// RESTful返却.
 		if(restful) {

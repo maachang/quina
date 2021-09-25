@@ -10,6 +10,7 @@ import quina.http.server.furnishing.BaseSendResponse;
 public interface SyncResponse extends
 	Response<SyncResponse>,
 	BaseSendResponse<SyncResponse> {
+	
 	/**
 	 * 送信なしを示すオブジェクト.
 	 */

@@ -5,8 +5,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import quina.net.nio.tcp.NioAtomicValues.Bool;
+import quina.worker.Wait;
 import quina.net.nio.tcp.NioUtil;
-import quina.net.nio.tcp.Wait;
 
 /**
  * Nioワーカースレッド.
