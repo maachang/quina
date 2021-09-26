@@ -43,16 +43,23 @@ public class HttpServerAnalysis {
 		}
 		// バッファからHTTPヘッダ終端情報が存在するかチェック.
 		final NioBuffer buffer = element.getBuffer();
+		try {
+			if(charset == null || charset.isEmpty()) {
+				charset = HttpConstants.getCharset();
+			}
+		} catch(Exception e) {}
 		buffer.write(recvBin);
+		// Httpヘッダの終端を検索.
 		final int endPoint = buffer.indexOf(HttpConstants.END_HEADER,
 			element.getReceiveHeaderPosition());
+		// 終端が見つからない場合.
 		if(endPoint == -1) {
 			// HTTPヘッダの終端が見つからない場合は、
 			// 現在のバッファ長 - 終端の長さ分を引いた
 			// ポジションを次の検索開始位置にセットする.
 			element.setReceiveHeaderPosition(
 				buffer.size() <= HttpConstants.END_HEADER_LENGTH ?
-					0 : buffer.size() - HttpConstants.END_HEADER_LENGTH);
+					endPoint : buffer.size() - HttpConstants.END_HEADER_LENGTH);
 			return false;
 		// 文字コードが指定されていない場合.
 		} else if(charset == null || charset.isEmpty()) {
@@ -72,12 +79,12 @@ public class HttpServerAnalysis {
 			String v = new String(b, charset).trim();
 			b = null;
 			String[] list = v.split(" ");
-			v = null;
 			if (list.length != 3) {
 				throw new HttpException(
 					"Received data is not an HTTP request: \"" +
 					v + "\"");
 			}
+			v = null;
 			Long contentLength;
 			Method method = Method.get(list[0].trim().toUpperCase());
 			String url = getDecodeUrl(list[1].trim(), charset);

@@ -15,6 +15,25 @@ public abstract class NioWorkerCall
 	protected byte[] receiveData;
 	
 	/**
+	 * 設定されたワーカーNoを取得.
+	 * @return int ワーカーNoを取得.
+	 *             -1の場合割り当てられていません.
+	 */
+	@Override
+	public int getWorkerNo() {
+		return element.getWorkerNo();
+	}
+	
+	/**
+	 * ワーカーNoを設定.
+	 * @param no ワーカーNoを設定します.
+	 */
+	@Override
+	public void setWorkerNo(int no) {
+		element.setWorkerNo(no);
+	}
+	
+	/**
 	 * 受信データを設定.
 	 * @param element NioElementを設定します.
 	 * @param receiveData 受信データを設定します.

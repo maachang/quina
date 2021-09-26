@@ -56,6 +56,13 @@ class QuinaWorkerHandlerImpl
 		}
 	}
 	
+	// コンテキストをクリア.
+	private static final void clearContext(QuinaWorkerCall em) {
+		// クリア.
+		em.setContext(null);
+		HttpServerContext.clear();
+	}
+	
 	/**
 	 * 対象要素の開始時の呼び出し.
 	 * この処理はQuinaWorkerElement開始時に必ず呼び出されます.
@@ -64,18 +71,47 @@ class QuinaWorkerHandlerImpl
 	 */
 	@Override
 	public void startCommonCall(int no, QuinaWorkerCall em) {
-		// ワーカーコール要素が有効な場合.
-		if(!em.isDestroy(no)) {
-			final HttpElement hem = (HttpElement)((NioWorkerCall)em)
-					.getNioElement();
-			// HttpServerContextが利用可能な場合.
-			if(HttpServerContext.isCreate(hem)) {
-				// コンテキストを生成して、スレッドでの
-				// コンテキスト利用を許可.
-				HttpServerContext.create(hem);
+		// ワーカーコール要素が無効な場合.
+		if(em.isDestroy(no)) {
+			// Contextクリア.
+			clearContext(em);
+			return;
+		}
+		// workerCallからContextを取得.
+		HttpServerContext ctx = (HttpServerContext)em.getContext();
+		// workerCallのコンテキストが存在する場合.
+		if(ctx != null) {
+			// このスレッドのコンテキストとして設定.
+			HttpServerContext.set(ctx);
+			// スレッドスコープ開始.
+			ctx.startThreadScope();
+		// workerCallのコンテキストが存在しない場合.
+		} else {
+			// このスレッドのコンテキストを取得.
+			HttpServerContext thisCtx = HttpServerContext.get();
+			// 存在する場合はworkerCallに設定.
+			if(thisCtx != null) {
+				em.setContext(thisCtx);
+				// スレッドスコープ開始.
+				thisCtx.startThreadScope();
+			// 存在しない場合、新規作成.
 			} else {
-				// 作成出来ない場合は破棄する.
-				HttpServerContext.clear();
+				// HttpElementを取得.
+				final HttpElement hem = (HttpElement)((NioWorkerCall)em)
+					.getNioElement();
+				// HttpServerContextが生成可能な場合.
+				if(HttpServerContext.isCreate(hem)) {
+					// コンテキストを生成して、スレッドでの
+					// コンテキスト利用を許可.
+					thisCtx = (HttpServerContext)HttpServerContext
+						.create(hem);
+					// workerCallに設定.
+					em.setContext(thisCtx);
+				// 生成出来ない場合は破棄する.
+				} else {
+					// Contextクリア.
+					clearContext(em);
+				}
 			}
 		}
 	}
@@ -88,7 +124,32 @@ class QuinaWorkerHandlerImpl
 	 */
 	@Override
 	public void endCommonCall(int no, QuinaWorkerCall em) {
-		// コンテキストをクリア.
+		// ワーカーコール要素が無効な場合.
+		if(em.isDestroy(no)) {
+			// Contextクリア.
+			clearContext(em);
+			return;
+		}
+		// workerCallに存在するContextを取得.
+		HttpServerContext ctx = (HttpServerContext)em.getContext();
+		// workerCallのコンテキストが存在しないで
+		if(ctx == null) {
+			// このスレッドのコンテキストを取得.
+			HttpServerContext thisCtx = HttpServerContext.get();
+			// このスレッドのコンテキストが存在する場合.
+			if(thisCtx != null) {
+				// workerCallにスレッドのコンテキストを
+				// 設定する.
+				em.setContext(thisCtx);
+				ctx = thisCtx;
+			}
+		}
+		// workerCallのコンテキストが存在する場合.
+		if(ctx != null) {
+			// １つのスレッドスコープを終了.
+			ctx.exitThreadScope();
+		}
+		// このスレッドのコンテキストをクリア.
 		HttpServerContext.clear();
 	}
 	

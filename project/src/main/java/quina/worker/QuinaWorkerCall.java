@@ -1,11 +1,34 @@
 package quina.worker;
 
+import quina.util.AtomicNumber;
+
 /**
  * Quinaコール.
  */
 public abstract class QuinaWorkerCall {
+	
 	// スレッド項番.
-	protected int threadNo = -1;
+	protected final AtomicNumber threadNo = new AtomicNumber(-1);
+	
+	// QuinaContext.
+	protected QuinaContext context;
+	
+	/**
+	 * QuinaContextを設定.
+	 * @param context 対象のQuinaContextを設定します.
+	 */
+	public void setContext(QuinaContext context) {
+		this.context = context;
+	}
+	
+	/**
+	 * QuinaContextを取得.
+	 * @return QuinaContext 設定されてるQuinaContextが
+	 *                      返却されます.
+	 */
+	public QuinaContext getContext() {
+		return this.context;
+	}
 	
 	/**
 	 * 設定されたワーカーNoを取得.
@@ -13,7 +36,7 @@ public abstract class QuinaWorkerCall {
 	 *             -1の場合割り当てられていません.
 	 */
 	public int getWorkerNo() {
-		return threadNo;
+		return threadNo.get();
 	}
 	
 	/**
@@ -21,7 +44,7 @@ public abstract class QuinaWorkerCall {
 	 * @param no ワーカーNoを設定します.
 	 */
 	public void setWorkerNo(int no) {
-		this.threadNo = no;
+		this.threadNo.set(no);
 	}
 	
 	/**

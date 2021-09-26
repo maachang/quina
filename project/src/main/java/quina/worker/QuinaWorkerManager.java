@@ -15,6 +15,9 @@ import quina.util.collection.IndexKeyValueList;
 final class QuinaWorkerManager {
 	// ワーカースレッド群.
 	private final QuinaWorkerThread[] threads;
+	
+	// ワーカースレッド長.
+	private final int threadLength;
 
 	// 次のワーカースレッド割当ID.
 	private final AtomicNumber nextWorkerId = new AtomicNumber(0);
@@ -56,6 +59,8 @@ final class QuinaWorkerManager {
 		for(int i = 0; i < threadLength; i ++) {
 			threads[i] = new QuinaWorkerThread(i, handle, indexCallHandles);
 		}
+		// スレッド長を設定.
+		this.threadLength = threadLength;
 	}
 	
 	// 指定されたいQuinaWorkerElementHandle群をインデックス化.
@@ -222,36 +227,24 @@ final class QuinaWorkerManager {
 	 * @param em Quinaワーカー要素を設定します.
 	 * @return int 割り当てられたワーカーNoが返却されます.
 	 */
-	public int push(QuinaWorkerCall em) {
-		// nio要素に登録されたワーカーNoを取得.
-		int no = em.getWorkerNo();
-		// １度登録されたワーカースレッド番号が存在しない場合.
-		if(no < 0) {
-			// 割り当てるワーカースレッドを算出.
-			int nextNo;
-			final int len = threads.length;
-			while(true) {
-				// 前の設定されたワーカーNoを取得.
-				no = nextWorkerId.get();
-				// 次のワーカーNoを作成.
-				nextNo = no + 1;
-				// ワーカースレッド数の上限.
-				if(nextNo >= len) {
-					nextNo = 0;
-				}
-				// この条件で更新可能な場合は割当可能.
-				if(nextWorkerId.compareAndSet(no, nextNo)) {
-					// nio要素に引き続き利用するワーカーNoを登録.
-					if(em != null) {
-						em.setWorkerNo(no);
-					}
-					break;
-				}
+	public void push(QuinaWorkerCall em) {
+		int no;
+		// 既にワーカーIDが設定されている場合.
+		if((no = em.getWorkerNo()) > 0) {
+			// そのまま登録.
+			threads[no].push(em);
+		// ワーカーIDが設定されていない場合.
+		} else {
+			// 新しいIDをセット.
+			no = nextWorkerId.inc();
+			// ワーカー登録.
+			em.setWorkerNo(no);
+			threads[no].push(em);
+			// スレッド数を超えてる場合.
+			if(no + 1 >= threadLength) {
+				nextWorkerId.set(0);
 			}
 		}
-		// 対象ワーカースレッドに登録.
-		threads[no].push(em);
-		return no;
 	}
 
 	/**

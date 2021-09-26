@@ -33,7 +33,7 @@ public class HttpServerWorkerCall extends NioWorkerCall {
 	@Override
 	public void errorCall(int no, Throwable t) {
 		if(handle.log.isErrorEnabled()) {
-			handle.log.error("*** error (" + no + ")", t);
+			handle.log.error("*** error threadNo: " + no, t);
 		}
 	}
 	

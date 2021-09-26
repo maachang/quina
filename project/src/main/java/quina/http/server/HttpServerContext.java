@@ -11,6 +11,7 @@ import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
+import quina.worker.QuinaContext;
 
 /**
  * HttpServerContext.
@@ -22,21 +23,38 @@ public class HttpServerContext implements HttpContext {
 	
 	/**
 	 * 現在のスレッドに新しいコンテキストを生成.
+	 * @param context 対象のQuinaContextを設定します.
+	 * @return HttpContext HttpContextが返却されます.
+	 */
+	public static final HttpContext set(
+		QuinaContext context) {
+		if(context == null) {
+			throw new QuinaException(
+				"The argument is null.");
+		}
+		if(!(context instanceof HttpServerContext)) {
+			throw new QuinaException(
+				"The specified Context is not an HttpServerContext.");
+		}
+		HttpServerContext ctx = (HttpServerContext)context;
+		threadLocal.set(ctx);
+		return ctx;
+	}
+	
+	/**
+	 * 現在のスレッドに新しいコンテキストを生成.
 	 * @param em 対象のHttpElementを設定します.
 	 * @return HttpContext HttpContextが返却されます.
 	 */
 	public static final HttpContext create(
 		HttpElement em) {
-		HttpServerContext ctx = threadLocal.get();
 		if(em == null || !em.isConnection() ||
 			em.getRequest() == null ||
 			em.getResponse() == null) {
-			throw new QuinaException("The argument is null.");
+			throw new QuinaException(
+				"The argument is null.");
 		}
-		if(ctx != null) {
-			return ctx._create(em);
-		}
-		ctx = new HttpServerContext(em);
+		HttpServerContext ctx = new HttpServerContext(em);
 		threadLocal.set(ctx);
 		return ctx;
 	}
@@ -59,10 +77,7 @@ public class HttpServerContext implements HttpContext {
 	 * 現在のスレッドのコンテキストをクリア.
 	 */
 	public static final void clear() {
-		HttpServerContext ctx = threadLocal.get();
-		if(ctx != null) {
-			ctx._clear();
-		}
+		threadLocal.set(null);
 	}
 	
 	/**
@@ -77,44 +92,49 @@ public class HttpServerContext implements HttpContext {
 	// HttpElement.
 	private HttpElement element;
 	
+	// threadScope.
+	private int threadScope;
+	
 	// コンストラクタ.
 	private HttpServerContext() {}
 	
 	// コンストラクタ.
 	private HttpServerContext(HttpElement em) {
 		this.element = em;
-	}
-	
-	// 新しく設定.
-	private final HttpServerContext _create(
-		HttpElement em) {
-		// 既に登録されるものと同じ場合は登録しない.
-		if(element != em) {
-			element = em;
-		}
-		return this;
-	}
-	
-	// 内容をクリア.
-	private final void _clear() {
-		element = null;
+		// 生成時のスレッドスコープ値は１.
+		this.threadScope = 1;
 	}
 	
 	/**
-	 * クリアーされてる状態の場合.
-	 * @return boolean true の場合、クリアされています.
+	 * スレッドスコープ値を設定.
+	 * @param threadScope 対象のスレッドスコープ値を
+	 *                    設定します.
 	 */
-	public boolean isClear() {
-		return element == null;
+	public void setThreadScope(int threadScope) {
+		this.threadScope = threadScope;
 	}
 	
 	/**
-	 * 対象のコンテキストをコピー.
-	 * @return HttpContext コピーされたContextが返却されます.
+	 * 新しいスレッドスコープを実行.
+	 */
+	public void startThreadScope() {
+		threadScope ++;
+	}
+	
+	/**
+	 * 現在のスレッドスコープを終了.
+	 */
+	public void exitThreadScope() {
+		threadScope --;
+	}
+	
+	/**
+	 * スレッドスコープ値を取得.
+	 * @return int スレッドスコープ値が返却されます.
 	 */
 	@Override
-	public HttpContext copy() {
-		return new HttpServerContext(element);
+	public int getThreadScope() {
+		return threadScope;
 	}
 	
 	/**
