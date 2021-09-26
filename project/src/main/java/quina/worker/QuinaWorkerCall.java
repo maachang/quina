@@ -7,9 +7,6 @@ import quina.util.AtomicNumber;
  */
 public abstract class QuinaWorkerCall {
 	
-	// スレッド項番.
-	protected final AtomicNumber threadNo = new AtomicNumber(-1);
-	
 	// QuinaContext.
 	protected QuinaContext context;
 	
@@ -36,7 +33,9 @@ public abstract class QuinaWorkerCall {
 	 *             -1の場合割り当てられていません.
 	 */
 	public int getWorkerNo() {
-		return threadNo.get();
+		// このIDはある程度長く滞在するオブジェクトと
+		// 連動させる必要がある.
+		return -1;
 	}
 	
 	/**
@@ -44,7 +43,8 @@ public abstract class QuinaWorkerCall {
 	 * @param no ワーカーNoを設定します.
 	 */
 	public void setWorkerNo(int no) {
-		this.threadNo.set(no);
+		// このIDはある程度長く滞在するオブジェクトと
+		// 連動させる必要がある.
 	}
 	
 	/**

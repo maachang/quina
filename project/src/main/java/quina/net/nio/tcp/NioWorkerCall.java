@@ -21,6 +21,7 @@ public abstract class NioWorkerCall
 	 */
 	@Override
 	public int getWorkerNo() {
+		// 対象NioElementのワーカー番号を取得.
 		return element.getWorkerNo();
 	}
 	
@@ -30,6 +31,7 @@ public abstract class NioWorkerCall
 	 */
 	@Override
 	public void setWorkerNo(int no) {
+		// 対象NioElementのワーカー番号に設定.
 		element.setWorkerNo(no);
 	}
 	

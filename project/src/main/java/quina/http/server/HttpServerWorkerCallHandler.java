@@ -159,14 +159,9 @@ public class HttpServerWorkerCallHandler
 				return true;
 			// 受信完了.
 			case STATE_END_RECV:
-				try {
-					// コンポーネント実行.
-					ExecuteComponent.getInstance()
-						.execute(element);
-				} finally {
-					// 対象のHttpServerContextをクリア.
-					HttpServerContext.clear();
-				}
+				// コンポーネント実行.
+				ExecuteComponent.getInstance()
+					.execute(element);
 				// 処理終了.
 				return true;
 			}
