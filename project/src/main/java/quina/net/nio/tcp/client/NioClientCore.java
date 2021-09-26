@@ -15,8 +15,8 @@ import quina.net.nio.tcp.NioSelector;
 import quina.net.nio.tcp.NioSendData;
 import quina.net.nio.tcp.NioSendLess;
 import quina.net.nio.tcp.NioUtil;
-import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerThreadManager;
+import quina.net.nio.tcp.NioWorkerCall;
+import quina.worker.QuinaWorkerService;
 
 /**
  * NioClientCore.
@@ -46,28 +46,28 @@ public class NioClientCore extends Thread {
 	private final Bool exitFlag = new Bool(false);
 
 	// ワーカースレッドマネージャ.
-	private NioWorkerThreadManager workerMan;
+	private QuinaWorkerService workerService;
 
 	/**
 	 * コンストラクタ.
 	 * @param call NioClientコール処理を設定します.
-	 * @param workerMan ワーカースレッドマネージャを設定します.
+	 * @param workerService QuinaWorkerServiceを設定します.
 	 */
-	public NioClientCore(NioClientCall call,NioWorkerThreadManager workerMan) {
-		this(NioConstants.getByteBufferLength(), call, workerMan);
+	public NioClientCore(NioClientCall call,QuinaWorkerService workerService) {
+		this(NioConstants.getByteBufferLength(), call, workerService);
 	}
 
 	/**
 	 * コンストラクタ.
 	 * @param byteBufferLength Nioで利用するByteBufferのサイズを設定します.
 	 * @param call NioClientコール処理を設定します.
-	 * @param workerMan ワーカースレッドマネージャを設定します.
+	 * @param workerService QuinaWorkerServiceを設定します.
 	 */
 	public NioClientCore(int byteBufferLength, NioClientCall call,
-		NioWorkerThreadManager workerMan) {
+		QuinaWorkerService workerService) {
 		this.byteBufferLength = byteBufferLength;
 		this.call = call;
-		this.workerMan = workerMan;
+		this.workerService = workerService;
 	}
 
 	/**
@@ -241,7 +241,7 @@ public class NioClientCore extends Thread {
 		NioElement em = null;
 		NioSendLess sl = null;
 		NioClientSendOrder sendEm = null;
-		NioReceiveWorkerElement wem = null;
+		NioWorkerCall wem = null;
 		byte[] rb = null;
 
 		// スレッド開始完了.
@@ -377,12 +377,12 @@ public class NioClientCore extends Thread {
 									if(buf.remaining() > 0) {
 										rb = new byte[buf.remaining()];
 										buf.get(rb);
-										wem = new NioReceiveWorkerElement(nc);
+										wem = nc.createNioWorkerCall();
 										// ワーカー要素に受信データをセット.
 										wem.setReceiveData(em, rb);
 										rb = null;
-										// ワーカースレッドマネージャに登録.
-										workerMan.push(em, wem);
+										// ワーカーサービスに登録.
+										workerService.push(wem);
 									}
 								}
 							}

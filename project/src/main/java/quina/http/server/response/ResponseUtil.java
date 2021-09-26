@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.zip.GZIPOutputStream;
 
-import quina.Quina;
+import quina.component.ExecuteComponent;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpConstants;
@@ -425,7 +425,7 @@ public final class ResponseUtil {
 	 * @param path フォワード先のコンポーネントパスを設定します.
 	 */
 	public static final void forward(HttpElement em, String path) {
-		Quina.get().getHttpServerCall().execComponent(path, em);
+		ExecuteComponent.getInstance().execute(path, em);
 	}
 
 	/**

@@ -1,7 +1,5 @@
 package quina.http.server;
 
-import java.util.Arrays;
-
 import quina.http.HttpConstants;
 import quina.http.HttpElement;
 import quina.http.HttpElementState;
@@ -11,6 +9,7 @@ import quina.http.HttpStatus;
 import quina.http.Method;
 import quina.net.nio.tcp.NioBuffer;
 import quina.util.Alphabet;
+import quina.util.StringUtil;
 
 /**
  * Httpサーバ用の解析処理.
@@ -22,7 +21,8 @@ public class HttpServerAnalysis {
 	 * @param recvBin 受信されたバイナリ情報を設定します.
 	 * @return boolean trueの場合、リクエストの作成が完了しました.
 	 */
-	public static final boolean getRequest(HttpElement element, byte[] recvBin) {
+	public static final boolean getRequest(
+		HttpElement element, byte[] recvBin) {
 		return getRequest(element, null, recvBin);
 	}
 
@@ -33,10 +33,12 @@ public class HttpServerAnalysis {
 	 * @param recvBin 受信されたバイナリ情報を設定します.
 	 * @return boolean trueの場合、リクエストの作成が完了しました.
 	 */
-	public static final boolean getRequest(HttpElement element, String charset,
+	public static final boolean getRequest(
+		HttpElement element, String charset,
 		byte[] recvBin) {
 		// リクエストヘッダ作成中のステータスでない場合.
-		if(element.getState() != HttpElementState.STATE_RECEIVING_HEADER) {
+		if(element.getState() !=
+			HttpElementState.STATE_RECEIVING_HEADER) {
 			return true;
 		}
 		// バッファからHTTPヘッダ終端情報が存在するかチェック.
@@ -45,7 +47,8 @@ public class HttpServerAnalysis {
 		final int endPoint = buffer.indexOf(HttpConstants.END_HEADER,
 			element.getReceiveHeaderPosition());
 		if(endPoint == -1) {
-			// HTTPヘッダの終端が見つからない場合は、現在のバッファ長 - 終端の長さ分を引いた
+			// HTTPヘッダの終端が見つからない場合は、
+			// 現在のバッファ長 - 終端の長さ分を引いた
 			// ポジションを次の検索開始位置にセットする.
 			element.setReceiveHeaderPosition(
 				buffer.size() <= HttpConstants.END_HEADER_LENGTH ?
@@ -60,7 +63,8 @@ public class HttpServerAnalysis {
 			// method url version を取得.
 			int firstPoint = buffer.indexOf(HttpConstants.END_LINE);
 			if(firstPoint == -1) {
-				throw new HttpException("Received data is not an HTTP request");
+				throw new HttpException(
+					"Received data is not an HTTP request");
 			}
 			byte[] b = new byte[firstPoint];
 			buffer.read(b);
@@ -70,12 +74,13 @@ public class HttpServerAnalysis {
 			String[] list = v.split(" ");
 			v = null;
 			if (list.length != 3) {
-				throw new HttpException("Received data is not an HTTP request:"
-					+ Arrays.toString(list));
+				throw new HttpException(
+					"Received data is not an HTTP request: \"" +
+					v + "\"");
 			}
 			Long contentLength;
 			Method method = Method.get(list[0].trim().toUpperCase());
-			String url = list[1].trim();
+			String url = getDecodeUrl(list[1].trim(), charset);
 			String version = list[2].trim().toUpperCase();
 			list = null;
 
@@ -159,5 +164,16 @@ public class HttpServerAnalysis {
 		} catch(Exception e) {
 			throw new HttpException(e);
 		}
+	}
+	
+	// エンコードされてるURLを変換.
+	private static final String getDecodeUrl(
+		String url, String charset) {
+		int p = url.indexOf("?");
+		if(p == -1) {
+			return StringUtil.urlDecode(url, charset);
+		}
+		return StringUtil.urlDecode(url.substring(0, p), charset) +
+			url.substring(p);
 	}
 }

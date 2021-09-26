@@ -13,8 +13,8 @@ import quina.net.nio.tcp.NioElement;
 import quina.net.nio.tcp.NioSelector;
 import quina.net.nio.tcp.NioSendLess;
 import quina.net.nio.tcp.NioUtil;
-import quina.net.nio.tcp.worker.NioReceiveWorkerElement;
-import quina.net.nio.tcp.worker.NioWorkerThreadManager;
+import quina.net.nio.tcp.NioWorkerCall;
+import quina.worker.QuinaWorkerService;
 
 /**
  * 基本Nio処理. accept,read,writeの nioイベントを１つのスレッドで処理します。
@@ -43,22 +43,22 @@ public class NioServerCore extends Thread {
 	// スレッド終了完了フラグ.
 	private final Bool exitFlag = new Bool(false);
 
-	// ワーカースレッドマネージャ.
-	private NioWorkerThreadManager workerMan;
+	// QuinaWorkerService.
+	private QuinaWorkerService workerService;
 
 	/**
 	 * コンストラクタ.
 	 *
 	 * @param server ServerSocketChannelを設定します.
 	 * @param call NioServerCallを設定します.
-	 * @param workerMan ワーカースレッドマネージャを設定します.
+	 * @param workerService QuinaWorkerServiceを設定します.
 	 * @exception IOException I/O例外.
 	 */
 	public NioServerCore(ServerSocketChannel server, NioServerCall call,
-		NioWorkerThreadManager workerMan)
+		QuinaWorkerService workerService)
 		throws IOException {
 		this(NioConstants.getByteBufferLength()
-			, server, call, workerMan);
+			, server, call, workerService);
 	}
 
 	/**
@@ -67,19 +67,18 @@ public class NioServerCore extends Thread {
 	 * @param byteBufferLength Nioで利用するByteBufferのサイズを設定します.
 	 * @param server ServerSocketChannelを設定します.
 	 * @param call NioServerCallを設定します.
-	 * @param workerMan ワーカースレッドマネージャを設定します.
+	 * @param workerService QuinaWorkerServiceを設定します.
 	 * @exception IOException I/O例外.
 	 */
 	public NioServerCore(int byteBufferLength, ServerSocketChannel server,
-		NioServerCall call, NioWorkerThreadManager workerMan)
-
+		NioServerCall call, QuinaWorkerService workerService)
 		throws IOException {
 		this(byteBufferLength
 			, NioServerConstants.getSendBuffer()
 			, NioServerConstants.getRecvBuffer()
 			, NioServerConstants.isKeepAlive()
 			, NioServerConstants.isTcpNoDeley()
-			, server, call, workerMan);
+			, server, call, workerService);
 	}
 
 	/**
@@ -92,13 +91,13 @@ public class NioServerCore extends Thread {
 	 * @param tcpNoDeley tcpNoDeleyモードを設定します.
 	 * @param server ServerSocketChannelを設定します.
 	 * @param call NioServerCallを設定します.
-	 * @param workerMan ワーカースレッドマネージャを設定します.
+	 * @param workerService QuinaWorkerServiceを設定します.
 	 * @exception IOException I/O例外.
 	 */
 	public NioServerCore(int byteBufferLength, int sendBuffer,
 		int recvBuffer, boolean keepAlive, boolean tcpNoDeley,
 		ServerSocketChannel server, NioServerCall call,
-		NioWorkerThreadManager workerMan)
+		QuinaWorkerService workerService)
 		throws IOException {
 		if(server.isBlocking()) {
 			server.configureBlocking(false);
@@ -110,7 +109,7 @@ public class NioServerCore extends Thread {
 		this.tcpNoDeley = tcpNoDeley;
 		this.server = server;
 		this.call = call;
-		this.workerMan = workerMan;
+		this.workerService = workerService;
 		call.init();
 	}
 
@@ -296,7 +295,7 @@ public class NioServerCore extends Thread {
 		SocketChannel ch = null;
 		NioElement em = null;
 		NioSendLess sl = null;
-		NioReceiveWorkerElement wem = null;
+		NioWorkerCall wem = null;
 		byte[] rb = null;
 
 		// スレッド開始完了.
@@ -433,12 +432,12 @@ public class NioServerCore extends Thread {
 									if(buf.remaining() > 0) {
 										rb = new byte[buf.remaining()];
 										buf.get(rb);
-										wem = new NioReceiveWorkerElement(nc);
+										wem = nc.createNioWorkerCall();
 										// ワーカー要素に受信データをセット.
 										wem.setReceiveData(em, rb);
 										rb = null;
-										// ワーカースレッドマネージャに登録.
-										workerMan.push(em, wem);
+										// ワーカーサービスに登録.
+										workerService.push(wem);
 									}
 								}
 							}

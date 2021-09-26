@@ -3,12 +3,12 @@ package quina.worker;
 /**
  * QuinaWorker呼び出しに対する１つのハンドル.
  */
-public interface QuinaWorkerCallHandler {
+public abstract class QuinaWorkerCallHandler {
 	/**
 	 * 紐付けたいQuinaCall.getId()と同じIdを取得.
 	 * @return Integer 対象となるQuinaCallのIdが返却されます.
 	 */
-	default Integer targetId() {
+	public Integer targetId() {
 		return null;
 	}
 	
@@ -16,21 +16,21 @@ public interface QuinaWorkerCallHandler {
 	 * ワーカーマネージャ初期化時の呼び出し処理。
 	 * @param len ワーカースレッド数が設定されます.
 	 */
-	default void initWorkerCall(int len) {
+	public void initWorkerCall(int len) {
 	}
 
 	/**
 	 * １つのワーカスレッド開始時の呼び出し.
 	 * @param no ワーカースレッドNoが設定されます.
 	 */
-	default void startThreadCall(int no) {
+	public void startThreadCall(int no) {
 	}
 
 	/**
 	 * １つのワーカスレッド終了時の呼び出し.
 	 * @param no ワーカースレッドNoが設定されます.
 	 */
-	default void endThreadCall(int no) {
+	public void endThreadCall(int no) {
 	}
 	
 	/**
@@ -38,8 +38,8 @@ public interface QuinaWorkerCallHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	default void destroy(int no, QuinaWorkerCall em) {
-		em.destroy();
+	public void destroy(int no, QuinaWorkerCall em) {
+		em.destroy(no);
 	}
 
 	/**
@@ -48,8 +48,8 @@ public interface QuinaWorkerCallHandler {
 	 * @param em QuinaWorkerElementを設定します.
 	 * @return boolean [true]の場合は既に破棄されています.
 	 */
-	default boolean isDestroy(int no, QuinaWorkerCall em) {
-		return em.isDestroy();
+	public boolean isDestroy(int no, QuinaWorkerCall em) {
+		return em.isDestroy(no);
 	}
 	
 	/**
@@ -57,8 +57,8 @@ public interface QuinaWorkerCallHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	default void startCall(int no, QuinaWorkerCall em) {
-		em.startCall();
+	public void startCall(int no, QuinaWorkerCall em) {
+		em.startCall(no);
 	}
 	
 	/**
@@ -66,8 +66,8 @@ public interface QuinaWorkerCallHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	default void endCall(int no, QuinaWorkerCall em) {
-		em.endCall();
+	public void endCall(int no, QuinaWorkerCall em) {
+		em.endCall(no);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public interface QuinaWorkerCallHandler {
 	 * @param em QuinaWorkerElementを設定します.
 	 * @return boolean falseの場合実行処理は失敗しました.
 	 */
-	default boolean executeCall(int no, QuinaWorkerCall em) {
-		return em.executeCall();
+	public boolean executeCall(int no, QuinaWorkerCall em) {
+		return em.executeCall(no);
 	}
 }

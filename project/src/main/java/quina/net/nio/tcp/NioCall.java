@@ -55,20 +55,4 @@ public interface NioCall {
 	 */
 	public boolean send(NioElement em, ByteBuffer buf)
 		throws IOException;
-
-	/**
-	 * Receive処理.
-	 *
-	 * @param o
-	 *            ワーカースレッドNoに紐づくオブジェクトが設定されます.
-	 * @param em
-	 *            対象のNioElementオブジェクトが設定されます.
-	 * @param rcvBin
-	 *            今回受信されたデータが設定されます.
-	 * @return boolean [true]の場合、正常に処理されました.
-	 * @exception IOException
-	 *                IO例外.
-	 */
-	public boolean receive(Object o, NioElement em, byte[] rcvBin)
-		throws IOException;
 }

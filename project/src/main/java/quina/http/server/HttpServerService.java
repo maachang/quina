@@ -7,9 +7,7 @@ import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.QuinaUtil;
 import quina.exception.QuinaException;
-import quina.http.HttpCustomAnalysisParams;
 import quina.http.MimeTypes;
-import quina.http.worker.HttpWorkerService;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerConstants;
@@ -18,6 +16,7 @@ import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
+import quina.worker.QuinaWorkerService;
 
 /**
  * HttpServerサービス.
@@ -56,18 +55,14 @@ public class HttpServerService implements QuinaService {
 	private NioServerCore core = null;
 	
 	// HttpServerCall.
-	private final AtomicObject<HttpServerCall> httpServerCall =
-		new AtomicObject<HttpServerCall>();
-	
-	// カスタムなPostBody解析.
-	private final AtomicObject<HttpCustomAnalysisParams> custom =
-		new AtomicObject<HttpCustomAnalysisParams>();
+	private final AtomicObject<HttpServerNioCall> httpServerCall =
+		new AtomicObject<HttpServerNioCall>();
 	
 	// MimeTypes.
 	private final MimeTypes mimeTypes = MimeTypes.getInstance();
 
-	// HttpWorkerService.
-	private HttpWorkerService httpWorkerService = null;
+	// QuinaWorkerService.
+	private QuinaWorkerService quinaWorkerService = null;
 
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
@@ -77,14 +72,25 @@ public class HttpServerService implements QuinaService {
 
 	/**
 	 * コンストラクタ.
-	 * @param httpWorkerService HttpWorkerServceを設定します.
+	 * @param QuinaWorkerService QuinaWorkerServiceを設定します.
 	 */
-	public HttpServerService(HttpWorkerService httpWorkerService) {
-		this.httpWorkerService = httpWorkerService;
+	public HttpServerService(QuinaWorkerService quinaWorkerService) {
+		this.quinaWorkerService = quinaWorkerService;
 	}
 
 	@Override
 	public boolean loadConfig(String configDir) {
+		// HttpServerWorkerCallHandlerを取得.
+		HttpServerWorkerCallHandler hnd =
+				(HttpServerWorkerCallHandler)quinaWorkerService
+					.getCallHandleByTargetId(
+							HttpServerConstants.WORKER_CALL_ID);
+		// 対象ハンドルが存在しない場合.
+		if(hnd == null) {
+			throw new QuinaException(
+				"HttpServerWorkerCallHandler is not set in " +
+				"QuinaWorkerService.");
+		}
 		boolean ret = false;
 		lock.writeLock().lock();
 		try {
@@ -99,6 +105,9 @@ public class HttpServerService implements QuinaService {
 					ret = true;
 				}
 			}
+			// 対象ハンドルにコンフィグのテンポラリバイナリサイズを
+			// 登録する.
+			hnd.setTmpBinaryLength(config.getInt("recvTmpBuffer"));
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -119,14 +128,14 @@ public class HttpServerService implements QuinaService {
 		}
 		lock.writeLock().lock();
 		try {
-			// HttpWorkerServiceが開始していない場合はエラー.
-			if(!httpWorkerService.isStarted()) {
+			// QuinaWorkerServiceが開始していない場合はエラー.
+			if(!quinaWorkerService.isStarted()) {
 				throw new QuinaException("HttpWorkerService is not started.");
 			}
 			ServerSocketChannel server = null;
 			try {
 				// サーバーコール生成.
-				HttpServerCall c = new HttpServerCall(getCustom(), getMimeTypes());
+				HttpServerNioCall c = new HttpServerNioCall();
 				// サーバーソケット作成.
 				server = NioUtil.createServerSocketChannel(
 					config.getString("bindAddress"), config.getInt("bindPort"),
@@ -136,7 +145,7 @@ public class HttpServerService implements QuinaService {
 					config.getInt("sendBuffer"),
 					config.getInt("recvBuffer"), config.getBoolean("keepAlive"),
 					config.getBool("tcpNoDeley"), server, c,
-					httpWorkerService.getNioWorkerThreadManager());
+					quinaWorkerService);
 				// サーバーコールを設定.
 				this.httpServerCall.set(c);
 				// サーバーコアを設定.
@@ -257,41 +266,6 @@ public class HttpServerService implements QuinaService {
 		lock.readLock().lock();
 		try {
 			return mimeTypes;
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
-
-	/**
-	 * HttpServerCallを取得.
-	 * @return
-	 */
-	public HttpServerCall getHttpServerCall() {
-		return httpServerCall.get();
-	}
-	
-	/**
-	 * Httpリクエストのパラメータ解析カスアム処理を設定.
-	 * @param custom
-	 */
-	public void setCustom(
-		HttpCustomAnalysisParams custom) {
-		lock.writeLock().lock();
-		try {
-			this.custom.set(custom);
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
-	
-	/**
-	 * Httpリクエストのパラメータ解析カスタム処理を取得.
-	 * @return
-	 */
-	public HttpCustomAnalysisParams getCustom() {
-		lock.readLock().lock();
-		try {
-			return custom.get();
 		} finally {
 			lock.readLock().unlock();
 		}

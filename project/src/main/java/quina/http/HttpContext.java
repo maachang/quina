@@ -3,12 +3,17 @@ package quina.http;
 import quina.http.server.response.NormalResponse;
 import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.SyncResponse;
-import quina.worker.QuinaContext;
 
 /**
  * HttpContext.
  */
-public interface HttpContext extends QuinaContext {
+public interface HttpContext {
+	/**
+	 * 対象のコンテキストをコピー.
+	 * @return HttpContext コピーされたContextが返却されます.
+	 */
+	public HttpContext copy();
+	
 	/**
 	 * 対象のRequestを取得.
 	 * @return Request Requestが返却されます.

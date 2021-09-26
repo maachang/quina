@@ -6,17 +6,16 @@ import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
 import quina.annotation.quina.AnnotationQuina;
 import quina.component.EtagManagerInfo;
+import quina.component.ExecuteComponent;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpContext;
-import quina.http.server.HttpServerCall;
+import quina.http.HttpCustomAnalysisParams;
 import quina.http.server.HttpServerContext;
 import quina.http.server.HttpServerService;
-import quina.http.worker.HttpWorkerService;
+import quina.http.server.HttpServerWorkerCallHandler;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioUtil;
-import quina.net.nio.tcp.worker.NioWorkerThreadManager;
-import quina.net.nio.tcp.worker.WorkerElement;
 import quina.promise.PromiseWorkerManager;
 import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownConstants;
@@ -28,6 +27,8 @@ import quina.util.Env;
 import quina.util.FileUtil;
 import quina.util.TwoStepsFlag;
 import quina.util.collection.IndexMap;
+import quina.worker.QuinaWorkerCall;
+import quina.worker.QuinaWorkerService;
 
 /**
  * Quina.
@@ -49,14 +50,12 @@ public final class Quina {
 
 	// ルータオブジェクト.
 	private Router router;
+	
+	// Quinaワーカーサービス.
+	private QuinaWorkerService workerService;
 
-	// 基本サービス: HttpServerService.
-	// Httpサーバー関連のサービスを管理します.
+	// Httpサーバーサービス.
 	private HttpServerService httpServerService;
-
-	// 基本サービス: HttpWorkerService.
-	// Httpワーカースレッド関連を管理します.
-	private HttpWorkerService httpWorkerService;
 
 	// シャットダウンマネージャー.
 	private ShutdownManager shutdownManager;
@@ -64,10 +63,6 @@ public final class Quina {
 	// 実行引数管理.
 	private Args args;
 
-	// 実行中のワーカースレッドマネージャ.
-	private final AtomicObject<NioWorkerThreadManager> workerManager =
-		new AtomicObject<NioWorkerThreadManager>();
-	
 	// Quinaサービス管理.
 	private final QuinaServiceManager quinaServiceManager =
 		new QuinaServiceManager();
@@ -221,10 +216,18 @@ public final class Quina {
 			this.shutdownManager.getInfo().register(
 				new QuinaShutdownCall());
 			
+			// Httpワーカーサービスを生成.
+			this.workerService = new QuinaWorkerService();
+			// 共通ワーカーハンドラをセット.
+			this.workerService.setHandler(
+				new QuinaWorkerHandlerImpl());
+			// Httpワーカーハンドラをセット.
+			this.workerService.addCallHandle(
+				new HttpServerWorkerCallHandler());
+			
 			// HTTP関連サービスを生成.
-			this.httpWorkerService = new HttpWorkerService();
 			this.httpServerService = new HttpServerService(
-				this.httpWorkerService);
+				this.workerService);
 			
 			// AppendMimeのAnnotationを読み込む.
 			AnnotationQuina.loadAppendMimeType(mainClass);
@@ -274,7 +277,7 @@ public final class Quina {
 		// Etagマネージャのコンフィグ定義.
 		_loadEtagManagerConfig(confDir);
 		// 標準コンポーネントのコンフィグ情報を読み込む.
-		httpWorkerService.loadConfig(confDir);
+		workerService.loadConfig(confDir);
 		httpServerService.loadConfig(confDir);
 		// 登録サービスのコンフィグ情報を読み込む.
 		final int len = quinaServiceManager.size();
@@ -429,6 +432,25 @@ public final class Quina {
 	}
 	
 	/**
+	 * HTTPパラメータ解析をカスタマイズ解析するオブジェクトを設定.
+	 * @return custom カスタムオブジェクトを設定します.
+	 */
+	public void setHttpCustomAnalysisParams(
+		HttpCustomAnalysisParams custom) {
+		ExecuteComponent.getInstance()
+			.setHttpCustomAnalysisParams(custom);
+	}
+	
+	/**
+	 * HTTPパラメータ解析をカスタマイズ解析するオブジェクトを取得.
+	 * @return HttpCustomAnalysisParams カスタムオブジェクトが返却されます.
+	 */
+	public HttpCustomAnalysisParams getHttpCustomAnalysisParams() {
+		return ExecuteComponent.getInstance()
+			.getHttpCustomAnalysisParams();
+	}
+	
+	/**
 	 * Quina初期設定.
 	 * この処理はQuinaを利用する場合、必ず１度呼び出す必要があります.
 	 * 
@@ -565,7 +587,7 @@ public final class Quina {
 	private final void _checkService(boolean mode) {
 		_checkNoneExecuteInit();
 		// 基本サービスのチェック.
-		httpWorkerService.checkService(mode);
+		workerService.checkService(mode);
 		httpServerService.checkService(mode);
 		// 登録サービスのチェック.
 		final int len = quinaServiceManager.size();
@@ -598,7 +620,7 @@ public final class Quina {
 	 */
 	public QuinaConfig getHttpWorkerConfig() {
 		_checkNoneExecuteInit();
-		return httpWorkerService.getConfig();
+		return workerService.getConfig();
 	}
 
 	/**
@@ -637,13 +659,10 @@ public final class Quina {
 			}
 			// 基本サービスを起動.
 			// ワーカー起動で、最後にサーバー起動.
-			httpWorkerService.startService();
-			httpWorkerService.awaitStartup();
+			workerService.startService();
+			workerService.awaitStartup();
 			httpServerService.startService();
 			httpServerService.awaitStartup();
-			// ワーカースレッドマネージャを取得.
-			workerManager.set(
-				httpWorkerService.getNioWorkerThreadManager());
 			return this;
 		} catch(QuinaException qe) {
 			try {
@@ -669,7 +688,7 @@ public final class Quina {
 		_checkNoneExecuteInit();
 		// 基本サービスの開始処理[start()]が呼び出された場合.
 		if(httpServerService.isStartService() &&
-			httpWorkerService.isStartService()) {
+			workerService.isStartService()) {
 			// 登録サービスの開始処理[start()]が呼び出されたかチェック.
 			final int len = quinaServiceManager.size();
 			for(int i = 0; i < len; i ++) {
@@ -689,7 +708,7 @@ public final class Quina {
 		_checkNoneExecuteInit();
 		// 基本サービスが起動している場合.
 		if(httpServerService.isStarted() &&
-			httpWorkerService.isStarted()) {
+			workerService.isStarted()) {
 			// 登録サービスが起動しているかチェック.
 			final int len = quinaServiceManager.size();
 			for(int i = 0; i < len; i ++) {
@@ -724,8 +743,8 @@ public final class Quina {
 		// 最初にサーバ停止で、次にワーカー停止.
 		httpServerService.stopService();
 		httpServerService.awaitExit();
-		httpWorkerService.stopService();
-		httpWorkerService.awaitExit();
+		workerService.stopService();
+		workerService.awaitExit();
 		// 登録されたサービスを後ろから停止.
 		QuinaService qs;
 		final int len = quinaServiceManager.size();
@@ -752,7 +771,7 @@ public final class Quina {
 			}
 		}
 		// 基本サービスの停止チェック.
-		return httpWorkerService.isExit() &&
+		return workerService.isExit() &&
 			httpServerService.isExit() &&
 			LogFactory.getInstance().isExitLogWriteWorker();
 	}
@@ -788,18 +807,13 @@ public final class Quina {
 
 	/**
 	 * ワーカー要素を登録します.
-	 * @param em Worker要素を設定します.
+	 * @param em Workerコール要素を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public Quina registerWorker(WorkerElement em) {
+	public Quina registerWorker(QuinaWorkerCall em) {
 		_checkNoneExecuteInit();
-		final NioWorkerThreadManager man = workerManager.get();
-		// 開始していない場合.
-		if(man == null) {
-			throw new QuinaException("Quina has not started.");
-		}
 		try {
-			man.push(em);
+			workerService.push(em);
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {
@@ -814,21 +828,7 @@ public final class Quina {
 	 */
 	public boolean isStopWorker() {
 		_checkNoneExecuteInit();
-		final NioWorkerThreadManager man = workerManager.get();
-		// 開始していない場合.
-		if(man == null) {
-			return true;
-		}
-		return man.isStopCall();
-	}
-
-	/**
-	 * 登録されているHttpServerCallを取得.
-	 * @return HttpServerCall HttpServerCallが返却されます.
-	 */
-	public HttpServerCall getHttpServerCall() {
-		_checkNoneExecuteInit();
-		return httpServerService.getHttpServerCall();
+		return workerService.isExit();
 	}
 
 	// QuinaShutdownCall.

@@ -7,6 +7,7 @@ import quina.component.ComponentType;
 import quina.component.ErrorComponent;
 import quina.component.RegisterComponent;
 import quina.exception.CoreException;
+import quina.exception.QuinaException;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
@@ -54,7 +55,7 @@ public final class HttpServerUtil {
 		Validation validation;
 		// requestを取得.
 		HttpServerRequest req = (HttpServerRequest)em.getRequest();
-		// レスポンスはnull.
+		// 初回の場合レスポンスはnull.
 		Response<?> res = em.getResponse();
 		// methodがoptionかチェック.
 		if(Method.OPTIONS.equals(req.getMethod())) {
@@ -106,6 +107,13 @@ public final class HttpServerUtil {
 				// レスポンスをセット.
 				em.setResponse(res);
 			}
+			// HttpServerContextが作成可能な場合.
+			if(!HttpServerContext.isCreate(em)) {
+				throw new QuinaException(
+					"Failed to create HttpContext.");
+			}
+			// HttpServerContextに登録.
+			HttpServerContext.create(em);
 			// パラメータを取得.
 			params = HttpAnalysis.convertParams(req, custom);
 			// URLパラメータ条件が存在する場合.

@@ -60,6 +60,20 @@ public class QuinaWorkerService
 	}
 	
 	/**
+	 * 設定されているワーカーハンドラを取得.
+	 * @return QuinaWorkerHandler ワーカーハンドラーが
+	 *                            返却されます.
+	 */
+	public QuinaWorkerHandler getHandler() {
+		lock.readLock().lock();
+		try {
+			return handle;
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
+	
+	/**
 	 * ワーカーハンドラーが設定されてるか取得.
 	 * @return boolean trueの場合設定されています.
 	 */
@@ -97,6 +111,63 @@ public class QuinaWorkerService
 			lock.writeLock().unlock();
 		}
 		return this;
+	}
+	
+	/**
+	 * 登録されているQuinaWorkerCallHandler数を取得.
+	 * @return int 登録されている数が返却されます.
+	 */
+	public int getCallHandleSize() {
+		lock.readLock().lock();
+		try {
+			return callHandles == null ?
+				0 : callHandles.size();
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
+	
+	/**
+	 * 番号を指定して登録されているQuinaWorkerCallHandlerを取得.
+	 * @param no 対象の項番を設定します.
+	 * @return QuinaWorkerCallHandler QuinaWorkerCallHandlerが
+	 *                                返却されます.
+	 */
+	public QuinaWorkerCallHandler getCallHandle(int no) {
+		lock.readLock().lock();
+		try {
+			if(callHandles == null || no < 0 ||
+				no > callHandles.size()) {
+				return null;
+			}
+			return callHandles.get(no);
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
+	
+	/**
+	 * QuinaWorkerCallのターゲットIDを指定して
+	 * QuinaWorkerCallHandlerを取得します.
+	 * @param id QuinaWorkerCallのターゲットIDを指定します.
+	 * @return QuinaWorkerCallHandler QuinaWorkerCallHandlerが
+	 *                                返却されます.
+	 */
+	public QuinaWorkerCallHandler getCallHandleByTargetId(
+		int id) {
+		lock.readLock().lock();
+		try {
+			final int len = callHandles == null ?
+				0 : callHandles.size();
+			for(int i = 0; i < len; i ++) {
+				if(callHandles.get(i).targetId() == id) {
+					return callHandles.get(i);
+				}
+			}
+		} finally {
+			lock.readLock().unlock();
+		}
+		return null;
 	}
 	
 	/**
@@ -141,23 +212,12 @@ public class QuinaWorkerService
 			lock.writeLock().unlock();
 		}
 	}
-
+	
 	@Override
 	public boolean isStartService() {
 		return startFlag.get();
 	}
 	
-	// callHandles群を配列に変換.
-	private final QuinaWorkerCallHandler[] toArrayCallHandle() {
-		final int len = callHandles.size();
-		QuinaWorkerCallHandler[] ret =
-			new QuinaWorkerCallHandler[len];
-		for(int i = 0; i < len; i ++) {
-			ret[i] = callHandles.get(i);
-		}
-		return ret;
-	}
-
 	@Override
 	public void startService() {
 		// ワーカーハンドラが設定されていない場合.
@@ -189,6 +249,17 @@ public class QuinaWorkerService
 		}
 	}
 
+	// callHandles群を配列に変換.
+	private final QuinaWorkerCallHandler[] toArrayCallHandle() {
+		final int len = callHandles.size();
+		QuinaWorkerCallHandler[] ret =
+			new QuinaWorkerCallHandler[len];
+		for(int i = 0; i < len; i ++) {
+			ret[i] = callHandles.get(i);
+		}
+		return ret;
+	}
+	
 	@Override
 	public boolean isStarted() {
 		lock.readLock().lock();
@@ -275,5 +346,17 @@ public class QuinaWorkerService
 		} finally {
 			lock.readLock().unlock();
 		}
+	}
+	
+	/**
+	 * ワーカー要素の追加.
+	 * @param em Quinaワーカー要素を設定します.
+	 */
+	public void push(QuinaWorkerCall em) {
+		if(!isStartService()) {
+			throw new QuinaException(
+				"The service has not started.");
+		}
+		manager.push(em);
 	}
 }

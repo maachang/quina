@@ -489,7 +489,8 @@ final class QuinaWorkerManager {
 						// 対象ワーカーハンドルが存在する場合.
 						if(callHandle == null) {
 							// 既に破棄されてる場合.
-							if(!handle.isDestroy(id, call)) {
+							if(handle.isDestroy(id, call)) {
+								handle.destroy(id, call);
 								continue;
 							}
 							// 全体ワーカー共通開始処理.
@@ -508,12 +509,15 @@ final class QuinaWorkerManager {
 							
 							// 全体ワーカー要素の終了処理.
 							handle.endCall(id, call);
+							startCallFlag = false;
 							// 全体ワーカー共通終了処理.
 							handle.endCommonCall(id, call);
+							startCommonCallFlag = false;
 						// 対象ワーカーハンドルが存在しない場合.
 						} else {
 							// 既に破棄されてる場合.
-							if(!callHandle.isDestroy(id, call)) {
+							if(callHandle.isDestroy(id, call)) {
+								callHandle.destroy(id, call);
 								continue;
 							}
 							
@@ -533,11 +537,15 @@ final class QuinaWorkerManager {
 							
 							// 対象ワーカー要素の終了処理.
 							callHandle.endCall(id, call);
+							startCallFlag = false;
+							
 							// 全体ワーカー共通終了処理.
 							handle.endCommonCall(id, call);
+							startCommonCallFlag = false;
 						}
 					}
 				} catch (Throwable to) {
+					//to.printStackTrace();
 					// スレッド中止.
 					if (to instanceof InterruptedException) {
 						endFlag = true;
@@ -590,7 +598,12 @@ final class QuinaWorkerManager {
 							}
 							try {
 								handle.destroy(id, call);
-							} catch(Exception e) {}
+							} catch(Exception e) {
+								try {
+									// 破棄処理.
+									call.destroy(id);
+								} catch(Exception ee) {}
+							}
 						}
 					}
 				}
@@ -615,7 +628,11 @@ final class QuinaWorkerManager {
 					} else {
 						try {
 							handle.destroy(id, call);
-						} catch(Exception e) {}
+						} catch(Exception e) {
+							try {
+								call.destroy(id);
+							} catch(Exception ee) {}
+						}
 					}
 				} catch (Throwable to) {
 				}

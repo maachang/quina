@@ -1,7 +1,5 @@
 package quina.http.server;
 
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import quina.exception.QuinaException;
 import quina.http.HttpContext;
 import quina.http.HttpElement;
@@ -13,7 +11,6 @@ import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
-import quina.util.AtomicNumber;
 
 /**
  * HttpServerContext.
@@ -28,42 +25,40 @@ public class HttpServerContext implements HttpContext {
 	 * @param em 対象のHttpElementを設定します.
 	 * @return HttpContext HttpContextが返却されます.
 	 */
-	protected static final HttpContext create(
+	public static final HttpContext create(
 		HttpElement em) {
 		HttpServerContext ctx = threadLocal.get();
-		if(ctx != null) {
-			return ctx._create(
-				(HttpServerRequest)em.getRequest(),
-				(AbstractResponse<?>)em.getResponse());
+		if(em == null || !em.isConnection() ||
+			em.getRequest() == null ||
+			em.getResponse() == null) {
+			throw new QuinaException("The argument is null.");
 		}
-		ctx = new HttpServerContext(
-			(HttpServerRequest)em.getRequest(),
-			(AbstractResponse<?>)em.getResponse());
+		if(ctx != null) {
+			return ctx._create(em);
+		}
+		ctx = new HttpServerContext(em);
 		threadLocal.set(ctx);
 		return ctx;
 	}
 	
 	/**
-	 * 現在のスレッドに新しいコンテキストを生成.
-	 * @param req Requestを設定します.
-	 * @param res Responseを設定します.
-	 * @return HttpContext HttpContextが返却されます.
+	 * コンテキストが作成可能かチェック.
+	 * @param em 対象のHttpElementを設定します.
+	 * @return boolean trueの場合作成可能です.
 	 */
-	protected static final HttpContext create(
-		HttpServerRequest req, AbstractResponse<?> res) {
-		HttpServerContext ctx = threadLocal.get();
-		if(ctx != null) {
-			return ctx._create(req, res);
+	public static final boolean isCreate(HttpElement em) {
+		if(em == null || !em.isConnection() ||
+			em.getRequest() == null ||
+			em.getResponse() == null) {
+			return false;
 		}
-		ctx = new HttpServerContext(req, res);
-		threadLocal.set(ctx);
-		return ctx;
+		return true;
 	}
 	
 	/**
 	 * 現在のスレッドのコンテキストをクリア.
 	 */
-	protected static final void clear() {
+	public static final void clear() {
 		HttpServerContext ctx = threadLocal.get();
 		if(ctx != null) {
 			ctx._clear();
@@ -71,67 +66,46 @@ public class HttpServerContext implements HttpContext {
 	}
 	
 	/**
-	 * HttpContextを取得.
-	 * @return HttpContext HttpContextが返却されます.
+	 * HttpServerContextを取得.
+	 * @return HttpServerContext HttpServerContextが返却されます.
 	 */
-	public static final HttpContext get() {
+	public static final HttpServerContext get() {
 		// 現在のスレッドのコンテキストを取得.
 		return threadLocal.get();
 	}
 	
-	// スレッド呼び出しカウント.
-	private final AtomicNumber scope = new AtomicNumber(0);
-	
-	// HttpRequest.
-	private HttpServerRequest request;
-	
-	// HttpResponse.
-	private AbstractResponse<?> response;
-	
-	// Read-Writeロックオブジェクト.
-	private final ReentrantReadWriteLock lock =
-		new ReentrantReadWriteLock();
+	// HttpElement.
+	private HttpElement element;
 	
 	// コンストラクタ.
 	private HttpServerContext() {}
 	
 	// コンストラクタ.
-	private HttpServerContext(
-		HttpServerRequest req, AbstractResponse<?> res) {
-		_create(req, res);
+	private HttpServerContext(HttpElement em) {
+		this.element = em;
 	}
 	
 	// 新しく設定.
 	private final HttpServerContext _create(
-		HttpServerRequest req, AbstractResponse<?> res) {
-		if(req == null || res == null) {
-			throw new QuinaException("The argument is null.");
+		HttpElement em) {
+		// 既に登録されるものと同じ場合は登録しない.
+		if(element != em) {
+			element = em;
 		}
-		lock.writeLock().lock();
-		try {
-			request = req;
-			response = res;
-		} finally {
-			lock.writeLock().unlock();
-		}
-		// 呼び出しスコープの追加.
-		scope.inc();
 		return this;
 	}
 	
 	// 内容をクリア.
 	private final void _clear() {
-		lock.writeLock().lock();
-		try {
-			if(request != null) {
-				request = null;
-				response = null;
-				// 呼び出しスコープの削除.
-				scope.dec();
-			}
-		} finally {
-			lock.writeLock().unlock();
-		}
+		element = null;
+	}
+	
+	/**
+	 * クリアーされてる状態の場合.
+	 * @return boolean true の場合、クリアされています.
+	 */
+	public boolean isClear() {
+		return element == null;
 	}
 	
 	/**
@@ -140,7 +114,7 @@ public class HttpServerContext implements HttpContext {
 	 */
 	@Override
 	public HttpContext copy() {
-		return new HttpServerContext(request, response);
+		return new HttpServerContext(element);
 	}
 	
 	/**
@@ -148,59 +122,20 @@ public class HttpServerContext implements HttpContext {
 	 * @return HttpElement HttpElementが返却されます.
 	 */
 	public HttpElement getHttpElement() {
-		lock.readLock().lock();
-		try {
-			if(request != null) {
-				return request.getElement();
-			}
-		} finally {
-			lock.readLock().unlock();
-		}
-		return null;
+		return element;
 	}
 	
 	@Override
 	public Request getRequest() {
-		lock.readLock().lock();
-		try {
-			return request;
-		} finally {
-			lock.readLock().unlock();
-		}
+		return element.isConnection() ?
+			element.getRequest() : null;
 	}
 	
 	// 対象のレスポンスを取得.
 	private AbstractResponse<?> _getResponse() {
-		lock.readLock().lock();
-		try {
-			return response;
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
-	
-	// レスポンス生成.
-	private final AbstractResponse<?> _setResponse(
-		AbstractResponse<?> res) {
-		lock.writeLock().lock();
-		try {
-			if(response != null) {
-				response = res;
-				return res;
-			} else {
-				return null;
-			}
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
-	
-	/**
-	 * スレッド呼び出しのスレッドスコープが終端の場合.
-	 * @return boolean true の場合、スレッドスコープの終端です.
-	 */
-	protected boolean isExitScoped() {
-		return scope.get() <= 0;
+		return element.isConnection() ?
+			(AbstractResponse<?>)element.getResponse() :
+			null;
 	}
 	
 	/**
@@ -215,8 +150,7 @@ public class HttpServerContext implements HttpContext {
 		} else if(res instanceof NormalResponse) {
 			return (NormalResponse)res;
 		}
-		return (NormalResponse)_setResponse(
-			(AbstractResponse<?>)new NormalResponseImpl(res));
+		return new NormalResponseImpl(res);
 	}
 
 	/**
@@ -231,8 +165,7 @@ public class HttpServerContext implements HttpContext {
 		} else if(res instanceof RESTfulResponse) {
 			return (RESTfulResponse)res;
 		}
-		return (RESTfulResponse)_setResponse(
-			(AbstractResponse<?>)new RESTfulResponseImpl(res));
+		return new RESTfulResponseImpl(res);
 	}
 
 	/**
@@ -247,7 +180,6 @@ public class HttpServerContext implements HttpContext {
 		} else if(res instanceof SyncResponse) {
 			return (SyncResponse)res;
 		}
-		return (SyncResponse)_setResponse(
-			(AbstractResponse<?>)new SyncResponseImpl(res));
+		return new SyncResponseImpl(res);
 	}
 }
