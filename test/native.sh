@@ -34,7 +34,7 @@ JAR_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`
 OPTIONS="--no-fallback"
 OPTIONS="${OPTIONS} --verbose"
 OPTIONS="${OPTIONS} -H:+ReportExceptionStackTraces"
-OPTIONS="${OPTIONS} -H:+AddAllCharsets"
+#OPTIONS="${OPTIONS} -H:+AddAllCharsets"
 
 rm -f ${NATIVE_OUT}
 echo native-image ${OPTIONS} -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}

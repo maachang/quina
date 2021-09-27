@@ -284,7 +284,7 @@ final class QuinaWorkerManager {
 		private final Queue<QuinaWorkerCall> queue;
 
 		// wait管理.
-		private final Wait wait;
+		private final QuinaWait wait;
 
 		// スレッド停止フラグ.
 		private volatile boolean stopFlag = true;
@@ -307,7 +307,7 @@ final class QuinaWorkerManager {
 			this.handle = handle;
 			this.callHandles = callHandles;
 			this.queue = new ConcurrentLinkedQueue<QuinaWorkerCall>();
-			this.wait = new Wait();
+			this.wait = new QuinaWait();
 		}
 
 		/**
@@ -386,7 +386,7 @@ final class QuinaWorkerManager {
 		 * @return boolean [true]の場合、正しく終了しました.
 		 */
 		public boolean awaitStartup() {
-			return Wait.await(-1L, startThreadFlag);
+			return QuinaWait.await(-1L, startThreadFlag);
 		}
 
 		/**
@@ -396,7 +396,7 @@ final class QuinaWorkerManager {
 		 * @return boolean [true]の場合、正しく終了しました.
 		 */
 		public boolean awaitStartup(long timeout) {
-			return Wait.await(timeout, startThreadFlag);
+			return QuinaWait.await(timeout, startThreadFlag);
 		}
 
 		/**
@@ -404,7 +404,7 @@ final class QuinaWorkerManager {
 		 * @return boolean [true]の場合、正しく終了しました.
 		 */
 		public boolean awaitExit() {
-			return Wait.await(-1L, endThreadFlag);
+			return QuinaWait.await(-1L, endThreadFlag);
 		}
 
 		/**
@@ -414,7 +414,7 @@ final class QuinaWorkerManager {
 		 * @return boolean [true]の場合、正しく終了しました.
 		 */
 		public boolean awaitExit(long timeout) {
-			return Wait.await(timeout, endThreadFlag);
+			return QuinaWait.await(timeout, endThreadFlag);
 		}
 
 		/**

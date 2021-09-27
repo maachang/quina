@@ -9,7 +9,7 @@ import quina.net.nio.tcp.NioAtomicValues.Number32;
 public class HttpServerConstants {
 	private HttpServerConstants() {}
 	
-	/** ワーカーコールID. **/
+	/** HttpServerWorkerCall用のID. **/
 	protected static final int WORKER_CALL_ID = 0;
 
 	// HttpResponseのNoCacheのデフォルトモード.

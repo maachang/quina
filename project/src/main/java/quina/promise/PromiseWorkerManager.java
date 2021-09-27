@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
 import quina.util.Flag;
-import quina.worker.Wait;
+import quina.worker.QuinaWait;
 
 /**
  * Promiseワーカーマネージャ.
@@ -216,7 +216,7 @@ public class PromiseWorkerManager {
 		private final Queue<PromiseWorkerCall> queue;
 
 		// wait管理.
-		private final Wait wait;
+		private final QuinaWait wait;
 
 		// スレッド停止フラグ.
 		private volatile boolean stopFlag = true;
@@ -235,7 +235,7 @@ public class PromiseWorkerManager {
 		public PromiseWorkerThread(int no) {
 			this.no = no;
 			this.queue = new ConcurrentLinkedQueue<PromiseWorkerCall>();
-			this.wait = new Wait();
+			this.wait = new QuinaWait();
 		}
 
 		/**

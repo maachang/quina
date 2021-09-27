@@ -29,8 +29,7 @@ public class HttpServerContext implements HttpContext {
 	public static final HttpContext set(
 		QuinaContext context) {
 		if(context == null) {
-			throw new QuinaException(
-				"The argument is null.");
+			throw new QuinaException("The argument is null.");
 		}
 		if(!(context instanceof HttpServerContext)) {
 			throw new QuinaException(
@@ -48,13 +47,15 @@ public class HttpServerContext implements HttpContext {
 	 */
 	public static final HttpContext create(
 		HttpElement em) {
-		if(em == null || !em.isConnection() ||
+		if(em == null ||
 			em.getRequest() == null ||
 			em.getResponse() == null) {
+			throw new QuinaException("The argument is null.");
+		} else if(!em.isConnection()) {
 			throw new QuinaException(
-				"The argument is null.");
+				"HttpElement has already been destroyed.");
 		}
-		HttpServerContext ctx = new HttpServerContext(em);
+		final HttpServerContext ctx = new HttpServerContext(em);
 		threadLocal.set(ctx);
 		return ctx;
 	}
@@ -74,19 +75,19 @@ public class HttpServerContext implements HttpContext {
 	}
 	
 	/**
-	 * 現在のスレッドのコンテキストをクリア.
-	 */
-	public static final void clear() {
-		threadLocal.set(null);
-	}
-	
-	/**
 	 * HttpServerContextを取得.
 	 * @return HttpServerContext HttpServerContextが返却されます.
 	 */
 	public static final HttpServerContext get() {
 		// 現在のスレッドのコンテキストを取得.
 		return threadLocal.get();
+	}
+	
+	/**
+	 * 現在のスレッドのコンテキストをクリア.
+	 */
+	public static final void clear() {
+		threadLocal.set(null);
 	}
 	
 	// HttpElement.

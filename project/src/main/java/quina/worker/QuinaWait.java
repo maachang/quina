@@ -9,9 +9,9 @@ import quina.util.AtomicNumber;
 import quina.util.Flag;
 
 /**
- * Waitオブジェクト.
+ * QuinaWaitオブジェクト.
  */
-public class Wait {
+public class QuinaWait {
 
 	// ロックオブジェクト.
 	private final Lock sync = new ReentrantLock();
@@ -21,7 +21,7 @@ public class Wait {
 	/**
 	 * コンストラクタ.
 	 */
-	public Wait() {
+	public QuinaWait() {
 	}
 
 	/**

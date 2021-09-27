@@ -3,7 +3,7 @@ package quina.promise;
 import quina.exception.QuinaException;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
-import quina.worker.Wait;
+import quina.worker.QuinaWait;
 
 /**
  * Quina専用のPromise処理.
@@ -243,7 +243,7 @@ public class Promise {
 			int i;
 			Promise p;
 			// waitオブジェクト.
-			final Wait w = new Wait();
+			final QuinaWait w = new QuinaWait();
 			// 既に実行されている場合は例外返却.
 			for(i = 0; i < len; i ++) {
 				checkStartPromise(p = list[i]);
@@ -388,7 +388,7 @@ public class Promise {
 	// any用の処理終了コールバック.
 	private static final class AnyCallback implements PromiseAwaitCall {
 		private final int allAnyPromiseLength;
-		private final Wait waitObject = new Wait();
+		private final QuinaWait waitObject = new QuinaWait();
 		private final Flag successFlag = new Flag(false);
 		private final AtomicNumber rejectCounter = new AtomicNumber(0);
 
@@ -434,7 +434,7 @@ public class Promise {
 		 *              // anyCallbackで管理してるWaitオブジェクトをsignalAllで定義.
 		 *              p.action.setWaitObject(anyCallback.getWait());
 		 */
-		public Wait getWait() {
+		public QuinaWait getWait() {
 			return waitObject;
 		}
 

@@ -5,8 +5,11 @@ import quina.exception.QuinaException;
 import quina.http.HttpElement;
 import quina.net.nio.tcp.NioWorkerCall;
 
+/**
+ * HttpServer用のWorker実行.
+ */
 public class HttpServerWorkerCall extends NioWorkerCall {
-	// WorkerHandler.
+	// WorkerCallHandler.
 	protected HttpServerWorkerCallHandler handle;
 	
 	/**
@@ -18,10 +21,11 @@ public class HttpServerWorkerCall extends NioWorkerCall {
 	}
 	
 	/**
-	 * ハンドルを設定.
-	 * @param handler 対象のハンドルを設定します.
+	 * WorkerCallハンドルを設定.
+	 * @param handler 対象のWorkerCallハンドルを設定します.
 	 */
-	protected void setHandler(HttpServerWorkerCallHandler handle) {
+	protected void setWorkerCallHandler(
+		HttpServerWorkerCallHandler handle) {
 		this.handle = handle;
 	}
 	
@@ -48,9 +52,15 @@ public class HttpServerWorkerCall extends NioWorkerCall {
 			// HttpElementを取得.
 			final HttpElement httpElement = 
 				(HttpElement)super.getNioElement();
+			// HttpElementが利用出来ない場合.
+			if(httpElement == null ||
+				!httpElement.isConnection()) {
+				// 処理失敗.
+				return false;
+			}
 			// 受信処理を実行.
-			return handle.executeReceive(super.getReceiveData(),
-				httpElement, no);
+			return handle.executeReceive(
+				super.getReceiveData(), httpElement, no);
 		} catch(CoreException qe) {
 			throw qe;
 		} catch(Exception e) {

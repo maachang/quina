@@ -3,11 +3,16 @@ package quina.worker;
 import quina.util.AtomicNumber;
 
 public class QuinaWorkerConstants {
+	
+	/** カスタムワーカーコールに対する利用可能な最初のID. **/
+	public static final int START_CUSTOM_WORKER_CALL_ID = 100;
+	
 	/** 最小ワーカー数. **/
 	public static final int MIN_WORKER_LENGTH = 16;
 
 	/** デフォルトのワーカー数. **/
 	public static final int DEF_WORKER_LENGTH;
+	
 	// MIN_WORKER_THREAD_LENGTHより少ない数になる場合は
 	// MIN_WORKER_THREAD_LENGTH をセット.
 	static {

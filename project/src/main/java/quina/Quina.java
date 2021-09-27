@@ -220,7 +220,7 @@ public final class Quina {
 			this.workerService = new QuinaWorkerService();
 			// 共通ワーカーハンドラをセット.
 			this.workerService.setHandler(
-				new QuinaWorkerHandlerImpl());
+				new QuinaContextHandler());
 			// Httpワーカーハンドラをセット.
 			this.workerService.addCallHandle(
 				new HttpServerWorkerCallHandler());
@@ -804,13 +804,21 @@ public final class Quina {
 		_checkNoneExecuteInit();
 		return args;
 	}
+	
+	/**
+	 * ワーカーが利用可能かチェック.
+	 * @return boolean trueの場合、利用可能です.
+	 */
+	public boolean isWorker() {
+		return workerService.isStarted();
+	}
 
 	/**
 	 * ワーカー要素を登録します.
 	 * @param em Workerコール要素を設定します.
 	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public Quina registerWorker(QuinaWorkerCall em) {
+	public Quina pushWorker(QuinaWorkerCall em) {
 		_checkNoneExecuteInit();
 		try {
 			workerService.push(em);

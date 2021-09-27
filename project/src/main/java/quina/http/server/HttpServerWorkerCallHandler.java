@@ -26,6 +26,26 @@ public class HttpServerWorkerCallHandler
 	private Object[] tmpBinaryThreadList;
 	
 	/**
+	 * テンポラリバイナリ長を設定.
+	 * @param tmpBinaryLength テンポラリバイナリ長を設定します.
+	 */
+	public void setTmpBinaryLength(int tmpBinaryLength) {
+		if(tmpBinaryThreadList != null) {
+			throw new QuinaException(
+				"Temporary binaries have already been created.");
+		}
+		this.tmpBinaryLength = tmpBinaryLength;
+	}
+	
+	/**
+	 * テンポラリバイナリ長を取得.
+	 * @return int テンポラリバイナリ長が返却されます.
+	 */
+	public int getTmpBinaryLength() {
+		return tmpBinaryLength;
+	}
+	
+	/**
 	 * 紐付けたいQuinaCall.getId()と同じIdを取得.
 	 * @return Integer 対象となるQuinaCallのIdが返却されます.
 	 */
@@ -56,8 +76,8 @@ public class HttpServerWorkerCallHandler
 	@Override
 	public void startCall(int no, QuinaWorkerCall em) {
 		HttpServerWorkerCall wem = (HttpServerWorkerCall)em;
-		// 対象要素にこのハンドルをセット.
-		wem.setHandler(this);
+		// 対象要素にこのWorkerCallHandlerをセット.
+		wem.setWorkerCallHandler(this);
 		// 対象要素にスレッド番号をセット.
 		wem.setWorkerNo(no);
 		// 開始処理実行.
@@ -89,25 +109,6 @@ public class HttpServerWorkerCallHandler
 		return super.isDestroy(no, em);
 	}
 	
-	/**
-	 * テンポラリバイナリ長を設定.
-	 * @param tmpBinaryLength テンポラリバイナリ長を設定します.
-	 */
-	public void setTmpBinaryLength(int tmpBinaryLength) {
-		if(tmpBinaryThreadList != null) {
-			throw new QuinaException(
-				"Temporary binaries have already been created.");
-		}
-		this.tmpBinaryLength = tmpBinaryLength;
-	}
-	
-	/**
-	 * テンポラリバイナリ長を取得.
-	 * @return int テンポラリバイナリ長が返却されます.
-	 */
-	public int getTmpBinaryLength() {
-		return tmpBinaryLength;
-	}
 	/**
 	 * スレッド毎のテンポラリバイナリを取得.
 	 * @param threadNo 対象のワーカースレッド番号を設定します.

@@ -5,7 +5,7 @@ import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
-import quina.worker.Wait;
+import quina.worker.QuinaWait;
 
 /**
  * Promiseアクション実装.
@@ -25,7 +25,7 @@ class PromiseActionImpl implements PromiseAction {
 	protected boolean waitAllFlag = false;
 
 	// waitオブジェクト.
-	protected Wait waitObject = null;
+	protected QuinaWait waitObject = null;
 
 	// waitオブジェクトの代わりのコールバック.
 	protected PromiseAwaitCall awaitCall = null;
@@ -373,7 +373,7 @@ class PromiseActionImpl implements PromiseAction {
 	 * Waitオブジェクトを設定.
 	 * @param waitObject Waitオブジェクトを設定します.
 	 */
-	protected void setWaitObject(Wait waitObject) {
+	protected void setWaitObject(QuinaWait waitObject) {
 		checkNotStartPromise();
 		this.waitAllFlag = true;
 		this.waitObject = waitObject;
@@ -393,7 +393,7 @@ class PromiseActionImpl implements PromiseAction {
 		// waitオブジェクトが設定されていない場合は生成.
 		if(awaitCall == null && waitObject == null) {
 			this.waitAllFlag = false;
-			this.waitObject = new Wait();
+			this.waitObject = new QuinaWait();
 		}
 		// スタート時にresolve実行させる場合.
 		if(execFlag) {

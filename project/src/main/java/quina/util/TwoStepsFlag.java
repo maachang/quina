@@ -1,6 +1,6 @@
 package quina.util;
 
-import quina.worker.Wait;
+import quina.worker.QuinaWait;
 
 /**
  * ２段階フラグ.
@@ -45,7 +45,7 @@ public class TwoStepsFlag {
 	private final AtomicNumber status = new AtomicNumber(0);
 	
 	// wait.
-	private final Wait wait = new Wait();
+	private final QuinaWait wait = new QuinaWait();
 	
 	/**
 	 * 未実行かチェック.

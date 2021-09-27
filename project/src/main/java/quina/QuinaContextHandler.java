@@ -8,11 +8,9 @@ import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerHandler;
 
 /**
- * 共通のQuinaWorkerハンドル実装.
- * 
- * 基本的にHttpContextに対する対応処理を行います
+ * QuinaContextに対するワーカーハンドル.
  */
-class QuinaWorkerHandlerImpl
+class QuinaContextHandler
 	extends QuinaWorkerHandler {
 	
 	// ログオブジェクト.
@@ -54,13 +52,6 @@ class QuinaWorkerHandlerImpl
 		}
 	}
 	
-	// コンテキストをクリア.
-	private static final void clearContext(QuinaWorkerCall em) {
-		// クリア.
-		em.setContext(null);
-		HttpServerContext.clear();
-	}
-	
 	/**
 	 * Workerに対してPush実行される時の呼び出し.
 	 * @param no ワーカースレッドNoが設定されます.
@@ -69,11 +60,18 @@ class QuinaWorkerHandlerImpl
 	@Override
 	public void pushCall(int no, QuinaWorkerCall em) {
 		// HttpServerContextをワーカーコールにセット.
-		HttpServerContext ctx = HttpServerContext.get();
+		final HttpServerContext ctx =
+			HttpServerContext.get();
 		if(ctx != null) {
 			em.setContext(ctx);
-			ctx = null;
 		}
+	}
+	
+	// コンテキストをクリア.
+	private static final void clearContext(QuinaWorkerCall em) {
+		// クリア.
+		em.setContext(null);
+		HttpServerContext.clear();
 	}
 	
 	/**
@@ -91,7 +89,7 @@ class QuinaWorkerHandlerImpl
 			return;
 		}
 		// workerCallからContextを取得.
-		HttpServerContext ctx = 
+		HttpServerContext ctx =
 			(HttpServerContext)em.getContext();
 		
 		// workerCallのコンテキストが存在する場合.
@@ -120,23 +118,40 @@ class QuinaWorkerHandlerImpl
 		// workerCallに存在するContextを取得.
 		HttpServerContext ctx =
 			(HttpServerContext)em.getContext();
+		
 		// workerCallのコンテキストが存在しないで
 		if(ctx == null) {
+			
 			// このスレッドのコンテキストを取得.
 			HttpServerContext thisCtx =
 				HttpServerContext.get();
+			
 			// このスレッドのコンテキストが存在する場合.
 			if(thisCtx != null) {
 				// １つのスレッドスコープを終了.
 				thisCtx.exitThreadScope();
 			}
+			
 		// workerCallのコンテキストが存在する場合.
 		} else if(ctx != null) {
+			
 			// １つのスレッドスコープを終了.
 			ctx.exitThreadScope();
 		}
 		// このスレッドのコンテキストをクリア.
 		HttpServerContext.clear();
+	}
+	
+	/**
+	 * 対象要素実行時でエラーが発生した場合の呼び出し.
+	 * @param no ワーカースレッドNoが設定されます.
+	 * @param em QuinaWorkerElementを設定します.
+	 * @param t 例外(Throwable)が設定されます.
+	 */
+	@Override
+	public void errorCall(
+		int no, QuinaWorkerCall em, Throwable t) {
+		em.errorCall(no, t);
 	}
 	
 	/**
@@ -194,17 +209,5 @@ class QuinaWorkerHandlerImpl
 	public boolean executeCall(int no, QuinaWorkerCall em) {
 		throw new QuinaException(
 			"Target processing \"executeCall\" is not supported.");
-	}
-	
-	/**
-	 * 対象要素実行時でエラーが発生した場合の呼び出し.
-	 * @param no ワーカースレッドNoが設定されます.
-	 * @param em QuinaWorkerElementを設定します.
-	 * @param t 例外(Throwable)が設定されます.
-	 */
-	@Override
-	public void errorCall(
-		int no, QuinaWorkerCall em, Throwable t) {
-		em.errorCall(no, t);
 	}
 }
