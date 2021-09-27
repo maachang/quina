@@ -1,5 +1,6 @@
 package quina.net.nio.tcp;
 
+import quina.worker.QuinaContext;
 import quina.worker.QuinaWorkerCall;
 
 /**
@@ -13,6 +14,25 @@ public abstract class NioWorkerCall
 	
 	// 今回受信したバイナリデーター.
 	protected byte[] receiveData;
+	
+	/**
+	 * QuinaContextを設定.
+	 * @param context 対象のQuinaContextを設定します.
+	 */
+	@Override
+	public void setContext(QuinaContext context) {
+		element.setContext(context);
+	}
+	
+	/**
+	 * QuinaContextを取得.
+	 * @return QuinaContext 設定されてるQuinaContextが
+	 *                      返却されます.
+	 */
+	@Override
+	public QuinaContext getContext() {
+		return element.getContext();
+	}
 	
 	/**
 	 * 設定されたワーカーNoを取得.

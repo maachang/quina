@@ -1,21 +1,14 @@
 package quina.worker;
 
-import quina.util.AtomicNumber;
-
 /**
  * Quinaコール.
  */
 public abstract class QuinaWorkerCall {
-	
-	// QuinaContext.
-	protected QuinaContext context;
-	
 	/**
 	 * QuinaContextを設定.
 	 * @param context 対象のQuinaContextを設定します.
 	 */
 	public void setContext(QuinaContext context) {
-		this.context = context;
 	}
 	
 	/**
@@ -24,7 +17,7 @@ public abstract class QuinaWorkerCall {
 	 *                      返却されます.
 	 */
 	public QuinaContext getContext() {
-		return this.context;
+		return null;
 	}
 	
 	/**
