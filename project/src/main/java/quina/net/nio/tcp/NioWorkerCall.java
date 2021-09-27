@@ -1,6 +1,5 @@
 package quina.net.nio.tcp;
 
-import quina.worker.QuinaContext;
 import quina.worker.QuinaWorkerCall;
 
 /**

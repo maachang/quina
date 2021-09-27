@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import quina.Quina;
 import quina.exception.QuinaException;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
@@ -19,6 +18,9 @@ final class QuinaWorkerManager {
 	
 	// ワーカースレッド長.
 	private final int threadLength;
+	
+	// ワーカーハンドラ.
+	private final QuinaWorkerHandler handle;
 
 	// 次のワーカースレッド割当ID.
 	private final AtomicNumber nextWorkerId = new AtomicNumber(0);
@@ -62,6 +64,8 @@ final class QuinaWorkerManager {
 		}
 		// スレッド長を設定.
 		this.threadLength = threadLength;
+		// ハンドルを設定.
+		this.handle = handle;
 	}
 	
 	// 指定されたいQuinaWorkerElementHandle群をインデックス化.
@@ -229,15 +233,11 @@ final class QuinaWorkerManager {
 	 * @return int 割り当てられたワーカーNoが返却されます.
 	 */
 	public void push(QuinaWorkerCall em) {
-		// Contextをワーカーコールにセット.
-		QuinaContext ctx = Quina.getContext();
-		if(ctx != null) {
-			em.setContext(ctx);
-			ctx = null;
-		}
 		int no;
 		// 既にワーカーIDが設定されている場合.
 		if((no = em.getWorkerNo()) > 0) {
+			// Pushコール実行.
+			handle.pushCall(no, em);
 			// そのまま登録.
 			threads[no].push(em);
 		// ワーカーIDが設定されていない場合.
@@ -248,6 +248,8 @@ final class QuinaWorkerManager {
 			if(no + 1 >= threadLength) {
 				nextWorkerId.set(0);
 			}
+			// Pushコール実行.
+			handle.pushCall(no, em);
 			// ワーカー登録.
 			em.setWorkerNo(no);
 			threads[no].push(em);

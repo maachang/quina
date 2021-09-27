@@ -62,6 +62,21 @@ class QuinaWorkerHandlerImpl
 	}
 	
 	/**
+	 * Workerに対してPush実行される時の呼び出し.
+	 * @param no ワーカースレッドNoが設定されます.
+	 * @param em QuinaWorkerElementを設定します.
+	 */
+	@Override
+	public void pushCall(int no, QuinaWorkerCall em) {
+		// HttpServerContextをワーカーコールにセット.
+		HttpServerContext ctx = HttpServerContext.get();
+		if(ctx != null) {
+			em.setContext(ctx);
+			ctx = null;
+		}
+	}
+	
+	/**
 	 * 対象要素の開始時の呼び出し.
 	 * この処理はQuinaWorkerElement開始時に必ず呼び出されます.
 	 * @param no ワーカースレッドNoが設定されます.
