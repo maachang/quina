@@ -16,25 +16,6 @@ public abstract class NioWorkerCall
 	protected byte[] receiveData;
 	
 	/**
-	 * QuinaContextを設定.
-	 * @param context 対象のQuinaContextを設定します.
-	 */
-	@Override
-	public void setContext(QuinaContext context) {
-		element.setContext(context);
-	}
-	
-	/**
-	 * QuinaContextを取得.
-	 * @return QuinaContext 設定されてるQuinaContextが
-	 *                      返却されます.
-	 */
-	@Override
-	public QuinaContext getContext() {
-		return element.getContext();
-	}
-	
-	/**
 	 * 設定されたワーカーNoを取得.
 	 * @return int ワーカーNoを取得.
 	 *             -1の場合割り当てられていません.

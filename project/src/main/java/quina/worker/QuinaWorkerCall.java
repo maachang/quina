@@ -4,11 +4,15 @@ package quina.worker;
  * Quinaコール.
  */
 public abstract class QuinaWorkerCall {
+	// QuinaContext.
+	private QuinaContext context;
+	
 	/**
 	 * QuinaContextを設定.
 	 * @param context 対象のQuinaContextを設定します.
 	 */
 	public void setContext(QuinaContext context) {
+		this.context = context;
 	}
 	
 	/**
@@ -17,7 +21,7 @@ public abstract class QuinaWorkerCall {
 	 *                      返却されます.
 	 */
 	public QuinaContext getContext() {
-		return null;
+		return context;
 	}
 	
 	/**

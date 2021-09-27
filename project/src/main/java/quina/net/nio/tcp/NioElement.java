@@ -8,9 +8,7 @@ import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 
 import quina.net.nio.tcp.NioAtomicValues.Number32;
-import quina.net.nio.tcp.NioAtomicValues.Value;
 import quina.util.Flag;
-import quina.worker.QuinaContext;
 
 /**
  * Nio要素.
@@ -25,7 +23,6 @@ public class NioElement implements Closeable {
 	protected final Flag connectionFlag = new Flag(false);
 	protected final Number32 ops = new Number32(SelectionKey.OP_READ);
 	protected final Number32 workerNo = new Number32(NON_WORKER_NO);
-	protected final Value<QuinaContext> context = new Value<QuinaContext>();
 	protected NioSelector selector;
 	protected SelectionKey key;
 	protected InetSocketAddress access;
@@ -87,7 +84,6 @@ public class NioElement implements Closeable {
 			}
 			object = null;
 		}
-		context.set(null);
 	}
 
 	/**
@@ -293,23 +289,6 @@ public class NioElement implements Closeable {
 		return this;
 	}
 	
-	/**
-	 * QuinaContextを設定.
-	 * @param ctx 対象のQuinaContextを設定します.
-	 */
-	public void setContext(QuinaContext ctx) {
-		context.set(ctx);
-	}
-	
-	/**
-	 * QuinaContextを取得.
-	 * @return QuinaContext 設定されてるQuinaContextが
-	 *                      返却されます.
-	 */
-	public QuinaContext getContext() {
-		return context.get();
-	}
-
 	/**
 	 * オブジェクトを設定.
 	 *

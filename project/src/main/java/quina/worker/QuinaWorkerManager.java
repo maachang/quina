@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import quina.Quina;
 import quina.exception.QuinaException;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
@@ -228,6 +229,12 @@ final class QuinaWorkerManager {
 	 * @return int 割り当てられたワーカーNoが返却されます.
 	 */
 	public void push(QuinaWorkerCall em) {
+		// Contextをワーカーコールにセット.
+		QuinaContext ctx = Quina.getContext();
+		if(ctx != null) {
+			em.setContext(ctx);
+			ctx = null;
+		}
 		int no;
 		// 既にワーカーIDが設定されている場合.
 		if((no = em.getWorkerNo()) > 0) {
@@ -237,13 +244,13 @@ final class QuinaWorkerManager {
 		} else {
 			// 新しいIDをセット.
 			no = nextWorkerId.inc();
-			// ワーカー登録.
-			em.setWorkerNo(no);
-			threads[no].push(em);
 			// スレッド数を超えてる場合.
 			if(no + 1 >= threadLength) {
 				nextWorkerId.set(0);
 			}
+			// ワーカー登録.
+			em.setWorkerNo(no);
+			threads[no].push(em);
 		}
 	}
 

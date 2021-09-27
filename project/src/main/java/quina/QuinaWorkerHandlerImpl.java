@@ -1,11 +1,9 @@
 package quina;
 
 import quina.exception.QuinaException;
-import quina.http.HttpElement;
 import quina.http.server.HttpServerContext;
 import quina.logger.Log;
 import quina.logger.LogFactory;
-import quina.net.nio.tcp.NioWorkerCall;
 import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerHandler;
 
@@ -78,41 +76,15 @@ class QuinaWorkerHandlerImpl
 			return;
 		}
 		// workerCallからContextを取得.
-		HttpServerContext ctx = (HttpServerContext)em.getContext();
+		HttpServerContext ctx = 
+			(HttpServerContext)em.getContext();
+		
 		// workerCallのコンテキストが存在する場合.
 		if(ctx != null) {
 			// このスレッドのコンテキストとして設定.
 			HttpServerContext.set(ctx);
 			// スレッドスコープ開始.
 			ctx.startThreadScope();
-		// workerCallのコンテキストが存在しない場合.
-		} else {
-			// このスレッドのコンテキストを取得.
-			HttpServerContext thisCtx = HttpServerContext.get();
-			// 存在する場合はworkerCallに設定.
-			if(thisCtx != null) {
-				em.setContext(thisCtx);
-				// スレッドスコープ開始.
-				thisCtx.startThreadScope();
-			// 存在しない場合、新規作成.
-			} else {
-				// HttpElementを取得.
-				final HttpElement hem = (HttpElement)((NioWorkerCall)em)
-					.getNioElement();
-				// HttpServerContextが生成可能な場合.
-				if(HttpServerContext.isCreate(hem)) {
-					// コンテキストを生成して、スレッドでの
-					// コンテキスト利用を許可.
-					thisCtx = (HttpServerContext)HttpServerContext
-						.create(hem);
-					// workerCallに設定.
-					em.setContext(thisCtx);
-				// 生成出来ない場合は破棄する.
-				} else {
-					// Contextクリア.
-					clearContext(em);
-				}
-			}
 		}
 	}
 	
@@ -131,21 +103,20 @@ class QuinaWorkerHandlerImpl
 			return;
 		}
 		// workerCallに存在するContextを取得.
-		HttpServerContext ctx = (HttpServerContext)em.getContext();
+		HttpServerContext ctx =
+			(HttpServerContext)em.getContext();
 		// workerCallのコンテキストが存在しないで
 		if(ctx == null) {
 			// このスレッドのコンテキストを取得.
-			HttpServerContext thisCtx = HttpServerContext.get();
+			HttpServerContext thisCtx =
+				HttpServerContext.get();
 			// このスレッドのコンテキストが存在する場合.
 			if(thisCtx != null) {
-				// workerCallにスレッドのコンテキストを
-				// 設定する.
-				em.setContext(thisCtx);
-				ctx = thisCtx;
+				// １つのスレッドスコープを終了.
+				thisCtx.exitThreadScope();
 			}
-		}
 		// workerCallのコンテキストが存在する場合.
-		if(ctx != null) {
+		} else if(ctx != null) {
 			// １つのスレッドスコープを終了.
 			ctx.exitThreadScope();
 		}

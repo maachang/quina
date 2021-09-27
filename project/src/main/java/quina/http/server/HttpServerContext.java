@@ -202,4 +202,9 @@ public class HttpServerContext implements HttpContext {
 		}
 		return new SyncResponseImpl(res);
 	}
+	
+	@Override
+	public String toString() {
+		return "quina.worker.QuinaContext";
+	}
 }
