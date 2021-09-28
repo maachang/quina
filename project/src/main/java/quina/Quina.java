@@ -529,7 +529,7 @@ public final class Quina {
 	 * HttpContextを取得.
 	 * @return HttpContext HttpContextが返却されます.
 	 */
-	public static final HttpContext getContext() {
+	public static final HttpContext getHttpContext() {
 		return HttpServerContext.get();
 	}
 	

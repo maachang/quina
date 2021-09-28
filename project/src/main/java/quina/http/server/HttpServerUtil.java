@@ -149,7 +149,7 @@ public final class HttpServerUtil {
 				req.setParams(params);
 			}
 			// コンポーネント実行.
-			comp.call(req.getMethod(), req, res);
+			comp.call(req, res);
 		} catch(Exception e) {
 			// ワーニング以上のログ通知が認められてる場合.
 			if(LOG.isWarnEnabled()) {

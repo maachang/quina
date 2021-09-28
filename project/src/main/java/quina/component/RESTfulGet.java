@@ -1,6 +1,5 @@
 package quina.component;
 
-import quina.http.HttpException;
 import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
@@ -33,15 +32,13 @@ public interface RESTfulGet extends Component {
 
 	/**
 	 * コンポーネント実行処理.
-	 * @param method HTTPメソッドが設定されます.
 	 * @param req HttpRequestが設定されます.
 	 * @param res HttpResponseが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response<?> res) {
-		if(method != Method.GET) {
-			throw new HttpException(405,
-				"The specified method: " + method + " cannot be used for this URL.");
+	default void call(Request req, Response<?> res) {
+		if(req.getMethod() != Method.GET) {
+			ComponentConstants.httpError405(req);
 		}
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof RESTfulResponse)) {

@@ -53,7 +53,7 @@ class QuinaContextHandler
 	}
 	
 	/**
-	 * Workerに対してPush実行される時の呼び出し.
+	 * Workerに対してpushメソッド実行時の呼び出し.
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */

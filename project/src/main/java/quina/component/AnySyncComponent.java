@@ -1,6 +1,5 @@
 package quina.component;
 
-import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
@@ -38,12 +37,10 @@ public interface AnySyncComponent extends Component {
 
 	/**
 	 * コンポーネント実行処理.
-	 * @param method HTTPメソッドが設定されます.
 	 * @param req HttpRequestが設定されます.
 	 * @param res HttpResponseが設定されます.
 	 */
-	@Override
-	default void call(Method method, Request req, Response<?> res) {
+	default void call(Request req, Response<?> res) {
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
 			res = new SyncResponseImpl(res);

@@ -1,7 +1,6 @@
 package quina.component;
 
 import quina.http.HttpException;
-import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
@@ -37,19 +36,19 @@ public interface RESTful extends Component {
 	 * @param params パラメータが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response<?> res) {
+	default void call(Request req, Response<?> res) {
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof RESTfulResponse)) {
 			res = new RESTfulResponseImpl(res);
 		}
 		final RESTfulResponse rres = (RESTfulResponse)res;
-		switch(method) {
+		switch(req.getMethod()) {
 		case GET: get(req, rres, req.getParams()); break;
 		case POST: post(req, rres, req.getParams()); break;
 		case DELETE: delete(req, rres, req.getParams()); break;
 		case PUT: put(req, rres, req.getParams()); break;
 		case PATCH: patch(req, rres, req.getParams()); break;
-		default: throw new HttpException(405, "Unsupported HTTP method: " + method.getName());
+		default: ComponentConstants.httpError405(req);
 		}
 	}
 

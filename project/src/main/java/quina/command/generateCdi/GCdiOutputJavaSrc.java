@@ -14,8 +14,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.List;
 
 import quina.QuinaServiceManager;
 import quina.Router;
@@ -24,6 +26,7 @@ import quina.annotation.cdi.CdiHandleManager;
 import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.route.AnnotationRoute;
+import quina.exception.QuinaException;
 import quina.util.FileUtil;
 
 /**
@@ -73,6 +76,77 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
+	// 対象のクラスがPublic定義で空のpublicコンストラクタが
+	// 利用可能かチェック.
+	private static final boolean isPublicClass(
+		String clazzName, GCdiParams params)
+		throws ClassNotFoundException {
+		// 対象のクラスをロード.
+		final Class<?> c = GCdiUtil.getClass(clazzName, params.cl);
+		return isPublicClass(c);
+	}
+	
+	// 対象のクラスがPublic定義で空のpublicコンストラクタが
+	// 利用可能かチェック.
+	private static final boolean isPublicClass(Class<?> c) {
+		// そのクラスがPublic定義の場合.
+		if(Modifier.isPublic(c.getModifiers())) {
+			// publicで引数の無いコンストラクタが存在するかチェック.
+			try {
+				Constructor<?> csr = c.getConstructor();
+				// 対象コンストラクタがPublicの場合.
+				if(Modifier.isPublic(csr.getModifiers())) {
+					return true;
+				}
+			} catch(NoSuchMethodException mse) {
+				// コンストラクタ取得失敗.
+			}
+			// 存在しない場合は例外.
+			throw new QuinaException(
+				"An empty Public constructor for the specified " +
+				"class \"" + c.getClass().getName() +
+				"\" is not defined. ");
+		}
+		return false;
+	}
+	
+	// 対象フィールドがCdiFieldでfinal定義でないかチェック.
+	private static final boolean isCdiField(Class<?> c, Field f) {
+		// 何らかのアノテーション定義が存在する場合.
+		if(f.getAnnotations().length > 0) {
+			// final 定義の場合エラー.
+			if(Modifier.isFinal(f.getModifiers())) {
+				throw new QuinaException(
+					"The specified field (class: " +
+					c.getName() + " field: " + f.getName() +
+					") is the final definition while the Cdi " +
+					"injection annotation definition. ");
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	// 対象のクラスリストで出力条件が存在するかチェック.
+	private static final boolean isOutClassList(
+		List<String> classlist, GCdiParams params)
+		throws ClassNotFoundException {
+		// publicでないクラスで空のコンストラクタで
+		// ないかチェック.
+		boolean notFlag = true;
+		String clazzName;
+		int len = classlist.size();
+		for(int i = 0; i < len; i ++) {
+			clazzName = classlist.get(i);
+			if(isPublicClass(clazzName, params)) {
+				// 存在する場合.
+				notFlag = false;
+				break;
+			}
+		}
+		return !notFlag;
+	}
+	
 	/**
 	 * 抽出したRoute定義されたComponentをJavaファイルに出力.
 	 * @param outSourceDirectory 出力先ディレクトリを設定します.
@@ -91,6 +165,8 @@ public class GCdiOutputJavaSrc {
 		String outFileName = outDir + "/" + AUTO_ROUTE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
+			// 出力可能かチェック.
+			isOutClassList(params.routeList, params);
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
@@ -117,42 +193,54 @@ public class GCdiOutputJavaSrc {
 			println(w, 2, "// Get the Router to be registered.");
 			println(w, 2, "final Router router = Quina.get().getRouter();");
 			
+			// 通常Componentの出力.
 			String clazzName;
 			int len = params.routeList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.routeList.get(i);
-				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\"");
-				println(w, 2, "// component in the @Route.");
-				println(w, 2, "router.route(new " + clazzName + "());");
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(clazzName, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// component in the @Route.");
+					println(w, 2, "router.route(new " + clazzName + "());");
+				}
 			}
 			
+			// AnyComponentの出力.
 			if(params.any != null) {
-				println(w, 2, "");
-				println(w, 2, "// Register the \""+ params.any + "\"");
-				println(w, 2, "// component in the @AnyRoute.");
-				println(w, 2, "router.any(new " + params.any + "());");
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(params.any, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ params.any + "\"");
+					println(w, 2, "// component in the @AnyRoute.");
+					println(w, 2, "router.any(new " + params.any + "());");
+				}
 			}
 			
+			// ErrorComponentの出力.
 			Class<?> c;
 			len = params.errList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.errList.get(i);
 				c = GCdiUtil.getClass(clazzName, params);
-				int[] es = AnnotationRoute.loadErrorRoute(c);
-				println(w, 2, "");
-				if(es[0] == 0) {
-					println(w, 2, "// Register the \""+ clazzName + "\"");
-					println(w, 2, "// component in the @ErrorRoute.");
-				} else if(es[1] == 0) {
-					println(w, 2, "// Register the \""+ clazzName + "\"");
-					println(w, 2, "// component in the @ErrorRoute(" +
-						es[0] + ")");
-					println(w, 2, "// Register the \""+ clazzName + "\"");
-					println(w, 2, "// component in the @ErrorRoute(" +
-						es[0] + ", " + es[1] + ")");
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(c)) {
+					int[] es = AnnotationRoute.loadErrorRoute(c);
+					println(w, 2, "");
+					if(es[0] == 0) {
+						println(w, 2, "// Register the \""+ clazzName + "\"");
+						println(w, 2, "// component in the @ErrorRoute.");
+					} else if(es[1] == 0) {
+						println(w, 2, "// Register the \""+ clazzName + "\"");
+						println(w, 2, "// component in the @ErrorRoute(" +
+							es[0] + ")");
+						println(w, 2, "// Register the \""+ clazzName + "\"");
+						println(w, 2, "// component in the @ErrorRoute(" +
+							es[0] + ", " + es[1] + ")");
+					}
+					println(w, 2, "router.error(new " + clazzName + "());");
 				}
-				println(w, 2, "router.error(new " + clazzName + "());");
 			}
 			
 			println(w, 1, "}");
@@ -176,10 +264,11 @@ public class GCdiOutputJavaSrc {
 	 * @param outSourceDirectory 出力先ディレクトリを設定します.
 	 * @param params GenerateGciパラメータを設定します.
 	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void serviceScoped(String outSourceDirectory,
 		GCdiParams params)
-		throws IOException {
+		throws IOException, ClassNotFoundException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
@@ -188,6 +277,8 @@ public class GCdiOutputJavaSrc {
 		String outFileName = outDir + "/" + CDI_SERVICE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
+			// 出力可能かチェック.
+			isOutClassList(params.cdiList, params);
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
@@ -218,10 +309,13 @@ public class GCdiOutputJavaSrc {
 			int len = params.cdiList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.cdiList.get(i);
-				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\"");
-				println(w, 2, "// object in the @ServiceScoped.");
-				println(w, 2, "cdiManager.put(new " + clazzName + "());");
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(clazzName, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// object in the @ServiceScoped.");
+					println(w, 2, "cdiManager.put(new " + clazzName + "());");
+				}
 			}
 			
 			println(w, 1, "}");
@@ -245,10 +339,11 @@ public class GCdiOutputJavaSrc {
 	 * @param outSourceDirectory 出力先ディレクトリを設定します.
 	 * @param params GenerateGciパラメータを設定します.
 	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void quinaServiceScoped(String outSourceDirectory,
 		GCdiParams params)
-		throws IOException {
+		throws IOException, ClassNotFoundException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
@@ -257,6 +352,8 @@ public class GCdiOutputJavaSrc {
 		String outFileName = outDir + "/" + QUINA_SERVICE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
+			// 出力可能かチェック.
+			isOutClassList(params.qsrvList, params);
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
@@ -287,10 +384,13 @@ public class GCdiOutputJavaSrc {
 			int len = params.qsrvList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.qsrvList.get(i);
-				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\"");
-				println(w, 2, "// object in the @QuinaServiceScoped.");
-				println(w, 2, "qsrvManager.put(new " + clazzName + "());");
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(clazzName, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// object in the @QuinaServiceScoped.");
+					println(w, 2, "qsrvManager.put(new " + clazzName + "());");
+				}
 			}
 			
 			println(w, 1, "}");
@@ -327,6 +427,23 @@ public class GCdiOutputJavaSrc {
 		String outFileName = outDir + "/" + CDI_REFLECT_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
+			// エラーチェック.
+			Class<?> c;
+			String clazzName;
+			int len = params.refList.size();
+			for(int i = 0; i < len; i ++) {
+				clazzName = params.refList.get(i);
+				c = GCdiUtil.getClass(clazzName, params);
+				final Field[] list = c.getDeclaredFields();
+				int lenJ = list.length;
+				if(lenJ == 0) {
+					continue;
+				}
+				for(int j = 0; j < lenJ; j ++) {
+					// Cdiアノテーションがあってfinal定義でない場合.
+					isCdiField(c, list[j]);
+				}
+			}
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
@@ -352,9 +469,7 @@ public class GCdiOutputJavaSrc {
 			println(w, 1, "public static final void " + CdiReflectManager.AUTO_READ_CDI_REFLECT_METHOD +
 				"() throws Exception {");
 			
-			Class<?> c;
-			String clazzName;
-			int len = params.refList.size();
+			len = params.refList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.refList.get(i);
 				c = GCdiUtil.getClass(clazzName, params);
@@ -363,17 +478,38 @@ public class GCdiOutputJavaSrc {
 				if(lenJ == 0) {
 					continue;
 				}
-				println(w, 2, "");
-				println(w, 2, "// Register the field group of the target class");
-				println(w, 2, "// \""+ clazzName + "\"");
 				
-				println(w, 2, convClassByMethodName(clazzName) + "();");
+				// Cdiアノテーションあってfinal定義でないものをチェック.
+				boolean notOut = true;
+				for(int j = 0; j < lenJ; j ++) {
+					// Cdiアノテーションがあってfinal定義でない場合.
+					if(isCdiField(c, list[j])) {
+						notOut = false;
+					}
+				}
+				// 存在しない場合.
+				if(notOut) {
+					// リストから削除(nullセット).
+					params.refList.set(i, null);
+				} else {
+					// 存在する場合.
+					println(w, 2, "");
+					println(w, 2, "// Register the field group of the target class");
+					println(w, 2, "// \""+ clazzName + "\"");
+					
+					println(w, 2, convClassByMethodName(clazzName) + "();");
+				}
 			}
 			
 			println(w, 1, "}");
 			
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.refList.get(i);
+				// CdiアノテーションのFieldが存在しない場合.
+				if(clazzName == null) {
+					// 次の処理を行う.
+					continue;
+				}
 				c = GCdiUtil.getClass(clazzName, params);
 				final Field[] list = c.getDeclaredFields();
 				int lenJ = list.length;
@@ -393,10 +529,13 @@ public class GCdiOutputJavaSrc {
 				println(w, 2, "boolean staticFlag = false;");
 				
 				for(int j = 0; j < lenJ; j ++) {
-					println(w, 2, "");
-					println(w, 2, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
-					println(w, 2, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
-					println(w, 2, "element.add(staticFlag, field);");
+					// Cdiアノテーションがあってfinal定義でない場合.
+					if(isCdiField(c, list[j])) {
+						println(w, 2, "");
+						println(w, 2, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
+						println(w, 2, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
+						println(w, 2, "element.add(staticFlag, field);");
+					}
 				}
 				println(w, 1, "}");
 			}
@@ -420,10 +559,11 @@ public class GCdiOutputJavaSrc {
 	 * @param outSourceDirectory 出力先ディレクトリを設定します.
 	 * @param params GenerateGciパラメータを設定します.
 	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void cdiHandle(String outSourceDirectory,
 		GCdiParams params)
-		throws IOException {
+		throws IOException, ClassNotFoundException {
 		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
@@ -432,6 +572,8 @@ public class GCdiOutputJavaSrc {
 		String outFileName = outDir + "/" + CDI_HANDLE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
+			// 出力可能かチェック.
+			isOutClassList(params.hndList, params);
 			// ソースコードを出力.
 			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
 			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
@@ -459,15 +601,17 @@ public class GCdiOutputJavaSrc {
 			println(w, 2, "");
 			println(w, 2, "// Cdi Handle Manager to be registered.");
 			println(w, 2, "final CdiHandleManager chdManager = Quina.get().CdiHandleManager();");
-			
 			String clazzName;
-			int len = params.qsrvList.size();
+			final int len = params.hndList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.hndList.get(i);
-				println(w, 2, "");
-				println(w, 2, "// Register the \""+ clazzName + "\"");
-				println(w, 2, "// object in the @CdiAnnotationScoped.");
-				println(w, 2, "chdManager.put(new " + clazzName + "());");
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(clazzName, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// object in the @CdiHandleScoped.");
+					println(w, 2, "chdManager.put(new " + clazzName + "());");
+				}
 			}
 			
 			println(w, 1, "}");

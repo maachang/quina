@@ -10,7 +10,8 @@ import quina.net.nio.tcp.NioRecvBody;
  */
 public class HttpElement extends NioElement {
 	/** ステータス. **/
-	private HttpElementState state = HttpElementState.STATE_RECEIVING_HEADER;
+	private HttpElementState state = 
+		HttpElementState.STATE_RECEIVING_HEADER;
 
 	/** Httpモード. **/
 	private CsMode httpMode = null;

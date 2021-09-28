@@ -3,7 +3,6 @@ package quina.component;
 import java.util.Map;
 
 import quina.annotation.component.ResponseInitialSetting;
-import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.HttpServerRequest;
@@ -231,7 +230,7 @@ public class RegisterComponent implements Component {
 	}
 
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	public void call(Request req, Response<?> res) {
 		// HttpServerRequestの場合は、コンポーネントURLを設定.
 		if(req instanceof HttpServerRequest) {
 			((HttpServerRequest)req).setComponentUrl(url, urlSlashCount);
@@ -248,15 +247,21 @@ public class RegisterComponent implements Component {
 				switch(type.getAttributeType()) {
 				// コンポーネントタイプが同期系の場合は、同期レスポンス作成.
 				case ComponentConstants.ATTRIBUTE_SYNC:
-					res = new SyncResponseImpl(ares);
+					if(!(ares instanceof SyncResponseImpl)) {
+						res = new SyncResponseImpl(ares);
+					}
 					break;
 				// コンポーネントタイプがRESTful系の場合は、RESTfulレスポンス作成.
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
-					res = new RESTfulResponseImpl(ares);
+					if(!(ares instanceof RESTfulResponseImpl)) {
+						res = new RESTfulResponseImpl(ares);
+					}
 					break;
 				default:
 					// それ以外はノーマルタイプのレスポンスを作成.
-					res = new NormalResponseImpl(ares);
+					if(!(ares instanceof NormalResponseImpl)) {
+						res = new NormalResponseImpl(ares);
+					}
 					break;
 				}
 			}
@@ -266,7 +271,7 @@ public class RegisterComponent implements Component {
 			responseInitialSetting.setResponse(res);
 		}
 		// 実行処理.
-		component.call(method, req, res);
+		component.call(req, res);
 	}
 
 	@Override

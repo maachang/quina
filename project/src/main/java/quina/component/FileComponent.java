@@ -2,7 +2,6 @@ package quina.component;
 
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
-import quina.http.Method;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
@@ -53,7 +52,8 @@ public class FileComponent implements FileAttributeComponent {
 		String dir = AnnotationRoute.loadFilePath(this);
 		if(dir == null) {
 			// 設定されてない場合はエラー.
-			throw new QuinaException("@FilePath annotation is not set.");
+			throw new QuinaException(
+				"@FilePath annotation is not set.");
 		}
 		init(cacheMode, dir);
 	}
@@ -84,9 +84,11 @@ public class FileComponent implements FileAttributeComponent {
 	 */
 	protected void init(Boolean cacheMode, String dir) {
 		if(dir == null || dir.isEmpty()) {
-			throw new QuinaException("Target directory is not set.");
+			throw new QuinaException(
+				"Target directory is not set.");
 		} else if(!FileUtil.isDir(dir)) {
-			throw new QuinaException("The specified directory \"" +
+			throw new QuinaException(
+				"The specified directory \"" +
 				dir + "\" does not exist. ");
 		}
 		try {
@@ -176,13 +178,15 @@ public class FileComponent implements FileAttributeComponent {
 			throw new QuinaException("Component definition URL is not set.");
 		} else if(!componentUrl.endsWith("/*")) {
 			throw new QuinaException(
-				"The end of the component definition URL is not an asterisk: " + componentUrl);
+				"The end of the component definition URL is not an asterisk: " +
+				componentUrl);
 		}
 		int pos = positionSlash(url, countSlash);
 		if(pos == -1) {
 			throw new QuinaException(
-				"The conditions of the component definition URL and this URL do not match: "
-				+ "componentUrl: " + componentUrl + " url: " + url);
+				"The conditions of the component definition URL and " +
+				"this URL do not match: " + "componentUrl: " +
+				componentUrl + " url: " + url);
 		}
 		final String target = url.substring(pos);
 		checkIllegalUrl(target);
@@ -205,7 +209,7 @@ public class FileComponent implements FileAttributeComponent {
 	}
 
 	@Override
-	public void call(Method method, Request req, Response<?> res) {
+	public void call(Request req, Response<?> res) {
 		// 要求URLパスとローカルディレクトリ名とマージ.
 		String path = urlAndComponentUrlByMargeLocalPath(
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),

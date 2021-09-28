@@ -1,6 +1,8 @@
 package quina.component;
 
+import quina.http.HttpException;
 import quina.http.Method;
+import quina.http.Request;
 
 /**
  * コンポーネント定義.
@@ -36,7 +38,8 @@ public class ComponentConstants {
 	/**
 	 * HTTPメソッド: 全属性.
 	 */
-	public static final int HTTP_METHOD_ALL = Method.GET.getType()
+	public static final int HTTP_METHOD_ALL =
+		  Method.GET.getType()
 		| Method.POST.getType()
 		| Method.DELETE.getType()
 		| Method.PUT.getType()
@@ -67,4 +70,16 @@ public class ComponentConstants {
 	 * HTTPメソッド: PATCH.
 	 */
 	public static final int HTTP_METHOD_PATCH = Method.PATCH.getType();
+	
+	/**
+	 * Httpエラー405を返却.
+	 * @param req
+	 */
+	public static final void httpError405(Request req) {
+		throw new HttpException(405,
+			"The specified method: " +
+			req.getMethod() +
+			" cannot be used for this URL: " +
+			req.getUrl());
+	}
 }

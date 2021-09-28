@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * 
  * Injectの定義は２つの方法で定義することができます.
  * 
- *   @Inject
+ *   ＠Inject
  *   private XxxxService service;
  * 
  * この定義の場合XxxxServiceは基底クラスやインターフェイスでない
@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * 基底クラスやインターフェイスで継承されたServiceアノテーション定義
  * クラスが存在する場合は、以下のように定義する必要があります.
  * 
- *   @Inject("abc.xyz.YyyyService")
+ *   ＠Inject("abc.xyz.YyyyService")
  *   private XxxxService service;
  * 
  * このようにパッケージ名＋クラス名を指定することで正常にInjectする

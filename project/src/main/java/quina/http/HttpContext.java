@@ -11,6 +11,12 @@ import quina.worker.QuinaContext;
 public interface HttpContext extends QuinaContext {
 	
 	/**
+	 * HttpElementを取得.
+	 * @return HttpElement HttpElementが返却されます.
+	 */
+	public HttpElement getHttpElement();
+	
+	/**
 	 * 対象のRequestを取得.
 	 * @return Request Requestが返却されます.
 	 */

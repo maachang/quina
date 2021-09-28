@@ -1,7 +1,6 @@
 package quina.component;
 
 import quina.http.HttpException;
-import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
@@ -41,23 +40,22 @@ public interface RESTfulSync extends Component {
 	 * コンポーネント実行処理.
 	 * @param req HttpRequestが設定されます.
 	 * @param res HttpResponseが設定されます.
-	 * @param params パラメータが設定されます.
 	 */
 	@Override
-	default void call(Method method, Request req, Response<?> res) {
-		final Object o;
+	default void call(Request req, Response<?> res) {
+		Object o = null;
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
 			res = new SyncResponseImpl(res);
 		}
 		final SyncResponse sres = (SyncResponse)res;
-		switch(method) {
+		switch(req.getMethod()) {
 		case GET: o = get(req, sres, req.getParams()); break;
 		case POST: o = post(req, sres, req.getParams()); break;
 		case DELETE: o = delete(req, sres, req.getParams()); break;
 		case PUT: o = put(req, sres, req.getParams()); break;
 		case PATCH: o = patch(req, sres, req.getParams()); break;
-		default: throw new HttpException(405, "Unsupported HTTP method: " + method.getName());
+		default: ComponentConstants.httpError405(req);
 		}
 		// 送信なしを示す場合.
 		if(NOSEND == o) {

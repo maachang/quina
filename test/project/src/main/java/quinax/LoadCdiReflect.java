@@ -98,9 +98,5 @@ public final class LoadCdiReflect {
 		field = cls.getDeclaredField("config");
 		staticFlag = false;
 		element.add(staticFlag, field);
-		
-		field = cls.getDeclaredField("startFlag");
-		staticFlag = false;
-		element.add(staticFlag, field);
 	}
 }
