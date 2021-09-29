@@ -76,6 +76,13 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
+	// このクラスにCdiAnnotationClassが設定されてるかチェック.
+	private static final boolean isCdiAnnotationClass(
+		Class<?> c) {
+		return GCdiConstants.isDefineAnnotation(c);
+	}
+
+	
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(
@@ -89,32 +96,37 @@ public class GCdiOutputJavaSrc {
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(Class<?> c) {
-		// そのクラスがPublic定義の場合.
+		// Cdi関連のアノテーションが設定されてない場合.
+		if(!isCdiAnnotationClass(c)) {
+			// false返却.
+			return false;
+		}
+		// クラス定義がPublic定義の場合.
 		if(Modifier.isPublic(c.getModifiers())) {
-			// publicで引数の無いコンストラクタが存在するかチェック.
 			try {
+				// 引数の無いコンストラクタが存在して、それが
+				// public 定義かチェック.
 				Constructor<?> csr = c.getConstructor();
-				// 対象コンストラクタがPublicの場合.
 				if(Modifier.isPublic(csr.getModifiers())) {
+					// 対象コンストラクタがPublicの場合.
 					return true;
 				}
 			} catch(NoSuchMethodException mse) {
-				// コンストラクタ取得失敗.
 			}
-			// 存在しない場合は例外.
-			throw new QuinaException(
-				"An empty Public constructor for the specified " +
-				"class \"" + c.getClass().getName() +
-				"\" is not defined. ");
 		}
-		return false;
+		// クラス定義がpublicでなく、空のpublic
+		// コンストラクタが存在しない場合.
+		throw new QuinaException(
+			"An empty Public constructor for the specified " +
+			"class \"" + c.getClass().getName() +
+			"\" is not defined. ");
 	}
 	
 	// 対象フィールドがCdiFieldでfinal定義でないかチェック.
 	private static final boolean isCdiField(Class<?> c, Field f) {
 		// 何らかのアノテーション定義が存在する場合.
 		if(f.getAnnotations().length > 0) {
-			// final 定義の場合エラー.
+			// フィールドが final 定義の場合エラー.
 			if(Modifier.isFinal(f.getModifiers())) {
 				throw new QuinaException(
 					"The specified field (class: " +

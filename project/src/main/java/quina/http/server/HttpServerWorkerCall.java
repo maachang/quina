@@ -4,6 +4,7 @@ import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpElement;
 import quina.net.nio.tcp.NioWorkerCall;
+import quina.worker.QuinaWorkerConstants;
 
 /**
  * HttpServer用のWorker実行.
@@ -17,7 +18,7 @@ public class HttpServerWorkerCall extends NioWorkerCall {
 	 * @return int ユニークIDを取得します.
 	 */
 	public int getId() {
-		return HttpServerConstants.WORKER_CALL_ID;
+		return QuinaWorkerConstants.HTTP_SERVER_WORKER_CALL_ID;
 	}
 	
 	/**

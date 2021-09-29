@@ -1,5 +1,6 @@
 package quina.promise;
 
+import quina.Quina;
 import quina.exception.QuinaException;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
@@ -51,7 +52,7 @@ import quina.worker.QuinaWait;
  */
 public class Promise {
 	// 初期起動用コール.
-	protected PromiseFromEndWorker firstCall = null;
+	protected PromiseFromEndWorkerCall firstCall = null;
 	// promiseアクション.
 	protected PromiseActionImpl action;
 	
@@ -76,7 +77,8 @@ public class Promise {
 	 */
 	public Promise(PromiseFromEndCall call) {
 		this.action = new PromiseActionImpl(null);
-		this.firstCall = new PromiseFromEndWorker(this.action, call);
+		this.firstCall = new PromiseFromEndWorkerCall(
+			this.action, call);
 	}
 
 	// Promiseが開始している場合はエラー出力.
@@ -339,12 +341,12 @@ public class Promise {
 	public Promise start() {
 		// 初期実行が定義されている場合.
 		if(firstCall != null) {
-			final PromiseWorkerCall call = firstCall;
+			final PromiseFromEndWorkerCall call = firstCall;
 			firstCall = null;
 			// actionを自動実行させずに起動.
 			action.start(false);
 			// firstCallのワーカー実行.
-			PromiseWorkerManager.getInstance().push(call);
+			Quina.get().pushWorker(call);
 		// 初期実行が定義されていない場合.
 		} else {
 			// actionを自動実行で起動.

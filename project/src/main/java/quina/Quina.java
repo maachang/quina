@@ -13,10 +13,8 @@ import quina.http.HttpContext;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.server.HttpServerContext;
 import quina.http.server.HttpServerService;
-import quina.http.server.HttpServerWorkerCallHandler;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioUtil;
-import quina.promise.PromiseWorkerManager;
 import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
@@ -221,9 +219,13 @@ public final class Quina {
 			// 共通ワーカーハンドラをセット.
 			this.workerService.setHandler(
 				new QuinaContextHandler());
-			// Httpワーカーハンドラをセット.
-			this.workerService.addCallHandle(
-				new HttpServerWorkerCallHandler());
+			
+			// ワーカーコールハンドラをセット.
+			int len = QuinaConstants.REG_WORKER_CALL_HANDLES.length;
+			for(int i = 0; i < len; i ++) {
+				this.workerService.addCallHandle(
+					QuinaConstants.REG_WORKER_CALL_HANDLES[i]);
+			}
 			
 			// HTTP関連サービスを生成.
 			this.httpServerService = new HttpServerService(
@@ -269,9 +271,6 @@ public final class Quina {
 		if(confDir == null || confDir.isEmpty()) {
 			return;
 		}
-		// Promiseワーカーのコンフィグ設定.
-		PromiseWorkerManager.getInstance().getConfig()
-			.loadConfig(confDir);
 		// シャットダウンマネージャのコンフィグ定義.
 		_loadShutdownManagerConfig(confDir);
 		// Etagマネージャのコンフィグ定義.
@@ -527,6 +526,19 @@ public final class Quina {
 	
 	/**
 	 * HttpContextを取得.
+	 * このContextは、QuinaWorkerService内で実行される
+	 * ものに関して、利用することが出来ます.
+	 * なので、他のスレッドでこの処理を呼び出す場合は
+	 * この処理は利用出来ません.
+	 * 
+	 * その場合は以下のような形で実装することで対応
+	 * 出来ます.
+	 * 
+	 * final HttpContext ctx = Quina.getContext();
+	 * xxxx.execute(() -> {
+	 *   ctx.normalResponse().send("hoge");
+	 * }
+	 * 
 	 * @return HttpContext HttpContextが返却されます.
 	 */
 	public static final HttpContext getHttpContext() {

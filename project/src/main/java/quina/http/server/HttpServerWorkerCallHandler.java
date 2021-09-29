@@ -10,6 +10,7 @@ import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerCallHandler;
+import quina.worker.QuinaWorkerConstants;
 
 /**
  * HttpServer用のWorkerCallハンドラ.
@@ -51,7 +52,7 @@ public class HttpServerWorkerCallHandler
 	 */
 	@Override
 	public Integer targetId() {
-		return HttpServerConstants.WORKER_CALL_ID;
+		return QuinaWorkerConstants.HTTP_SERVER_WORKER_CALL_ID;
 	}
 	
 	/**

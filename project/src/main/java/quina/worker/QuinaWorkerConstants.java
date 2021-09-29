@@ -4,9 +4,6 @@ import quina.util.AtomicNumber;
 
 public class QuinaWorkerConstants {
 	
-	/** カスタムワーカーコールに対する利用可能な最初のID. **/
-	public static final int START_CUSTOM_WORKER_CALL_ID = 100;
-	
 	/** 最小ワーカー数. **/
 	public static final int MIN_WORKER_LENGTH = 16;
 
@@ -53,4 +50,16 @@ public class QuinaWorkerConstants {
 		}
 		workerLength.set(len);
 	}
+	
+	
+	
+	/** カスタムワーカーコールに対する利用可能な最初のID. **/
+	public static final int START_CUSTOM_WORKER_CALL_ID = 100;
+	
+	/** HttpServerWorkerCall用のID. **/
+	public static final int HTTP_SERVER_WORKER_CALL_ID = 0;
+	
+	/** PromiseWorkerCall用のID. **/
+	public static final int PROMISE_WORKER_CALL_ID = 1;
+	
 }

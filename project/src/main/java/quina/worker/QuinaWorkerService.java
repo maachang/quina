@@ -353,6 +353,7 @@ public class QuinaWorkerService
 	 * @param em Quinaワーカー要素を設定します.
 	 */
 	public void push(QuinaWorkerCall em) {
+		// サービスが開始してない場合エラー.
 		if(!isStartService()) {
 			throw new QuinaException(
 				"The service has not started.");

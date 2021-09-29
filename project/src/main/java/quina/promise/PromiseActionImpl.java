@@ -1,5 +1,6 @@
 package quina.promise;
 
+import quina.Quina;
 import quina.exception.QuinaException;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
@@ -12,8 +13,8 @@ import quina.worker.QuinaWait;
  */
 class PromiseActionImpl implements PromiseAction {
 	// Promise実行ワーカーリスト.
-	protected ObjectList<PromiseWorker> list =
-		new ObjectList<PromiseWorker>();
+	protected ObjectList<PromiseWorkerCall> list =
+		new ObjectList<PromiseWorkerCall>();
 
 	// 初期実行パラメータ.
 	protected Object initParam;
@@ -35,8 +36,8 @@ class PromiseActionImpl implements PromiseAction {
 		new AtomicNumber64(0L);
 
 	// 前回実行されたワーカー要素.
-	protected final AtomicObject<PromiseWorker> before =
-		new AtomicObject<PromiseWorker>();
+	protected final AtomicObject<PromiseWorkerCall> before =
+		new AtomicObject<PromiseWorkerCall>();
 
 	// promiseステータス.
 	protected final AtomicObject<PromiseStatus> status =
@@ -90,8 +91,8 @@ class PromiseActionImpl implements PromiseAction {
 				"The call object for normal execution has not been set.");
 		}
 		checkNotStartPromise();
-		list.add(new PromiseWorker(this, list.size(),
-			PromiseWorker.MODE_THEN, call));
+		list.add(new PromiseWorkerCall(this, list.size(),
+			PromiseWorkerCall.MODE_THEN, call));
 	}
 
 	/**
@@ -105,8 +106,8 @@ class PromiseActionImpl implements PromiseAction {
 				"The call object for executing the abnormal system has not been set.");
 		}
 		checkNotStartPromise();
-		list.add(new PromiseWorker(this, list.size(),
-			PromiseWorker.MODE_ERROR, call));
+		list.add(new PromiseWorkerCall(this, list.size(),
+			PromiseWorkerCall.MODE_ERROR, call));
 	}
 
 	/**
@@ -118,8 +119,8 @@ class PromiseActionImpl implements PromiseAction {
 			throw new QuinaException("The call object for execution has not been set.");
 		}
 		checkNotStartPromise();
-		list.add(new PromiseWorker(this, list.size(),
-			PromiseWorker.MODE_ANY, call));
+		list.add(new PromiseWorkerCall(this, list.size(),
+			PromiseWorkerCall.MODE_ANY, call));
 	}
 
 	/**
@@ -158,9 +159,9 @@ class PromiseActionImpl implements PromiseAction {
 
 	// 最終非同期処理のステータスを抽出して設定します.
 	protected boolean setLastStatusByLastPromise() {
-		PromiseWorker em = before.get();
+		PromiseWorkerCall em = before.get();
 		if(em != null) {
-			if((em.getCallMode() & PromiseWorker.MODE_THEN) != 0) {
+			if((em.getCallMode() & PromiseWorkerCall.MODE_THEN) != 0) {
 				// success.
 				status.set(PromiseStatus.Fulfilled);
 				return true;
@@ -229,13 +230,13 @@ class PromiseActionImpl implements PromiseAction {
 		// resolveが呼び出された.
 		resolveRejectCounter.inc();
 		// 利用可能なthen()追加の実行処理を取得.
-		PromiseWorker em;
+		PromiseWorkerCall em;
 		final int len = list.size();
 		for(int i = no; i < len; i ++) {
 			em = list.get(i);
-			if((em.getCallMode() & PromiseWorker.MODE_THEN) != 0) {
+			if((em.getCallMode() & PromiseWorkerCall.MODE_THEN) != 0) {
 				// anyの呼び出しの場合はPromiseValueでステータス付与する.
-				if(em.getCallMode() == PromiseWorker.MODE_ANY) {
+				if(em.getCallMode() == PromiseWorkerCall.MODE_ANY) {
 					em.setParam(new PromiseValue(PromiseStatus.Fulfilled, value));
 				} else {
 					em.setParam(value);
@@ -244,7 +245,7 @@ class PromiseActionImpl implements PromiseAction {
 				before.set(em);
 				// successステータス設定.
 				status.set(PromiseStatus.Fulfilled);
-				PromiseWorkerManager.getInstance().push(em);
+				Quina.get().pushWorker(em);
 				return true;
 			}
 		}
@@ -266,13 +267,13 @@ class PromiseActionImpl implements PromiseAction {
 		// rejectが呼び出された.
 		resolveRejectCounter.inc();
 		// 利用可能なerror()追加の実行処理を取得.
-		PromiseWorker em;
+		PromiseWorkerCall em;
 		final int len = list.size();
 		for(int i = no; i < len; i ++) {
 			em = list.get(i);
-			if((em.getCallMode() & PromiseWorker.MODE_ERROR) != 0) {
+			if((em.getCallMode() & PromiseWorkerCall.MODE_ERROR) != 0) {
 				// anyの呼び出しの場合はPromiseValueでステータス付与する.
-				if(em.getCallMode() == PromiseWorker.MODE_ANY) {
+				if(em.getCallMode() == PromiseWorkerCall.MODE_ANY) {
 					em.setParam(new PromiseValue(PromiseStatus.Rejected, value));
 				} else {
 					em.setParam(value);
@@ -281,7 +282,7 @@ class PromiseActionImpl implements PromiseAction {
 				before.set(em);
 				// reject.
 				status.set(PromiseStatus.Rejected);
-				PromiseWorkerManager.getInstance().push(em);
+				Quina.get().pushWorker(em);
 				return true;
 			}
 		}
@@ -309,7 +310,7 @@ class PromiseActionImpl implements PromiseAction {
 	 */
 	@Override
 	public PromiseAction resolve(Object value) {
-		final PromiseWorker b = before.get();
+		final PromiseWorkerCall b = before.get();
 		if(b == null) {
 			resolve(0, value);
 		} else {
@@ -326,7 +327,7 @@ class PromiseActionImpl implements PromiseAction {
 	 */
 	@Override
 	public PromiseAction reject(Object value) {
-		final PromiseWorker b = before.get();
+		final PromiseWorkerCall b = before.get();
 		if(b == null) {
 			reject(0, value);
 		} else {
@@ -417,9 +418,9 @@ class PromiseActionImpl implements PromiseAction {
 				return null;
 			}
 			// await待機.
-			// ワーカースレッドが停止した場合はawaitを取りやめる.
+			// Quinaが停止した場合はawaitを取りやめる.
 			while(!(waitObject.await(100L) ||
-				PromiseWorkerManager.getInstance().isStopCall()));
+				Quina.get().isExit()));
 			// 終了した時の返信パラメータをセット.
 			return resultAwaitValue.put(null);
 		}
@@ -471,7 +472,7 @@ class PromiseActionImpl implements PromiseAction {
 	 * @return
 	 */
 	protected int getBeforeCallMode() {
-		PromiseWorker em = before.get();
+		PromiseWorkerCall em = before.get();
 		if(em == null) {
 			return 0;
 		}

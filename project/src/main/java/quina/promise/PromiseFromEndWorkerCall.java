@@ -1,9 +1,12 @@
 package quina.promise;
 
+import quina.worker.QuinaWorkerCall;
+import quina.worker.QuinaWorkerConstants;
+
 /**
  * Promise開始・終了時のコール実行に対するワーカー要素.
  */
-final class PromiseFromEndWorker implements PromiseWorkerCall {
+final class PromiseFromEndWorkerCall extends QuinaWorkerCall {
 	/**
 	 * PromiseAction情報.
 	 */
@@ -19,17 +22,47 @@ final class PromiseFromEndWorker implements PromiseWorkerCall {
 	 * @param action PromiseAction情報を設定します.
 	 * @param call 実行対象のコールオブジェクトを設定します.
 	 */
-	protected PromiseFromEndWorker(
+	protected PromiseFromEndWorkerCall(
 		PromiseActionImpl action, PromiseFromEndCall call) {
 		this.action = action;
 		this.fromEndCall = call;
 	}
 
 	/**
-	 * ワーカースレッドでの実行処理.
+	 * ワーカー要素用のユニークIDを取得.
+	 * @return int ユニークIDを取得します.
 	 */
 	@Override
-	public void call() {
+	public int getId() {
+		return QuinaWorkerConstants.PROMISE_WORKER_CALL_ID;
+	}
+
+	/**
+	 * 要素を破棄.
+	 * @param no 対象のスレッドNoを設定します.
+	 */
+	@Override
+	public void destroy(int no) {
+		
+	}
+
+	/**
+	 * 要素が既に破棄されているかチェック.
+	 * @param no 対象のスレッドNoを設定します.
+	 * @return boolean [true]の場合は既に破棄されています.
+	 */
+	@Override
+	public boolean isDestroy(int no) {
+		return false;
+	}
+
+	/**
+	 * 対象要素の実行時の呼び出し.
+	 * @param no 対象のスレッドNoを設定します.
+	 * @return boolean falseの場合実行処理は失敗しました.
+	 */
+	@Override
+	public boolean executeCall(int no) {
 		// 実行処理.
 		try {
 			// コール実行前のresolveやreject
@@ -45,5 +78,6 @@ final class PromiseFromEndWorker implements PromiseWorkerCall {
 			// エラーの場合リジェクト.
 			action.reject(e);
 		}
+		return true;
 	}
 }

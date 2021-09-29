@@ -16,6 +16,7 @@ import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
+import quina.worker.QuinaWorkerConstants;
 import quina.worker.QuinaWorkerService;
 
 /**
@@ -82,9 +83,9 @@ public class HttpServerService implements QuinaService {
 	public boolean loadConfig(String configDir) {
 		// HttpServerWorkerCallHandlerを取得.
 		HttpServerWorkerCallHandler hnd =
-				(HttpServerWorkerCallHandler)quinaWorkerService
-					.getCallHandleByTargetId(
-							HttpServerConstants.WORKER_CALL_ID);
+			(HttpServerWorkerCallHandler)quinaWorkerService
+				.getCallHandleByTargetId(
+					QuinaWorkerConstants.HTTP_SERVER_WORKER_CALL_ID);
 		// 対象ハンドルが存在しない場合.
 		if(hnd == null) {
 			throw new QuinaException(
