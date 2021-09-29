@@ -1,9 +1,9 @@
 package quina.test;
 
 import quina.Quina;
-import quina.component.AnyComponent;
-import quina.component.RESTfulGet;
-import quina.component.RESTfulGetSync;
+import quina.component.any.AnyComponent;
+import quina.component.restful.RESTfulGet;
+import quina.component.restful.RESTfulGetSync;
 import quina.json.ResultJson;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;

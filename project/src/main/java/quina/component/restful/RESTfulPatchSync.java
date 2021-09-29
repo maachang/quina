@@ -1,5 +1,8 @@
-package quina.component;
+package quina.component.restful;
 
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;

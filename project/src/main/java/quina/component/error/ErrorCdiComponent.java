@@ -1,7 +1,7 @@
-package quina.component;
+package quina.component.error;
 
 import quina.http.Request;
-import quina.http.server.response.NormalResponse;
+import quina.http.server.response.AnyResponse;
 
 /**
  * Cdi(Contexts and Dependency Injection)向け
@@ -18,7 +18,7 @@ public interface ErrorCdiComponent
 	
 	@Override
 	default void call(int state, boolean restful, Request req,
-		NormalResponse res, Throwable e) {
+		AnyResponse res, Throwable e) {
 		// RESTful返却.
 		if(restful) {
 			jsonCall(state, req, res, e);
@@ -32,17 +32,17 @@ public interface ErrorCdiComponent
 	 * Json形式のHttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
 	 * @param req HttpRequestを設定します.
-	 * @param res NormalResponseを設定します.
+	 * @param res AnyResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
-	public void jsonCall(int state, Request req, NormalResponse res, Throwable e);
+	public void jsonCall(int state, Request req, AnyResponse res, Throwable e);
 
 	/**
 	 * Json形式以外のHttpError処理を実行.
 	 * @param state HTTPステータスを設定します.
 	 * @param req HttpRequestを設定します.
-	 * @param res NormalResponseを設定します.
+	 * @param res AnyResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
-	public void call(int state, Request req, NormalResponse res, Throwable e);
+	public void call(int state, Request req, AnyResponse res, Throwable e);
 }

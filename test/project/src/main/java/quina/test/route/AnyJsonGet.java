@@ -1,7 +1,7 @@
 package quina.test.route;
 
 import quina.annotation.route.AnyRoute;
-import quina.component.RESTfulGetSync;
+import quina.component.restful.RESTfulGetSync;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.server.response.SyncResponse;

@@ -3,7 +3,7 @@ package quina.test.route;
 import quina.annotation.cdi.Inject;
 import quina.annotation.log.LogDefine;
 import quina.annotation.route.Route;
-import quina.component.RESTfulGetSync;
+import quina.component.restful.RESTfulGetSync;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.server.response.SyncResponse;

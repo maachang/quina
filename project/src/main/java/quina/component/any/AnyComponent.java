@@ -1,9 +1,12 @@
-package quina.component;
+package quina.component.any;
 
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.response.NormalResponse;
-import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.AnyResponse;
+import quina.http.server.response.AnyResponseImpl;
 
 /**
  * Anyコンポーネント.
@@ -16,7 +19,7 @@ public interface AnyComponent extends Component {
 	 */
 	@Override
 	default ComponentType getType() {
-		return ComponentType.NORMAL;
+		return ComponentType.Any;
 	}
 
 	/**
@@ -35,17 +38,17 @@ public interface AnyComponent extends Component {
 	 */
 	@Override
 	default void call(Request req, Response<?> res) {
-		// ResponseがNormalResponseでない場合は変換.
-		if(!(res instanceof NormalResponse)) {
-			res = new NormalResponseImpl(res);
+		// ResponseがAnyResponseでない場合は変換.
+		if(!(res instanceof AnyResponse)) {
+			res = new AnyResponseImpl(res);
 		}
-		call(req, (NormalResponse)res);
+		call(req, (AnyResponse)res);
 	}
 
 	/**
 	 * コール実行.
 	 * @param req HttpRequestが設定されます.
-	 * @param res NormalResponseが設定されます.
+	 * @param res AnyResponseが設定されます.
 	 */
-	public void call(Request req, NormalResponse res);
+	public void call(Request req, AnyResponse res);
 }

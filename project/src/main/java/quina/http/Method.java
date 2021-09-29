@@ -6,6 +6,7 @@ import quina.util.Alphabet;
  * Http-Method定義.
  */
 public enum Method {
+	All("All", 0x0000001f, true),
 	GET("GET", 0x00000001, false),
 	POST("POST", 0x00000002, true),
 	DELETE("DELETE", 0x00000004, true),

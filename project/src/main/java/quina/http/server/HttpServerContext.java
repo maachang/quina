@@ -5,8 +5,8 @@ import quina.http.HttpContext;
 import quina.http.HttpElement;
 import quina.http.Request;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
-import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.AnyResponse;
+import quina.http.server.response.AnyResponseImpl;
 import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponse;
@@ -161,18 +161,18 @@ public class HttpServerContext implements HttpContext {
 	}
 	
 	/**
-	 * ノーマルレスポンスを取得.
-	 * @return NormalResponse ノーマルレスポンスが返却されます.
+	 * Anyレスポンスを取得.
+	 * @return AnyResponse Anyレスポンスが返却されます.
 	 */
 	@Override
-	public NormalResponse getNormalResponse() {
+	public AnyResponse getAnyResponse() {
 		AbstractResponse<?> res = _getResponse();
 		if(res == null) {
 			return null;
-		} else if(res instanceof NormalResponse) {
-			return (NormalResponse)res;
+		} else if(res instanceof AnyResponse) {
+			return (AnyResponse)res;
 		}
-		return new NormalResponseImpl(res);
+		return new AnyResponseImpl(res);
 	}
 
 	/**

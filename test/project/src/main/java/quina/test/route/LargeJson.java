@@ -1,6 +1,6 @@
 package quina.test.route;
 
-import quina.component.RESTfulGet;
+import quina.component.restful.RESTfulGet;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.server.response.RESTfulResponse;

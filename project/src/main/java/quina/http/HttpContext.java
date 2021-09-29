@@ -1,6 +1,6 @@
 package quina.http;
 
-import quina.http.server.response.NormalResponse;
+import quina.http.server.response.AnyResponse;
 import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.SyncResponse;
 import quina.worker.QuinaContext;
@@ -23,10 +23,10 @@ public interface HttpContext extends QuinaContext {
 	public Request getRequest();
 	
 	/**
-	 * ノーマルレスポンスを取得.
-	 * @return NormalResponse ノーマルレスポンスが返却されます.
+	 * Anyレスポンスを取得.
+	 * @return AnyResponse Anyレスポンスが返却されます.
 	 */
-	public NormalResponse getNormalResponse();
+	public AnyResponse getAnyResponse();
 
 	/**
 	 * RESTfulレスポンスを取得.

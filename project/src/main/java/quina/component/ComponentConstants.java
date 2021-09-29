@@ -21,30 +21,24 @@ public class ComponentConstants {
 	public static final int ATTRIBUTE_RESTFUL = 0x0200;
 
 	/**
-	 * コンポーネント属性: ノーマルコンポーネント.
+	 * コンポーネント属性: ANYコンポーネント.
 	 */
-	public static final int ATTRIBUTE_NORMAL = 0x0000;
+	public static final int ATTRIBUTE_ANY = 0x0000;
 
 	/**
 	 * コンポーネント属性: ファイルコンポーネント.
 	 */
-	public static final int ATTRIBUTE_FILE = 0x00ff;
+	public static final int ATTRIBUTE_FILE = 0x0400;
 
 	/**
 	 * コンポーネント属性: エラーコンポーネントタイプ
 	 */
-	public static final int ATTRIBUTE_ERROR = 0x8000;
+	public static final int ATTRIBUTE_ERROR = 0x0800;
 
 	/**
 	 * HTTPメソッド: 全属性.
 	 */
-	public static final int HTTP_METHOD_ALL =
-		  Method.GET.getType()
-		| Method.POST.getType()
-		| Method.DELETE.getType()
-		| Method.PUT.getType()
-		| Method.PATCH.getType()
-		;
+	public static final int HTTP_METHOD_ALL = Method.All.getType();
 
 	/**
 	 * HTTPメソッド: GET.

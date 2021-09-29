@@ -4,8 +4,8 @@ import quina.Quina;
 import quina.component.ComponentConstants;
 import quina.component.ComponentManager;
 import quina.component.ComponentType;
-import quina.component.ErrorComponent;
 import quina.component.RegisterComponent;
+import quina.component.error.ErrorComponent;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpAnalysis;
@@ -17,7 +17,7 @@ import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.AnyResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponseImpl;
 import quina.logger.Log;
@@ -81,7 +81,7 @@ public final class HttpServerUtil {
 			if(comp == null) {
 				// エラー404返却.
 				if(res == null) {
-					res = new NormalResponseImpl(em, mime);
+					res = new AnyResponseImpl(em, mime);
 				}
 				res.setStatus(404);
 				HttpServerUtil.sendError(req, res, null);
@@ -100,9 +100,9 @@ public final class HttpServerUtil {
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
 					res = new RESTfulResponseImpl(em, mime);
 					break;
-				// デフォルトレスポンス.
+				// Anyレスポンス.
 				default:
-					res = new NormalResponseImpl(em, mime);
+					res = new AnyResponseImpl(em, mime);
 				}
 				// レスポンスをセット.
 				em.setResponse(res);

@@ -7,7 +7,8 @@ import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.HttpServerRequest;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.AnyResponse;
+import quina.http.server.response.AnyResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponseImpl;
 import quina.validate.Validation;
@@ -259,8 +260,8 @@ public class RegisterComponent implements Component {
 					break;
 				default:
 					// それ以外はノーマルタイプのレスポンスを作成.
-					if(!(ares instanceof NormalResponseImpl)) {
-						res = new NormalResponseImpl(ares);
+					if(!(ares instanceof AnyResponse)) {
+						res = new AnyResponseImpl(ares);
 					}
 					break;
 				}

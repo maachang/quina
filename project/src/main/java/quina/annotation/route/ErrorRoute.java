@@ -14,7 +14,8 @@ import java.lang.annotation.Target;
  * 
  * @ErrorRoute
  * public class NewErrorComponent implements ErrorComponent {
- *   public void call(int state, boolean restful, Request req, NormalResponse res, Throwable e);
+ *   public void call(int state, boolean restful, Request req,
+ *     AnyResponse res, Throwable e);
  *     String message = "error!!";
  *     if(e != null) {
  *       message = e.getMessage();

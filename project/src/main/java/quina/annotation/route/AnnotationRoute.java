@@ -1,7 +1,7 @@
 package quina.annotation.route;
 
 import quina.component.Component;
-import quina.component.ErrorComponent;
+import quina.component.error.ErrorComponent;
 import quina.exception.QuinaException;
 
 /**

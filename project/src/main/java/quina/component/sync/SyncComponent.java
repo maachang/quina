@@ -1,5 +1,8 @@
-package quina.component;
+package quina.component.sync;
 
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
@@ -8,10 +11,10 @@ import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
 
 /**
- * [同期]Anyコンポーネント.
+ * [同期]コンポーネント.
  */
 @FunctionalInterface
-public interface AnySyncComponent extends Component {
+public interface SyncComponent extends Component {
 	/**
 	 * 送信なしを示すオブジェクト.
 	 */

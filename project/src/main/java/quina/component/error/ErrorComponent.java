@@ -1,10 +1,12 @@
-package quina.component;
+package quina.component.error;
 
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
-import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.AnyResponse;
+import quina.http.server.response.AnyResponseImpl;
 
 /**
  * エラーコンポーネント.
@@ -37,7 +39,7 @@ public interface ErrorComponent {
 	 * @param res HttpResponseを設定します.
 	 */
 	default void call(int state, Request req, Response<?> res) {
-		call(state, req, (NormalResponse)res, null);
+		call(state, req, (AnyResponse)res, null);
 	}
 
 	/**
@@ -60,12 +62,12 @@ public interface ErrorComponent {
 				res.setContentType("text/html");
 			}
 		}
-		// ResponseがNormalResponseでない場合は変換.
-		if(!(res instanceof NormalResponse)) {
-			res = new NormalResponseImpl(res);
+		// ResponseがAnyResponseでない場合は変換.
+		if(!(res instanceof AnyResponse)) {
+			res = new AnyResponseImpl(res);
 		}
 		// 実行処理.
-		call(state, json, req, (NormalResponse)res, e);
+		call(state, json, req, (AnyResponse)res, e);
 	}
 
 	/**
@@ -74,14 +76,14 @@ public interface ErrorComponent {
 	 * @param json エラーが発生した呼び出しコンポーネントが
 	 *             [RESFful]の場合は[true]が設定されます.
 	 * @param req HttpRequestを設定します.
-	 * @param res NormalResponseを設定します.
+	 * @param res Responseを設定します.
 	 */
 	default void call(int state, boolean restful, Request req, Response<?> res) {
-		// ResponseがNormalResponseでない場合は変換.
-		if(!(res instanceof NormalResponse)) {
-			res = new NormalResponseImpl(res);
+		// ResponseがAnyResponseでない場合は変換.
+		if(!(res instanceof AnyResponse)) {
+			res = new AnyResponseImpl(res);
 		}
-		call(state, restful, req, (NormalResponse)res, null);
+		call(state, restful, req, (AnyResponse)res, null);
 	}
 
 	/**
@@ -90,9 +92,9 @@ public interface ErrorComponent {
 	 * @param json エラーが発生した呼び出しコンポーネントが
 	 *             [RESFful]の場合は[true]が設定されます.
 	 * @param req HttpRequestを設定します.
-	 * @param res NormalResponseを設定します.
+	 * @param res AnyResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
 	public void call(int state, boolean restful, Request req,
-		NormalResponse res, Throwable e);
+			AnyResponse res, Throwable e);
 }

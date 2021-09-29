@@ -1,9 +1,10 @@
-package quina.component;
+package quina.component.error;
 
+import quina.component.ComponentType;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
+import quina.http.server.response.AnyResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
@@ -32,7 +33,7 @@ public interface ErrorSyncComponent extends ErrorComponent {
 	
 	@Override
 	default void call(int state, boolean restful, Request req,
-		NormalResponse res, Throwable e) {
+		AnyResponse res, Throwable e) {
 		call(state, req, (Response<?>)res, e);
 	}
 	
@@ -40,7 +41,7 @@ public interface ErrorSyncComponent extends ErrorComponent {
 	default void call(int state, Request req, Response<?> res, Throwable e) {
 		final boolean restful = ((AbstractResponse<?>)res)
 			.getComponentType().isRESTful();
-		// ResponseがNormalResponseでない場合は変換.
+		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
 			res = new SyncResponseImpl(res);
 		}

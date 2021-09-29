@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
  * 
  *   ＠POST
  *   ＠Route("/exsample/hello")
- *   ＠ParamsDefine({"name", "age"})
+ *   ＠PathParams({"name", "age"})
  *   public Object hello(String name, int age) {
  *     return "hello " + name + " age: " + age;
  *   }
@@ -27,18 +27,14 @@ import java.lang.annotation.Target;
  * この実装によって、以下の実装と同じような形で動作します.
  * 
  * ＠Route("/hoge/exsample/hello")
- * public class Exsample implements AnySyncComponent {
+ * public class Exsample implements SyncPostComponent {
  *   private final Exsample exsample = new Exsample();
- *   public Object call(Request req, SyncResponse res) {
+ *   public Object post(Request req, SyncResponse res) {
  *     Params params = req.getParams();
- *     switch(req.getMethod()) {
- *     case POST:
- *       return hello(
- *         params.getString("name")
- *         ,params.getInt("age")
- *       );
- *     }
- *     ComponentConstants.httpError405(req);
+ *     return hello(
+ *       params.getString("name")
+ *       ,params.getInteger("age")
+ *     );
  *   }
  * }
  * 

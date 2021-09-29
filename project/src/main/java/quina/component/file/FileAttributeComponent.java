@@ -1,4 +1,8 @@
-package quina.component;
+package quina.component.file;
+
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 
 /**
  * ファイル属性コンポーネント.

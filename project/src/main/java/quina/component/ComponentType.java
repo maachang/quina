@@ -1,53 +1,116 @@
 package quina.component;
 
-import static quina.component.ComponentConstants.*;
+import static quina.component.ComponentConstants.ATTRIBUTE_ANY;
+import static quina.component.ComponentConstants.ATTRIBUTE_ERROR;
+import static quina.component.ComponentConstants.ATTRIBUTE_FILE;
+import static quina.component.ComponentConstants.ATTRIBUTE_RESTFUL;
+import static quina.component.ComponentConstants.ATTRIBUTE_SYNC;
+
+import quina.exception.QuinaException;
+import quina.http.Method;
 
 /**
  * コンポーネントタイプを取得.
  */
 public enum ComponentType {
 	/** Anyコンポーネント. **/
-	NORMAL(ATTRIBUTE_NORMAL, ATTRIBUTE_NORMAL, "Normal"),
+	Any(ATTRIBUTE_ANY,
+		ATTRIBUTE_ANY + ComponentConstants.HTTP_METHOD_ALL,
+		"Any"),
+	
+	/** Any GetMethod用コンポーネント. **/
+	AnyGet(ATTRIBUTE_ANY, ATTRIBUTE_ANY + Method.GET.getType(),
+		"AnyGet"),
 
-	/** [同期]Anyコンポーネント. **/
-	Sync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC, "Sync"),
+	/** Any PostMethod用コンポーネント. **/
+	AnyPost(ATTRIBUTE_ANY, ATTRIBUTE_ANY + Method.POST.getType(),
+		"AnyPost"),
+	
+	/** Any DeleteMethod用コンポーネント. **/
+	AnyDelete(ATTRIBUTE_ANY, ATTRIBUTE_ANY + Method.DELETE.getType(),
+		"AnyDelete"),
+
+	/** Any PutMethod用コンポーネント. **/
+	AnyPut(ATTRIBUTE_ANY, ATTRIBUTE_ANY + Method.PUT.getType(),
+		"AnyPut"),
+	
+	/** Any PathMethod用コンポーネント. **/
+	AnyPatch(ATTRIBUTE_ANY, ATTRIBUTE_ANY + Method.PATCH.getType(),
+		"AnyPatch"),
+
+	/** [同期]コンポーネント. **/
+	Sync(ATTRIBUTE_SYNC,
+		ATTRIBUTE_SYNC + ComponentConstants.HTTP_METHOD_ALL,
+		"Sync"),
+	
+	/** [同期]GetMethod用コンポーネント. **/
+	SyncGet(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + Method.GET.getType(),
+		"SyncGet"),
+
+	/** [同期]PostMethod用コンポーネント. **/
+	SyncPost(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + Method.POST.getType(),
+		"SyncPost"),
+	
+	/** [同期]DeleteMethod用コンポーネント. **/
+	SyncDelete(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + Method.DELETE.getType(),
+		"SyncDelete"),
+
+	/** [同期]PutMethod用コンポーネント. **/
+	SyncPut(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + Method.PUT.getType(),
+		"SyncPut"),
+	
+	/** [同期]PathMethod用コンポーネント. **/
+	SyncPatch(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + Method.PATCH.getType(),
+		"SyncPatch"),
 
 	/** RESTful 用コンポーネント. **/
-	RESTful(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL, "RESTful"),
+	RESTful(ATTRIBUTE_RESTFUL,
+		ATTRIBUTE_RESTFUL + ComponentConstants.HTTP_METHOD_ALL,
+		"RESTful"),
 
 	/** RESTful GetMethod用コンポーネント. **/
-	RESTfulGet(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + 1, "RESTfulGet"),
+	RESTfulGet(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + Method.GET.getType(),
+		"RESTfulGet"),
 
 	/** [同期]RESTful GetMethod用コンポーネント. **/
-	RESTfulGetSync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + 1,
+	RESTfulGetSync(ATTRIBUTE_SYNC, 
+		ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + Method.GET.getType(),
 		"RESTfulGetSync"),
 
 	/** RESTful PostMethod用コンポーネント. **/
-	RESTfulPost(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + 2, "RESTfulPost"),
+	RESTfulPost(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + Method.POST.getType(),
+		"RESTfulPost"),
 
 	/** [同期]RESTful PostMethod用コンポーネント. **/
-	RESTfulPostSync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + 2,
+	RESTfulPostSync(ATTRIBUTE_SYNC,
+		ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + Method.POST.getType(),
 		"RESTfulPostSync"),
 
 	/** RESTful DeleteMethod用コンポーネント. **/
-	RESTfulDelete(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + 3, "RESTfulDelete"),
+	RESTfulDelete(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + Method.DELETE.getType(),
+		"RESTfulDelete"),
 
 	/** [同期]RESTful DeleteMethod用コンポーネント. **/
-	RESTfulDeleteSync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + 3,
+	RESTfulDeleteSync(ATTRIBUTE_SYNC,
+		ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + Method.DELETE.getType(),
 		"RESTfulDeleteSync"),
 
 	/** RESTful PutMethod用コンポーネント. **/
-	RESTfulPut(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + 4, "RESTfulPut"),
+	RESTfulPut(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + Method.PUT.getType(),
+		"RESTfulPut"),
 
 	/** [同期]RESTful PutMethod用コンポーネント. **/
-	RESTfulPutSync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + 4,
+	RESTfulPutSync(ATTRIBUTE_SYNC,
+		ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + Method.PUT.getType(),
 		"RESTfulPutSync"),
 
 	/** RESTful PatchMethod用コンポーネント. **/
-	RESTfulPatch(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + 5, "RESTfulPatch"),
+	RESTfulPatch(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + Method.PATCH.getType(),
+		"RESTfulPatch"),
 
 	/** [同期]RESTful PatchMethod用コンポーネント. **/
-	RESTfulPatchSync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + 5,
+	RESTfulPatchSync(ATTRIBUTE_SYNC,
+		ATTRIBUTE_SYNC + ATTRIBUTE_RESTFUL + Method.PATCH.getType(),
 		"RESTfulPatchSync"),
 
 	/** ファイルコンポーネント. **/
@@ -115,6 +178,29 @@ public enum ComponentType {
 	 */
 	public boolean isSync() {
 		return (type & ATTRIBUTE_SYNC) == ATTRIBUTE_SYNC;
+	}
+	
+	/**
+	 * 対象のHttpメソッドを取得.
+	 * @return Method Httpメソッドが返却されます.
+	 */
+	public Method getMethod() {
+		int methodType = type & ComponentConstants.HTTP_METHOD_ALL;
+		if(methodType == ComponentConstants.HTTP_METHOD_ALL) {
+			return Method.All;
+		} else if(methodType == ComponentConstants.HTTP_METHOD_GET) {
+			return Method.GET;
+		} else if(methodType == ComponentConstants.HTTP_METHOD_POST) {
+			return Method.POST;
+		} else if(methodType == ComponentConstants.HTTP_METHOD_DELETE) {
+			return Method.DELETE;
+		} else if(methodType == ComponentConstants.HTTP_METHOD_PUT) {
+			return Method.PUT;
+		} else if(methodType == ComponentConstants.HTTP_METHOD_PATCH) {
+			return Method.PATCH;
+		}
+		throw new QuinaException(
+			"Failed to get Http method information: " + methodType);
 	}
 
 	/**

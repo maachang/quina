@@ -1,4 +1,4 @@
-package quina.component;
+package quina.component.file;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

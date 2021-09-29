@@ -1,24 +1,26 @@
-package quina.component;
+package quina.component.any;
 
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Method;
-import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.response.RESTfulResponse;
-import quina.http.server.response.RESTfulResponseImpl;
+import quina.http.server.response.AnyResponse;
+import quina.http.server.response.AnyResponseImpl;
 
 /**
- * RESTfulメソッドPut専用のComponent.
+ * メソッドGet専用のComponent.
  */
 @FunctionalInterface
-public interface RESTfulPut extends Component {
+public interface AnyGetComponent extends Component {
 	/**
 	 * コンポーネントタイプを取得.
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	@Override
 	default ComponentType getType() {
-		return ComponentType.RESTfulPut;
+		return ComponentType.AnyGet;
 	}
 
 	/**
@@ -27,7 +29,7 @@ public interface RESTfulPut extends Component {
 	 */
 	@Override
 	default int getMethod() {
-		return ComponentConstants.HTTP_METHOD_PUT;
+		return ComponentConstants.HTTP_METHOD_GET;
 	}
 
 	/**
@@ -37,21 +39,20 @@ public interface RESTfulPut extends Component {
 	 */
 	@Override
 	default void call(Request req, Response<?> res) {
-		if(req.getMethod() != Method.PUT) {
+		if(req.getMethod() != Method.GET) {
 			ComponentConstants.httpError405(req);
 		}
-		// ResponseがSyncResponseでない場合は変換.
-		if(!(res instanceof RESTfulResponse)) {
-			res = new RESTfulResponseImpl(res);
+		// ResponseがAnyResponseでない場合は変換.
+		if(!(res instanceof AnyResponse)) {
+			res = new AnyResponseImpl(res);
 		}
-		put(req, (RESTfulResponse)res, req.getParams());
+		get(req, (AnyResponse)res);
 	}
 
 	/**
-	 * PUTメソッド用実行.
+	 * GETメソッド用実行.
 	 * @param req HttpRequestが設定されます.
 	 * @param res RESTfulResponseが設定されます.
-	 * @param params パラメータが設定されます.
 	 */
-	public void put(Request req, RESTfulResponse res, Params params);
+	public void get(Request req, AnyResponse res);
 }

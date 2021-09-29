@@ -2,7 +2,7 @@ package quina.http.server.furnishing;
 
 import quina.http.server.HttpServerUtil;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponseImpl;
+import quina.http.server.response.AnyResponseImpl;
 
 /**
  * エラー送信実装提供.
@@ -57,8 +57,8 @@ public interface ErrorSendResponse<T>
 			if(status < 0) {
 				state = 500;
 			}
-			// エラー送信ではDefaultレスポンスに変換して送信.
-			res = (AbstractResponse<?>)new NormalResponseImpl(res);
+			// エラー送信ではAnyレスポンスに変換して送信.
+			res = (AbstractResponse<?>)new AnyResponseImpl(res);
 			// エラーが存在しない場合.
 			if(value == null) {
 				// エラー返却.

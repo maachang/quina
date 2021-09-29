@@ -1,12 +1,16 @@
 package quina.component;
 
 import quina.annotation.component.ResponseInitialSetting;
+import quina.component.error.ErrorComponent;
+import quina.component.file.EtagManager;
+import quina.component.file.EtagManagerInfo;
+import quina.component.file.FileAttributeComponent;
 import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.Method;
 import quina.http.Request;
 import quina.http.server.response.AbstractResponse;
-import quina.http.server.response.NormalResponse;
+import quina.http.server.response.AnyResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.ObjectList;
@@ -20,7 +24,8 @@ public class ComponentManager {
 	// デフォルトのエラー処理コンポーネント.
 	private static final class DefaultErrorComponent
 		implements ErrorComponent {
-		private static final DefaultErrorComponent INST = new DefaultErrorComponent();
+		private static final DefaultErrorComponent INST =
+			new DefaultErrorComponent();
 
 		/**
 		 * 標準エラーコンポーネントを取得.
@@ -37,7 +42,8 @@ public class ComponentManager {
 		}
 
 		@Override
-		public void call(int state, boolean restful, Request req, NormalResponse res, Throwable e) {
+		public void call(int state, boolean restful, Request req,
+			AnyResponse res, Throwable e) {
 			// BodyなしのHttpHeaderでのエラーメッセージを送信.
 			if(e != null) {
 				res.setStatus(state, e.getMessage());
@@ -64,7 +70,8 @@ public class ComponentManager {
 		 * @param ErrorComponent
 		 */
 		public RangeStatusElement(
-			int startStatus, int endStatus, ErrorComponent ErrorComponent) {
+			int startStatus, int endStatus,
+			ErrorComponent ErrorComponent) {
 			if(startStatus > endStatus) {
 				int n = startStatus;
 				startStatus = endStatus;
@@ -81,7 +88,8 @@ public class ComponentManager {
 		 * @return
 		 */
 		public boolean match(int state) {
-			return (startStatus <= state && endStatus >= state);
+			return (startStatus <= state &&
+				endStatus >= state);
 		}
 		
 		/**
@@ -111,8 +119,8 @@ public class ComponentManager {
 		@Override
 		public String toString() {
 			return new StringBuilder()
-				.append(startStatus).append(" - ").append(endStatus)
-				.toString();
+				.append(startStatus).append(" - ")
+				.append(endStatus).toString();
 		}
 	}
 	
@@ -270,16 +278,19 @@ public class ComponentManager {
 			int type = component.getMethod();
 			if(type == ComponentConstants.HTTP_METHOD_ALL) {
 				all = component;
-			} else if((type & Method.GET.getType()) != 0) {
+			} else if(type == ComponentConstants.HTTP_METHOD_GET) {
 				get = component;
-			} else if((type & Method.POST.getType()) != 0) {
+			} else if(type == ComponentConstants.HTTP_METHOD_POST) {
 				post = component;
-			} else if((type & Method.DELETE.getType()) != 0) {
+			} else if(type == ComponentConstants.HTTP_METHOD_DELETE) {
 				delete = component;
-			} else if((type & Method.PUT.getType()) != 0) {
+			} else if(type == ComponentConstants.HTTP_METHOD_PUT) {
 				put = component;
-			} else if((type & Method.PATCH.getType()) != 0) {
+			} else if(type == ComponentConstants.HTTP_METHOD_PATCH) {
 				patch = component;
+			} else {
+				throw new QuinaException(
+					"Failed to get Http method information: " + type);
 			}
 		}
 
@@ -290,7 +301,9 @@ public class ComponentManager {
 		 */
 		public RegisterComponent getComponent(Method method) {
 			int type = method.getType();
-			if(type == ComponentConstants.HTTP_METHOD_GET) {
+			if(type == ComponentConstants.HTTP_METHOD_ALL) {
+				return all;
+			} else if(type == ComponentConstants.HTTP_METHOD_GET) {
 				return get();
 			} else if(type == ComponentConstants.HTTP_METHOD_POST) {
 				return post();

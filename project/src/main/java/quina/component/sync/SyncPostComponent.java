@@ -1,7 +1,9 @@
-package quina.component;
+package quina.component.sync;
 
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Method;
-import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
@@ -10,10 +12,10 @@ import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
 
 /**
- * [同期]RESTfulメソッドGet専用のComponent.
+ * [同期]メソッドPost専用のComponent.
  */
 @FunctionalInterface
-public interface RESTfulGetSync extends Component {
+public interface SyncPostComponent extends Component {
 	/**
 	 * 送信なしを示すオブジェクト.
 	 */
@@ -25,7 +27,7 @@ public interface RESTfulGetSync extends Component {
 	 */
 	@Override
 	default ComponentType getType() {
-		return ComponentType.RESTfulGetSync;
+		return ComponentType.SyncPost;
 	}
 
 	/**
@@ -34,7 +36,7 @@ public interface RESTfulGetSync extends Component {
 	 */
 	@Override
 	default int getMethod() {
-		return ComponentConstants.HTTP_METHOD_GET;
+		return ComponentConstants.HTTP_METHOD_POST;
 	}
 
 	/**
@@ -44,14 +46,13 @@ public interface RESTfulGetSync extends Component {
 	 */
 	@Override
 	default void call(Request req, Response<?> res) {
-		if(req.getMethod() != Method.GET) {
+		if(req.getMethod() != Method.POST) {
 			ComponentConstants.httpError405(req);
-		}
 		// ResponseがSyncResponseでない場合は変換.
-		if(!(res instanceof SyncResponse)) {
+		} else if(!(res instanceof SyncResponse)) {
 			res = new SyncResponseImpl(res);
 		}
-		final Object o = get(req, (SyncResponse)res, req.getParams());
+		final Object o = post(req, (SyncResponse)res);
 		// 送信なしを示す場合.
 		if(NOSEND == o) {
 			return;
@@ -62,12 +63,10 @@ public interface RESTfulGetSync extends Component {
 	}
 
 	/**
-	 * GETメソッド用実行.
+	 * POSTメソッド用実行.
 	 * @param req HttpRequestが設定されます.
 	 * @param res SyncResponseが設定されます.
-	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public Object get(Request req, SyncResponse res, Params params);
-
+	public Object post(Request req, SyncResponse res);
 }

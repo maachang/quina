@@ -1,4 +1,4 @@
-package quina.component;
+package quina.component.file;
 
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;

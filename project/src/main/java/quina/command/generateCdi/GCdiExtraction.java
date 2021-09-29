@@ -13,7 +13,7 @@ import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
-import quina.component.ErrorComponent;
+import quina.component.error.ErrorComponent;
 
 /**
  * Cdiオブジェクトを抽出.

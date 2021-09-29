@@ -1,7 +1,9 @@
-package quina.component;
+package quina.component.sync;
 
+import quina.component.Component;
+import quina.component.ComponentConstants;
+import quina.component.ComponentType;
 import quina.http.Method;
-import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
@@ -10,10 +12,10 @@ import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
 
 /**
- * [同期]RESTfulメソッドPost専用のComponent.
+ * [同期]メソッドPut専用のComponent.
  */
 @FunctionalInterface
-public interface RESTfulPostSync extends Component {
+public interface SyncPutComponent extends Component {
 	/**
 	 * 送信なしを示すオブジェクト.
 	 */
@@ -25,7 +27,7 @@ public interface RESTfulPostSync extends Component {
 	 */
 	@Override
 	default ComponentType getType() {
-		return ComponentType.RESTfulPostSync;
+		return ComponentType.SyncPut;
 	}
 
 	/**
@@ -34,7 +36,7 @@ public interface RESTfulPostSync extends Component {
 	 */
 	@Override
 	default int getMethod() {
-		return ComponentConstants.HTTP_METHOD_POST;
+		return ComponentConstants.HTTP_METHOD_PUT;
 	}
 
 	/**
@@ -44,14 +46,13 @@ public interface RESTfulPostSync extends Component {
 	 */
 	@Override
 	default void call(Request req, Response<?> res) {
-		if(req.getMethod() != Method.POST) {
+		if(req.getMethod() != Method.PUT) {
 			ComponentConstants.httpError405(req);
-		}
 		// ResponseがSyncResponseでない場合は変換.
-		if(!(res instanceof SyncResponse)) {
+		} else if(!(res instanceof SyncResponse)) {
 			res = new SyncResponseImpl(res);
 		}
-		final Object o = post(req, (SyncResponse)res, req.getParams());
+		final Object o = put(req, (SyncResponse)res);
 		// 送信なしを示す場合.
 		if(NOSEND == o) {
 			return;
@@ -62,11 +63,10 @@ public interface RESTfulPostSync extends Component {
 	}
 
 	/**
-	 * POSTメソッド用実行.
+	 * PUTメソッド用実行.
 	 * @param req HttpRequestが設定されます.
 	 * @param res SyncResponseが設定されます.
-	 * @param params パラメータが設定されます.
 	 * @return Object 返却するRESTfulオブジェクトを設定します.
 	 */
-	public Object post(Request req, SyncResponse res, Params params);
+	public Object put(Request req, SyncResponse res);
 }

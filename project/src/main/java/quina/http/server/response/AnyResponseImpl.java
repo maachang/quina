@@ -10,21 +10,21 @@ import quina.http.server.furnishing.AbstractBaseSendResponse;
 /**
  * 標準的なレスポンス実装.
  */
-public class NormalResponseImpl
-	extends AbstractResponse<NormalResponse>
-	implements NormalResponse,
-		AbstractBaseSendResponse<NormalResponse> {
+public class AnyResponseImpl
+	extends AbstractResponse<AnyResponse>
+	implements AnyResponse,
+		AbstractBaseSendResponse<AnyResponse> {
 	
 	/**
 	 * コンストラクタ.
 	 */
-	protected NormalResponseImpl() {}
+	protected AnyResponseImpl() {}
 	
 	/***
 	 * コンストラクタ.
 	 * @param res レスポンスオブジェクトを設定します.
 	 */
-	public NormalResponseImpl(Response<?> res) {
+	public AnyResponseImpl(Response<?> res) {
 		newResponse(res);
 	}
 
@@ -33,7 +33,7 @@ public class NormalResponseImpl
 	 * @param element Http要素を設定します.
 	 * @param mimeTypes MimeType群を設定します.
 	 */
-	public NormalResponseImpl(
+	public AnyResponseImpl(
 		HttpElement element, MimeTypes mimeTypes) {
 		if(element == null || mimeTypes == null) {
 			throw new QuinaException("The specified argument is null.");
@@ -56,7 +56,7 @@ public class NormalResponseImpl
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	public ComponentType getComponentType() {
-		return NormalResponse.super.getComponentType();
+		return AnyResponse.super.getComponentType();
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class NormalResponseImpl
 		}
 		final AbstractResponse<?> res = (AbstractResponse<?>)response;
 		final HttpElement em = res.getElement();
-		AbstractResponse<?> ret = new NormalResponseImpl(
+		AbstractResponse<?> ret = new AnyResponseImpl(
 			em, res.getMimeTypes());
 		ret.setting(res);
 		em.setResponse(ret);

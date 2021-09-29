@@ -5,8 +5,8 @@ import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
 import quina.annotation.quina.AnnotationQuina;
-import quina.component.EtagManagerInfo;
 import quina.component.ExecuteComponent;
+import quina.component.file.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpContext;
@@ -536,7 +536,7 @@ public final class Quina {
 	 * 
 	 * final HttpContext ctx = Quina.getContext();
 	 * xxxx.execute(() -> {
-	 *   ctx.normalResponse().send("hoge");
+	 *   ctx.anyResponse().send("hoge");
 	 * }
 	 * 
 	 * @return HttpContext HttpContextが返却されます.
