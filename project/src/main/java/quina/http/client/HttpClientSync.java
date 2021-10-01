@@ -59,7 +59,7 @@ public class HttpClientSync {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setMethod(Method.GET));
+		return connect(url, option.setMethod(Method.GET));
 	}
 
 	/**
@@ -73,7 +73,7 @@ public class HttpClientSync {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setMethod(Method.POST));
+		return connect(url, option.setMethod(Method.POST));
 	}
 
 	/**
@@ -102,7 +102,7 @@ public class HttpClientSync {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setJson(json).setMethod(method));
+		return connect(url, option.setJson(json).setMethod(method));
 	}
 
 
@@ -117,7 +117,7 @@ public class HttpClientSync {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setMethod(Method.DELETE));
+		return connect(url, option.setMethod(Method.DELETE));
 	}
 
 	/**
@@ -131,7 +131,7 @@ public class HttpClientSync {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setMethod(Method.PUT));
+		return connect(url, option.setMethod(Method.PUT));
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class HttpClientSync {
 		if(option == null) {
 			option = new HttpClientOption();
 		}
-		return fetch(url, option.setMethod(Method.PATCH));
+		return connect(url, option.setMethod(Method.PATCH));
 	}
 
 	// MethodがGETやDELETEの場合、URLに対してFormDataを付与.
@@ -187,7 +187,7 @@ public class HttpClientSync {
 	 * @param option 対象のオプションを設定します.
 	 * @return HttpResult 返却データが返されます.
 	 */
-	public static final HttpResult fetch(
+	public static final HttpResult connect(
 		String url, HttpClientOption option) {
 		String accessUrl;
 		HttpStatus state;
@@ -263,7 +263,7 @@ public class HttpClientSync {
 		InputStream in = null;
 		OutputStream out = null;
 		try {
-			// 解析.
+			// URL解析.
 			String[] urlArray = parseUrl(url);
 
 			// リクエスト送信.
@@ -365,9 +365,9 @@ public class HttpClientSync {
 	private static final Socket createSocket(String[] urlArray)
 		throws IOException {
 		return NioClientSocket.create(
-			"https".equals(urlArray[0]), urlArray[1], 
-				NumberUtil.parseInt(urlArray[2]),
-				NioClientConstants.getTimeout());
+			"https".equals(urlArray[0]), urlArray[1],
+			NumberUtil.parseInt(urlArray[2]),
+			NioClientConstants.getTimeout());
 	}
 
 	// 文字コードを取得.

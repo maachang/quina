@@ -127,6 +127,7 @@ public class SslCacerts {
 		check = new String[] {
 			"http.cacerts",
 			"net.cacerts",
+			"ssl.cacerts",
 			"cacerts"
 		};
 		for(int i = 0; i < check.length; i ++) {
@@ -141,21 +142,24 @@ public class SslCacerts {
 	}
 
 	/**
-	 * SSLの認証局証明書管理ファイル[cacerts]の内容を取得.
+	 * SSLの認証局証明書管理ファイル
+	 * cacertsの内容を取得.
 	 * @return
 	 */
 	public static final byte[] get() {
 		InputStream in = null;
-		// JAVA_HOMEが存在する場合は、jreのcacertsファイルを読み込む.
+		// JAVA_HOMEが存在する場合は、jreのcacertsファイルを
+		// 読み込む.
 		String changeitFile = getJavaHomeCacertsPath();
 		if (changeitFile != null) {
 			try {
-				in = new BufferedInputStream(new FileInputStream(changeitFile));
+				in = new BufferedInputStream(
+					new FileInputStream(changeitFile));
 			} catch(Exception e) {
 				in = null;
 			}
 		}
-		// 読み込めない場合はConfigディレクトリ群をシィ特.
+		// 読み込めない場合はConfigディレクトリ群を読み込む.
 		if(in == null) {
 			// configディレクトリを取得.
 			changeitFile = getConfigDirectory();
@@ -182,14 +186,14 @@ public class SslCacerts {
 				}
 			}
 		}
-		// 読み込めない場合はリソースファイルを取得する.
+		// cacertsのInputStreamが存在しない場合はエラー.
+		if(in == null) {
+			throw new NioException("Failed to load '" +
+				CACERTS_FILE + "' file.");
+		}
+		// InputStreamを読み込む.
 		byte[] ret = null;
 		try {
-			// cacertsが存在しない場合はエラー.
-			if(in == null) {
-				throw new NioException("Failed to load '" +
-					CACERTS_FILE + "' file.");
-			}
 			int len;
 			final byte[] b = new byte[1024];
 			NioBuffer buf = new NioBuffer(1024);

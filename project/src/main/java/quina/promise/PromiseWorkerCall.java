@@ -14,7 +14,7 @@ final class PromiseWorkerCall extends QuinaWorkerCall {
 	protected static final int MODE_ERROR = 0x02;
 	// allways()呼び出し.
 	protected static final int MODE_ANY = 0x03;
-
+	
 	/**
 	 * 呼び出しモード.
 	 * [11の場合はthen()呼び出し.
@@ -122,7 +122,9 @@ final class PromiseWorkerCall extends QuinaWorkerCall {
 	 */
 	@Override
 	public boolean executeCall(int no) {
+		// 実行パラメータを取得.
 		final Object v = param.get();
+		// 取得した実行パラメータは削除.
 		param.set(null);
 		// 実行処理.
 		try {

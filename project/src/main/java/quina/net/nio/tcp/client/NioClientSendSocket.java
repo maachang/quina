@@ -12,38 +12,7 @@ import quina.net.nio.tcp.NioUtil;
  * Nioクライアント送信ソケット管理.
  */
 public class NioClientSendSocket {
-
-	/** SocketChannel生成. **/
-	private static final SocketChannel createSocketChannel(
-		InetAddress connAddr, int connPort, InetAddress bindAddr, int bindPort,
-		int sendBuf, int recvBuf, boolean keepAlive, boolean tcpNoDeley)
-		throws IOException {
-		SocketChannel channel = SocketChannel.open();
-		try {
-			if(!NioUtil.initSocketChannel(
-				channel, sendBuf, recvBuf, keepAlive, tcpNoDeley)) {
-				throw new IOException("SocketChannel initialization failed.");
-			}
-			if(bindAddr != null) {
-				if(bindPort > 0) {
-					channel.bind(new InetSocketAddress(bindAddr, bindPort));
-				} else {
-					channel.bind(new InetSocketAddress(bindAddr, 0));
-				}
-			} else if(bindPort > 0) {
-				channel.bind(new InetSocketAddress(bindPort));
-			}
-			channel.connect(new InetSocketAddress(connAddr, connPort));
-		} catch (IOException e) {
-			try {
-				channel.close();
-			} catch (Exception ee) {
-			}
-			throw e;
-		}
-		return channel;
-	}
-
+	
 	private NioClientCore clientCore;
 	private int sendBuffer;
 	private int recvBuffer;
@@ -77,10 +46,11 @@ public class NioClientSendSocket {
 	 * @param tcpNoDeley tcpNoDeleyモードを設定します.
 	 * @exception IOException I/O例外.
 	 */
-	public NioClientSendSocket(NioClientCore core, int sendBuf, int recvBuf,
-		boolean keepAlive, boolean tcpNoDeley)
+	public NioClientSendSocket(NioClientCore core, int sendBuf,
+		int recvBuf,boolean keepAlive, boolean tcpNoDeley)
 		throws IOException {
-		this(core, sendBuf, recvBuf, keepAlive, tcpNoDeley, null, -1);
+		this(core, sendBuf, recvBuf, keepAlive, tcpNoDeley,
+			null, -1);
 	}
 
 	/**
@@ -92,7 +62,8 @@ public class NioClientSendSocket {
 	 *                 0以下を設定した場合はバインドポートは設定しません.
 	 * @exception IOException I/O例外.
 	 */
-	public NioClientSendSocket(NioClientCore core, Object bindAddr, int bindPort)
+	public NioClientSendSocket(
+		NioClientCore core, Object bindAddr, int bindPort)
 		throws IOException {
 		this(core
 			, NioClientConstants.getSendBuffer()
@@ -115,8 +86,9 @@ public class NioClientSendSocket {
 	 *                 0以下を設定した場合はバインドポートは設定しません.
 	 * @exception IOException I/O例外.
 	 */
-	public NioClientSendSocket(NioClientCore core, int sendBuf, int recvBuf,
-		boolean keepAlive, boolean tcpNoDeley, Object bindAddr, int bindPort)
+	public NioClientSendSocket(NioClientCore core, int sendBuf,
+		int recvBuf, boolean keepAlive, boolean tcpNoDeley,
+		Object bindAddr, int bindPort)
 		throws IOException {
 		this.clientCore = core;
 		this.sendBuffer = sendBuf;
@@ -150,7 +122,8 @@ public class NioClientSendSocket {
 	 * @param datas 送信データ情報群を設定します.
 	 * @exception IOException I/O例外.
 	 */
-	public void send(Object addr, int port, int bindPort, NioSendData... datas)
+	public void send(Object addr, int port, int bindPort,
+		NioSendData... datas)
 		throws IOException {
 		send(addr, port, null, bindPort, datas);
 	}
@@ -163,8 +136,8 @@ public class NioClientSendSocket {
 	 * @param datas 送信データ情報群を設定します.
 	 * @exception IOException I/O例外.
 	 */
-	public void send(Object addr, int port,
-		Object bindAddr, NioSendData... datas)
+	public void send(Object addr, int port, Object bindAddr,
+		NioSendData... datas)
 		throws IOException {
 		send(addr, port, bindAddr, -1, datas);
 	}
@@ -191,6 +164,42 @@ public class NioClientSendSocket {
 			iaddr, port, ibaddr, bindPort,
 			sendBuffer, recvBuffer, keepAlive, tcpNoDeley);
 		clientCore.push(ch, datas);
+	}
+	
+	/** SocketChannel生成. **/
+	private static final SocketChannel createSocketChannel(
+		InetAddress connAddr, int connPort, InetAddress bindAddr,
+		int bindPort, int sendBuf, int recvBuf, boolean keepAlive,
+		boolean tcpNoDeley)
+		throws IOException {
+		SocketChannel channel = SocketChannel.open();
+		try {
+			if(!NioUtil.initSocketChannel(
+				channel, sendBuf, recvBuf, keepAlive, tcpNoDeley)) {
+				throw new IOException(
+					"SocketChannel initialization failed.");
+			}
+			if(bindAddr != null) {
+				if(bindPort > 0) {
+					channel.bind(
+						new InetSocketAddress(bindAddr, bindPort));
+				} else {
+					channel.bind(
+						new InetSocketAddress(bindAddr, 0));
+				}
+			} else if(bindPort > 0) {
+				channel.bind(new InetSocketAddress(bindPort));
+			}
+			channel.connect(
+				new InetSocketAddress(connAddr, connPort));
+		} catch (IOException e) {
+			try {
+				channel.close();
+			} catch (Exception ee) {
+			}
+			throw e;
+		}
+		return channel;
 	}
 
 	/**

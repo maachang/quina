@@ -4,7 +4,10 @@ import java.io.Closeable;
 import java.io.InputStream;
 
 import quina.http.Header;
+import quina.http.HttpAnalysis;
 import quina.http.HttpStatus;
+import quina.json.Json;
+import quina.net.nio.tcp.NioBuffer;
 
 /**
  * HttpClient処理結果.
@@ -72,18 +75,59 @@ public interface HttpResult extends Closeable {
 	 *
 	 * @return byte[] レスポンスボディバイナリが返却されます.
 	 */
-	public byte[] getBody();
+	default byte[] getBody() {
+		// inputStreamで受信している場合は、バイナリに展開.
+		InputStream in = null;
+		try {
+			in = getInputStream();
+			if (in != null) {
+				int len;
+				byte[] buf = new byte[1024];
+				NioBuffer out = new NioBuffer();
+				while ((len = in.read(buf)) != -1) {
+					out.write(buf, 0, len);
+				}
+				in.close();
+				in = null;
+				return out.toByteArray();
+			}
+		} catch (Exception e) {
+			throw new HttpClientException(500, e);
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (Exception e) {
+				}
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * レスポンスボディを取得.
 	 *
 	 * @return String レスポンスボディが返却されます.
 	 */
-	public String getText();
+	default String getText() {
+		final byte[] b = getBody();
+		if (b != null) {
+			try {
+				String charset = HttpAnalysis.contentTypeToCharset(
+					getContentType());
+				return new String(b, charset);
+			} catch (Exception e) {
+				throw new HttpClientException(500, e);
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * JSONオブジェクトを取得.
 	 * @return
 	 */
-	public Object getJson();
+	default Object getJson() {
+		return Json.decode(getText());
+	}
 }

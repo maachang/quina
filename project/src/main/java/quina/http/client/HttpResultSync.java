@@ -7,8 +7,6 @@ import java.util.zip.GZIPInputStream;
 import quina.http.Header;
 import quina.http.HttpAnalysis;
 import quina.http.HttpStatus;
-import quina.json.Json;
-import quina.net.nio.tcp.NioBuffer;
 import quina.net.nio.tcp.NioRecvBody;
 import quina.util.Alphabet;
 
@@ -28,7 +26,8 @@ class HttpResultSync implements HttpResult {
 	 * @param message
 	 * @param header
 	 */
-	protected HttpResultSync(int status, String message, Header header) {
+	protected HttpResultSync(
+		int status, String message, Header header) {
 		this.status = HttpStatus.getHttpStatus(status);
 		this.message = message;
 		this.header = header;
@@ -168,68 +167,5 @@ class HttpResultSync implements HttpResult {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * レスポンスボディバイナリを取得.
-	 *
-	 * @return byte[] レスポンスボディバイナリが返却されます.
-	 */
-	@Override
-	public byte[] getBody() {
-		// inputStreamで受信している場合は、バイナリに展開.
-		InputStream in = null;
-		try {
-			in = getInputStream();
-			if (in != null) {
-				int len;
-				byte[] buf = new byte[1024];
-				NioBuffer out = new NioBuffer();
-				while ((len = in.read(buf)) != -1) {
-					out.write(buf, 0, len);
-				}
-				in.close();
-				in = null;
-				return out.toByteArray();
-			}
-		} catch (Exception e) {
-			throw new HttpClientException(500, e);
-		} finally {
-			if (in != null) {
-				try {
-					in.close();
-				} catch (Exception e) {
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * レスポンスボディを取得.
-	 *
-	 * @return String レスポンスボディが返却されます.
-	 */
-	@Override
-	public String getText() {
-		final byte[] b = getBody();
-		if (b != null) {
-			try {
-				String charset = HttpAnalysis.contentTypeToCharset(getContentType());
-				return new String(b, charset);
-			} catch (Exception e) {
-				throw new HttpClientException(500, e);
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * JSONオブジェクトを取得.
-	 * @return
-	 */
-	@Override
-	public Object getJson() {
-		return Json.decode(getText());
 	}
 }

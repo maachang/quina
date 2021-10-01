@@ -14,8 +14,7 @@ import quina.http.Method;
  */
 public enum ComponentType {
 	/** Anyコンポーネント. **/
-	Any(ATTRIBUTE_ANY,
-		ATTRIBUTE_ANY + ComponentConstants.HTTP_METHOD_ALL,
+	Any(ATTRIBUTE_ANY, ATTRIBUTE_ANY + Method.All.getType(),
 		"Any"),
 	
 	/** Any GetMethod用コンポーネント. **/
@@ -39,8 +38,7 @@ public enum ComponentType {
 		"AnyPatch"),
 
 	/** [同期]コンポーネント. **/
-	Sync(ATTRIBUTE_SYNC,
-		ATTRIBUTE_SYNC + ComponentConstants.HTTP_METHOD_ALL,
+	Sync(ATTRIBUTE_SYNC, ATTRIBUTE_SYNC + Method.All.getType(),
 		"Sync"),
 	
 	/** [同期]GetMethod用コンポーネント. **/
@@ -64,8 +62,7 @@ public enum ComponentType {
 		"SyncPatch"),
 
 	/** RESTful 用コンポーネント. **/
-	RESTful(ATTRIBUTE_RESTFUL,
-		ATTRIBUTE_RESTFUL + ComponentConstants.HTTP_METHOD_ALL,
+	RESTful(ATTRIBUTE_RESTFUL, ATTRIBUTE_RESTFUL + Method.All.getType(),
 		"RESTful"),
 
 	/** RESTful GetMethod用コンポーネント. **/

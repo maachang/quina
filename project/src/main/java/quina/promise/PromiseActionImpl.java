@@ -55,7 +55,7 @@ class PromiseActionImpl implements PromiseAction {
 
 	// promise終了フラグ.
 	protected final Flag exitPromiseFlag = new Flag(false);
-
+	
 	/**
 	 * コンストラクタ.
 	 * @param param 初期実行パラメータを設定します.
