@@ -179,6 +179,18 @@ public final class ObjectList<T> implements ReadList<T> {
 	public int size() {
 		return length;
 	}
+	
+	/**
+	 * リスト配列を現在の長さに整頓.
+	 */
+	public void trim() {
+		if(list.length == length) {
+			return;
+		}
+		Object[] src = list;
+		list = new Object[length];
+		System.arraycopy(src, 0, list, 0, length);
+	}
 
 	/**
 	 * オブジェクト配列情報を取得.

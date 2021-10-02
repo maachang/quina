@@ -4,7 +4,7 @@ import quina.Quina;
 import quina.component.any.AnyComponent;
 import quina.component.restful.RESTfulGet;
 import quina.component.restful.RESTfulGetSync;
-import quina.json.ResultJson;
+import quina.json.JsonMap;
 import quina.logger.LogDefineElement;
 import quina.logger.LogFactory;
 import quina.promise.Promise;
@@ -52,12 +52,12 @@ public class QuinaTestLmd {
 
 		// http://127.0.0.1:3333/
 		.route("/", (RESTfulGetSync)(req, res, params) -> {
-			return new ResultJson("hello", "world");
+			return new JsonMap("hello", "world");
 		})
 
 		// http://127.0.0.1:3333/largeJson
 		.route("/largeJson", (RESTfulGet)(req, res, params) -> {
-			res.setGzip(true).sendLargeJSON(new ResultJson("hello", "world"));
+			res.setGzip(true).sendLargeJSON(new JsonMap("hello", "world"));
 		})
 
 		// http://127.0.0.1:3333/hoge/moge/100/a/xyz/
@@ -67,7 +67,7 @@ public class QuinaTestLmd {
 				,"name", VType.String, "default 'mo_|_ge'"
 			),
 			(RESTfulGetSync)(req, res, params) -> {
-				return new ResultJson("params", params);
+				return new JsonMap("params", params);
 		})
 		
 		// http://127.0.0.1:3333/redirect

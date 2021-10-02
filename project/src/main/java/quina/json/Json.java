@@ -50,7 +50,8 @@ public final class Json {
 	 * @param custom 置き換えるカスタムJSON変換オブジェクトを設定します.
  	 * @return CustomJsonIO 前回登録されてたカスタムJSON変換オブジェクトが返却されます.
 	 */
-	public static final CustomJsonIO setCustomJsonIO(final CustomJsonIO custom) {
+	public static final CustomJsonIO setCustomJsonIO(
+		final CustomJsonIO custom) {
 		if(custom == null) {
 			return null;
 		}
@@ -62,7 +63,8 @@ public final class Json {
 	}
 
 	// StringBuilderを内包するJsonBuilder.
-	private static final class StringJsonBuilder implements JsonBuilder {
+	private static final class StringJsonBuilder
+		implements JsonBuilder {
 		private StringBuilder buf = new StringBuilder();
 		@Override
 		public JsonBuilder append(String s) {
@@ -96,7 +98,8 @@ public final class Json {
 	 *            対象のターゲットオブジェクトを設定します.
 	 * @return String 変換されたJSON情報が返されます.
 	 */
-	public static final String encode(JsonBuilder buf, final Object target) {
+	public static final String encode(
+		JsonBuilder buf, final Object target) {
 		_encode(buf, target, target);
 		return buf.toString();
 	}
@@ -122,7 +125,8 @@ public final class Json {
 	 *            対象のJSON情報を設定します.
 	 * @return Object 変換されたJSON情報が返されます.
 	 */
-	public static final Object decode(boolean cutComment, String json) {
+	public static final Object decode(
+		boolean cutComment, String json) {
 		if (json == null) {
 			return null;
 		}
@@ -259,7 +263,8 @@ public final class Json {
 	}
 
 	/** [decodeJSON]１つの要素を変換. **/
-	private static final Object decJsonValue(final int[] n, final int no, String json) {
+	private static final Object decJsonValue(
+		final int[] n, final int no, String json) {
 		int len;
 		if ((len = json.length()) <= 0) {
 			return json;
@@ -267,8 +272,11 @@ public final class Json {
 		// JSON変換I/Oを取得.
 		final CustomJsonIO conv = convertJsonIO.get();
 		// 文字列コーテーション区切り.
-		if ((json.startsWith("\"") && json.endsWith("\""))
-				|| (json.startsWith("\'") && json.endsWith("\'"))) {
+		if ((json.startsWith("\"") &&
+				json.endsWith("\""))
+			|| (json.startsWith("\'") &&
+				json.endsWith("\'"))
+		) {
 			json = json.substring(1, len - 1);
 			// Date変換対象かチェック.
 			if (conv.isDate(json)) {
@@ -281,7 +289,8 @@ public final class Json {
 			return conv.jsonToNull();
 		}
 		// BOOLEAN.
-		else if (treeEq("true", json) || treeEq("false", json)) {
+		else if (treeEq("true", json) ||
+			treeEq("false", json)) {
 			return conv.jsonToBoolean(json);
 		}
 		// 数値.
@@ -289,7 +298,13 @@ public final class Json {
 			return conv.jsonToNumber(json);
 		}
 		// その他.
-		throw new JsonException("Failed to parse JSON(" + json + "):No:" + no);
+		//throw new JsonException(
+		//	"Failed to parse JSON(" + json + "):No:" + no);
+		
+		// 文字列として扱う.
+		// これにより、コーテーションなしのvalue文字列も
+		// 利用可能になります.
+		return conv.jsonToString(json);
 	}
 
 	/** JSON_Token_解析処理 **/

@@ -7,7 +7,7 @@ import quina.component.restful.RESTfulGetSync;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.server.response.SyncResponse;
-import quina.json.ResultJson;
+import quina.json.JsonMap;
 import quina.logger.Log;
 import quina.test.service.GreetingService;
 
@@ -24,7 +24,7 @@ public class GreetingJsonGet implements RESTfulGetSync {
 	public Object get(Request req, SyncResponse res, Params params) {
 		
 		log.info("greeting accees: " + params.getString("name"));
-		return ResultJson.of(
+		return JsonMap.of(
 			"geeting", service.greeting(params.getString("name")));
 	}
 

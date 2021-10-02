@@ -1,5 +1,5 @@
 {
-    name: "hoge-moge"
+    name: hoge-moge
     ,age: 43
     ,sex: true
 }

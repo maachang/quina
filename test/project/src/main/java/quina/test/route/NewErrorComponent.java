@@ -4,13 +4,13 @@ import quina.annotation.route.ErrorRoute;
 import quina.component.error.ErrorCdiSyncComponent;
 import quina.http.Request;
 import quina.http.server.response.SyncResponse;
-import quina.json.ResultJson;
+import quina.json.JsonMap;
 
 @ErrorRoute
 public class NewErrorComponent implements ErrorCdiSyncComponent {
 	@Override
 	public Object jsonCall(int state, Request req, SyncResponse res, Throwable e) {
-		return ResultJson.of("error", e.getMessage());
+		return JsonMap.of("error", e.getMessage());
 	}
 
 	@Override
