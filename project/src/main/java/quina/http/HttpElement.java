@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import quina.net.nio.tcp.NioElement;
 import quina.net.nio.tcp.NioRecvBody;
+import quina.util.AtomicNumber;
 
 /**
  * Http要素.
@@ -33,6 +34,9 @@ public class HttpElement extends NioElement {
 
 	/** chunked受信用. **/
 	private HttpReceiveChunked recvChunked;
+	
+	/** threadScope. **/
+	private final AtomicNumber threadScope = new AtomicNumber(0);
 
 	/**
 	 * コンストラクタ.
@@ -60,6 +64,7 @@ public class HttpElement extends NioElement {
 			response = null;
 		}
 		receiveHeaderPosition = 0;
+		threadScope.set(0);
 	}
 
 	/**
@@ -202,5 +207,36 @@ public class HttpElement extends NioElement {
 	 */
 	public HttpReceiveChunked getReceiveChunked() {
 		return recvChunked;
+	}
+	
+	/**
+	 * スレッドスコープ値を設定.
+	 * @param threadScope 対象のスレッドスコープ値を
+	 *                    設定します.
+	 */
+	public void setThreadScope(int threadScope) {
+		this.threadScope.set(threadScope);
+	}
+	
+	/**
+	 * 新しいスレッドスコープを実行.
+	 */
+	public void startThreadScope() {
+		threadScope.inc();
+	}
+	
+	/**
+	 * 現在のスレッドスコープを終了.
+	 */
+	public void exitThreadScope() {
+		threadScope.dec();
+	}
+	
+	/**
+	 * スレッドスコープ値を取得.
+	 * @return int スレッドスコープ値が返却されます.
+	 */
+	public int getThreadScope() {
+		return threadScope.get();
 	}
 }

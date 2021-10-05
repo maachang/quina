@@ -164,7 +164,6 @@ public class CreateResponseHeader {
 	 * 送信可能なレスポンス用Httpヘッダを生成.
 	 * @param state Httpステータスを設定します.
 	 * @param msg Httpステータスメッセージを設定します.
-	 * @param mimeTypes mimeTypesを設定します.
 	 * @param header Httpヘッダを設定します.
 	 * @param mime 設定されたMimeTypeを設定します.
 	 * @param charset 文字コードを設定します.
@@ -175,8 +174,8 @@ public class CreateResponseHeader {
 	 * @return NioSendData NioSendDataが返却されます.
 	 */
 	public static final NioSendData createHeader(
-		int state, String msg, MimeTypes mimeTypes, Header header, String mime,
-		String charset, boolean noCache, boolean crossDomain, long bodyLength) {
+		int state, String msg, Header header, String mime, String charset,
+		boolean noCache, boolean crossDomain, long bodyLength) {
 		// 文字コードはデフォルトの内容を取得.
 		charset = (charset == null || charset.isEmpty()) ? HttpConstants.getCharset() : charset;
 		try {
@@ -221,7 +220,7 @@ public class CreateResponseHeader {
 			// mimeTypeが存在する場合.
 			if(mime != null) {
 				// 対象のMimeTypeに対して、文字コードが必要かチェック.
-				if(mimeTypes.isAppendCharset(mime)) {
+				if(MimeTypes.getInstance().isAppendCharset(mime)) {
 					// 文字コードが設定されてない場合のみ設定.
 					if(mime.indexOf("charset") == -1) {
 						mime = mime + "; charset=" + charset;

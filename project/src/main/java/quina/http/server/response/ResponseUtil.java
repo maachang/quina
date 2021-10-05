@@ -16,6 +16,7 @@ import quina.http.HttpElement;
 import quina.http.HttpException;
 import quina.http.HttpSendChunkedData;
 import quina.http.HttpStatus;
+import quina.http.MimeTypes;
 import quina.json.Json;
 import quina.json.JsonBuilder;
 import quina.net.nio.tcp.NioAsyncBuffer;
@@ -256,7 +257,7 @@ public final class ResponseUtil {
 			// Content-Typeがヘッダに設定されてない場合.
 			} else if(!res.isContentType()) {
 				// 拡張子からmimeTypeを取得してセット.
-				String mimeType = res.mimeTypes.getMimeType(name);
+				String mimeType = MimeTypes.getInstance().getMimeType(name);
 				if(mimeType != null) {
 					res.setContentType(mimeType);
 				}

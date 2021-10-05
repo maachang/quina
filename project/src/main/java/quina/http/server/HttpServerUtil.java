@@ -11,7 +11,7 @@ import quina.exception.QuinaException;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
-import quina.http.HttpException;
+import quina.http.HttpStatus;
 import quina.http.Method;
 import quina.http.MimeTypes;
 import quina.http.Params;
@@ -81,7 +81,7 @@ public final class HttpServerUtil {
 			if(comp == null) {
 				// エラー404返却.
 				if(res == null) {
-					res = new AnyResponseImpl(em, mime);
+					res = new AnyResponseImpl(em);
 				}
 				res.setStatus(404);
 				HttpServerUtil.sendError(req, res, null);
@@ -94,15 +94,15 @@ public final class HttpServerUtil {
 				switch(ctype.getAttributeType()) {
 				// このコンポーネントは同期コンポーネントの場合.
 				case ComponentConstants.ATTRIBUTE_SYNC:
-					res = new SyncResponseImpl(em, mime);
+					res = new SyncResponseImpl(em);
 					break;
 				// このコンポーネントはRESTful系の場合.
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
-					res = new RESTfulResponseImpl(em, mime);
+					res = new RESTfulResponseImpl(em);
 					break;
 				// Anyレスポンス.
 				default:
-					res = new AnyResponseImpl(em, mime);
+					res = new AnyResponseImpl(em);
 				}
 				// レスポンスをセット.
 				em.setResponse(res);
@@ -184,26 +184,148 @@ public final class HttpServerUtil {
 				}
 			}
 			// エラー返却.
-			HttpServerUtil.sendError(req, res, e);
+			try {
+				HttpServerUtil.sendError(
+					req, res, e);
+			} catch(Exception ee) {
+				// エラーは無視.
+			}
 		}
 	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param em 対象のHTTP要素を設定します.
+	 */
+	public static final void sendError(HttpElement em) {
+		sendError(em.getRequest(), em.getResponse());
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 */
+	public static final void sendError(
+		int status, HttpElement em) {
+		em.getResponse().setStatus(status);
+		sendError(em.getRequest(), em.getResponse());
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 */
+	public static final void sendError(
+		HttpStatus status, HttpElement em) {
+		em.getResponse().setStatus(status);
+		sendError(em.getRequest(), em.getResponse());
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param message 対象のHTTPステータスメッセージを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 */
+	public static final void sendError(
+		int status, String message, HttpElement em) {
+		em.getResponse().setStatus(status, message);
+		sendError(em.getRequest(), em.getResponse());
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param message 対象のHTTPステータスメッセージを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 */
+	public static final void sendError(
+		HttpStatus status, String message, HttpElement em) {
+		em.getResponse().setStatus(status, message);
+		sendError(em.getRequest(), em.getResponse());
+	}
 
+	/**
+	 * HttpErrorを送信.
+	 * @param em 対象のHTTP要素を設定します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(
+		HttpElement em, Throwable e) {
+		sendError(em.getRequest(), em.getResponse(), e);
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(
+		int status, HttpElement em, Throwable e) {
+		em.getResponse().setStatus(status);
+		sendError(em.getRequest(), em.getResponse(), e);
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(
+		HttpStatus status, HttpElement em, Throwable e) {
+		em.getResponse().setStatus(status);
+		sendError(em.getRequest(), em.getResponse(), e);
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param message 対象のHTTPステータスメッセージを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(
+		int status, String message, HttpElement em, Throwable e) {
+		em.getResponse().setStatus(status, message);
+		sendError(em.getRequest(), em.getResponse(), e);
+	}
+	
+	/**
+	 * HttpErrorを送信.
+	 * @param status 対象のHTTPステータスを設定します.
+	 * @param message 対象のHTTPステータスメッセージを設定します.
+	 * @param em 対象のHTTP要素を設定します.
+	 * @param e 例外を設定します.
+	 */
+	public static final void sendError(
+		HttpStatus status, String message, HttpElement em,
+		Throwable e) {
+		em.getResponse().setStatus(status, message);
+		sendError(em.getRequest(), em.getResponse(), e);
+	}
+	
 	/**
 	 * HttpErrorを送信.
 	 * @param req HttpRequestを設定します.
 	 * @param res httpResponseを設置します.
 	 */
-	public static final void sendError(Request req, Response<?> res) {
+	public static final void sendError(
+		Request req, Response<?> res) {
 		sendError(req, res, null);
 	}
-
+	
 	/**
 	 * HttpErrorを送信.
 	 * @param req HttpRequestを設定します.
 	 * @param res httpResponseを設置します.
 	 * @param e 例外を設定します.
 	 */
-	public static final void sendError(Request req, Response<?> res, Throwable e) {
+	public static final void sendError(
+		Request req, Response<?> res, Throwable e) {
 		// NioElementが閉じられてる場合は処理しない.
 		if(!req.isConnection()) {
 			return;
@@ -260,11 +382,6 @@ public final class HttpServerUtil {
 			try {
 				req.close();
 			} catch(Exception ee) {}
-			if(e instanceof HttpException) {
-				throw (HttpException)e;
-			}
-			// NioElementをクローズさせてるので
-			// 通信切断されたので、例外は出さない.
 		}
 	}
 }

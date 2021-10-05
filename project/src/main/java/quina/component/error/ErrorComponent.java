@@ -39,7 +39,7 @@ public interface ErrorComponent {
 	 * @param res HttpResponseを設定します.
 	 */
 	default void call(int state, Request req, Response<?> res) {
-		call(state, req, (AnyResponse)res, null);
+		call(state, req, res, null);
 	}
 
 	/**
@@ -49,22 +49,19 @@ public interface ErrorComponent {
 	 * @param res HttpResponseを設定します.
 	 * @param e 例外を設定します.
 	 */
-	default void call(int state, Request req, Response<?> res, Throwable e) {
+	default void call(
+		int state, Request req, Response<?> res, Throwable e) {
+		// 例外用のレスポンスを新規作成.
+		res = new AnyResponseImpl(((AbstractResponse<?>)res).getElement());
 		final boolean json = ((AbstractResponse<?>)res)
 			.getComponentType().isRESTful();
-		if(res.isContentType()) {
-			// json返却の場合.
-			if(json) {
-				// JSON返却条件を設定.
-				res.setContentType("application/json");
-			} else {
-				// HTML返却条件を設定.
-				res.setContentType("text/html");
-			}
-		}
-		// ResponseがAnyResponseでない場合は変換.
-		if(!(res instanceof AnyResponse)) {
-			res = new AnyResponseImpl(res);
+		// json返却の場合.
+		if(json) {
+			// JSON返却条件を設定.
+			res.setContentType("application/json");
+		} else {
+			// HTML返却条件を設定.
+			res.setContentType("text/html");
 		}
 		// 実行処理.
 		call(state, json, req, (AnyResponse)res, e);
@@ -78,11 +75,10 @@ public interface ErrorComponent {
 	 * @param req HttpRequestを設定します.
 	 * @param res Responseを設定します.
 	 */
-	default void call(int state, boolean restful, Request req, Response<?> res) {
-		// ResponseがAnyResponseでない場合は変換.
-		if(!(res instanceof AnyResponse)) {
-			res = new AnyResponseImpl(res);
-		}
+	default void call(
+		int state, boolean restful, Request req, Response<?> res) {
+		// 例外用のレスポンスを新規作成.
+		res = new AnyResponseImpl(((AbstractResponse<?>)res).getElement());
 		call(state, restful, req, (AnyResponse)res, null);
 	}
 
@@ -96,5 +92,5 @@ public interface ErrorComponent {
 	 * @param e 例外を設定します.
 	 */
 	public void call(int state, boolean restful, Request req,
-			AnyResponse res, Throwable e);
+		AnyResponse res, Throwable e);
 }

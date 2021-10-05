@@ -93,9 +93,6 @@ public class HttpServerContext implements HttpContext {
 	// HttpElement.
 	private HttpElement element;
 	
-	// threadScope.
-	private int threadScope;
-	
 	// コンストラクタ.
 	private HttpServerContext() {}
 	
@@ -103,30 +100,21 @@ public class HttpServerContext implements HttpContext {
 	private HttpServerContext(HttpElement em) {
 		this.element = em;
 		// 生成時のスレッドスコープ値は１.
-		this.threadScope = 1;
-	}
-	
-	/**
-	 * スレッドスコープ値を設定.
-	 * @param threadScope 対象のスレッドスコープ値を
-	 *                    設定します.
-	 */
-	public void setThreadScope(int threadScope) {
-		this.threadScope = threadScope;
+		this.element.setThreadScope(1);
 	}
 	
 	/**
 	 * 新しいスレッドスコープを実行.
 	 */
 	public void startThreadScope() {
-		threadScope ++;
+		element.startThreadScope();
 	}
 	
 	/**
 	 * 現在のスレッドスコープを終了.
 	 */
 	public void exitThreadScope() {
-		threadScope --;
+		element.exitThreadScope();
 	}
 	
 	/**
@@ -135,7 +123,7 @@ public class HttpServerContext implements HttpContext {
 	 */
 	@Override
 	public int getThreadScope() {
-		return threadScope;
+		return element.getThreadScope();
 	}
 	
 	/**

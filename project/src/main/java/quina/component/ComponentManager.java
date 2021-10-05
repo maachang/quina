@@ -290,7 +290,8 @@ public class ComponentManager {
 				patch = component;
 			} else {
 				throw new QuinaException(
-					"Failed to get Http method information: " + type);
+					"Failed to get Http method information: " +
+					component.getMethod());
 			}
 		}
 
@@ -315,7 +316,8 @@ public class ComponentManager {
 				return patch();
 			}
 			throw new HttpException(405,
-				"The specified method: " + method.getName() + " cannot be used for this URL.");
+				"The specified method: " + method.getName() +
+				" cannot be used for this URL.");
 		}
 
 		/**

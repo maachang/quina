@@ -10,12 +10,13 @@ import quina.json.JsonMap;
 public class NewErrorComponent implements ErrorCdiSyncComponent {
 	@Override
 	public Object jsonCall(int state, Request req, SyncResponse res, Throwable e) {
-		return JsonMap.of("error", e.getMessage());
+		return JsonMap.of("error", res.getMessage());
 	}
 
 	@Override
 	public Object call(int state, Request req, SyncResponse res, Throwable e) {
-		return "error: " + e.getMessage();
+		System.out.println("state: " + state + " message: " + res.getMessage());
+		return "error: " + res.getMessage();
 	}
 
 }

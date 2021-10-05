@@ -283,11 +283,14 @@ public class NioClientCore extends Thread {
 								NioUtil.closeNioElement(em);
 								NioUtil.closeChannel(ch);
 								continue;
+							}
 							// 送信対象のデータが存在する場合.
-							} else if(em.isSendData()) {
+							if(em.isSendData()) {
 								// 送信開始.
 								em.startWrite();
 							}
+							// I/Oタイムアウトを更新.
+							em.setIoTimeout();
 						} catch(Throwable se) {
 							if (sendEm != null) {
 								sendEm.destroy();
@@ -357,6 +360,8 @@ public class NioClientCore extends Thread {
 											em = null;
 											continue;
 										}
+										// I/Oタイムアウトを更新.
+										em.setIoTimeout();
 										// 送信の残り（未送信バイナリ）が存在する場合.
 										sl.evacuate(buf);
 									}
@@ -381,6 +386,8 @@ public class NioClientCore extends Thread {
 										// ワーカー要素に受信データをセット.
 										wem.setReceiveData(em, rb);
 										rb = null;
+										// I/Oタイムアウトを更新.
+										em.setIoTimeout();
 										// ワーカーサービスに登録.
 										workerService.push(wem);
 									}

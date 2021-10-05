@@ -7,7 +7,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 
+import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.net.nio.tcp.NioAtomicValues.Number64;
 import quina.util.Flag;
 
 /**
@@ -23,6 +25,10 @@ public class NioElement implements Closeable {
 	protected final Flag connectionFlag = new Flag(false);
 	protected final Number32 ops = new Number32(SelectionKey.OP_READ);
 	protected final Number32 workerNo = new Number32(NON_WORKER_NO);
+	protected final Bool regIoTimeout = new Bool(false);
+	protected final Number64 ioTime = new Number64(
+		System.currentTimeMillis());
+	protected final Bool sendFlag = new Bool(false);
 	protected NioSelector selector;
 	protected SelectionKey key;
 	protected InetSocketAddress access;
@@ -192,6 +198,7 @@ public class NioElement implements Closeable {
 	public NioElement setSendData(NioSendData... in) {
 		final int len = in == null ? 0 : in.length;
 		if(len > 0) {
+			sendFlag.set(true);
 			if(sendDataList == null) {
 				sendDataList = new LinkedList<NioSendData>();
 			}
@@ -207,7 +214,8 @@ public class NioElement implements Closeable {
 	 * @return boolean [true]の場合、送信データが存在します.
 	 */
 	public boolean isSendData() {
-		return sendDataList != null && !sendDataList.isEmpty();
+		//return sendDataList != null && !sendDataList.isEmpty();
+		return sendFlag.get();
 	}
 
 	/**
@@ -237,7 +245,38 @@ public class NioElement implements Closeable {
 		}
 		return null;
 	}
-
+	
+	/**
+	 * IoTimeout監視を登録.
+	 * @return boolean true の場合既に登録されています.
+	 */
+	public boolean regIoTimeout() {
+		return regIoTimeout.setToGetBefore(true);
+	}
+	
+	/**
+	 * IoTimeout監視が登録されてるか取得.
+	 * @return boolean true の場合既に登録されています.
+	 */
+	public boolean isRegIoTimeout() {
+		return regIoTimeout.get();
+	}
+	
+	/**
+	 * I/Oタイムアウト値を設定.
+	 */
+	public void setIoTimeout() {
+		ioTime.set(System.currentTimeMillis());
+	}
+	
+	/**
+	 * I/Oタイムアウト値を取得.
+	 * @return long I/Oタイムアウト値を取得.
+	 */
+	public long getIoTimeout() {
+		return ioTime.get();
+	}
+	
 	/**
 	 * interOpsの変更.
 	 *
@@ -246,7 +285,8 @@ public class NioElement implements Closeable {
 	 * @exception IOException
 	 *                I/O例外.
 	 */
-	public NioElement interestOps(int ops) throws IOException {
+	public NioElement interestOps(int ops)
+		throws IOException {
 		this.ops.set(ops);
 		key.interestOps(ops);
 		selector.wakeup();

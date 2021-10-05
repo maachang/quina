@@ -2,6 +2,7 @@ package quina.net.nio.tcp;
 
 import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.net.nio.tcp.NioAtomicValues.Number64;
 import quina.net.nio.tcp.NioAtomicValues.Value;
 
 /**
@@ -61,6 +62,9 @@ public final class NioConstants {
 	 */
 	private static final int TEMP_FILENAME_LENGTH = 20;
 
+	// 無通信が続くタイムアウト値.
+	private static final long DEF_TIMEOUT = 30000L;
+
 	// NioDebugMode.
 	private static final Bool nioDebugMode = new Bool(false);
 
@@ -79,6 +83,9 @@ public final class NioConstants {
 	// テンポラリファイル文字数.
 	private static final Number32 tempFileNameLength = new Number32(
 		NioConstants.TEMP_FILENAME_LENGTH);
+	
+	// 無通信が続くタイムアウト値.
+	private static final Number64 timeout = new Number64(DEF_TIMEOUT);
 
 	/**
 	 * NioDebugモードを取得.
@@ -165,5 +172,24 @@ public final class NioConstants {
 	public static final void setTempFileNameLength(int tempFileNameLength) {
 		NioConstants.tempFileNameLength.set(tempFileNameLength);
 	}
-
+	
+	/**
+	 * 無通信が続くタイムアウト値を設定.
+	 * @param time 無通信が続くタイムアウト値を設定します.
+	 */
+	public static final void setTimeout(long time) {
+		if(time < 0) {
+			// 0の場合タイムアウトなし.
+			time = 0;
+		}
+		timeout.set(time);
+	}
+	
+	/**
+	 * 無通信が続くタイムアウト値を取得.
+	 * @return long 無通信が続くタイムアウト値を返却します.
+	 */
+	public static final long getTimeout() {
+		return timeout.get();
+	}
 }

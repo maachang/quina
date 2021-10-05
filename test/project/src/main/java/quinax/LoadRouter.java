@@ -24,6 +24,10 @@ public final class LoadRouter {
 		// component in the @Route.
 		router.route(new quina.test.route.GreetingJsonGet());
 		
+		// Register the "quina.test.route.TimeoutRoute"
+		// component in the @Route.
+		router.route(new quina.test.route.TimeoutRoute());
+		
 		// Register the "quina.test.route.AnyJsonGet"
 		// component in the @AnyRoute.
 		router.any(new quina.test.route.AnyJsonGet());

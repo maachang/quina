@@ -17,13 +17,16 @@ import quina.net.nio.tcp.server.NioServerCall;
 public class HttpServerNioCall extends NioServerCall {
 	// ログ出力.
 	private static final Log log = LogFactory.getInstance().get();
+	
+	// HttpServerService.
+	private final HttpServerService service;
 
 	/**
 	 * コンストラクタ.
-	 * @param custom HttpRequestでのBodyの解釈をするオブジェクトを設定します.
-	 * @param mimeTypes mimeTypesを設定します.
+	 * @param server HttpServerServiceを設定します.
 	 */
-	public HttpServerNioCall() {
+	public HttpServerNioCall(HttpServerService service) {
+		this.service = service;
 	}
 
 	/**
@@ -116,6 +119,8 @@ public class HttpServerNioCall extends NioServerCall {
 	public NioElement createElement() {
 		HttpElement ret = new HttpElement(CsMode.Server,
 			MimeTypes.getInstance());
+		// ElementTimeoutに登録.
+		service.pushTimeoutElement(ret);
 		return ret;
 	}
 

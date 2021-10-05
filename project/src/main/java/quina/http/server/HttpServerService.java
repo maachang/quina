@@ -7,12 +7,13 @@ import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.QuinaUtil;
 import quina.exception.QuinaException;
+import quina.http.HttpElement;
 import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioConstants;
+import quina.net.nio.tcp.NioTimeoutThread;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerConstants;
 import quina.net.nio.tcp.server.NioServerCore;
-import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
@@ -50,21 +51,22 @@ public class HttpServerService implements QuinaService {
 		,"serverRecvBuffer", TypesClass.Integer, NioServerConstants.getRecvBuffer()
 		// 受信テンポラリバッファサイズ.
 		,"recvTmpBuffer", TypesClass.Integer, NioConstants.getByteBufferLength()
+		// 受信タイムアウト値.
+		,"timeout", TypesClass.Long, NioConstants.getTimeout()
 	);
 	
 	// Nioサーバコア.
 	private NioServerCore core = null;
-	
-	// HttpServerCall.
-	private final AtomicObject<HttpServerNioCall> httpServerCall =
-		new AtomicObject<HttpServerNioCall>();
 	
 	// MimeTypes.
 	private final MimeTypes mimeTypes = MimeTypes.getInstance();
 
 	// QuinaWorkerService.
 	private QuinaWorkerService quinaWorkerService = null;
-
+	
+	// NioTimeoutThread.
+	private NioTimeoutThread nioTimeoutThread = null;
+	
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
 	
@@ -77,6 +79,14 @@ public class HttpServerService implements QuinaService {
 	 */
 	public HttpServerService(QuinaWorkerService quinaWorkerService) {
 		this.quinaWorkerService = quinaWorkerService;
+	}
+	
+	/**
+	 * タイムアウトを監視する要素を監視スレッドに登録.
+	 * @param element HttpElementを設定.
+	 */
+	protected void pushTimeoutElement(HttpElement element) {
+		nioTimeoutThread.push(element);
 	}
 
 	@Override
@@ -114,7 +124,7 @@ public class HttpServerService implements QuinaService {
 		}
 		return ret;
 	}
-
+	
 	@Override
 	public boolean isStartService() {
 		return startFlag.get();
@@ -136,7 +146,7 @@ public class HttpServerService implements QuinaService {
 			ServerSocketChannel server = null;
 			try {
 				// サーバーコール生成.
-				HttpServerNioCall c = new HttpServerNioCall();
+				HttpServerNioCall c = new HttpServerNioCall(this);
 				// サーバーソケット作成.
 				server = NioUtil.createServerSocketChannel(
 					config.getString("bindAddress"), config.getInt("bindPort"),
@@ -147,20 +157,26 @@ public class HttpServerService implements QuinaService {
 					config.getInt("recvBuffer"), config.getBoolean("keepAlive"),
 					config.getBool("tcpNoDeley"), server, c,
 					quinaWorkerService);
-				// サーバーコールを設定.
-				this.httpServerCall.set(c);
 				// サーバーコアを設定.
 				this.core = cr;
+				// NioTimeoutThreadを生成.
+				this.nioTimeoutThread = new NioTimeoutThread(
+					config.getLong("timeout"),
+					new HttpServerTimeoutHandler());
+				// NioTimeoutThread管理用のスレッド開始.
+				nioTimeoutThread.startThread();
 				// サーバスレッド開始.
 				cr.startThread();
 			} catch(QuinaException qe) {
 				stopService();
+				nioTimeoutThread.stopThread();
 				if(server != null) {
 					try {server.close();} catch(Exception ee) {}
 				}
 				throw qe;
 			} catch(Exception e) {
 				stopService();
+				nioTimeoutThread.stopThread();
 				if(server != null) {
 					try {server.close();} catch(Exception ee) {}
 				}
@@ -175,8 +191,10 @@ public class HttpServerService implements QuinaService {
 	public boolean isStarted() {
 		lock.readLock().lock();
 		try {
-			if(core != null) {
-				return core.isStartupThread();
+			if(core != null &&
+				nioTimeoutThread != null) {
+				return core.isStartupThread() &&
+					nioTimeoutThread.isStartupThread();
 			}
 			return false;
 		} finally {
@@ -187,14 +205,19 @@ public class HttpServerService implements QuinaService {
 	@Override
 	public boolean awaitStartup(long timeout) {
 		NioServerCore c = null;
+		NioTimeoutThread et = null;
 		lock.readLock().lock();
 		try {
 			c = core;
+			et = nioTimeoutThread;
 		} finally {
 			lock.readLock().unlock();
 		}
 		if(c != null) {
-			return c.awaitStartup(timeout);
+			c.awaitStartup(timeout);
+		}
+		if(et != null) {
+			et.awaitStartup(timeout);
 		}
 		return true;
 	}
@@ -207,6 +230,9 @@ public class HttpServerService implements QuinaService {
 			if(core != null) {
 				core.stopThread();
 			}
+			if(nioTimeoutThread != null) {
+				nioTimeoutThread.stopThread();
+			}
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -217,8 +243,10 @@ public class HttpServerService implements QuinaService {
 	public boolean isExit() {
 		lock.readLock().lock();
 		try {
-			if(core != null) {
-				return core.isExitThread();
+			if(core != null &&
+				nioTimeoutThread != null) {
+				return core.isStopThread() &&
+					nioTimeoutThread.isStopThread();
 			}
 			return true;
 		} finally {
@@ -229,22 +257,26 @@ public class HttpServerService implements QuinaService {
 	@Override
 	public boolean awaitExit(long timeout) {
 		NioServerCore c = null;
+		NioTimeoutThread et = null;
 		lock.readLock().lock();
 		try {
 			c = core;
+			et = nioTimeoutThread;
 		} finally {
 			lock.readLock().unlock();
 		}
 		if(c != null) {
-			if(c.awaitExit(timeout)) {
-				lock.writeLock().lock();
-				try {
-					core = null;
-				} finally {
-					lock.writeLock().unlock();
-				}
-				return true;
-			}
+			c.awaitExit(timeout);
+		}
+		if(et != null) {
+			et.awaitExit(timeout);
+		}
+		lock.writeLock().lock();
+		try {
+			core = null;
+			nioTimeoutThread = null;
+		} finally {
+			lock.writeLock().unlock();
 		}
 		return true;
 	}

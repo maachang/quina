@@ -3,7 +3,6 @@ package quina.http.server.response;
 import quina.component.ComponentType;
 import quina.exception.QuinaException;
 import quina.http.HttpElement;
-import quina.http.MimeTypes;
 import quina.http.Response;
 import quina.http.server.furnishing.AbstractBaseSendResponse;
 
@@ -22,24 +21,26 @@ public class RESTfulResponseImpl
 	
 	/***
 	 * コンストラクタ.
-	 * @param res レスポンスオブジェクトを設定します.
+	 * @param response レスポンスオブジェクトを設定します.
 	 */
-	public RESTfulResponseImpl(Response<?> res) {
-		newResponse(res);
+	public RESTfulResponseImpl(Response<?> response) {
+		if(response == null) {
+			throw new QuinaException("The specified response is null.");
+		}
+		final AbstractResponse<?> res = (AbstractResponse<?>)response;
+		super.setting(res);
+		super.getElement().setResponse(this);
 	}
 
 	/**
 	 * コンストラクタ.
 	 * @param element Http要素を設定します.
-	 * @param mimeTypes MimeType群を設定します.
 	 */
-	public RESTfulResponseImpl(
-		HttpElement element, MimeTypes mimeTypes) {
-		if(element == null || mimeTypes == null) {
+	public RESTfulResponseImpl(HttpElement element) {
+		if(element == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
 		this.element = element;
-		this.mimeTypes = mimeTypes;
 	}
 	
 	/**
@@ -57,23 +58,5 @@ public class RESTfulResponseImpl
 	 */
 	public ComponentType getComponentType() {
 		return RESTfulResponse.super.getComponentType();
-	}
-
-	/**
-	 * 新しいデフォルトのResponseを取得.
-	 * @param response レスポンスを設定します.
-	 * @return Response<?> 新しいレスポンスが返却されます.
-	 */
-	public static final Response<?> newResponse(Response<?> response) {
-		if(response == null) {
-			throw new QuinaException("The specified response is null.");
-		}
-		final AbstractResponse<?> res = (AbstractResponse<?>)response;
-		final HttpElement em = res.getElement();
-		AbstractResponse<?> ret = new RESTfulResponseImpl(
-			em, res.getMimeTypes());
-		ret.setting(res);
-		em.setResponse(ret);
-		return ret;
 	}
 }

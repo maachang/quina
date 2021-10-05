@@ -48,19 +48,15 @@ public interface ErrorCdiSyncComponent
 		}
 		// RESTful返却.
 		if(restful) {
-			if(res.isContentType()) {
-				// JSON返却条件を設定.
-				res.setContentType("application/json");
-			}
+			// JSON返却条件を設定.
+			res.setContentType("application/json");
 			Object result = jsonCall(state, req, (SyncResponse)res, e);
 			// Json返却.
 			ResponseUtil.sendJSON((AbstractResponse<?>)res, result);
 		// RESTful以外の返却.
 		} else {
-			if(res.isContentType()) {
-				// HTML返却条件を設定.
-				res.setContentType("text/html");
-			}
+			// HTML返却条件を設定.
+			res.setContentType("text/html");
 			Object result = call(state, req, (SyncResponse)res, e);
 			// 同期返却.
 			ResponseUtil.sendSync((AbstractResponse<?>)res, result);

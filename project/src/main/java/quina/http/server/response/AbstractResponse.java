@@ -27,8 +27,6 @@ public abstract class AbstractResponse<T>
 	implements Response<T>, BaseSendResponse<T> {
 	/** HTTP要素. **/
 	protected HttpElement element = null;
-	/** MimeTypes. **/
-	protected MimeTypes mimeTypes = null;
 	/** 送信ヘッダ. **/
 	protected HttpSendHeader header = null;
 	/** ステータス. **/
@@ -59,18 +57,17 @@ public abstract class AbstractResponse<T>
 	protected void setting(AbstractResponse<?> res) {
 		lock.writeLock().lock();
 		try {
-			element = res.element;
-			mimeTypes = res.mimeTypes;
-			header = res.header;
-			state = res.state;
-			message = res.message;
-			contentType = res.contentType;
-			charset = res.charset;
-			cacheMode = res.cacheMode;
-			gzipMode = res.gzipMode;
-			corsMode = res.corsMode;
-			sendFlag.set(res.sendFlag.get());
-			execSendDataFlag.set(res.execSendDataFlag.get());
+			this.element = res.element;
+			this.header = res.header;
+			this.state = res.state;
+			this.message = res.message;
+			this.contentType = res.contentType;
+			this.charset = res.charset;
+			this.cacheMode = res.cacheMode;
+			this.gzipMode = res.gzipMode;
+			this.corsMode = res.corsMode;
+			this.sendFlag.set(res.sendFlag.get());
+			this.execSendDataFlag.set(res.execSendDataFlag.get());
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -113,7 +110,6 @@ public abstract class AbstractResponse<T>
 		lock.writeLock().lock();
 		try {
 			element = null;
-			mimeTypes = null;
 			header = null;
 			state = null;
 			message = null;
@@ -458,19 +454,6 @@ public abstract class AbstractResponse<T>
 	}
 
 	/**
-	 * MimeTypesを取得.
-	 * @return MimeTypes MimeTypesが返却されます.
-	 */
-	public MimeTypes getMimeTypes() {
-		lock.readLock().lock();
-		try {
-			return mimeTypes;
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
-
-	/**
 	 * 送信処理が行われているかチェック.
 	 * @return boolean trueの場合送信されています.
 	 */
@@ -505,7 +488,7 @@ public abstract class AbstractResponse<T>
 		lock.readLock().lock();
 		try {
 			return CreateResponseHeader.createHeader(
-				state.getState(), getMessage(), mimeTypes, header,
+				state.getState(), getMessage(), header,
 				getContentType(), ResponseUtil.lastCharset(charset),
 				!cacheMode, corsMode, bodyLength);
 		} finally {
