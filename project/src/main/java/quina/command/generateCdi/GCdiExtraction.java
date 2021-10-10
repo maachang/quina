@@ -8,6 +8,7 @@ import quina.annotation.cdi.CdiHandleScoped;
 import quina.annotation.cdi.CdiScoped;
 import quina.annotation.cdi.ServiceScoped;
 import quina.annotation.quina.QuinaServiceScoped;
+import quina.annotation.reflection.ProxyScoped;
 import quina.annotation.route.AnnotationRoute;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
@@ -55,8 +56,9 @@ public class GCdiExtraction {
 			if(c.isAnnotation()) {
 				continue;
 			}
-			// Cdi系アノテーションが定義されていない場合.
-			if(!GCdiConstants.isDefineAnnotation(c)) {
+			// 利用可能なアノテーションが定義されていない場合.
+			if(!GCdiConstants.isDefineAnnotation(c) &&
+				!GCdiConstants.isProxyAnnotation(c)) {
 				// クラスのインスタンスを生成.
 				Object o;
 				try {
@@ -99,6 +101,14 @@ public class GCdiExtraction {
 				continue;
 			}
 			
+			// ProxyScoped定義の場合.
+			if(c.isAnnotationPresent(ProxyScoped.class)) {
+				System.out.println("  > proxy          : " + className);
+				// ProxyScopedリストに追加.
+				params.prxList.add(className);
+				continue;
+			}
+			
 			// クラスのインスタンスを生成.
 			final Object o = GCdiUtil.newInstance(c);
 			
@@ -123,7 +133,7 @@ public class GCdiExtraction {
 				params.refList.add(className);
 				continue;
 			}
-
+			
 			// 対象がコンポーネントクラスの場合.
 			if(o instanceof Component) {
 				// @Route付属のコンポーネントを登録.

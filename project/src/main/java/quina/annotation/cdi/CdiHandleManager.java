@@ -19,13 +19,13 @@ import quina.util.collection.ObjectList;
  */
 public class CdiHandleManager {
 	/**
-	 * CdiAnnotationScopedアノテーション自動読み込み実行用クラス名.
+	 * CdiScopedアノテーション自動読み込み実行用クラス名.
 	 */
 	public static final String AUTO_READ_CDI_HANDLE_CLASS =
 		"LoadCdiAnnotationHandle";
 
 	/**
-	 * CdiAnnotationScopedアノテーション自動読み込み実行用メソッド名.
+	 * CdiScopedアノテーション自動読み込み実行用メソッド名.
 	 */
 	public static final String AUTO_READ_CDI_HANDLE_METHOD =
 		"load";

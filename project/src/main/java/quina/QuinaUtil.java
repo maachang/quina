@@ -2,6 +2,7 @@ package quina;
 
 import quina.exception.QuinaException;
 import quina.json.Json;
+import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
 import quina.util.collection.IndexMap;
@@ -32,19 +33,29 @@ public final class QuinaUtil {
 	 * @param buf StringBuilderを設定します.
 	 * @param space スペースの数を設定します.
 	 */
-	public static final void setSpace(StringBuilder buf, int space) {
+	public static final void setSpace(
+		StringBuilder buf, int space) {
 		for(int i = 0; i < space; i ++) {
 			buf.append(" ");
 		}
 	}
 
+	// １度取得したConfigPath情報.
+	private static final AtomicObject<String> confPath =
+		new AtomicObject<String>();
+	
 	/**
 	 * コンフィグディレクトリ名を取得.
 	 * @return String コンフィグディレクトリ名が返却されます.
 	 */
-	public static final String getConfigDirectory() {
+	public static final String getConfigPath() {
+		// １度取得してる場合.
+		String ret = confPath.get();
+		if(ret != null) {
+			// その内容を返却する.
+			return ret;
+		}
 		try {
-			String ret;
 			String[] check;
 			// システムプロパティから取得.
 			check = new String[] {
@@ -61,8 +72,10 @@ public final class QuinaUtil {
 			};
 			for(int i = 0; i < check.length; i ++) {
 				ret = System.getProperty(check[i]);
-				if(ret != null) {
-					return FileUtil.getFullPath(ret);
+				if(ret != null && !ret.isEmpty()) {
+					ret = FileUtil.getFullPath(ret);
+					confPath.set(ret);
+					return ret;
 				}
 			}
 			// 環境変数から取得.
@@ -71,12 +84,14 @@ public final class QuinaUtil {
 				,"QUINA_CONFIG_DIRECTORY"
 				,"QUINA_CONFIG_FOLDER"
 				,"QUINA_CONFIG_PATH"
+				,"QUINA_CONFIG"
 			};
-			// 環境変数から取得.
 			for(int i = 0; i < check.length; i ++) {
 				ret = System.getenv(check[i]);
-				if(ret != null) {
-					return FileUtil.getFullPath(ret);
+				if(ret != null && !ret.isEmpty()) {
+					ret = FileUtil.getFullPath(ret);
+					confPath.set(ret);
+					return ret;
 				}
 			}
 			// ディレクトリが存在する場合.
@@ -86,7 +101,9 @@ public final class QuinaUtil {
 			};
 			for(int i = 0; i < check.length; i ++) {
 				if(FileUtil.isDir(check[i])) {
-					return FileUtil.getFullPath(check[i]);
+					ret = FileUtil.getFullPath(check[i]);
+					confPath.set(ret);
+					return ret;
 				}
 			}
 			return null;
@@ -94,16 +111,28 @@ public final class QuinaUtil {
 			throw new QuinaException(e);
 		}
 	}
+	
+	/**
+	 * json情報をロード.
+	 * @param configDir コンフィグディレクトリ名を設定します.
+	 * @param name ファイル名(拡張子なし)を設定します.
+	 * @return IndexMap<String, Object> JSON情報が返却されます.
+	 */
+	public static final IndexMap<String, Object> loadJson(
+		String configDir, String name) {
+		return loadJson(configDir, name, "UTF8");
+	}
 
 	/**
 	 * json情報をロード.
 	 * @param configDir コンフィグディレクトリ名を設定します.
 	 * @param name ファイル名(拡張子なし)を設定します.
-	 * @return BinarySearchMap<String, Object> JSON情報が返却されます.
+	 * @param charset 文字コードを設定します.
+	 * @return IndexMap<String, Object> JSON情報が返却されます.
 	 */
 	@SuppressWarnings("unchecked")
 	public static final IndexMap<String, Object> loadJson(
-		String configDir, String name) {
+		String configDir, String name, String charset) {
 		configDir = getDir(configDir);
 		if(!configDir.endsWith("/")) {
 			configDir += "/";
@@ -111,8 +140,8 @@ public final class QuinaUtil {
 		// 環境変数が定義されている場合は置き換える.
 		configDir = Env.path(configDir);
 		// コンフィグファイルが存在するかチェック.
-		int len = JSON_CONFIG_EXTENSION.length;
 		String fileName = null;
+		int len = JSON_CONFIG_EXTENSION.length;
 		for(int i = 0; i < len; i ++) {
 			if(FileUtil.isFile(name + JSON_CONFIG_EXTENSION[i])) {
 				fileName = configDir + name +
@@ -127,7 +156,7 @@ public final class QuinaUtil {
 		try {
 			// JSON解析をして、Map形式のみ処理をする.
 			final Object json = Json.decode(true,
-				FileUtil.getFileString(fileName, "UTF8"));
+				FileUtil.getFileString(fileName, charset));
 			if(!(json instanceof IndexMap)) {
 				return null;
 			}
@@ -172,7 +201,7 @@ public final class QuinaUtil {
 		if(dir == null || dir.isEmpty()) {
 			try {
 				// 該当するコンフィグディレクトリを探す.
-				dir = QuinaUtil.getConfigDirectory();
+				dir = QuinaUtil.getConfigPath();
 			} catch(Exception e) {
 			}
 			// 取得できなかった場合はカレントディレクトリを対象とする.

@@ -6,6 +6,6 @@ package quina.annotation.cdi;
 public class AnnotationCdiConstants {
 	private AnnotationCdiConstants() {}
 	
-	/** GenerateCdiパッケージ名. **/
+	/** Cdiパッケージ名. **/
 	public static final String CDI_PACKAGE_NAME = "quinax";
 }

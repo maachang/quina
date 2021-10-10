@@ -407,7 +407,8 @@ public final class FileUtil {
 	 * @return boolean 削除結果が返されます.
 	 * @exception 例外.
 	 */
-	public static final void removeFile(String name) throws Exception {
+	public static final void removeFile(String name)
+		throws Exception {
 		_deleteFileOrDirectory(name);
 	}
 	
@@ -419,18 +420,14 @@ public final class FileUtil {
 	 * @throws Exception
 	 *             例外.
 	 */
-	public static final void delete(String name) throws Exception {
-		_delete(getFullPath(name));
+	public static final void delete(String name)
+		throws Exception {
+		_delete(name);
 	}
-
 	
-	// ファイル及びディレクトリの削除.
-	private static final void _deleteFileOrDirectory(String name) throws Exception {
-		Files.delete(Paths.get(name));
-	}
-
 	// 指定内のフォルダが空でない場合は中身も削除して削除処理.
-	private static final void _delete(String name) throws Exception {
+	private static final void _delete(String name)
+		throws Exception {
 		if (isFile(name)) {
 			_deleteFileOrDirectory(name);
 		} else {
@@ -444,12 +441,17 @@ public final class FileUtil {
 				for (int i = 0; i < len; i++) {
 					path = name + list[i];
 					_delete(path);
-					if (isDir(path)) {
-						_deleteFileOrDirectory(path);
-					}
 				}
 			}
+			_deleteFileOrDirectory(name);
 		}
+	}
+	
+	
+	// ファイル及びディレクトリの削除.
+	private static final void _deleteFileOrDirectory(String name)
+		throws Exception {
+		Files.delete(Paths.get(name));
 	}
 
 	/**

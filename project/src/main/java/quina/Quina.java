@@ -5,6 +5,7 @@ import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
 import quina.annotation.quina.AnnotationQuina;
+import quina.annotation.reflection.ProxyScopedManager;
 import quina.component.ExecuteComponent;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.CoreException;
@@ -76,6 +77,10 @@ public final class Quina {
 	// CDIアノテーションマネージャ.
 	private final CdiHandleManager cdiHandleManager =
 		new CdiHandleManager();
+	
+	// ProxyScopedマネージャ.
+	private final ProxyScopedManager proxyScopedManager =
+		new ProxyScopedManager();
 
 	// コンストラクタ.
 	private Quina() {
@@ -172,6 +177,11 @@ public final class Quina {
 			cdiHandleManager.autoCdiHandleManager();
 			// CdiHandleManagerをFix.
 			cdiHandleManager.fix();
+			
+			// ProxyScopedアノテーションを反映.
+			proxyScopedManager.autoProxyScopedManager();
+			// ProxyScopedManagerをFix.
+			proxyScopedManager.fix();
 			
 			// アノテーションからコンフィグディレクトリを取得.
 			String confDir = AnnotationQuina.loadConfigDirectory(
@@ -556,7 +566,8 @@ public final class Quina {
 	
 	/**
 	 * QuinaServiceManagerを取得.
-	 * @return QuinaServiceManager QuinaServiceManagerga返却されます.
+	 * @return QuinaServiceManager QuinaServiceManagerga
+	 *                             返却されます.
 	 */
 	public QuinaServiceManager getQuinaServiceManager() {
 		return quinaServiceManager;
@@ -574,7 +585,8 @@ public final class Quina {
 	/**
 	 * CDI（Contexts and Dependency Injection）
 	 * リフレクションマネージャを取得.
-	 * @return CdiReflectManager CDIリフレクションマネージャが返却されます.
+	 * @return CdiReflectManager CDIリフレクション
+	 *                           マネージャが返却されます.
 	 */
 	public CdiReflectManager getCdiReflectManager() {
 		return cdiRefrectManager;
@@ -583,10 +595,20 @@ public final class Quina {
 	/**
 	 * CDI（Contexts and Dependency Injection）
 	 * アノテーションマネージャを取得.
-	 * @return CdiHandleManager CDIアノテーションマネージャが返却されます.
+	 * @return CdiHandleManager CDIアノテーション
+	 *                          マネージャが返却されます.
 	 */
 	public CdiHandleManager getCdiHandleManager() {
 		return cdiHandleManager;
+	}
+	
+	/**
+	 * ProxyScopedアノテーション定義でのInvocationHandler
+	 * 代替え管理マネージャが返却されます.
+	 * @return
+	 */
+	public ProxyScopedManager getProxyScopedManager() {
+		return proxyScopedManager;
 	}
 	
 	/**

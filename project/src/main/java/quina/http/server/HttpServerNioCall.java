@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import quina.http.CsMode;
 import quina.http.HttpElement;
-import quina.http.MimeTypes;
 import quina.logger.Log;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioElement;
@@ -117,8 +116,7 @@ public class HttpServerNioCall extends NioServerCall {
 	 */
 	@Override
 	public NioElement createElement() {
-		HttpElement ret = new HttpElement(CsMode.Server,
-			MimeTypes.getInstance());
+		HttpElement ret = new HttpElement(CsMode.Server);
 		// ElementTimeoutに登録.
 		service.pushTimeoutElement(ret);
 		return ret;

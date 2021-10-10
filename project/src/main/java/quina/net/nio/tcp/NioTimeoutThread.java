@@ -180,7 +180,7 @@ public class NioTimeoutThread
 		while (!endFlag && !stopFlag) {
 			try {
 				while (!endFlag && !stopFlag) {
-					// クローズチェック.
+					// 監視キュー情報が存在しない.
 					if(queue.size() == 0) {
 						// Timeout監視キューの実行条件でない場合.
 						if(!(timeoutQueue.size() > 0 &&
@@ -192,7 +192,9 @@ public class NioTimeoutThread
 					}
 					
 					// NioElement監視キューの実行.
-					executeNioElementQueue(timeoutQueue);
+					if(queue.size() > 0) {
+						executeNioElementQueue(timeoutQueue);
+					}
 					
 					// Timeout監視キューの実行が可能な場合.
 					if(timeoutQueue.size() > 0 &&
@@ -226,7 +228,7 @@ public class NioTimeoutThread
 	private final void executeNioElementQueue(
 		Queue<NioElement> timeoutQueue)
 		throws Throwable {
-		long currentTime = System.currentTimeMillis();
+		final long currentTime = System.currentTimeMillis();
 		// 一覧を取得.
 		NioElement em;
 		Iterator<NioElement> it = queue.iterator();
@@ -234,16 +236,13 @@ public class NioTimeoutThread
 			em = null;
 			try {
 				// クローズされてる場合.
-				if(!(em = it.next()).isConnection()
-					// 送信処理が開始している場合.
-					//|| em.isSendData()
-				) {
+				if(!(em = it.next()).isConnection()) {
 					// Nio要素監視キューから除外.
 					it.remove();
 					continue;
 				// タイムアウトの可能性があるNio要素の場合.
-				} else if(em.getIoTimeout() + DOUBT_TIMEOUT
-					< currentTime) {
+				} else if(
+					em.getIoTimeout() + DOUBT_TIMEOUT < currentTime) {
 					// Nio要素監視キューから除外.
 					it.remove();
 					// Timeout監視キューにセット.
@@ -261,6 +260,7 @@ public class NioTimeoutThread
 				throw e;
 			}
 		}
+		// 一定期間待機.
 		Thread.sleep(50L);
 	}
 	
@@ -268,9 +268,9 @@ public class NioTimeoutThread
 	private final long executeTimeoutQueue(
 		Queue<NioElement> timeoutQueue)
 		throws Throwable {
-		long currentTime = System.currentTimeMillis();
 		long time = -1;
 		long ret = Long.MAX_VALUE;
+		final long currentTime = System.currentTimeMillis();
 		// 一覧を取得.
 		NioElement em;
 		Iterator<NioElement> it = timeoutQueue.iterator();
@@ -278,10 +278,7 @@ public class NioTimeoutThread
 			em = null;
 			try {
 				// クローズされてる場合.
-				if(!(em = it.next()).isConnection()
-					// 送信処理が開始している場合.
-					//|| em.isSendData()
-				) {
+				if(!(em = it.next()).isConnection()) {
 					// Timeout監視キューから除外.
 					it.remove();
 					continue;
@@ -306,12 +303,14 @@ public class NioTimeoutThread
 						continue;
 					// ハンドルが設定されてる場合.
 					} else if(handle != null) {
-						// タイムアウトしてるかチェック.
-						if(handle.isExecuteTimeout(em)) {
+						// タイムアウト実行が可能かチェック.
+						if(handle.isExecuteTimeout(
+							em, timeout)) {
 							// Timeout監視キューから除外.
 							it.remove();
 							// タイムアウト実行処理.
-							handle.executeTimeout(em);
+							handle.executeTimeout(
+								em, timeout);
 							continue;
 						}
 					// ハンドルが設定されていない場合.
@@ -340,6 +339,8 @@ public class NioTimeoutThread
 				throw e;
 			}
 		}
+		// 一定期間待機.
+		Thread.sleep(50L);
 		// 0以下の場合かLong.MAX_VALUEの場合は0を返却.
 		if(ret < 0 || ret == Long.MAX_VALUE) {
 			return 0L;

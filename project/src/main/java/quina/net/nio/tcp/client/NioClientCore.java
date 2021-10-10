@@ -289,8 +289,6 @@ public class NioClientCore extends Thread {
 								// 送信開始.
 								em.startWrite();
 							}
-							// I/Oタイムアウトを更新.
-							em.setIoTimeout();
 						} catch(Throwable se) {
 							if (sendEm != null) {
 								sendEm.destroy();

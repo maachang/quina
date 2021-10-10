@@ -6,6 +6,7 @@ import static quina.command.generateCdi.GCdiConstants.CDI_HANDLE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.OUTPUT_SOURCE_ARRAY;
+import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 
 import java.io.BufferedWriter;
@@ -14,7 +15,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -25,6 +25,7 @@ import quina.annotation.cdi.AnnotationCdiConstants;
 import quina.annotation.cdi.CdiHandleManager;
 import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
+import quina.annotation.reflection.ProxyScopedManager;
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
 import quina.util.FileUtil;
@@ -38,11 +39,7 @@ public class GCdiOutputJavaSrc {
 	// 出力処理.
 	private static final void println(Writer w, int tab, String s)
 		throws IOException {
-		for(int i = 0; i < tab; i ++) {
-			w.append("\t");
-		}
-		w.append(s);
-		w.append("\n");
+		GCdiUtil.println(w, tab, s);
 	}
 	
 	// クラス名からメソッド名変換.
@@ -76,50 +73,24 @@ public class GCdiOutputJavaSrc {
 		}
 	}
 	
-	// このクラスにCdiAnnotationClassが設定されてるかチェック.
-	private static final boolean isCdiAnnotationClass(
-		Class<?> c) {
-		return GCdiConstants.isDefineAnnotation(c);
-	}
-
-	
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(
 		String clazzName, GCdiParams params)
 		throws ClassNotFoundException {
-		// 対象のクラスをロード.
-		final Class<?> c = GCdiUtil.getClass(clazzName, params.cl);
-		return isPublicClass(c);
+		return isPublicClass(GCdiUtil.getClass(clazzName, params.cl));
+
 	}
 	
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(Class<?> c) {
-		// Cdi関連のアノテーションが設定されてない場合.
-		if(!isCdiAnnotationClass(c)) {
-			// false返却.
-			return false;
+		if(GCdiConstants.isDefineAnnotation(c) ||
+			GCdiConstants.isProxyAnnotation(c)) {
+			GCdiUtil.checkPublicClass(c);
+			return true;
 		}
-		// クラス定義がPublic定義の場合.
-		if(Modifier.isPublic(c.getModifiers())) {
-			try {
-				// 引数の無いコンストラクタが存在して、それが
-				// public 定義かチェック.
-				Constructor<?> csr = c.getConstructor();
-				if(Modifier.isPublic(csr.getModifiers())) {
-					// 対象コンストラクタがPublicの場合.
-					return true;
-				}
-			} catch(NoSuchMethodException mse) {
-			}
-		}
-		// クラス定義がpublicでなく、空のpublic
-		// コンストラクタが存在しない場合.
-		throw new QuinaException(
-			"An empty Public constructor for the specified " +
-			"class \"" + c.getClass().getName() +
-			"\" is not defined. ");
+		return false;
 	}
 	
 	// 対象フィールドがCdiFieldでfinal定義でないかチェック.
@@ -612,7 +583,7 @@ public class GCdiOutputJavaSrc {
 			
 			println(w, 2, "");
 			println(w, 2, "// Cdi Handle Manager to be registered.");
-			println(w, 2, "final CdiHandleManager chdManager = Quina.get().CdiHandleManager();");
+			println(w, 2, "final CdiHandleManager chdManager = Quina.get().getCdiHandleManager();");
 			String clazzName;
 			final int len = params.hndList.size();
 			for(int i = 0; i < len; i ++) {
@@ -623,6 +594,83 @@ public class GCdiOutputJavaSrc {
 					println(w, 2, "// Register the \""+ clazzName + "\"");
 					println(w, 2, "// object in the @CdiHandleScoped.");
 					println(w, 2, "chdManager.put(new " + clazzName + "());");
+				}
+			}
+			
+			println(w, 1, "}");
+			
+			println(w, 0, "}");
+			
+			w.close();
+			w = null;
+			
+		} finally {
+			if(w != null) {
+				try {
+					w.close();
+				} catch(Exception e) {}
+			}
+		}
+	}
+	
+	/**
+	 * 抽出したProxyScoped定義されたオブジェクトをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
+	 */
+	public static final void proxyScoped(String outSourceDirectory,
+		GCdiParams params)
+		throws IOException, ClassNotFoundException {
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		
+		// ソース出力先ディレクトリを作成.
+		new File(outDir).mkdirs();
+		
+		String outFileName = outDir + "/" + PROXY_SCOPED_SOURCE_NAME;
+		BufferedWriter w = null;
+		try {
+			// 出力可能かチェック.
+			isOutClassList(params.hndList, params);
+			// ソースコードを出力.
+			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
+			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
+			println(w, 0, "");
+			println(w, 0, "import quina.Quina;");
+			println(w, 0, "import quina.annotation.reflection.ProxyScopedManager;");
+			println(w, 0, "");
+			println(w, 0, "/**");
+			println(w, 0, " * ProxyScoped Annotation Registers the defined service object.");
+			println(w, 0, " */");
+			println(w, 0, "public final class " +
+				ProxyScopedManager.AUTO_READ_PROXY_SCOPED_CLASS + " {");
+			println(w, 1, "private " + 
+				ProxyScopedManager.AUTO_READ_PROXY_SCOPED_CLASS + "() {}");
+			
+			println(w, 1, "");
+			println(w, 1, "/**");
+			println(w, 1, " * ProxyScoped Annotation Registers the define object.");
+			println(w, 1, " *");
+			println(w, 1, " * @exception Exception If the registration fails.");
+			println(w, 1, " */");
+			println(w, 1, "public static final void " +
+				ProxyScopedManager.AUTO_READ_PROXY_SCOPED_METHOD + "() throws Exception {");
+			
+			println(w, 2, "");
+			println(w, 2, "// Proxy Scoped Manager to be registered.");
+			println(w, 2, "final ProxyScopedManager prxManager = Quina.get().getProxyScopedManager();");
+			String clazzName;
+			final int len = params.prxList.size();
+			for(int i = 0; i < len; i ++) {
+				clazzName = params.prxList.get(i);
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(clazzName, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// object in the @ProxyScoped.");
+					println(w, 2, "prxManager.put(\"" + clazzName + "\", ");
+					println(w, 3, GCdiUtil.getAutoProxyClassName(clazzName) + ".class);");
 				}
 			}
 			

@@ -10,6 +10,9 @@ import quina.annotation.cdi.CdiScoped;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.cdi.ServiceScoped;
 import quina.annotation.quina.QuinaServiceScoped;
+import quina.annotation.reflection.AnnotationProxyScopedConstants;
+import quina.annotation.reflection.ProxyScoped;
+import quina.annotation.reflection.ProxyScopedManager;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
 import quina.annotation.route.Route;
@@ -36,6 +39,13 @@ public class GCdiConstants {
 	public static final String CDI_DIRECTORY_NAME = 
 		GCdiUtil.packageNameToDirectory(
 			AnnotationCdiConstants.CDI_PACKAGE_NAME);
+	
+	/**
+	 * ProxyScoped出力先ディレクトリ名.
+	 */
+	public static final String PROXY_DIRECTORY_NAME = 
+		GCdiUtil.packageNameToDirectory(
+			AnnotationProxyScopedConstants.OUTPUT_AUTO_SOURCE_PROXY_PACKAGE_NAME);
 	
 	/**
 	 * AutoRoute出力先Javaソースファイル名.
@@ -68,6 +78,12 @@ public class GCdiConstants {
 		CdiHandleManager.AUTO_READ_CDI_HANDLE_CLASS + ".java";
 	
 	/**
+	 * ProxyScoped出力先Javaソースファイル名.
+	 */
+	public static final String PROXY_SCOPED_SOURCE_NAME =
+		ProxyScopedManager.AUTO_READ_PROXY_SCOPED_CLASS + ".java";
+	
+	/**
 	 * 出力ソースファイル群.
 	 */
 	public static final String[] OUTPUT_SOURCE_ARRAY = new String[] {
@@ -76,6 +92,7 @@ public class GCdiConstants {
 		,CDI_REFLECT_SOURCE_NAME
 		,QUINA_SERVICE_SOURCE_NAME
 		,CDI_HANDLE_SOURCE_NAME
+		,PROXY_SCOPED_SOURCE_NAME
 	};
 
 	/**
@@ -93,5 +110,15 @@ public class GCdiConstants {
 			|| GCdiUtil.isAnnotation(c, ServiceScoped.class)
 			|| GCdiUtil.isAnnotation(c, CdiScoped.class)
 		;
+	}
+	
+	/**
+	 * ProxyScopedで利用対象のアノテーションが定義されてるかチェック.
+	 * @param c 確認するクラスを設定します.
+	 * @return boolean true の場合、ProxyScopedで利用可能なアノテーションが
+	 *                 存在します.
+	 */
+	public static final boolean isProxyAnnotation(Class<?> c) {
+		return c.isAnnotationPresent(ProxyScoped.class);
 	}
 }

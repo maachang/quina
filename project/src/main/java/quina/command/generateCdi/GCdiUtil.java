@@ -1,8 +1,12 @@
 package quina.command.generateCdi;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -12,6 +16,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import quina.annotation.AnnotationUtil;
+import quina.annotation.reflection.AnnotationProxyScopedConstants;
 import quina.exception.QuinaException;
 
 /**
@@ -179,12 +184,42 @@ public class GCdiUtil {
 	 * @param fileName 拡張子が .class のファイル名を設定します.
 	 * @return String Class名が返却されます.
 	 */
-	public static final String createClassName(String packageName, String fileName) {
+	public static final String createClassName(
+		String packageName, String fileName) {
 		fileName = fileName.substring(0, fileName.length() - 6);
 		if(packageName.isEmpty()) {
 			return fileName;
 		}
 		return packageName + "." + fileName;
+	}
+	
+	/**
+	 * パッケージ名を除外したクラス名を取得.
+	 * @param className 対象のパッケージ名＋クラス名を設定します.
+	 * @return String クラス名が返却されます.
+	 */
+	public static final String getClassNameByCutPackageName(
+		String className) {
+		int p = className.lastIndexOf(".");
+		if(p == -1) {
+			return className;
+		}
+		return className.substring(p + 1);
+	}
+	
+	/**
+	 * ProxyScopedの自動作成されるクラス名を取得.
+	 * @param srcClassName ProxyScopedアノテーションが定義されてる
+	 *                     パッケージ名＋クラス名を設定します.
+	 * @return String 自動作成されるクラス名が返却されます.
+	 */
+	public static final String getAutoProxyClassName(
+		String srcClassName) {
+		return new StringBuilder(
+			AnnotationProxyScopedConstants.OUTPUT_AUTO_SOURCE_PROXY_PACKAGE_NAME)
+			.append(".").append(AnnotationProxyScopedConstants.HEAD_PROXY_CLASS_NAME)
+			.append(getClassNameByCutPackageName(srcClassName))
+			.toString();
 	}
 	
 	/**
@@ -357,5 +392,103 @@ public class GCdiUtil {
 			ret[i] = list.get(i);
 		}
 		return ret;
+	}
+	
+	/**
+	 * 出力処理.
+	 * @param w
+	 * @param tab
+	 * @param s
+	 * @throws IOException
+	 */
+	public static final void println(Writer w, int tab, String s)
+		throws IOException {
+		for(int i = 0; i < tab; i ++) {
+			w.append("\t");
+		}
+		w.append(s);
+		w.append("\n");
+	}
+	
+	/**
+	 * 対象のクラスがPublic定義で空のpublicコンストラクタが
+	 * 利用可能かチェック.
+	 * @param clazzName
+	 * @param params
+	 * @throws ClassNotFoundException
+	 */
+	public static final void checkPublicClass(
+		String clazzName, GCdiParams params)
+		throws ClassNotFoundException {
+		// 対象のクラスをロード.
+		final Class<?> c = GCdiUtil.getClass(clazzName, params.cl);
+		checkPublicClass(c);
+	}
+	
+	/**
+	 * 対象のクラスがPublic定義で空のpublicコンストラクタが
+	 * 利用可能かチェック.
+	 * @param c
+	 */
+	public static final void checkPublicClass(Class<?> c) {
+		// クラス定義がPublic定義の場合.
+		if(Modifier.isPublic(c.getModifiers())) {
+			try {
+				// 引数の無いコンストラクタが存在して、それが
+				// public 定義かチェック.
+				Constructor<?> csr = c.getConstructor();
+				if(Modifier.isPublic(csr.getModifiers())) {
+					// 対象コンストラクタがPublicの場合.
+					return;
+				}
+			} catch(NoSuchMethodException mse) {
+			}
+		}
+		// クラス定義がpublicでなく、空のpublic
+		// コンストラクタが存在しない場合.
+		throw new QuinaException(
+			"An empty Public constructor for the specified " +
+			"class \"" + c.getClass().getName() +
+			"\" is not defined. ");
+	}
+	
+	/**
+	 * 対象リフレクションオブジェクトのアクセス修飾子を取得します.
+	 * @param o 取得したいClass, Constructor, Method, Fieldのどれかを
+	 *          設定します.
+	 * @return String 対象のアクセス修飾子が返却されます.
+	 */
+	public static final String getAccessModifier(Member o) {
+		int mod = o.getModifiers();
+		if(Modifier.isPublic(mod)) {
+			return "public";
+		} else if(Modifier.isProtected(mod)) {
+			return "protected";
+		}
+		return "private";
+	}
+	
+	/**
+	 * クラス名を取得.
+	 * 通常の Class.getName() では配列などのクラス名が
+	 * 正しく取得出来ません.
+	 * このメソッドでは、配列クラス名を取得します.
+	 * @param c 対象のクラスを設定します.
+	 * @return String クラス名が返却されます.
+	 */
+	public static final String getClassName(Class<?> c) {
+		int count = 0;
+		while(true) {
+			if(c.isArray()) {
+				c = c.getComponentType();
+				count ++;
+				continue;
+			}
+			StringBuilder buf = new StringBuilder(c.getName());
+			for(int i = 0; i < count; i ++) {
+				buf.append("[]");
+			}
+			return buf.toString();
+		}
 	}
 }

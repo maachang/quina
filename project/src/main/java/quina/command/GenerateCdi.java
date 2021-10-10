@@ -5,6 +5,7 @@ import static quina.command.generateCdi.GCdiConstants.CDI_DIRECTORY_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.COMMAND_NAME;
+import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.VERSION;
 
@@ -18,6 +19,8 @@ import quina.command.generateCdi.GCdiExtraction;
 import quina.command.generateCdi.GCdiOutputJavaSrc;
 import quina.command.generateCdi.GCdiParams;
 import quina.command.generateCdi.GCdiUtil;
+import quina.command.generateCdi.ProxyOutputJavaSrc;
+import quina.exception.QuinaException;
 import quina.util.Args;
 
 /**
@@ -94,6 +97,20 @@ public class GenerateCdi {
 	private static final String getFullPath(String fileName)
 		throws IOException {
 		return new File(fileName).getCanonicalPath();
+	}
+	
+	// エラーハンドル処理.
+	private static final void errorHandle(String javaSourceDir) {
+		if(javaSourceDir == null || javaSourceDir.isEmpty()) {
+			return;
+		}
+		// エラーが発生した場合は、生成されるGCi情報を破棄する.
+		try {
+			GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
+		} catch(Exception e) {}
+		try {
+			ProxyOutputJavaSrc.removeDirectory(javaSourceDir);
+		} catch(Exception e) {}
 	}
 
 	// コマンド実行.
@@ -199,102 +216,123 @@ public class GenerateCdi {
 		
 		System.out.println();
 		
-		// 処理開始.
-		long time = System.currentTimeMillis();
-		
-		// jarファイル名群を取得.
-		String[] jarFileArray;
-		if(jarDirArray.length > 0) {
-			jarFileArray = GCdiUtil.findJarFiles(jarDirArray);
-		} else {
-			jarFileArray = new String[0];
-		}
-		jarDirArray = null;
-		
-		// params.
-		GCdiParams params = new GCdiParams(
-			clazzDir, verboseFlag, jarFileArray);
-		
-		// クラス一覧を取得.
-		List<String> clazzList = new ArrayList<String>();
-		// クラスディレクトリのクラス一覧を取得.
-		if(clazzDir != null) {
-			GCdiUtil.findClassDirByClassNames(clazzList, clazzDir);
-		}
-		// jarファイル群からクラス一覧を取得.
-		if(jarFileArray.length > 0) {
-			int len = jarFileArray.length;
-			for(int i = 0; i < len; i ++) {
-				GCdiUtil.findJarByClassNames(clazzList, jarFileArray[i]);
+		try {
+			
+			// 処理開始.
+			long time = System.currentTimeMillis();
+			
+			// jarファイル名群を取得.
+			String[] jarFileArray;
+			if(jarDirArray.length > 0) {
+				jarFileArray = GCdiUtil.findJarFiles(jarDirArray);
+			} else {
+				jarFileArray = new String[0];
 			}
-		}
-		
-		// ClassDirから、対象となるクラスを抽出.
-		GCdiExtraction.extraction(clazzList, params);
-		clazzList = null;
-		
-		// 出力先のソースコードを全削除.
-		GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
-		
-		// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
-		if(params.isEmpty()) {
+			jarDirArray = null;
+			
+			// params.
+			GCdiParams params = new GCdiParams(
+				clazzDir, verboseFlag, jarFileArray);
+			
+			// クラス一覧を取得.
+			List<String> clazzList = new ArrayList<String>();
+			// クラスディレクトリのクラス一覧を取得.
+			if(clazzDir != null) {
+				GCdiUtil.findClassDirByClassNames(clazzList, clazzDir);
+			}
+			// jarファイル群からクラス一覧を取得.
+			if(jarFileArray.length > 0) {
+				int len = jarFileArray.length;
+				for(int i = 0; i < len; i ++) {
+					GCdiUtil.findJarByClassNames(clazzList, jarFileArray[i]);
+				}
+			}
+			
+			// ClassDirから、対象となるクラスを抽出.
+			GCdiExtraction.extraction(clazzList, params);
+			clazzList = null;
+			
+			// 出力先のソースコードを全削除.
+			GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
+			
+			// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
+			if(params.isEmpty()) {
+				time = System.currentTimeMillis() - time;
+				// 存在しない場合は正常終了.
+				System.out.println("There is no target condition to read.");
+				System.out.println();
+				System.out.println("success: " + time + " msec");
+				System.out.println();
+				System.exit(0);
+				return;
+			}
+			
+			// 開始処理.
+			System.out.println();
+			
+			// ProxyScopedソースコードの自動作成を行う.
+			ProxyOutputJavaSrc.proxyScoped(javaSourceDir, params);
+			
+			// [Router]ファイル出力.
+			if(!params.isRouteEmpty()) {
+				GCdiOutputJavaSrc.routerScoped(javaSourceDir, params);
+				System.out.println( " routerScoped      : " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
+			}
+			
+			// [(CDI)ServiceScoped]ファイル出力.
+			if(!params.isCdiEmpty()) {
+				GCdiOutputJavaSrc.serviceScoped(javaSourceDir, params);
+				System.out.println( " serviceScoped     : " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+			}
+			
+			// [QuinaService]ファイル出力.
+			if(!params.isQuinaServiceEmpty()) {
+				GCdiOutputJavaSrc.quinaServiceScoped(javaSourceDir, params);
+				System.out.println( " quinaServiceScoped: " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + QUINA_SERVICE_SOURCE_NAME);
+			}
+			
+			// [CdiReflect]ファイル出力.
+			if(!params.isCdiReflectEmpty()) {
+				GCdiOutputJavaSrc.cdiReflect(javaSourceDir, params);
+				System.out.println( " cdiReflect        : " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
+			}
+			
+			// [CdiHandle]ファイル出力.
+			if(!params.isCdiHandleEmpty()) {
+				GCdiOutputJavaSrc.cdiHandle(javaSourceDir, params);
+				System.out.println( " cdiHandle         : " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+			}
+			
+			// [ProxyScoped]ファイル出力.
+			if(!params.isProxyScopedEmpty()) {
+				GCdiOutputJavaSrc.proxyScoped(javaSourceDir, params);
+				System.out.println( " proxyScoped       : " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + PROXY_SCOPED_SOURCE_NAME);
+			}
+			
 			time = System.currentTimeMillis() - time;
-			// 存在しない場合は正常終了.
-			System.out.println("There is no target condition to read.");
 			System.out.println();
 			System.out.println("success: " + time + " msec");
 			System.out.println();
+			
 			System.exit(0);
-			return;
+		} catch(QuinaException qe) {
+			errorHandle(javaSourceDir);
+			throw qe;
+		} catch(Exception e) {
+			errorHandle(javaSourceDir);
+			throw new QuinaException(e);
 		}
-		
-		System.out.println();
-		
-		// [Router]ファイル出力.
-		if(!params.isRouteEmpty()) {
-			GCdiOutputJavaSrc.routerScoped(javaSourceDir, params);
-			System.out.println( " routerScoped      : " +
-				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
-		}
-		
-		// [CdiService]ファイル出力.
-		if(!params.isCdiEmpty()) {
-			GCdiOutputJavaSrc.serviceScoped(javaSourceDir, params);
-			System.out.println( " serviceScoped     : " +
-				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
-		}
-		
-		// [QuinaService]ファイル出力.
-		if(!params.isQuinaServiceEmpty()) {
-			GCdiOutputJavaSrc.quinaServiceScoped(javaSourceDir, params);
-			System.out.println( " quinaServiceScoped: " +
-				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + QUINA_SERVICE_SOURCE_NAME);
-		}
-		
-		// [CdiReflect]ファイル出力.
-		if(!params.isCdiReflectEmpty()) {
-			GCdiOutputJavaSrc.cdiReflect(javaSourceDir, params);
-			System.out.println( " cdiReflect        : " +
-				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
-		}
-		
-		// [CdiHandle]ファイル出力.
-		if(!params.isCdiHandleEmpty()) {
-			GCdiOutputJavaSrc.cdiHandle(javaSourceDir, params);
-			System.out.println( " cdiHandle         : " +
-				new File(javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
-		}
-		
-		time = System.currentTimeMillis() - time;
-		System.out.println();
-		System.out.println("success: " + time + " msec");
-		System.out.println();
-		
-		System.exit(0);
 	}
 }

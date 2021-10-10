@@ -83,15 +83,33 @@ public final class QuinaConfig implements
 			if(value != null) {
 				try {
 					switch(clz) {
-					case Boolean: this.value = this.getBoolean(); break;
-					case Byte: this.value = this.getByte(); break;
-					case Short: this.value = this.getShort(); break;
-					case Integer: this.value = this.getInteger(); break;
-					case Long: this.value = this.getLong(); break;
-					case Float: this.value = this.getFloat(); break;
-					case Double: this.value = this.getDouble(); break;
-					case Date: this.value = this.getDate(); break;
-					case String: this.value = this.getString(); break;
+					case Boolean:
+						this.value = this.getBoolean();
+						break;
+					case Byte:
+						this.value = this.getByte();
+						break;
+					case Short:
+						this.value = this.getShort();
+						break;
+					case Integer:
+						this.value = this.getInteger();
+						break;
+					case Long:
+						this.value = this.getLong();
+						break;
+					case Float:
+						this.value = this.getFloat();
+						break;
+					case Double:
+						this.value = this.getDouble();
+						break;
+					case Date:
+						this.value = this.getDate();
+						break;
+					case String:
+						this.value = this.getString();
+						break;
 					}
 				} catch(Exception e) {
 					this.value = null;
