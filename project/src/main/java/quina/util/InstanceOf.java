@@ -69,11 +69,11 @@ public class InstanceOf {
 	 * @param c 対象のオブジェクトを設定します.
 	 * @return boolean trueの場合一致します.
 	 */
-	public static final boolean equalsField(Field f, Object o) {
+	public static final boolean equalsFieldType(Field f, Object o) {
 		if(o == null) {
 			return false;
 		}
-		return equalsField(f, o.getClass());
+		return equalsFieldType(f, o.getClass());
 	}
 	
 	/**
@@ -82,9 +82,23 @@ public class InstanceOf {
 	 * @param c 対象のクラスを設定します.
 	 * @return boolean trueの場合一致します.
 	 */
-	public static final boolean equalsField(Field f, Class<?> c) {
+	public static final boolean equalsFieldType(Field f, Class<?> c) {
 		Class<?> fc = f.getType();
 		return fc ==c;
+	}
+	
+	/**
+	 * 指定フィールドと同じかチェック.
+	 * @param a 比較元のFieldを設定します.
+	 * @param b 比較先のFieldを設定します.
+	 * @return boolean trueの場合一致します.
+	 */
+	public static final boolean equalsField(Field a, Field b) {
+		if(a == null || b == null) {
+			return false;
+		}
+		return a.getName().equals(b.getName()) &&
+			a.getType().equals(b.getType());
 	}
 
 	/**

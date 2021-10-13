@@ -14,11 +14,11 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import quina.annotation.reflection.AnnotationProxyScopedConstants;
-import quina.annotation.reflection.ProxyField;
-import quina.annotation.reflection.ProxyInitialSetting;
-import quina.annotation.reflection.ProxyInjectMethod;
-import quina.annotation.reflection.ProxyOverride;
+import quina.annotation.proxy.AnnotationProxyScopedConstants;
+import quina.annotation.proxy.ProxyField;
+import quina.annotation.proxy.ProxyInitialSetting;
+import quina.annotation.proxy.ProxyInjectMethod;
+import quina.annotation.proxy.ProxyOverride;
 import quina.exception.QuinaException;
 import quina.util.FileUtil;
 import quina.util.InstanceOf;
@@ -115,14 +115,20 @@ public class ProxyOutputJavaSrc {
 				AnnotationProxyScopedConstants.OUTPUT_AUTO_SOURCE_PROXY_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "/**");
-			println(w, 0, " * ProxyScoped Annotation Registers the defined object.");
+			println(w, 0, " * ProxyScoped ProxyClass automatically generated based on the");
+			println(w, 0, " * annotation definition class \"" + clazzName + "\".");
 			println(w, 0, " */");
-			println(w, 0, "@SuppressWarnings({ \"unchecked\", \"rawtypes\" })");
+			println(w, 0, "@SuppressWarnings({ \"unchecked\", \"rawtypes\", \"deprecation\" })");
+			//println(w, 0, "@SuppressWarnings({ \"unchecked\", \"rawtypes\" })");
 			println(w, 0, "public final class " + autoClassName);
 			println(w, 1, "extends " + clazzName+ " {");
 			println(w, 1, "");
 			
 			// newInstanceを生成.
+			println(w, 1, "/**");
+			println(w, 1, " * Creates an empty object.");
+			println(w, 1, " * @return Objec Set an empty object.");
+			println(w, 1, " */");
 			println(w, 1, "public static final Object " +
 				AnnotationProxyScopedConstants.NEW_INSTANCE_METHOD + "() {");
 			println(w, 2, "return new " + autoClassName + "();");
@@ -130,6 +136,10 @@ public class ProxyOutputJavaSrc {
 			println(w, 1, "");
 			
 			// initialSettingを生成.
+			println(w, 1, "/**");
+			println(w, 1, " * Set the required parameters.");
+			println(w, 1, " * @param args Set the parameters.");
+			println(w, 1, " */");
 			println(w, 1, "public final void " +
 				AnnotationProxyScopedConstants.INITIAL_SETTING_METHOD + "(Object[] args) {");
 			println(w, 2, "try {");
@@ -140,7 +150,8 @@ public class ProxyOutputJavaSrc {
 				nextArgs = "";
 				for(i = 0; i < len; i ++) {
 					println(w, 4, nextArgs +
-						"(" + GCdiUtil.getClassName(methodParams[i]) +
+						"(" + GCdiUtil.getClassName(
+							methodParams[i]) +
 						")args[" + i + "]");
 					nextArgs = ",";
 				}
@@ -193,7 +204,8 @@ public class ProxyOutputJavaSrc {
 		indent(buf, space)
 			.append(GCdiUtil.getAccessModifier(method))
 			.append(" ")
-			.append(GCdiUtil.getClassName(method.getReturnType()))
+			.append(GCdiUtil.getClassName(
+				method.getReturnType()))
 			.append(" ")
 			.append(method.getName())
 			.append("(");
@@ -212,29 +224,35 @@ public class ProxyOutputJavaSrc {
 		}
 		if(paramsLen > 0) {
 			buf.append("\n");
-			indent(buf, space + 1).append(")");
+			indent(buf, space).append(")");
 		} else {
 			buf.append(")");
 		}
 		// 例外が存在する場合は例外出力.
 		Class<?>[] exceptions = method.getExceptionTypes();
 		if(exceptions != null && exceptions.length > 0) {
-			buf.append(" throws ");
+			if(paramsLen > 0) {
+				buf.append(" ");
+			} else {
+				buf.append("\n");
+				indent(buf, space + 1);
+			}
+			buf.append("throws ");
 			int len = exceptions.length;
 			for(int i = 0; i < len; i ++) {
 				if(i != 0) {
 					buf.append(", ");
 				}
-				buf.append(GCdiUtil.getClassName(exceptions[i]));
+				buf.append(GCdiUtil.getClassName(
+					exceptions[i]));
 			}
 		}
 		buf.append(" {\n");
 		
-		indent(buf, space + 1);
-		
 		// injectMethodが存在する場合.
 		if(isInjectMethod(injectMethod, method)) {
-			buf.append("super.")
+			indent(buf, space + 1)
+				.append("super.")
 				.append(injectMethod.getName())
 				.append("();\n");
 		}
@@ -305,7 +323,6 @@ public class ProxyOutputJavaSrc {
 			.toString();
 	}
 	
-	
 	// 対象のメソッドがPublicかProtected定義の場合.
 	private static final boolean isPublicProtectedMethod(Method m) {
 		int n = m.getModifiers();
@@ -329,111 +346,126 @@ public class ProxyOutputJavaSrc {
 	
 	// ProxyFieldアノテーションが設定されてるFieldを取得.
 	private static final Field getProxyField(Class<?> c) {
-		final Field[] list = c.getDeclaredFields();
+		Field field;
+		final List<Field> list = GCdiUtil.getFields(c);
 		Field ret = null;
-		final int len = list == null ? 0 : list.length;
+		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
-			if(list[i].isAnnotationPresent(ProxyField.class)) {
-				if(!isPublicProtectedField(list[i])) {
+			field = list.get(i);
+			if(field.isAnnotationPresent(ProxyField.class)) {
+				if(!isPublicProtectedField(field)) {
 					// アクセス出来ないField定義の場合.
 					throw new QuinaException(
 						"The Field in the @ProxyField definition " +
-						"must be public or protected.");
-				} else if(ret != null) {
-					// 複数のFieldに設定されてる場合例外.
+						"must be public or protected: " + c.getName());
+				} else if(ret != null && !InstanceOf.equalsField(ret, field)) {
+					// 複数のFieldに設定されてる場合、その内容が最初に取得した
+					// 条件と同一でない場合はエラー出力.
 					throw new QuinaException(
-						"There are multiple @ProxyField definitions.");
+						"There are multiple @ProxyField definitions: " +
+						c.getName());
 				}
-				ret = list[i];
+				ret = field;
 			}
 		}
 		// 必須定義.
 		if(ret == null) {
 			// ProxyFieldが存在しない場合例外.
 			throw new QuinaException(
-				"@ProxyField definition does not exist.");
+				"@ProxyField definition does not exist: " + c.getName());
 		}
 		return ret;
 	}
 	
 	// ProxyInitialSettingアノテーションが設定されてるMethodを取得.
 	private static final Method getProxyInitialSetting(Class<?> c) {
-		final Method[] list = c.getDeclaredMethods();
+		Method method;
+		final List<Method> list = GCdiUtil.getMethods(c);
 		Method ret = null;
-		final int len = list == null ? 0 : list.length;
+		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
-			if(list[i].isAnnotationPresent(ProxyInitialSetting.class)) {
-				if(!isPublicProtectedMethod(list[i])) {
+			method = list.get(i);
+			if(method.isAnnotationPresent(ProxyInitialSetting.class)) {
+				if(!isPublicProtectedMethod(method)) {
 					// アクセス出来ないMethod定義の場合.
 					throw new QuinaException(
 						"The Method in the @ProxyInitialSetting definition " +
-						"must be public or protected.");
-				} else if(ret != null) {
-					// 複数のMethodに設定されてる場合例外.
+						"must be public or protected: " + c.getName());
+				} else if(ret != null && !InstanceOf.equalsMethod(ret, method)) {
+					// 複数のMethodに設定されてる場合、その内容が最初に取得した
+					// 条件と同一でない場合はエラー出力.
 					throw new QuinaException(
-						"There are multiple @ProxyInitialSetting definitions.");
+						"There are multiple @ProxyInitialSetting definitions: " +
+						c.getName());
 				}
-				ret = list[i];
+				ret = method;
 			}
 		}
 		// 必須定義.
 		if(ret == null) {
 			// ProxyInitialSettingアノテーションが存在しない場合例外.
 			throw new QuinaException(
-				"@ProxyInitialSetting definition does not exist.");
+				"@ProxyInitialSetting definition does not exist: " + c.getName());
 		}
 		return ret;
 	}
 	
 	// ProxyInjectMethodアノテーションが設定されてるMethodを取得.
 	private static final Method getProxyInjectMethod(Class<?> c) {
-		final Method[] list = c.getDeclaredMethods();
+		Method method;
+		final List<Method> list = GCdiUtil.getMethods(c);
 		Method ret = null;
-		final int len = list == null ? 0 : list.length;
+		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
-			if(list[i].isAnnotationPresent(ProxyInjectMethod.class)) {
-				if(!isPublicProtectedMethod(list[i])) {
+			method = list.get(i);
+			if(method.isAnnotationPresent(ProxyInjectMethod.class)) {
+				if(!isPublicProtectedMethod(method)) {
 					// アクセス出来ないMethod定義の場合.
 					throw new QuinaException(
 						"The Method in the @ProxyInjectMethod definition " +
-						"must be public or protected.");
-				} else if(ret != null) {
-					// 複数のMethodに設定されてる場合例外.
+						"must be public or protected: " + c.getName());
+				} else if(ret != null && !InstanceOf.equalsMethod(ret, method)) {
+					// 複数のMethodに設定されてる場合、その内容が最初に取得した
+					// 条件と同一でない場合はエラー出力.
 					throw new QuinaException(
-						"There are multiple @ProxyInjectMethod definitions.");
+						"There are multiple @ProxyInjectMethod definitions: " +
+						c.getName());
 				}
-				ret = list[i];
+				ret = method;
 			}
 		}
 		if(ret != null && ret.getParameterCount() != 0) {
 			// 対象のメソッドのパラメータは空である必要がある.
 			throw new QuinaException(
-				"@ProxyInjectMethod must be an empty parameter definition.");
+				"@ProxyInjectMethod must be an empty parameter definition: " +
+				c.getName());
 		}
 		return ret;
 	}
 	
 	// ProxyInitialSettingアノテーションが設定されてるMethodを取得.
 	private static final int getProxyOverride(List<Method> out, Class<?> c) {
-		final Method[] list = c.getMethods();
+		Method method;
+		final List<Method> list = GCdiUtil.getMethods(c);
 		out.clear();
-		final int len = list == null ? 0 : list.length;
+		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
-			if(list[i].isAnnotationPresent(ProxyOverride.class)) {
-				if(!isPublicProtectedMethod(list[i])) {
+			method = list.get(i);
+			if(method.isAnnotationPresent(ProxyOverride.class)) {
+				if(!isPublicProtectedMethod(method)) {
 					// アクセス出来ないMethod定義の場合.
 					throw new QuinaException(
 						"The Method in the @ProxyOverride definition " +
-						"must be public or protected.");
+						"must be public or protected: " + c.getName());
 				}
-				out.add(list[i]);
+				out.add(method);
 			}
 		}
 		// １つも設定されていない場合.
 		if(out.size() <= 0) {
 			// ProxyOverrideアノテーションが存在しない場合例外.
 			throw new QuinaException(
-				"@ProxyOverride definition does not exist.");
+				"@ProxyOverride definition does not exist: " + c.getName());
 		}
 		return out.size();
 	}

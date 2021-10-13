@@ -1,4 +1,4 @@
-package quina.annotation.reflection;
+package quina.annotation.proxy;
 
 /**
  * ProxyScoped定義.

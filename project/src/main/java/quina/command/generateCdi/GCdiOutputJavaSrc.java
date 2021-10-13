@@ -25,7 +25,7 @@ import quina.annotation.cdi.AnnotationCdiConstants;
 import quina.annotation.cdi.CdiHandleManager;
 import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
-import quina.annotation.reflection.ProxyScopedManager;
+import quina.annotation.proxy.ProxyScopedManager;
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
 import quina.util.FileUtil;
@@ -417,14 +417,15 @@ public class GCdiOutputJavaSrc {
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.refList.get(i);
 				c = GCdiUtil.getClass(clazzName, params);
-				final Field[] list = c.getDeclaredFields();
-				int lenJ = list.length;
+				// subClassを含むFieldをすべて取得.
+				final List<Field> list = GCdiUtil.getFields(c);
+				final int lenJ = list.size();
 				if(lenJ == 0) {
 					continue;
 				}
 				for(int j = 0; j < lenJ; j ++) {
 					// Cdiアノテーションがあってfinal定義でない場合.
-					isCdiField(c, list[j]);
+					isCdiField(c, list.get(j));
 				}
 			}
 			// ソースコードを出力.
@@ -456,8 +457,9 @@ public class GCdiOutputJavaSrc {
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.refList.get(i);
 				c = GCdiUtil.getClass(clazzName, params);
-				final Field[] list = c.getDeclaredFields();
-				int lenJ = list.length;
+				// subClassを含むFieldをすべて取得.
+				final List<Field> list = GCdiUtil.getFields(c);
+				final int lenJ = list.size();
 				if(lenJ == 0) {
 					continue;
 				}
@@ -466,7 +468,7 @@ public class GCdiOutputJavaSrc {
 				boolean notOut = true;
 				for(int j = 0; j < lenJ; j ++) {
 					// Cdiアノテーションがあってfinal定義でない場合.
-					if(isCdiField(c, list[j])) {
+					if(isCdiField(c, list.get(j))) {
 						notOut = false;
 					}
 				}
@@ -494,8 +496,9 @@ public class GCdiOutputJavaSrc {
 					continue;
 				}
 				c = GCdiUtil.getClass(clazzName, params);
-				final Field[] list = c.getDeclaredFields();
-				int lenJ = list.length;
+				// subClassを含むFieldをすべて取得.
+				final List<Field> list = GCdiUtil.getFields(c);
+				final int lenJ = list.size();
 				if(lenJ == 0) {
 					continue;
 				}
@@ -513,10 +516,10 @@ public class GCdiOutputJavaSrc {
 				
 				for(int j = 0; j < lenJ; j ++) {
 					// Cdiアノテーションがあってfinal定義でない場合.
-					if(isCdiField(c, list[j])) {
+					if(isCdiField(c, list.get(j))) {
 						println(w, 2, "");
-						println(w, 2, "field = cls.getDeclaredField(\"" + list[j].getName() + "\");");
-						println(w, 2, "staticFlag = " + Modifier.isStatic(list[j].getModifiers()) + ";");
+						println(w, 2, "field = cls.getDeclaredField(\"" + list.get(j).getName() + "\");");
+						println(w, 2, "staticFlag = " + Modifier.isStatic(list.get(j).getModifiers()) + ";");
 						println(w, 2, "element.add(staticFlag, field);");
 					}
 				}
@@ -638,7 +641,7 @@ public class GCdiOutputJavaSrc {
 			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
 			println(w, 0, "");
 			println(w, 0, "import quina.Quina;");
-			println(w, 0, "import quina.annotation.reflection.ProxyScopedManager;");
+			println(w, 0, "import quina.annotation.proxy.ProxyScopedManager;");
 			println(w, 0, "");
 			println(w, 0, "/**");
 			println(w, 0, " * ProxyScoped Annotation Registers the defined service object.");

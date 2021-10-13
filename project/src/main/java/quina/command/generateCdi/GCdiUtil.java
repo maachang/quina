@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Member;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -16,7 +19,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import quina.annotation.AnnotationUtil;
-import quina.annotation.reflection.AnnotationProxyScopedConstants;
+import quina.annotation.proxy.AnnotationProxyScopedConstants;
 import quina.exception.QuinaException;
 
 /**
@@ -448,7 +451,7 @@ public class GCdiUtil {
 		// コンストラクタが存在しない場合.
 		throw new QuinaException(
 			"An empty Public constructor for the specified " +
-			"class \"" + c.getClass().getName() +
+			"class \"" + c.getName() +
 			"\" is not defined. ");
 	}
 	
@@ -473,22 +476,84 @@ public class GCdiUtil {
 	 * 通常の Class.getName() では配列などのクラス名が
 	 * 正しく取得出来ません.
 	 * このメソッドでは、配列クラス名を取得します.
-	 * @param c 対象のクラスを設定します.
+	 * @param clazz 対象のクラスを設定します.
 	 * @return String クラス名が返却されます.
 	 */
-	public static final String getClassName(Class<?> c) {
+	public static final String getClassName(
+		Class<?> clazz) {
+		return getClassName(clazz, null);
+	}
+	
+	/**
+	 * クラス名を取得.
+	 * 通常の Class.getName() では配列などのクラス名が
+	 * 正しく取得出来ません.
+	 * このメソッドでは、配列クラス名を取得します.
+	 * @param clazz 対象のクラスを設定します.
+	 * @param genericType 対象のGenericTypeを設定します.
+	 * @return String クラス名が返却されます.
+	 */
+	public static final String getClassName(
+		Class<?> clazz, Type genericType) {
+		if(genericType != null) {
+			return genericType.getTypeName();
+		}
 		int count = 0;
 		while(true) {
-			if(c.isArray()) {
-				c = c.getComponentType();
+			if(clazz.isArray()) {
+				clazz = clazz.getComponentType();
 				count ++;
 				continue;
 			}
-			StringBuilder buf = new StringBuilder(c.getName());
+			StringBuilder buf = null;
+			buf = new StringBuilder(clazz.getName());
 			for(int i = 0; i < count; i ++) {
 				buf.append("[]");
 			}
 			return buf.toString();
 		}
 	}
+	
+	/**
+	 * 指定クラスのMethod群を取得.
+	 * @param c 対象のクラスを設定します.
+	 * @return List<Method> superClassにさかのぼってMethod情報を取得します.
+	 */
+	public static final List<Method> getMethods(Class<?> c) {
+		int len;
+		Method[] methods;
+		List<Method> ret = new ArrayList<Method>();
+		while(c != null) {
+			methods = c.getDeclaredMethods();
+			len = methods.length;
+			for(int i = 0; i < len; i ++) {
+				ret.add(methods[i]);
+			}
+			methods = null;
+			c = c.getSuperclass();
+		}
+		return ret;
+	}
+	
+	/**
+	 * 指定クラスのField群を取得.
+	 * @param c 対象のクラスを設定します.
+	 * @return List<Field> superClassにさかのぼってField情報を取得します.
+	 */
+	public static List<Field> getFields(Class<?> c) {
+		int len;
+		Field[] fields;
+		List<Field> ret = new ArrayList<Field>();
+		while(c != null) {
+			fields = c.getDeclaredFields();
+			len = fields.length;
+			for(int i = 0; i < len; i ++) {
+				ret.add(fields[i]);
+			}
+			fields = null;
+			c = c.getSuperclass();
+		}
+		return ret;
+	}
+	
 }

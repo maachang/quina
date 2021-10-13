@@ -1,4 +1,4 @@
-package quina.annotation.reflection;
+package quina.annotation.proxy;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

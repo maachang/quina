@@ -1,4 +1,4 @@
-package quina.annotation.reflection;
+package quina.annotation.proxy;
 
 import java.lang.reflect.InvocationTargetException;
 

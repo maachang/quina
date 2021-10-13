@@ -289,11 +289,31 @@ public final class QuinaConfig implements
 	}
 	
 	/**
+	 * コンフィグ名を設定.
+	 * @param name 対象のコンフィグ名を設定します.
+	 * @return QuinaConfig このオブジェクトが返却されます.
+	 */
+	public QuinaConfig setName(String name) {
+		lock.writeLock().lock();
+		try {
+			this.name = name;
+		} finally {
+			lock.writeLock().unlock();
+		}
+		return this;
+	}
+	
+	/**
 	 * コンフィグ名を取得.
 	 * @return String コンフィグ名が返却されます.
 	 */
 	public String getName() {
-		return name;
+		lock.readLock().lock();
+		try {
+			return name;
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
