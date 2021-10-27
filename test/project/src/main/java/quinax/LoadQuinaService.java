@@ -22,5 +22,9 @@ public final class LoadQuinaService {
 		// Register the "quina.test.QuinaServiceTest"
 		// object in the @QuinaServiceScoped.
 		qsrvManager.put(new quina.test.QuinaServiceTest());
+		
+		// Register the "quina.jdbc.QuinaJDBCService"
+		// object in the @QuinaServiceScoped.
+		qsrvManager.put(new quina.jdbc.QuinaJDBCService());
 	}
 }

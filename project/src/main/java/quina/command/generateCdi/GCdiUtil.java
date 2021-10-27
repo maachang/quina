@@ -1,15 +1,12 @@
 package quina.command.generateCdi;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -398,22 +395,6 @@ public class GCdiUtil {
 	}
 	
 	/**
-	 * 出力処理.
-	 * @param w
-	 * @param tab
-	 * @param s
-	 * @throws IOException
-	 */
-	public static final void println(Writer w, int tab, String s)
-		throws IOException {
-		for(int i = 0; i < tab; i ++) {
-			w.append("\t");
-		}
-		w.append(s);
-		w.append("\n");
-	}
-	
-	/**
 	 * 対象のクラスがPublic定義で空のpublicコンストラクタが
 	 * 利用可能かチェック.
 	 * @param clazzName
@@ -469,49 +450,6 @@ public class GCdiUtil {
 			return "protected";
 		}
 		return "private";
-	}
-	
-	/**
-	 * クラス名を取得.
-	 * 通常の Class.getName() では配列などのクラス名が
-	 * 正しく取得出来ません.
-	 * このメソッドでは、配列クラス名を取得します.
-	 * @param clazz 対象のクラスを設定します.
-	 * @return String クラス名が返却されます.
-	 */
-	public static final String getClassName(
-		Class<?> clazz) {
-		return getClassName(clazz, null);
-	}
-	
-	/**
-	 * クラス名を取得.
-	 * 通常の Class.getName() では配列などのクラス名が
-	 * 正しく取得出来ません.
-	 * このメソッドでは、配列クラス名を取得します.
-	 * @param clazz 対象のクラスを設定します.
-	 * @param genericType 対象のGenericTypeを設定します.
-	 * @return String クラス名が返却されます.
-	 */
-	public static final String getClassName(
-		Class<?> clazz, Type genericType) {
-		if(genericType != null) {
-			return genericType.getTypeName();
-		}
-		int count = 0;
-		while(true) {
-			if(clazz.isArray()) {
-				clazz = clazz.getComponentType();
-				count ++;
-				continue;
-			}
-			StringBuilder buf = null;
-			buf = new StringBuilder(clazz.getName());
-			for(int i = 0; i < count; i ++) {
-				buf.append("[]");
-			}
-			return buf.toString();
-		}
 	}
 	
 	/**

@@ -9,23 +9,15 @@ public final class AutoProxyQuinaProxyConnection
 	extends quina.jdbc.QuinaProxyConnection {
 	
 	/**
-	 * Creates an empty object.
-	 * @return Objec Set an empty object.
-	 */
-	public static final Object __newInstance() {
-		return new AutoProxyQuinaProxyConnection();
-	}
-	
-	/**
 	 * Set the required parameters.
 	 * @param args Set the parameters.
 	 */
-	public final void __initialSetting(Object[] args) {
+	public final void __initialSetting(quina.annotation.proxy.ProxySettingArgs args) {
 		try {
 			super.setting(
-				(java.lang.Boolean)args[0]
-				,(quina.jdbc.QuinaDataSource)args[1]
-				,(java.sql.Connection)args[2]
+				(java.lang.Boolean)args.getArgs(0)
+				,(quina.jdbc.QuinaDataSource)args.getArgs(1)
+				,(java.sql.Connection)args.getArgs(2)
 			);
 		} catch(quina.exception.QuinaException qe) {
 			throw qe;
@@ -73,49 +65,6 @@ public final class AutoProxyQuinaProxyConnection
 	}
 
 	@Override
-	public void setTransactionIsolation(
-		int arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		connection.setTransactionIsolation(arg0);
-	}
-
-	@Override
-	public java.sql.SQLWarning getWarnings()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return connection.getWarnings();
-	}
-
-	@Override
-	public void clearWarnings()
-		throws java.sql.SQLException {
-		super.checkClose();
-		connection.clearWarnings();
-	}
-
-	@Override
-	public java.sql.DatabaseMetaData getMetaData()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return connection.getMetaData();
-	}
-
-	@Override
-	public boolean isClosed()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return connection.isClosed();
-	}
-
-	@Override
-	public int getHoldability()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return connection.getHoldability();
-	}
-
-	@Override
 	public java.sql.Statement createStatement(
 		int arg0
 		,int arg1
@@ -132,6 +81,20 @@ public final class AutoProxyQuinaProxyConnection
 	) throws java.sql.SQLException {
 		super.checkClose();
 		return connection.createStatement(arg0, arg1);
+	}
+
+	@Override
+	public java.sql.SQLWarning getWarnings()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return connection.getWarnings();
+	}
+
+	@Override
+	public void clearWarnings()
+		throws java.sql.SQLException {
+		super.checkClose();
+		connection.clearWarnings();
 	}
 
 	@Override
@@ -173,6 +136,13 @@ public final class AutoProxyQuinaProxyConnection
 	}
 
 	@Override
+	public java.sql.DatabaseMetaData getMetaData()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return connection.getMetaData();
+	}
+
+	@Override
 	public void setCatalog(
 		java.lang.String arg0
 	) throws java.sql.SQLException {
@@ -185,6 +155,14 @@ public final class AutoProxyQuinaProxyConnection
 		throws java.sql.SQLException {
 		super.checkClose();
 		return connection.getCatalog();
+	}
+
+	@Override
+	public void setTransactionIsolation(
+		int arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		connection.setTransactionIsolation(arg0);
 	}
 
 	@Override
@@ -215,6 +193,13 @@ public final class AutoProxyQuinaProxyConnection
 	) throws java.sql.SQLException {
 		super.checkClose();
 		connection.setHoldability(arg0);
+	}
+
+	@Override
+	public int getHoldability()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return connection.getHoldability();
 	}
 
 	@Override

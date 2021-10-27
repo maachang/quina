@@ -9,22 +9,14 @@ public final class AutoProxyQuinaProxyCallableStatement
 	extends quina.jdbc.QuinaProxyCallableStatement {
 	
 	/**
-	 * Creates an empty object.
-	 * @return Objec Set an empty object.
-	 */
-	public static final Object __newInstance() {
-		return new AutoProxyQuinaProxyCallableStatement();
-	}
-	
-	/**
 	 * Set the required parameters.
 	 * @param args Set the parameters.
 	 */
-	public final void __initialSetting(Object[] args) {
+	public final void __initialSetting(quina.annotation.proxy.ProxySettingArgs args) {
 		try {
 			super.setting(
-				(quina.jdbc.QuinaProxyConnection)args[0]
-				,(java.sql.Statement)args[1]
+				(quina.jdbc.QuinaProxyConnection)args.getArgs(0)
+				,(java.sql.Statement)args.getArgs(1)
 			);
 		} catch(quina.exception.QuinaException qe) {
 			throw qe;
@@ -508,7 +500,15 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.sql.Timestamp getTimestamp(
-		int arg0
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.getTimestamp(arg0);
+	}
+
+	@Override
+	public java.sql.Timestamp getTimestamp(
+		java.lang.String arg0
 		,java.util.Calendar arg1
 	) throws java.sql.SQLException {
 		super.checkClose();
@@ -517,14 +517,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.sql.Timestamp getTimestamp(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.getTimestamp(arg0);
-	}
-
-	@Override
-	public java.sql.Timestamp getTimestamp(
 		int arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
@@ -533,7 +525,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.sql.Timestamp getTimestamp(
-		java.lang.String arg0
+		int arg0
 		,java.util.Calendar arg1
 	) throws java.sql.SQLException {
 		super.checkClose();
@@ -542,7 +534,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.io.Reader getCharacterStream(
-		int arg0
+		java.lang.String arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getCharacterStream(arg0);
@@ -550,7 +542,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.io.Reader getCharacterStream(
-		java.lang.String arg0
+		int arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getCharacterStream(arg0);
@@ -574,7 +566,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.sql.Clob getClob(
-		int arg0
+		java.lang.String arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getClob(arg0);
@@ -582,7 +574,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.sql.Clob getClob(
-		java.lang.String arg0
+		int arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getClob(arg0);
@@ -654,14 +646,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 
 	@Override
 	public java.io.Reader getNCharacterStream(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.getNCharacterStream(arg0);
-	}
-
-	@Override
-	public java.io.Reader getNCharacterStream(
 		int arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
@@ -669,242 +653,11 @@ public final class AutoProxyQuinaProxyCallableStatement
 	}
 
 	@Override
-	public void setBinaryStream(
+	public java.io.Reader getNCharacterStream(
 		java.lang.String arg0
-		,java.io.InputStream arg1
-		,int arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.setBinaryStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setBinaryStream(
-		java.lang.String arg0
-		,java.io.InputStream arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBinaryStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setBinaryStream(
-		java.lang.String arg0
-		,java.io.InputStream arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBinaryStream(arg0, arg1);
-	}
-
-	@Override
-	public void setObject(
-		java.lang.String arg0
-		,java.lang.Object arg1
-		,java.sql.SQLType arg2
-		,int arg3
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setObject(arg0, arg1, arg2, arg3);
-	}
-
-	@Override
-	public void setObject(
-		java.lang.String arg0
-		,java.lang.Object arg1
-		,java.sql.SQLType arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setObject(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setObject(
-		java.lang.String arg0
-		,java.lang.Object arg1
-		,int arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setObject(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setObject(
-		java.lang.String arg0
-		,java.lang.Object arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setObject(arg0, arg1);
-	}
-
-	@Override
-	public void setObject(
-		java.lang.String arg0
-		,java.lang.Object arg1
-		,int arg2
-		,int arg3
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setObject(arg0, arg1, arg2, arg3);
-	}
-
-	@Override
-	public void setCharacterStream(
-		java.lang.String arg0
-		,java.io.Reader arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setCharacterStream(arg0, arg1);
-	}
-
-	@Override
-	public void setCharacterStream(
-		java.lang.String arg0
-		,java.io.Reader arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setCharacterStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setCharacterStream(
-		java.lang.String arg0
-		,java.io.Reader arg1
-		,int arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setCharacterStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setBlob(
-		java.lang.String arg0
-		,java.io.InputStream arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBlob(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setBlob(
-		java.lang.String arg0
-		,java.sql.Blob arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBlob(arg0, arg1);
-	}
-
-	@Override
-	public void setBlob(
-		java.lang.String arg0
-		,java.io.InputStream arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBlob(arg0, arg1);
-	}
-
-	@Override
-	public void setClob(
-		java.lang.String arg0
-		,java.sql.Clob arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setClob(arg0, arg1);
-	}
-
-	@Override
-	public void setClob(
-		java.lang.String arg0
-		,java.io.Reader arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setClob(arg0, arg1);
-	}
-
-	@Override
-	public void setClob(
-		java.lang.String arg0
-		,java.io.Reader arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setClob(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setRowId(
-		java.lang.String arg0
-		,java.sql.RowId arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setRowId(arg0, arg1);
-	}
-
-	@Override
-	public void setNString(
-		java.lang.String arg0
-		,java.lang.String arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNString(arg0, arg1);
-	}
-
-	@Override
-	public void setNCharacterStream(
-		java.lang.String arg0
-		,java.io.Reader arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNCharacterStream(arg0, arg1);
-	}
-
-	@Override
-	public void setNCharacterStream(
-		java.lang.String arg0
-		,java.io.Reader arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNCharacterStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setNClob(
-		java.lang.String arg0
-		,java.io.Reader arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNClob(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setNClob(
-		java.lang.String arg0
-		,java.io.Reader arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNClob(arg0, arg1);
-	}
-
-	@Override
-	public void setNClob(
-		java.lang.String arg0
-		,java.sql.NClob arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNClob(arg0, arg1);
-	}
-
-	@Override
-	public void setSQLXML(
-		java.lang.String arg0
-		,java.sql.SQLXML arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setSQLXML(arg0, arg1);
+		return statement.getNCharacterStream(arg0);
 	}
 
 	@Override
@@ -983,13 +736,242 @@ public final class AutoProxyQuinaProxyCallableStatement
 	}
 
 	@Override
-	public void registerOutParameter(
+	public void setBinaryStream(
 		java.lang.String arg0
-		,java.sql.SQLType arg1
+		,java.io.InputStream arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBinaryStream(arg0, arg1);
+	}
+
+	@Override
+	public void setBinaryStream(
+		java.lang.String arg0
+		,java.io.InputStream arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBinaryStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setBinaryStream(
+		java.lang.String arg0
+		,java.io.InputStream arg1
 		,int arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.registerOutParameter(arg0, arg1, arg2);
+		statement.setBinaryStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setObject(
+		java.lang.String arg0
+		,java.lang.Object arg1
+		,java.sql.SQLType arg2
+		,int arg3
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setObject(arg0, arg1, arg2, arg3);
+	}
+
+	@Override
+	public void setObject(
+		java.lang.String arg0
+		,java.lang.Object arg1
+		,java.sql.SQLType arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setObject(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setObject(
+		java.lang.String arg0
+		,java.lang.Object arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setObject(arg0, arg1);
+	}
+
+	@Override
+	public void setObject(
+		java.lang.String arg0
+		,java.lang.Object arg1
+		,int arg2
+		,int arg3
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setObject(arg0, arg1, arg2, arg3);
+	}
+
+	@Override
+	public void setObject(
+		java.lang.String arg0
+		,java.lang.Object arg1
+		,int arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setObject(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setCharacterStream(
+		java.lang.String arg0
+		,java.io.Reader arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setCharacterStream(arg0, arg1);
+	}
+
+	@Override
+	public void setCharacterStream(
+		java.lang.String arg0
+		,java.io.Reader arg1
+		,int arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setCharacterStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setCharacterStream(
+		java.lang.String arg0
+		,java.io.Reader arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setCharacterStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setBlob(
+		java.lang.String arg0
+		,java.sql.Blob arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBlob(arg0, arg1);
+	}
+
+	@Override
+	public void setBlob(
+		java.lang.String arg0
+		,java.io.InputStream arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBlob(arg0, arg1);
+	}
+
+	@Override
+	public void setBlob(
+		java.lang.String arg0
+		,java.io.InputStream arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBlob(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setClob(
+		java.lang.String arg0
+		,java.io.Reader arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setClob(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setClob(
+		java.lang.String arg0
+		,java.sql.Clob arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setClob(arg0, arg1);
+	}
+
+	@Override
+	public void setClob(
+		java.lang.String arg0
+		,java.io.Reader arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setClob(arg0, arg1);
+	}
+
+	@Override
+	public void setRowId(
+		java.lang.String arg0
+		,java.sql.RowId arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setRowId(arg0, arg1);
+	}
+
+	@Override
+	public void setNString(
+		java.lang.String arg0
+		,java.lang.String arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNString(arg0, arg1);
+	}
+
+	@Override
+	public void setNCharacterStream(
+		java.lang.String arg0
+		,java.io.Reader arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNCharacterStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setNCharacterStream(
+		java.lang.String arg0
+		,java.io.Reader arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNCharacterStream(arg0, arg1);
+	}
+
+	@Override
+	public void setNClob(
+		java.lang.String arg0
+		,java.io.Reader arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNClob(arg0, arg1);
+	}
+
+	@Override
+	public void setNClob(
+		java.lang.String arg0
+		,java.sql.NClob arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNClob(arg0, arg1);
+	}
+
+	@Override
+	public void setNClob(
+		java.lang.String arg0
+		,java.io.Reader arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNClob(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setSQLXML(
+		java.lang.String arg0
+		,java.sql.SQLXML arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setSQLXML(arg0, arg1);
 	}
 
 	@Override
@@ -1006,7 +988,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 	public void registerOutParameter(
 		int arg0
 		,java.sql.SQLType arg1
-		,java.lang.String arg2
+		,int arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.registerOutParameter(arg0, arg1, arg2);
@@ -1025,7 +1007,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 	public void registerOutParameter(
 		int arg0
 		,java.sql.SQLType arg1
-		,int arg2
+		,java.lang.String arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.registerOutParameter(arg0, arg1, arg2);
@@ -1038,6 +1020,16 @@ public final class AutoProxyQuinaProxyCallableStatement
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.registerOutParameter(arg0, arg1);
+	}
+
+	@Override
+	public void registerOutParameter(
+		java.lang.String arg0
+		,java.sql.SQLType arg1
+		,int arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.registerOutParameter(arg0, arg1, arg2);
 	}
 
 	@Override
@@ -1251,13 +1243,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 	}
 
 	@Override
-	public java.sql.ResultSetMetaData getMetaData()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return statement.getMetaData();
-	}
-
-	@Override
 	public int executeUpdate()
 		throws java.sql.SQLException {
 		super.checkClose();
@@ -1269,6 +1254,108 @@ public final class AutoProxyQuinaProxyCallableStatement
 		throws java.sql.SQLException {
 		super.checkClose();
 		statement.addBatch();
+	}
+
+	@Override
+	public java.sql.ResultSetMetaData getMetaData()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return statement.getMetaData();
+	}
+
+	@Override
+	public void setNull(
+		int arg0
+		,int arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNull(arg0, arg1);
+	}
+
+	@Override
+	public void setNull(
+		int arg0
+		,int arg1
+		,java.lang.String arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setNull(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setBigDecimal(
+		int arg0
+		,java.math.BigDecimal arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBigDecimal(arg0, arg1);
+	}
+
+	@Override
+	public void setString(
+		int arg0
+		,java.lang.String arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setString(arg0, arg1);
+	}
+
+	@Override
+	public void setBytes(
+		int arg0
+		,byte[] arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBytes(arg0, arg1);
+	}
+
+	@Override
+	public void setAsciiStream(
+		int arg0
+		,java.io.InputStream arg1
+		,int arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setAsciiStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setAsciiStream(
+		int arg0
+		,java.io.InputStream arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setAsciiStream(arg0, arg1);
+	}
+
+	@Override
+	public void setAsciiStream(
+		int arg0
+		,java.io.InputStream arg1
+		,long arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setAsciiStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setUnicodeStream(
+		int arg0
+		,java.io.InputStream arg1
+		,int arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setUnicodeStream(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setBinaryStream(
+		int arg0
+		,java.io.InputStream arg1
+		,int arg2
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setBinaryStream(arg0, arg1, arg2);
 	}
 
 	@Override
@@ -1288,16 +1375,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setBinaryStream(arg0, arg1);
-	}
-
-	@Override
-	public void setBinaryStream(
-		int arg0
-		,java.io.InputStream arg1
-		,int arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBinaryStream(arg0, arg1, arg2);
 	}
 
 	@Override
@@ -1321,9 +1398,10 @@ public final class AutoProxyQuinaProxyCallableStatement
 		int arg0
 		,java.lang.Object arg1
 		,int arg2
+		,int arg3
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.setObject(arg0, arg1, arg2);
+		statement.setObject(arg0, arg1, arg2, arg3);
 	}
 
 	@Override
@@ -1331,10 +1409,9 @@ public final class AutoProxyQuinaProxyCallableStatement
 		int arg0
 		,java.lang.Object arg1
 		,int arg2
-		,int arg3
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.setObject(arg0, arg1, arg2, arg3);
+		statement.setObject(arg0, arg1, arg2);
 	}
 
 	@Override
@@ -1362,7 +1439,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 	public void setCharacterStream(
 		int arg0
 		,java.io.Reader arg1
-		,int arg2
+		,long arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setCharacterStream(arg0, arg1, arg2);
@@ -1372,7 +1449,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 	public void setCharacterStream(
 		int arg0
 		,java.io.Reader arg1
-		,long arg2
+		,int arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setCharacterStream(arg0, arg1, arg2);
@@ -1408,16 +1485,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 	@Override
 	public void setBlob(
 		int arg0
-		,java.io.InputStream arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBlob(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setBlob(
-		int arg0
 		,java.sql.Blob arg1
 	) throws java.sql.SQLException {
 		super.checkClose();
@@ -1425,12 +1492,13 @@ public final class AutoProxyQuinaProxyCallableStatement
 	}
 
 	@Override
-	public void setClob(
+	public void setBlob(
 		int arg0
-		,java.sql.Clob arg1
+		,java.io.InputStream arg1
+		,long arg2
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.setClob(arg0, arg1);
+		statement.setBlob(arg0, arg1, arg2);
 	}
 
 	@Override
@@ -1450,6 +1518,15 @@ public final class AutoProxyQuinaProxyCallableStatement
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setClob(arg0, arg1, arg2);
+	}
+
+	@Override
+	public void setClob(
+		int arg0
+		,java.sql.Clob arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setClob(arg0, arg1);
 	}
 
 	@Override
@@ -1499,7 +1576,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 	@Override
 	public void setNClob(
 		int arg0
-		,java.io.Reader arg1
+		,java.sql.NClob arg1
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setNClob(arg0, arg1);
@@ -1518,7 +1595,7 @@ public final class AutoProxyQuinaProxyCallableStatement
 	@Override
 	public void setNClob(
 		int arg0
-		,java.sql.NClob arg1
+		,java.io.Reader arg1
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setNClob(arg0, arg1);
@@ -1534,91 +1611,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 	}
 
 	@Override
-	public void setNull(
-		int arg0
-		,int arg1
-		,java.lang.String arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNull(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setNull(
-		int arg0
-		,int arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setNull(arg0, arg1);
-	}
-
-	@Override
-	public void setBigDecimal(
-		int arg0
-		,java.math.BigDecimal arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBigDecimal(arg0, arg1);
-	}
-
-	@Override
-	public void setString(
-		int arg0
-		,java.lang.String arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setString(arg0, arg1);
-	}
-
-	@Override
-	public void setBytes(
-		int arg0
-		,byte[] arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setBytes(arg0, arg1);
-	}
-
-	@Override
-	public void setAsciiStream(
-		int arg0
-		,java.io.InputStream arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setAsciiStream(arg0, arg1);
-	}
-
-	@Override
-	public void setAsciiStream(
-		int arg0
-		,java.io.InputStream arg1
-		,long arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setAsciiStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setAsciiStream(
-		int arg0
-		,java.io.InputStream arg1
-		,int arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setAsciiStream(arg0, arg1, arg2);
-	}
-
-	@Override
-	public void setUnicodeStream(
-		int arg0
-		,java.io.InputStream arg1
-		,int arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setUnicodeStream(arg0, arg1, arg2);
-	}
-
-	@Override
 	public void cancel()
 		throws java.sql.SQLException {
 		super.checkClose();
@@ -1626,11 +1618,85 @@ public final class AutoProxyQuinaProxyCallableStatement
 	}
 
 	@Override
-	public void setQueryTimeout(
-		int arg0
+	public long getLargeMaxRows()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return statement.getLargeMaxRows();
+	}
+
+	@Override
+	public long[] executeLargeBatch()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeBatch();
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.setQueryTimeout(arg0);
+		return statement.executeLargeUpdate(arg0);
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
+		,int arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeUpdate(arg0, arg1);
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
+		,int[] arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeUpdate(arg0, arg1);
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
+		,java.lang.String[] arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeUpdate(arg0, arg1);
+	}
+
+	@Override
+	public java.lang.String enquoteLiteral(
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.enquoteLiteral(arg0);
+	}
+
+	@Override
+	public java.lang.String enquoteIdentifier(
+		java.lang.String arg0
+		,boolean arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.enquoteIdentifier(arg0, arg1);
+	}
+
+	@Override
+	public boolean isSimpleIdentifier(
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.isSimpleIdentifier(arg0);
+	}
+
+	@Override
+	public java.lang.String enquoteNCharLiteral(
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.enquoteNCharLiteral(arg0);
 	}
 
 	@Override
@@ -1676,6 +1742,14 @@ public final class AutoProxyQuinaProxyCallableStatement
 		throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getQueryTimeout();
+	}
+
+	@Override
+	public void setQueryTimeout(
+		int arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setQueryTimeout(arg0);
 	}
 
 	@Override
@@ -1735,6 +1809,14 @@ public final class AutoProxyQuinaProxyCallableStatement
 		throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getFetchDirection();
+	}
+
+	@Override
+	public void setFetchSize(
+		int arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setFetchSize(arg0);
 	}
 
 	@Override
@@ -1821,96 +1903,6 @@ public final class AutoProxyQuinaProxyCallableStatement
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setLargeMaxRows(arg0);
-	}
-
-	@Override
-	public long getLargeMaxRows()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return statement.getLargeMaxRows();
-	}
-
-	@Override
-	public long[] executeLargeBatch()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeBatch();
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-		,int arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0, arg1);
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-		,java.lang.String[] arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0, arg1);
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0);
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-		,int[] arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0, arg1);
-	}
-
-	@Override
-	public java.lang.String enquoteLiteral(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.enquoteLiteral(arg0);
-	}
-
-	@Override
-	public java.lang.String enquoteIdentifier(
-		java.lang.String arg0
-		,boolean arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.enquoteIdentifier(arg0, arg1);
-	}
-
-	@Override
-	public boolean isSimpleIdentifier(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.isSimpleIdentifier(arg0);
-	}
-
-	@Override
-	public java.lang.String enquoteNCharLiteral(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.enquoteNCharLiteral(arg0);
-	}
-
-	@Override
-	public void setFetchSize(
-		int arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setFetchSize(arg0);
 	}
 
 	@Override

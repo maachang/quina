@@ -42,7 +42,7 @@ public final class QuinaUtil {
 
 	// １度取得したConfigPath情報.
 	private static final AtomicObject<String> confPath =
-		new AtomicObject<String>();
+		new AtomicObject<String>(null);
 	
 	/**
 	 * コンフィグディレクトリ名を取得.
@@ -143,11 +143,14 @@ public final class QuinaUtil {
 		String fileName = null;
 		int len = JSON_CONFIG_EXTENSION.length;
 		for(int i = 0; i < len; i ++) {
-			if(FileUtil.isFile(name + JSON_CONFIG_EXTENSION[i])) {
-				fileName = configDir + name +
-					JSON_CONFIG_EXTENSION[i];
+			fileName =
+				configDir + name + JSON_CONFIG_EXTENSION[i];
+			if(FileUtil.isFile(fileName)) {
+				// ファイルが存在する場合.
 				break;
 			}
+			// ファイルが存在しない場合.
+			fileName = null;
 		}
 		// コンフィグファイルが存在しない.
 		if(fileName == null) {

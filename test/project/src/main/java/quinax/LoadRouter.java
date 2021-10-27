@@ -28,6 +28,10 @@ public final class LoadRouter {
 		// component in the @Route.
 		router.route(new quina.test.route.TimeoutRoute());
 		
+		// Register the "quina.test.route.TestDBJsonGet"
+		// component in the @Route.
+		router.route(new quina.test.route.TestDBJsonGet());
+		
 		// Register the "quina.test.route.AnyJsonGet"
 		// component in the @AnyRoute.
 		router.any(new quina.test.route.AnyJsonGet());

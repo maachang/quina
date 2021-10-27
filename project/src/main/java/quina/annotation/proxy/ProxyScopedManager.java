@@ -28,8 +28,8 @@ public class ProxyScopedManager {
 	// key  : ＠ProxyScoped定義のクラス名.
 	// value: ＠ProxyScoped定義を継承された
 	//        自動生成Javaコードのクラスオブジェクト.
-	private final IndexKeyValueList<String, Class<?>> manager =
-		new IndexKeyValueList<String, Class<?>>();
+	private final IndexKeyValueList<String, QuinaProxy> manager =
+		new IndexKeyValueList<String, QuinaProxy>();
 	
 	// fixフラグ.
 	private final Flag fixFlag = new Flag(false);
@@ -59,35 +59,37 @@ public class ProxyScopedManager {
 	/**
 	 * Proxyクラスを追加セット.
 	 * @param srcClass ＠ProxyScoped定義のクラス.
-	 * @param autoClass ＠ProxyScoped定義を継承された
-	 *                  自動生成Javaコードのクラスオブジェクト.
+	 * @param QuinaProxy ＠ProxyScoped定義を継承された
+	 *                   オブジェクトを生成できるオブジェクトが
+	 *                   設定されます..
 	 */
 	public void put(
-		Class<?> srcClass, Class<?> autoClass) {
+		Class<?> srcClass, QuinaProxy proxyObject) {
 		if(fixFlag.get()) {
 			throw new QuinaException("Already completed.");
 		} else if(srcClass == null) {
 			throw new QuinaException(
 				"The specified argument is null.");
 		}
-		manager.put(srcClass.getName(), autoClass);
+		manager.put(srcClass.getName(), proxyObject);
 	}
 	
 	/**
 	 * Proxyクラスを追加セット.
 	 * @param srcClassName ＠ProxyScoped定義のクラス名.
-	 * @param autoClass ＠ProxyScoped定義を継承された
-	 *                  自動生成Javaコードのクラスオブジェクト.
+	 * @param QuinaProxy ＠ProxyScoped定義を継承された
+	 *                   オブジェクトを生成できるオブジェクトが
+	 *                   設定されます..
 	 */
 	public void put(
-		String srcClassName, Class<?> autoClass) {
+		String srcClassName, QuinaProxy proxyObject) {
 		if(fixFlag.get()) {
 			throw new QuinaException("Already completed.");
 		} else if(srcClassName == null || srcClassName.isEmpty()) {
 			throw new QuinaException(
 				"The specified argument is null.");
 		}
-		manager.put(srcClassName, autoClass);
+		manager.put(srcClassName, proxyObject);
 	}
 	
 	/**
@@ -117,7 +119,6 @@ public class ProxyScopedManager {
 		}
 		manager.remove(srcClassName);
 	}
-
 	
 	/**
 	 * Proxyクラスを取得.
@@ -140,12 +141,24 @@ public class ProxyScopedManager {
 	 *                  Javaコードのクラスオブジェクト.
 	 */
 	public Class<?> get(String srcClassName) {
+		return _get(srcClassName).getProxyClass();
+	}
+	
+	// QuinaProxyオブジェクトを取得.
+	public QuinaProxy _get(String srcClassName) {
 		if(srcClassName == null || srcClassName.isEmpty()) {
 			throw new QuinaException(
 				"The specified argument is null.");
 		}
-		return manager.get(srcClassName);
+		QuinaProxy qp = manager.get(srcClassName);
+		if(qp == null) {
+			throw new QuinaException(
+				"Proxy object with specified class name \"" +
+				srcClassName + "\" does not exist.");
+		}
+		return qp;
 	}
+
 	
 	/**
 	 * Proxyオブジェクトを取得.
@@ -154,7 +167,7 @@ public class ProxyScopedManager {
 	 *                Javaコードのオブジェクト.
 	 */
 	public Object getObject(Class<?> srcClass,
-		Object... args) {
+		Object[] args) {
 		if(srcClass == null) {
 			throw new QuinaException(
 				"The specified argument is null.");
@@ -170,31 +183,8 @@ public class ProxyScopedManager {
 	 */
 	public Object getObject(String srcClassName,
 		Object... args) {
-		Class<?> src = get(srcClassName);
-		if(src == null) {
-			return null;
-		}
-		try {
-			// 自動生成されたクラスに自動生成される
-			//  public static final Object __newInstance()
-			// メソッドを実行する.
-			final Object ret = src.getMethod(
-				AnnotationProxyScopedConstants.NEW_INSTANCE_METHOD)
-				.invoke(null);
-			
-			// 次に＠ProxyInitialSetting定義された初期処理
-			//  public void __initialSetting(Object[] args)
-			// メソッドを実行する.
-			src.getMethod(
-				AnnotationProxyScopedConstants.INITIAL_SETTING_METHOD,
-					Object[].class)
-				.invoke(ret, args);
-			return ret;
-		} catch(InvocationTargetException it) {
-			throw new QuinaException(it.getCause());
-		} catch(Exception e) {
-			throw new QuinaException(e);
-		}
+		return _get(srcClassName)
+			.newInstance(new ProxySettingArgs(args));
 	}
 	
 	/**
@@ -230,5 +220,4 @@ public class ProxyScopedManager {
 		}
 		return this;
 	}
-
 }

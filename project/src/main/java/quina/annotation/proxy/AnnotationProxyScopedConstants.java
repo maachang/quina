@@ -13,9 +13,6 @@ public class AnnotationProxyScopedConstants {
 	/** 自動生成されるProxyクラスのヘッダ名. **/
 	public static final String HEAD_PROXY_CLASS_NAME = "AutoProxy";
 
-	/** オブジェクトを作成するメソッド名. **/
-	public static final String NEW_INSTANCE_METHOD = "__newInstance";
-	
 	/** 初期設定を行うメソッド名. **/
 	public static final String INITIAL_SETTING_METHOD = "__initialSetting";
 }

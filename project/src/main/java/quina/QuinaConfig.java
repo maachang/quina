@@ -171,7 +171,7 @@ public final class QuinaConfig implements
 	protected QuinaConfig() {}
 
 	/**
-	 * 予約キー定義.<br>
+	 * コンストラクタ.
 	 * @param name 対象のコンフィグ名を設定します.
 	 * @param defines [キー名, 型, デフォルト値, キー名, 型, デフォルト値, ...]<br>
 	 *                のように連続して定義します.<br>

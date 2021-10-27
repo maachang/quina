@@ -22,6 +22,7 @@ import quina.annotation.proxy.ProxyOverride;
 import quina.exception.QuinaException;
 import quina.util.FileUtil;
 import quina.util.InstanceOf;
+import quina.util.StringUtil;
 
 /**
  * ProxyScoped定義に対する自動ソースコード生成処理.
@@ -58,6 +59,10 @@ public class ProxyOutputJavaSrc {
 			autoProxyClass(outSourceDirectory, prxList.get(i), params);
 		}
 	}
+	
+	// 可変引数用オブジェクト.
+	private static final String PROXY_SETTING_ARGS =
+		"quina.annotation.proxy.ProxySettingArgs";
 	
 	/**
 	 * 抽出したProxyScoped定義されたオブジェクトをJavaファイルに出力.
@@ -119,20 +124,8 @@ public class ProxyOutputJavaSrc {
 			println(w, 0, " * annotation definition class \"" + clazzName + "\".");
 			println(w, 0, " */");
 			println(w, 0, "@SuppressWarnings({ \"unchecked\", \"rawtypes\", \"deprecation\" })");
-			//println(w, 0, "@SuppressWarnings({ \"unchecked\", \"rawtypes\" })");
 			println(w, 0, "public final class " + autoClassName);
 			println(w, 1, "extends " + clazzName+ " {");
-			println(w, 1, "");
-			
-			// newInstanceを生成.
-			println(w, 1, "/**");
-			println(w, 1, " * Creates an empty object.");
-			println(w, 1, " * @return Objec Set an empty object.");
-			println(w, 1, " */");
-			println(w, 1, "public static final Object " +
-				AnnotationProxyScopedConstants.NEW_INSTANCE_METHOD + "() {");
-			println(w, 2, "return new " + autoClassName + "();");
-			println(w, 1, "}");
 			println(w, 1, "");
 			
 			// initialSettingを生成.
@@ -141,7 +134,8 @@ public class ProxyOutputJavaSrc {
 			println(w, 1, " * @param args Set the parameters.");
 			println(w, 1, " */");
 			println(w, 1, "public final void " +
-				AnnotationProxyScopedConstants.INITIAL_SETTING_METHOD + "(Object[] args) {");
+				AnnotationProxyScopedConstants.INITIAL_SETTING_METHOD +
+				"(" + PROXY_SETTING_ARGS +" args) {");
 			println(w, 2, "try {");
 			if(initSetMethod != null) {
 				println(w, 3, "super." + initSetMethod.getName() + "(");
@@ -150,9 +144,9 @@ public class ProxyOutputJavaSrc {
 				nextArgs = "";
 				for(i = 0; i < len; i ++) {
 					println(w, 4, nextArgs +
-						"(" + GCdiUtil.getClassName(
+						"(" + StringUtil.getClassName(
 							methodParams[i]) +
-						")args[" + i + "]");
+						")args.getArgs(" + i + ")");
 					nextArgs = ",";
 				}
 				println(w, 3, ");");
@@ -200,11 +194,11 @@ public class ProxyOutputJavaSrc {
 		int space, Method method, Field prxField, Method injectMethod) {
 		StringBuilder buf = new StringBuilder();
 		// メソッド名定義.
-		indent(buf, space).append("@Override\n");
-		indent(buf, space)
+		print(buf, space).append("@Override\n");
+		print(buf, space)
 			.append(GCdiUtil.getAccessModifier(method))
 			.append(" ")
-			.append(GCdiUtil.getClassName(
+			.append(StringUtil.getClassName(
 				method.getReturnType()))
 			.append(" ")
 			.append(method.getName())
@@ -215,16 +209,16 @@ public class ProxyOutputJavaSrc {
 		final int paramsLen = list == null ? 0 : list.length;
 		for(int i = 0; i < paramsLen; i ++) {
 			buf.append("\n");
-			indent(buf, space + 1);
+			print(buf, space + 1);
 			if(i != 0) {
 				buf.append(",");
 			}
-			buf.append(GCdiUtil.getClassName(list[i]))
+			buf.append(StringUtil.getClassName(list[i]))
 				.append(" arg").append(i);
 		}
 		if(paramsLen > 0) {
 			buf.append("\n");
-			indent(buf, space).append(")");
+			print(buf, space).append(")");
 		} else {
 			buf.append(")");
 		}
@@ -235,7 +229,7 @@ public class ProxyOutputJavaSrc {
 				buf.append(" ");
 			} else {
 				buf.append("\n");
-				indent(buf, space + 1);
+				print(buf, space + 1);
 			}
 			buf.append("throws ");
 			int len = exceptions.length;
@@ -243,7 +237,7 @@ public class ProxyOutputJavaSrc {
 				if(i != 0) {
 					buf.append(", ");
 				}
-				buf.append(GCdiUtil.getClassName(
+				buf.append(StringUtil.getClassName(
 					exceptions[i]));
 			}
 		}
@@ -251,13 +245,13 @@ public class ProxyOutputJavaSrc {
 		
 		// injectMethodが存在する場合.
 		if(isInjectMethod(injectMethod, method)) {
-			indent(buf, space + 1)
+			print(buf, space + 1)
 				.append("super.")
 				.append(injectMethod.getName())
 				.append("();\n");
 		}
 		// 既存の処理内容を呼び出す.
-		indent(buf, space + 1);
+		print(buf, space + 1);
 		// 返却が必要な場合.
 		if(method.getReturnType() != Void.TYPE) {
 			buf.append("return ");
@@ -277,24 +271,21 @@ public class ProxyOutputJavaSrc {
 		// 呼び出し終了.
 		buf.append(");\n");
 		// メソッド実装終端.
-		indent(buf, space).append("}\n");
+		print(buf, space).append("}\n");
 		
 		// 処理返却.
 		return buf.toString();
 	}
 	
 	// 出力処理.
-	private static final void println(Writer w, int tab, String s)
+	private static final void println(Writer w, int tab, String... s)
 		throws IOException {
-		GCdiUtil.println(w, tab, s);
+		StringUtil.println(w, tab, s);
 	}
 	
 	// StringBuilderにインデントをセット.
-	private static final StringBuilder indent(StringBuilder buf, int space) {
-		for(int i = 0; i < space; i ++) {
-			buf.append("\t");
-		}
-		return buf;
+	private static final StringBuilder print(StringBuilder buf, int tab, String... s) {
+		return StringUtil.print(buf, tab, s);
 	}
 	
 	// 出力先のパッケージの削除処理.

@@ -28,12 +28,6 @@ readJar() {
     echo $CLASSPATH
 }
 
-# project version.
-VERSION=0.0.1
-
-# project name.
-PROJECT_NAME=quinaTest
-
 # execute class.
 EXECUTE_CLAZZ=quina.test.QuinaTest
 
@@ -44,16 +38,17 @@ JAR_NAME=${PROJECT_NAME}-${VERSION}.jar
 # libs.
 THIS_JAR_DIR=.
 JAR_DIR=..
-LIB_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`
+LIB_DIR=./lib
+LIB_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`:`readJar ${LIB_DIR}`
 
 # firstMemory.
-STM=128
+STM=256
 
 # maxMemory.
-EXM=128
+EXM=256
 
 # option.
 OPT="-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true"
 
 # execute java.
-java -Xms${STM}m -Xmx${EXM}m ${OPT} -classpath ${JAR_NAME}:${LIB_FILES} ${EXECUTE_CLAZZ} ${ARGS}
+java -Xms${STM}m -Xmx${EXM}m ${OPT} -classpath ${LIB_FILES} ${EXECUTE_CLAZZ} ${ARGS}

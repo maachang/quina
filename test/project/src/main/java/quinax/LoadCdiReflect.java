@@ -34,6 +34,10 @@ public final class LoadCdiReflect {
 		// Register the field group of the target class
 		// "quina.test.QuinaServiceTest"
 		quina_test_QuinaServiceTest();
+		
+		// Register the field group of the target class
+		// "quina.jdbc.QuinaJDBCService"
+		quina_jdbc_QuinaJDBCService();
 	}
 
 	// Register the field group of the target class "quina.test.service.GreetingService"
@@ -96,6 +100,20 @@ public final class LoadCdiReflect {
 		element.add(staticFlag, field);
 		
 		field = cls.getDeclaredField("config");
+		staticFlag = false;
+		element.add(staticFlag, field);
+	}
+
+	// Register the field group of the target class "quina.jdbc.QuinaJDBCService"
+	private static final void quina_jdbc_QuinaJDBCService()
+		throws Exception {
+		CdiReflectManager refManager = Quina.get().getCdiReflectManager();
+		Class<?> cls = quina.jdbc.QuinaJDBCService.class;
+		CdiReflectElement element = refManager.register(cls);
+		Field field = null;
+		boolean staticFlag = false;
+		
+		field = cls.getDeclaredField("log");
 		staticFlag = false;
 		element.add(staticFlag, field);
 	}

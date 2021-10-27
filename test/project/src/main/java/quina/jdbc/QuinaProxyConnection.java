@@ -1,8 +1,6 @@
 package quina.jdbc;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,6 +10,7 @@ import quina.annotation.proxy.ProxyInitialSetting;
 import quina.annotation.proxy.ProxyInjectMethod;
 import quina.annotation.proxy.ProxyOverride;
 import quina.annotation.proxy.ProxyScoped;
+import quina.util.AtomicNumber64;
 import quina.util.Flag;
 
 /**
@@ -20,16 +19,25 @@ import quina.util.Flag;
 @ProxyScoped
 public abstract class QuinaProxyConnection
 	implements Connection {
+	// 接続確認用SQL.
+	private static final String ECHO_SQL = "select (1);";
 	
 	// 元のコネクション.
 	@ProxyField
 	protected Connection connection;
+	
+	// 最終プーリング時間.
+	protected final AtomicNumber64 lastPoolingTime =
+		new AtomicNumber64();
 	
 	// プーリング対象のデータソース.
 	private QuinaDataSource dataSource;
 	
 	// プーリングしない場合.
 	private boolean notPooling;
+	
+	// 廃棄フラグ.
+	private final Flag destroyFlag = new Flag(false);
 	
 	// クローズフラグ.
 	private final Flag closeFlag = new Flag(true);
@@ -52,36 +60,49 @@ public abstract class QuinaProxyConnection
 		this.dataSource = dataSource;
 		this.connection = connection;
 		// コネクションの初期設定.
-		this.dataSource.getKind().setConnection(
-			this.connection);
+		this.dataSource.getDefine()
+			.appendConnection(
+				this.connection);
 		
 		// 初期設定.
 		this.closeFlag.set(false);
 	}
 	
 	/**
-	 * QuinaJDBCKindを取得.
-	 * @return QuinaJDBCKind kindが返却されます.
+	 * QuinaJDBCDefineを取得.
+	 * @return QuinaJDBCDefine defineが返却されます.
 	 * @exception SQLException SQL例外.
 	 */
-	public QuinaJDBCKind getKind()
+	public QuinaJDBCConfig getDefine()
 		throws SQLException {
 		checkClose();
-		return dataSource.getKind();
+		return dataSource.getDefine();
 	}
 	
 	/**
 	 * データ破棄.
-	 * @exception SQLException SQL例外.
 	 */
-	public void destroy() throws SQLException {
+	public void destroy() {
 		closeFlag.set(true);
+		destroyFlag.set(true);
+		lastPoolingTime.set(
+			QuinaJDBCTimeoutThread.DESTROY_TIMEOUT);
 		Connection c = connection;
 		connection = null;
 		dataSource = null;
-		if(c != null) {
-			c.close();
-		}
+		try {
+			if(c != null) {
+				c.close();
+			}
+		} catch(Exception e) {}
+	}
+	
+	/**
+	 * 既に破棄されているかチェック.
+	 * @return boolean trueの場合破棄されています.
+	 */
+	public boolean isDestroy() {
+		return destroyFlag.get();
 	}
 	
 	/**
@@ -89,9 +110,13 @@ public abstract class QuinaProxyConnection
 	 * @return boolean trueの場合、再オープンできました.
 	 */
 	protected boolean reOpen() {
-		if(connection == null) {
+		if(destroyFlag.get()) {
 			return false;
 		}
+		// タイムアウト監視しない.
+		lastPoolingTime.set(
+			QuinaJDBCTimeoutThread.NONE_TIMEOUT);
+		// 仮オープン.
 		closeFlag.set(false);
 		// アクセス可能かチェック.
 		boolean ret = true;
@@ -100,7 +125,7 @@ public abstract class QuinaProxyConnection
 		try {
 			stm = connection.createStatement();
 			rs = stm.executeQuery(
-				dataSource.getKind().getSQL("select 1;"));
+				dataSource.getDefine().getSQL(ECHO_SQL));
 			rs.next();
 			rs.close(); rs = null;
 			stm.close(); stm = null;
@@ -135,6 +160,14 @@ public abstract class QuinaProxyConnection
 	}
 	
 	/**
+	 * 最後にプーリングした時間を取得.
+	 * @return long 最後にプーリングした時間が返却されます.
+	 */
+	protected long getLastPoolingTime() {
+		return lastPoolingTime.get();
+	}
+	
+	/**
 	 * ProxyConnectionのメソッドに対して
 	 * SQLException例外を出力するメソッドのチェック処理.
 	 * @exception SQLException SQL例外.
@@ -150,6 +183,7 @@ public abstract class QuinaProxyConnection
 	 * コネクションクローズ処理.
 	 * @exception SQLException SQL例外.
 	 */
+	@Override
 	@ProxyOverride
 	public void close() throws SQLException {
 		// クローズ済みでない場合.
@@ -161,116 +195,167 @@ public abstract class QuinaProxyConnection
 			// プーリングする場合.
 			} else {
 				// 物理的にクローズせずに
-				// 仮にクローズする.
+				// 仮クローズ.
+				lastPoolingTime.set(
+					System.currentTimeMillis());
+				// プーリング管理にセット.
 				dataSource.pushPooling(this);
 			}
 		}
+	}
+	
+	@Override
+	@ProxyOverride
+	public boolean isClosed()
+		throws java.sql.SQLException {
+		if(closeFlag.get()) {
+			return true;
+		}
+		return connection.isClosed();
 	}
 	
 	/**
 	 * SQLを整形.
 	 * @param sql 対象のSQLを設定します.
 	 * @return String 整形されたSQLが返却されます.
-	 * @exception SQLException SQL例外.
 	 */
-	protected String getSQL(String sql)
+	protected String getSQL(String sql) {
+		return dataSource.getDefine().getSQL(sql);
+	}
+	
+	/**
+	 * StatementにKind定義を反映.
+	 * @param stmt 対象のStatementを設定します.
+	 * @return Statement 反映されたStatementが返却されます.
+	 */
+	protected final Statement appendStatement(Statement stmt) {
+		return dataSource.getDefine().appendStatement(stmt);
+	}
+
+	@Override
+	@ProxyOverride
+	public QuinaProxyStatement createStatement()
 		throws SQLException {
 		checkClose();
-		return dataSource.getKind().getSQL(sql);
+		return (QuinaProxyStatement)appendStatement(
+			QuinaProxyUtil.getStatement(
+				this, connection.createStatement())
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public Statement createStatement() throws SQLException {
-		checkClose();
-		return QuinaProxyUtil.getStatement(
-			this, connection.createStatement());
-	}
-
-	@ProxyOverride
-	public PreparedStatement prepareStatement(String sql)
+	public QuinaProxyPreparedStatement prepareStatement(String sql)
 		throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getPreparedStatement(
-			this, connection.prepareStatement(getSQL(sql)));
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(getSQL(sql)))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public CallableStatement prepareCall(String sql)
+	public QuinaProxyCallableStatement prepareCall(String sql)
 		throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getCallableStatement(
-				this, connection.prepareCall(getSQL(sql)));
+		return (QuinaProxyCallableStatement)appendStatement(
+			QuinaProxyUtil.getCallableStatement(
+				this, connection.prepareCall(getSQL(sql)))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public PreparedStatement prepareStatement(
+	public QuinaProxyPreparedStatement prepareStatement(
 		String sql, int resultSetType, int resultSetConcurrency)
 			throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getPreparedStatement(
-			this, connection.prepareStatement(
-				getSQL(sql), resultSetType, resultSetConcurrency));
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), resultSetType, resultSetConcurrency))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public CallableStatement prepareCall(
+	public QuinaProxyCallableStatement prepareCall(
 		String sql, int resultSetType, int resultSetConcurrency)
 		throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getCallableStatement(
-			this, connection.prepareCall(
-				getSQL(sql), resultSetType, resultSetConcurrency));
+		return (QuinaProxyCallableStatement)appendStatement(
+			QuinaProxyUtil.getCallableStatement(
+				this, connection.prepareCall(
+					getSQL(sql), resultSetType, resultSetConcurrency))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public PreparedStatement prepareStatement(
+	public QuinaProxyPreparedStatement prepareStatement(
 		String sql, int resultSetType, int resultSetConcurrency,
 		int resultSetHoldability) throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getPreparedStatement(
-			this, connection.prepareStatement(
-				getSQL(sql), resultSetType, resultSetConcurrency,
-				resultSetHoldability));
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), resultSetType, resultSetConcurrency,
+					resultSetHoldability))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public CallableStatement prepareCall(
+	public QuinaProxyCallableStatement prepareCall(
 			String sql, int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getCallableStatement(
-			this, connection.prepareCall(
-				getSQL(sql), resultSetType, resultSetConcurrency,
-				resultSetHoldability));
+		return (QuinaProxyCallableStatement)appendStatement(
+			QuinaProxyUtil.getCallableStatement(
+				this, connection.prepareCall(
+					getSQL(sql), resultSetType, resultSetConcurrency,
+					resultSetHoldability))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public PreparedStatement prepareStatement(
+	public QuinaProxyPreparedStatement prepareStatement(
 		String sql, int autoGeneratedKeys)
 		throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getPreparedStatement(
-			this, connection.prepareStatement(
-				getSQL(sql), autoGeneratedKeys));
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), autoGeneratedKeys))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public PreparedStatement prepareStatement(
+	public QuinaProxyPreparedStatement prepareStatement(
 		String sql, int[] columnIndexes)
 		throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getPreparedStatement(
-			this, connection.prepareStatement(
-				getSQL(sql), columnIndexes));
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), columnIndexes))
+		);
 	}
 
+	@Override
 	@ProxyOverride
-	public PreparedStatement prepareStatement
+	public QuinaProxyPreparedStatement prepareStatement
 		(String sql, String[] columnNames)
 		throws SQLException {
 		checkClose();
-		return QuinaProxyUtil.getPreparedStatement(
-			this, connection.prepareStatement(
-				getSQL(sql), columnNames));
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), columnNames))
+		);
 	}
 }
+

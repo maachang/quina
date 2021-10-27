@@ -29,10 +29,11 @@ public class GCdiExtraction {
 	 * @throws Exception 例外.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static final void extraction(List<String> classList, GCdiParams params)
+	public static final void extraction(
+		List<String> classList, GCdiParams params)
 		throws Exception {
 		String className;
-		final int len = classList != null ? classList.size() : 0;
+		final int len = classList == null ? 0 : classList.size();
 		for(int i = 0; i < len; i ++) {
 			// クラス名を取得.
 			className = classList.get(i);
@@ -43,7 +44,7 @@ public class GCdiExtraction {
 			} catch(NoClassDefFoundError e) {
 				// 詳細情報を表示する場合.
 				if(params.isVerbose()) {
-					// 何らかの理由で読み込み失敗の場合.
+					// 何らかの理由で読み込み失場合.
 					System.out.println();
 					System.out.println("    # loadError    :");
 					System.out.println("        src        : " + className);
@@ -56,9 +57,17 @@ public class GCdiExtraction {
 			if(c.isAnnotation()) {
 				continue;
 			}
+			
+			// NativeImageコンフィグ用アノテーション定義の場合.
+			if(NativeImages.executeExecuteStep(c, params)) {
+				// 読み込まれたら対象クラス名を出力.
+				System.out.println("  > loadNativeConf : " + className);
+			}
+			
 			// 利用可能なアノテーションが定義されていない場合.
 			if(!GCdiConstants.isDefineAnnotation(c) &&
 				!GCdiConstants.isProxyAnnotation(c)) {
+				
 				// クラスのインスタンスを生成.
 				Object o;
 				try {

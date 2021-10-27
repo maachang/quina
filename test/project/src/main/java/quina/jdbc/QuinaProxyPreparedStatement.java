@@ -1,7 +1,6 @@
 package quina.jdbc;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -31,14 +30,16 @@ public abstract class QuinaProxyPreparedStatement
 		statement = (PreparedStatement)s;
 	}
 
+	@Override
 	@ProxyOverride
-	public ResultSet getGeneratedKeys() throws SQLException {
+	public QuinaProxyResultSet getGeneratedKeys() throws SQLException {
 		return QuinaProxyUtil.getResultSet(
 			this, statement.getGeneratedKeys());
 	}
 
+	@Override
 	@ProxyOverride
-	public ResultSet executeQuery() throws SQLException {
+	public QuinaProxyResultSet executeQuery() throws SQLException {
 		return QuinaProxyUtil.getResultSet(
 			this, statement.executeQuery());
 	}

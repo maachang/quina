@@ -1,5 +1,8 @@
 package quina.util;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -833,5 +836,121 @@ public class StringUtil {
 			buf.append(c);
 		}
 		return buf.toString();
+	}
+	
+	/**
+	 * 出力処理.
+	 * @param buf 書き込み先のStringBuilderを設定します.
+	 * @param tab インデントのタブ数を設定します.
+	 * @param args 出力文字群を設定します.
+	 * @return StringBuilder StringBuilderが返却されます.
+	 */
+	public static final StringBuilder print(
+		StringBuilder buf, int tab, String... args) {
+		final int len = args == null ? 0 : args.length;
+		if(len == 0) {
+			for(int i = 0; i < tab; i ++) {
+				buf.append("\t");
+			}
+			return buf;
+		}
+		int i, j;
+		for(i = 0; i < len; i ++) {
+			if(i != 0) {
+				buf.append("\n");
+			}
+			for(j = 0; j < tab; j ++) {
+				buf.append("\t");
+			}
+			buf.append(args[i]);
+		}
+		return buf;
+	}
+	
+	/**
+	 * 出力処理.
+	 * @param w Writerオブジェクトを設定します.
+	 * @param tab インデントのタブ数を設定します.
+	 * @param args 出力文字群を設定します.
+	 * @throws IOException I/O例外.
+	 */
+	public static final void print(
+		Writer w, int tab, String... args)
+		throws IOException {
+		StringBuilder buf = new StringBuilder();
+		print(buf, tab, args);
+		w.append(buf.toString());
+	}
+	
+	/**
+	 * 改行して出力処理.
+	 * @param buf 書き込み先のStringBuilderを設定します.
+	 * @param tab インデントのタブ数を設定します.
+	 * @param args 出力文字群を設定します.
+	 * @return StringBuilder StringBuilderが返却されます.
+	 */
+	public static final StringBuilder println(
+		StringBuilder buf, int tab, String... args) {
+		print(buf, tab, args);
+		buf.append("\n");
+		return buf;
+	}
+	
+	/**
+	 * 改行して出力処理.
+	 * @param w Writerオブジェクトを設定します.
+	 * @param tab インデントのタブ数を設定します.
+	 * @param args 出力文字群を設定します.
+	 * @throws IOException I/O例外.
+	 */
+	public static final void println(
+		Writer w, int tab, String... args)
+		throws IOException {
+		StringBuilder buf = new StringBuilder();
+		println(buf, tab, args);
+		w.append(buf.toString());
+	}
+	
+	/**
+	 * クラス名を取得.
+	 * 通常の Class.getName() では配列などのクラス名が
+	 * 正しく取得出来ません.
+	 * このメソッドでは、配列クラス名を取得します.
+	 * @param clazz 対象のクラスを設定します.
+	 * @return String クラス名が返却されます.
+	 */
+	public static final String getClassName(
+		Class<?> clazz) {
+		return getClassName(clazz, null);
+	}
+	
+	/**
+	 * クラス名を取得.
+	 * 通常の Class.getName() では配列などのクラス名が
+	 * 正しく取得出来ません.
+	 * このメソッドでは、配列クラス名を取得します.
+	 * @param clazz 対象のクラスを設定します.
+	 * @param genericType 対象のGenericTypeを設定します.
+	 * @return String クラス名が返却されます.
+	 */
+	public static final String getClassName(
+		Class<?> clazz, Type genericType) {
+		if(genericType != null) {
+			return genericType.getTypeName();
+		}
+		int count = 0;
+		while(true) {
+			if(clazz.isArray()) {
+				clazz = clazz.getComponentType();
+				count ++;
+				continue;
+			}
+			StringBuilder buf = null;
+			buf = new StringBuilder(clazz.getName());
+			for(int i = 0; i < count; i ++) {
+				buf.append("[]");
+			}
+			return buf.toString();
+		}
 	}
 }

@@ -19,6 +19,7 @@ import quina.command.generateCdi.GCdiExtraction;
 import quina.command.generateCdi.GCdiOutputJavaSrc;
 import quina.command.generateCdi.GCdiParams;
 import quina.command.generateCdi.GCdiUtil;
+import quina.command.generateCdi.NativeImages;
 import quina.command.generateCdi.ProxyOutputJavaSrc;
 import quina.exception.QuinaException;
 import quina.util.Args;
@@ -90,6 +91,9 @@ public class GenerateCdi {
 		System.out.println("     This definition can be defined more than once.");
 		System.out.println("     If you do not make this definition, you will need");
 		System.out.println("     the -c or --class definition. ");
+		System.out.println("  -n [--nativeImage] {directory}");
+		System.out.println("     Set the config definition output destination directory");
+		System.out.println("     for Native-Image of graalvm.");
 		System.out.println();
 	}
 	
@@ -196,6 +200,15 @@ public class GenerateCdi {
 		}
 		jarDirList = null;
 		
+		// GraalVMのNative-Imageコンフィグ出力先ディレクトリを取得.
+		String nativeImgDir = args.get("-n", "--nativeImage");
+		if(nativeImgDir == null || nativeImgDir.isEmpty()) {
+			nativeImgDir = "nativeImageConfig";
+		}
+		
+		// nativeImgDirディレクトリを整頓.
+		nativeImgDir = AnnotationUtil.slashPath(nativeImgDir);
+		
 		// 処理開始.
 		System.out.println("start " + this.getClass().getSimpleName() +
 			" version: " + VERSION);
@@ -254,6 +267,9 @@ public class GenerateCdi {
 			
 			// 出力先のソースコードを全削除.
 			GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
+			
+			// GraalVM用のNativeImageコンフィグ群を出力.
+			NativeImages.outputNativeConfig(nativeImgDir, null);
 			
 			// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
 			if(params.isEmpty()) {

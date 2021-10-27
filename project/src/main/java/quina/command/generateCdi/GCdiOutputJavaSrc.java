@@ -29,6 +29,7 @@ import quina.annotation.proxy.ProxyScopedManager;
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
 import quina.util.FileUtil;
+import quina.util.StringUtil;
 
 /**
  * Cdiを行うJavaソースコードを出力.
@@ -39,7 +40,7 @@ public class GCdiOutputJavaSrc {
 	// 出力処理.
 	private static final void println(Writer w, int tab, String s)
 		throws IOException {
-		GCdiUtil.println(w, tab, s);
+		StringUtil.println(w, tab, s);
 	}
 	
 	// クラス名からメソッド名変換.
@@ -672,8 +673,21 @@ public class GCdiOutputJavaSrc {
 					println(w, 2, "");
 					println(w, 2, "// Register the \""+ clazzName + "\"");
 					println(w, 2, "// object in the @ProxyScoped.");
-					println(w, 2, "prxManager.put(\"" + clazzName + "\", ");
-					println(w, 3, GCdiUtil.getAutoProxyClassName(clazzName) + ".class);");
+					println(w, 2, "prxManager.put(\"" + clazzName + "\",");
+					
+					println(w, 3, "new quina.annotation.proxy.QuinaProxy() {");
+					println(w, 4, "public Class<?> getProxyClass() {");
+					println(w, 5, "return quinax.proxy.AutoProxyQuinaProxyStatement.class;");
+					println(w, 4, "}");
+					println(w, 4, "public Object newInstance(");
+					println(w, 5, "quina.annotation.proxy.ProxySettingArgs args) {");
+					println(w, 5, GCdiUtil.getAutoProxyClassName(clazzName) + " ret = new");
+					println(w, 6, GCdiUtil.getAutoProxyClassName(clazzName) + "();");
+					println(w, 5, "ret.__initialSetting(args);");
+					println(w, 5, "return ret;");
+					println(w, 4, "}");
+					println(w, 3, "}");
+					println(w, 2, ");");
 				}
 			}
 			

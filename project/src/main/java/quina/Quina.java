@@ -187,12 +187,8 @@ public final class Quina {
 			String confDir = AnnotationQuina.loadConfigDirectory(
 				mainClass);
 			
-			// アノテーションのコンフィグディレクトリが
-			// 存在する場合.
-			if(confDir != null && !confDir.isEmpty()) {
-				// コンフィグディレクトリをセット.
-				setConfigDirectory(confDir);
-			}
+			// コンフィグディレクトリをセット.
+			setConfigDirectory(confDir);
 			
 			// コンフィグディレクトリを取得.
 			confDir = getConfigDirectory();
@@ -403,9 +399,7 @@ public final class Quina {
 		try {
 			// コンフィグディレクトリが存在しない場合.
 			if(confDir == null || confDir.isEmpty()) {
-				// null で登録.
-				this.configDir.set(null);;
-				return this;
+				confDir = QuinaUtil.getConfigPath();
 			}
 			// 存在する場合Env定義を取り入れたパス生成.
 			confDir = Env.path(confDir);

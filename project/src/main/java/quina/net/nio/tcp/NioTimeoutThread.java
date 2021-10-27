@@ -6,14 +6,13 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import quina.util.Flag;
-import quina.worker.QuinaWait;
+import quina.QuinaServiceThread;
 
 /**
  * Nioタイムアウト監視.
  */
 public class NioTimeoutThread
-	extends Thread {
+	extends QuinaServiceThread<NioElement> {
 	
 	// タイムアウト値.
 	private long timeout;
@@ -25,14 +24,9 @@ public class NioTimeoutThread
 	private final Queue<NioElement> queue =
 		new ConcurrentLinkedQueue<NioElement>();
 	
-	// スレッド停止フラグ.
-	private volatile boolean stopFlag = true;
-	
-	// スレッド開始完了フラグ.
-	private final Flag startThreadFlag = new Flag(false);
-	
-	// スレッド終了フラグ.
-	private final Flag endThreadFlag = new Flag(false);
+	// タイムアウト監視キュー.
+	private final Queue<NioElement> timeoutQueue =
+		new LinkedList<NioElement>();
 	
 	/**
 	 * コンストラクタ.
@@ -59,166 +53,58 @@ public class NioTimeoutThread
 	}
 	
 	/**
-	 * ワーカースレッドに処理を登録.
+	 * Nio要素のタイムアウト監視登録.
 	 *
 	 * @param em 登録するワーカを設定します.
 	 * @throws IOException
 	 */
-	public void push(NioElement em) {
+	@Override
+	public void offer(NioElement em) {
 		// 登録されてない場合のみ１度登録.
 		if(!em.regIoTimeout()) {
 			queue.offer(em);
 		}
 	}
 	
-	/**
-	 * ワーカーを開始する.
-	 */
-	public void startThread() {
-		stopFlag = false;
-		startThreadFlag.set(false);
-		endThreadFlag.set(false);
-		setDaemon(true);
-		start();
+	@Override
+	protected NioElement poll() {
+		// Iteratorで取得するので、ここでは取得しない.
+		return null;
 	}
-
-	/**
-	 * ワーカーを停止する.
-	 */
-	public void stopThread() {
-		stopFlag = true;
-	}
-
-	/**
-	 * ワーカーが停止命令が既に出されているかチェック.
-	 * @return
-	 */
-	public boolean isStopThread() {
-		return stopFlag;
-	}
-
-	/**
-	 * ワーカーが開始しているかチェック.
-	 * @return
-	 */
-	public boolean isStartupThread() {
-		return startThreadFlag.get();
-	}
-
-	/**
-	 * ワーカーが終了しているかチェック.
-	 * @return
-	 */
-	public boolean isExitThread() {
-		return endThreadFlag.get();
-	}
-
-	/**
-	 * スレッド開始完了まで待機.
-	 * @param timeout タイムアウトのミリ秒を設定します.
-	 *                0以下を設定した場合、無限に待ちます.
-	 * @return boolean [true]の場合、正しく終了しました.
-	 */
-	public boolean awaitStartup() {
-		return QuinaWait.await(-1L, startThreadFlag);
-	}
-
-	/**
-	 * スレッド開始完了まで待機.
-	 * @param timeout タイムアウトのミリ秒を設定します.
-	 *                0以下を設定した場合、無限に待ちます.
-	 * @return boolean [true]の場合、正しく終了しました.
-	 */
-	public boolean awaitStartup(long timeout) {
-		return QuinaWait.await(timeout, startThreadFlag);
-	}
-
-	/**
-	 * スレッド終了まで待機.
-	 * @return boolean [true]の場合、正しく終了しました.
-	 */
-	public boolean awaitExit() {
-		return QuinaWait.await(-1L, endThreadFlag);
-	}
-
-	/**
-	 * スレッド終了まで待機.
-	 * @param timeout タイムアウトのミリ秒を設定します.
-	 *                0以下を設定した場合、無限に待ちます.
-	 * @return boolean [true]の場合、正しく終了しました.
-	 */
-	public boolean awaitExit(long timeout) {
-		return QuinaWait.await(timeout, endThreadFlag);
-	}
-
-	/**
-	 * スレッド実行.
-	 */
-	public void run() {
-		// スレッド実行.
-		final ThreadDeath td = execute();
-		
-		// スレッド終了完了.
-		endThreadFlag.set(true);
-		if (td != null) {
-			throw td;
-		}
-	}
-
+	
 	/**
 	 * ワーカースレッド実行処理.
+	 * @param em null が設定されます.
 	 */
-	protected final ThreadDeath execute() {
-		ThreadDeath ret = null;
-		boolean endFlag = false;
+	@Override
+	protected void executeCall(NioElement em)
+		throws Throwable {
 		long nextTime = 0L;
-		Queue<NioElement> timeoutQueue =
-			new LinkedList<NioElement>();
-		
-		// スレッド開始完了.
-		startThreadFlag.set(true);
-		while (!endFlag && !stopFlag) {
-			try {
-				while (!endFlag && !stopFlag) {
-					// 監視キュー情報が存在しない.
-					if(queue.size() == 0) {
-						// Timeout監視キューの実行条件でない場合.
-						if(!(timeoutQueue.size() > 0 &&
-							System.currentTimeMillis() > nextTime)) {
-							// 存在しない場合.
-							Thread.sleep(50L);
-							continue;
-						}
-					}
-					
-					// NioElement監視キューの実行.
-					if(queue.size() > 0) {
-						executeNioElementQueue(timeoutQueue);
-					}
-					
-					// Timeout監視キューの実行が可能な場合.
-					if(timeoutQueue.size() > 0 &&
-						System.currentTimeMillis() > nextTime) {
-						// Timeout監視キューの実行処理.
-						nextTime = executeTimeoutQueue(timeoutQueue);
-						// 次に実行される監視キューの時間を設定.
-						nextTime = (nextTime / 2) +
-							System.currentTimeMillis();
-					}
-					
-				}
-			} catch (Throwable to) {
-				// スレッド中止.
-				if (to instanceof InterruptedException) {
-					endFlag = true;
-				// threadDeathが発生した場合.
-				} else if (to instanceof ThreadDeath) {
-					endFlag = true;
-					ret = (ThreadDeath) to;
-				}
+		// 監視キュー情報が存在しない.
+		if(queue.size() == 0) {
+			// Timeout監視キューの実行条件でない場合.
+			if(!(timeoutQueue.size() > 0 &&
+				System.currentTimeMillis() > nextTime)) {
+				// 存在しない場合.
+				Thread.sleep(50L);
+				return;
 			}
 		}
-		return ret;
+		
+		// NioElement監視キューの実行.
+		if(queue.size() > 0) {
+			executeNioElementQueue(timeoutQueue);
+		}
+		
+		// Timeout監視キューの実行が可能な場合.
+		if(timeoutQueue.size() > 0 &&
+			System.currentTimeMillis() > nextTime) {
+			// Timeout監視キューの実行処理.
+			nextTime = executeTimeoutQueue(timeoutQueue);
+			// 次に実行される監視キューの時間を設定.
+			nextTime = (nextTime / 2) +
+				System.currentTimeMillis();
+		}
 	}
 	
 	// タイムアウト疑い値.
@@ -232,7 +118,7 @@ public class NioTimeoutThread
 		// 一覧を取得.
 		NioElement em;
 		Iterator<NioElement> it = queue.iterator();
-		while(it.hasNext()) {
+		while(!stopFlag && it.hasNext()) {
 			em = null;
 			try {
 				// クローズされてる場合.
@@ -261,7 +147,9 @@ public class NioTimeoutThread
 			}
 		}
 		// 一定期間待機.
-		Thread.sleep(50L);
+		if(!stopFlag) {
+			Thread.sleep(50L);
+		}
 	}
 	
 	// Timeout監視キューの処理.
@@ -274,7 +162,7 @@ public class NioTimeoutThread
 		// 一覧を取得.
 		NioElement em;
 		Iterator<NioElement> it = timeoutQueue.iterator();
-		while(it.hasNext()) {
+		while(!stopFlag && it.hasNext()) {
 			em = null;
 			try {
 				// クローズされてる場合.
@@ -340,12 +228,31 @@ public class NioTimeoutThread
 			}
 		}
 		// 一定期間待機.
-		Thread.sleep(50L);
+		if(!stopFlag) {
+			Thread.sleep(50L);
+		}
 		// 0以下の場合かLong.MAX_VALUEの場合は0を返却.
 		if(ret < 0 || ret == Long.MAX_VALUE) {
 			return 0L;
 		}
 		return ret;
 	}
-
+	
+	/**
+	 * 後始末実行.
+	 */
+	protected void cleanUpCall() {
+		Iterator<NioElement> it = timeoutQueue.iterator();
+		while(it.hasNext()) {
+			try {
+				it.next().close();
+			} catch(Exception e) {}
+		}
+		it = queue.iterator();
+		while(it.hasNext()) {
+			try {
+				it.next().close();
+			} catch(Exception e) {}
+		}
+	}
 }

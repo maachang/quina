@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class ThisMachineAddress {
 	private static final Map<String,Boolean> MAP;
-	private static final List<String> LIST;
+	private static final String[] LIST;
 	static {
 		// 自マシンが認識している自IPアドレス群を取得.
 		List<String> list = new ArrayList<String>();
@@ -39,8 +39,13 @@ public class ThisMachineAddress {
 		for(int i = 0; i < len; i ++) {
 			target.put(list.get(i), true);
 		}
+		len = list.size();
+		String[] ary = new String[len];
+		for(int i = 0; i < len; i ++) {
+			ary[i] = list.get(i);
+		}
 		MAP = target;
-		LIST = list;
+		LIST = ary;
 	}
 
 	protected ThisMachineAddress() {}
@@ -75,7 +80,7 @@ public class ThisMachineAddress {
 	 * @return
 	 */
 	public static final String get(int no) {
-		return LIST.get(no);
+		return LIST[no];
 	}
 
 	/**
@@ -83,6 +88,6 @@ public class ThisMachineAddress {
 	 * @return int
 	 */
 	public static final int size() {
-		return LIST.size();
+		return LIST.length;
 	}
 }

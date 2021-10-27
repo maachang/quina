@@ -86,11 +86,16 @@ public class HttpServerService implements QuinaService {
 	 * @param element HttpElementを設定.
 	 */
 	protected void pushTimeoutElement(HttpElement element) {
-		nioTimeoutThread.push(element);
+		nioTimeoutThread.offer(element);
 	}
 
 	@Override
 	public boolean loadConfig(String configDir) {
+		// サービスが開始している場合はエラー.
+		if(startFlag.get()) {
+			throw new QuinaException(
+				"The service has already started.");
+		}
 		// HttpServerWorkerCallHandlerを取得.
 		HttpServerWorkerCallHandler hnd =
 			(HttpServerWorkerCallHandler)quinaWorkerService
@@ -213,13 +218,18 @@ public class HttpServerService implements QuinaService {
 		} finally {
 			lock.readLock().unlock();
 		}
+		boolean ret = true;
 		if(c != null) {
-			c.awaitStartup(timeout);
+			if(!c.awaitStartup(timeout)) {
+				ret = false;
+			}
 		}
 		if(et != null) {
-			et.awaitStartup(timeout);
+			if(!et.awaitStartup(timeout)) {
+				ret = false;
+			}
 		}
-		return true;
+		return ret;
 	}
 
 	@Override
@@ -265,20 +275,18 @@ public class HttpServerService implements QuinaService {
 		} finally {
 			lock.readLock().unlock();
 		}
+		boolean ret = true;
 		if(c != null) {
-			c.awaitExit(timeout);
+			if(!c.awaitExit(timeout)) {
+				ret = false;
+			}
 		}
 		if(et != null) {
-			et.awaitExit(timeout);
+			if(!et.awaitExit(timeout)) {
+				ret = false;
+			}
 		}
-		lock.writeLock().lock();
-		try {
-			core = null;
-			nioTimeoutThread = null;
-		} finally {
-			lock.writeLock().unlock();
-		}
-		return true;
+		return ret;
 	}
 
 	@Override

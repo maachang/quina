@@ -23,18 +23,21 @@ public class QuinaDataSource implements DataSource {
 	protected final Queue<QuinaProxyConnection> pooling =
 		new ConcurrentLinkedQueue<QuinaProxyConnection>();
 
-	/** JDBCKind. **/
-	private QuinaJDBCKind kind;
+	/** JDBCDefine. **/
+	private QuinaJDBCConfig define;
+	
+	/** タイムアウト監視スレッド. **/
+	private QuinaJDBCTimeoutThread timeoutThread;
 	
 	/** オブジェクト破棄チェック. **/
 	private final Flag destroyFlag = new Flag();
 
 	/**
 	 * コンストラクタ.
-	 * @param kind QuinaJDBCKindを設定します.
+	 * @param define QuinaJDBCDefineを設定します.
 	 */
-	public QuinaDataSource(QuinaJDBCKind kind) {
-		this.kind = kind;
+	protected QuinaDataSource(QuinaJDBCConfig define) {
+		this.define = define;
 	}
 	
 	/**
@@ -71,54 +74,68 @@ public class QuinaDataSource implements DataSource {
 		}
 	}
 	
+	/**
+	 * タイムアウト監視スレッドを設定.
+	 * @param timeoutThread タイムアウトスレッドを設定します.
+	 */
+	protected void setTimeoutThread(QuinaJDBCTimeoutThread timeoutThread) {
+		this.timeoutThread = timeoutThread;
+	}
+	
 	// Poolingにセット.
-	protected boolean pushPooling(QuinaProxyConnection conn) {
+	protected boolean pushPooling(
+		QuinaProxyConnection conn) {
 		if(destroyFlag.get() ||
-			kind.getPoolingSize() < pooling.size()) {
+			define.getPoolingSize() < pooling.size()) {
 			try {
 				conn.destroy();
 			} catch(Exception e) {}
 			return false;
 		}
+		// プーリングにセット.
 		pooling.offer(conn);
+		// タイムアウト監視セット.
+		timeoutThread.offer(conn);
 		return true;
 	}
 
 	/**
-	 * QuinaJDBCKindを取得.
-	 * @return QuinaJDBCKindが返却されます.
+	 * QuinaJDBCDefineを取得.
+	 * @return QuinaJDBCDefineが返却されます.
 	 */
-	public QuinaJDBCKind getKind() {
-		return kind;
+	public QuinaJDBCConfig getDefine() {
+		return define;
 	}
 	
 	/**
-	 * 読み書きコネクションの取得.
+	 * JDBCコネクションの取得.
 	 * 
-	 * @param kind   DbKindを設定します.
+	 * @param define DbDefineを設定します.
 	 * @param url    対象の接続先を設定します.
 	 * @param user   対象のユーザ名を設定します.
 	 * @param passwd 対象のパスワードを設定します.
 	 * @return Connection コネクション情報が返却されます.
 	 * @exception SQLExceptino SQL例外.
 	 */
-	protected static final Connection _getConnection(
-		QuinaJDBCKind kind, String url, String user, String passwd)
+	protected static final Connection _getSrcConnection(
+		QuinaJDBCConfig define, String url, String user, String passwd)
 		throws SQLException {
 		Connection ret;
 		Properties p = new java.util.Properties();
-		kind.setProperty(p);
-		if (user == null || user.length() <= 0) {
+		define.appendProperty(p);
+		if (user == null || user.isEmpty()) {
 			p.put("user", "");
 			p.put("password", "");
-			ret = DriverManager.getConnection(url + kind.getUrlParams(), p);
+			ret = define.getKind().getDriver().connect(
+				url + define.getUrlParams(), p);
 		} else {
 			p.put("user", user);
 			p.put("password", passwd);
-			ret = DriverManager.getConnection(url + kind.getUrlParams(), p);
+			ret = define.getKind().getDriver().connect(
+				url + define.getUrlParams(), p);
 		}
-		ret.setReadOnly(false);
-		ret.setAutoCommit(false);
+		ret.setReadOnly(define.isReadOnly());
+		ret.setAutoCommit(define.isAutoCommit());
 		return ret;
 	}
 	
@@ -127,28 +144,34 @@ public class QuinaDataSource implements DataSource {
 		boolean notProxy, String user, String passwd)
 		throws SQLException {
 		checkDestroy();
-		Connection c = _getConnection(
-			kind, kind.getUrl(), user, passwd);
+		Connection c = _getSrcConnection(
+			define, define.getUrl(), user, passwd);
 		QuinaProxyConnection ret = QuinaProxyUtil.getConnection(
 			notProxy, this, c);
 		return ret;
 	}
 	
 	@Override
-	public Connection getConnection() throws SQLException {
-		QuinaProxyConnection conn = pooling.poll();
-		if(conn == null || !conn.reOpen()) {
-			return _getQuinaProxyConnection(
-				false, kind.getUser(), kind.getPassword());
+	public QuinaProxyConnection getConnection() throws SQLException {
+		QuinaProxyConnection conn;
+		// プーリング情報から取得.
+		while((conn = pooling.poll()) != null) {
+			// ReOpenが成功した場合.
+			if(conn.reOpen()) {
+				// プーリングオブジェクトを返却.
+				return conn;
+			}
 		}
-		return conn;
+		// 新規コネクションで取得.
+		return _getQuinaProxyConnection(
+			false, define.getUser(), define.getPassword());
 	}
 
 	@Override
-	public Connection getConnection(
+	public QuinaProxyConnection getConnection(
 		String username, String password) throws SQLException {
 		return _getQuinaProxyConnection(
-			true, kind.getUser(), kind.getPassword());
+			true, define.getUser(), define.getPassword());
 	}
 
 	@Override

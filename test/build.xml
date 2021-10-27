@@ -14,6 +14,7 @@
   <property name="project.name" value="quinaTest"/>
   <property name="version" value="0.0.1"/>
   <property environment="env"/>
+  <property name="externalLib.dir" value="lib/"/>
   <property name="lib.dir" value="project/lib/"/>
   <property name="src.dir" value="project/src/main/java/"/>
   <property name="dest.dir" value="project/classes"/>
@@ -27,10 +28,16 @@
   <property name="unchecked" value="on"/>
   
   <!-- ===================================================================== -->
-  <!-- include Jar path.                                                     -->
+  <!-- include Jar libs path.                                                -->
   <!-- ===================================================================== -->
   <path id="path.lib">
     <fileset dir="../">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${lib.dir}">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${externalLib.dir}">
       <include name="*.jar"/>
     </fileset>
   </path>
@@ -47,6 +54,8 @@
     <delete dir="${dest.dir}" />
     <delete file="${jar.name}" />
     <mkdir dir="${dest.dir}" />
+    <mkdir dir="${lib.dir}" />
+    <mkdir dir="${externalLib.dir}" />
     <javac includeantruntime="false"
            srcdir="${src.dir}"
            destdir="${dest.dir}"

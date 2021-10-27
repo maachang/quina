@@ -134,6 +134,22 @@ public class Alphabet {
 		}
 		return -1;
 	}
+	
+	/**
+	 * 開始条件と一致するかチェック.
+	 * @param src チェック元の文字列を設定します.
+	 * @param dests 一致条件群を設定します.
+	 * @return boolean trueの場合一致します.
+	 */
+	public static final boolean startsWith(String src, String... dests) {
+		int len = dests.length;
+		for(int i = 0; i < len; i ++) {
+			if(indexOf(src, dests[i]) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * 英字の大文字小文字を区別しない、バイトチェック.

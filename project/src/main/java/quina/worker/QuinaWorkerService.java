@@ -205,6 +205,11 @@ public class QuinaWorkerService
 	
 	@Override
 	public boolean loadConfig(String configDir) {
+		// 既にサービスが開始している場合はエラー.
+		if(startFlag.get()) {
+			throw new QuinaException(
+				"The service has already started.");
+		}
 		lock.writeLock().lock();
 		try {
 			return config.loadConfig(configDir);
@@ -285,7 +290,7 @@ public class QuinaWorkerService
 		if(m != null) {
 			return m.awaitStartup(timeout);
 		}
-		return false;
+		return true;
 	}
 
 	@Override
@@ -334,8 +339,9 @@ public class QuinaWorkerService
 				}
 				return true;
 			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	@Override

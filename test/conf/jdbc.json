@@ -1,0 +1,14 @@
+{
+    pooling: 15
+    ,testMySql: {
+        url: "jdbc:mysql://localhost:3306/testdb"
+        ,user: testUser
+        ,password: password
+        ,urlParams: {
+            characterEncoding: utf8
+            ,useSSL: false
+            ,serverTimezone: "Asia/Tokyo"
+            ,rewriteBatchedStatements: true
+        }
+    }
+}

@@ -9,22 +9,14 @@ public final class AutoProxyQuinaProxyStatement
 	extends quina.jdbc.QuinaProxyStatement {
 	
 	/**
-	 * Creates an empty object.
-	 * @return Objec Set an empty object.
-	 */
-	public static final Object __newInstance() {
-		return new AutoProxyQuinaProxyStatement();
-	}
-	
-	/**
 	 * Set the required parameters.
 	 * @param args Set the parameters.
 	 */
-	public final void __initialSetting(Object[] args) {
+	public final void __initialSetting(quina.annotation.proxy.ProxySettingArgs args) {
 		try {
 			super.setting(
-				(quina.jdbc.QuinaProxyConnection)args[0]
-				,(java.sql.Statement)args[1]
+				(quina.jdbc.QuinaProxyConnection)args.getArgs(0)
+				,(java.sql.Statement)args.getArgs(1)
 			);
 		} catch(quina.exception.QuinaException qe) {
 			throw qe;
@@ -41,11 +33,85 @@ public final class AutoProxyQuinaProxyStatement
 	}
 
 	@Override
-	public void setQueryTimeout(
-		int arg0
+	public long getLargeMaxRows()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return statement.getLargeMaxRows();
+	}
+
+	@Override
+	public long[] executeLargeBatch()
+		throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeBatch();
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
 	) throws java.sql.SQLException {
 		super.checkClose();
-		statement.setQueryTimeout(arg0);
+		return statement.executeLargeUpdate(arg0);
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
+		,int arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeUpdate(arg0, arg1);
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
+		,int[] arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeUpdate(arg0, arg1);
+	}
+
+	@Override
+	public long executeLargeUpdate(
+		java.lang.String arg0
+		,java.lang.String[] arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.executeLargeUpdate(arg0, arg1);
+	}
+
+	@Override
+	public java.lang.String enquoteLiteral(
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.enquoteLiteral(arg0);
+	}
+
+	@Override
+	public java.lang.String enquoteIdentifier(
+		java.lang.String arg0
+		,boolean arg1
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.enquoteIdentifier(arg0, arg1);
+	}
+
+	@Override
+	public boolean isSimpleIdentifier(
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.isSimpleIdentifier(arg0);
+	}
+
+	@Override
+	public java.lang.String enquoteNCharLiteral(
+		java.lang.String arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		return statement.enquoteNCharLiteral(arg0);
 	}
 
 	@Override
@@ -91,6 +157,14 @@ public final class AutoProxyQuinaProxyStatement
 		throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getQueryTimeout();
+	}
+
+	@Override
+	public void setQueryTimeout(
+		int arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setQueryTimeout(arg0);
 	}
 
 	@Override
@@ -150,6 +224,14 @@ public final class AutoProxyQuinaProxyStatement
 		throws java.sql.SQLException {
 		super.checkClose();
 		return statement.getFetchDirection();
+	}
+
+	@Override
+	public void setFetchSize(
+		int arg0
+	) throws java.sql.SQLException {
+		super.checkClose();
+		statement.setFetchSize(arg0);
 	}
 
 	@Override
@@ -243,96 +325,6 @@ public final class AutoProxyQuinaProxyStatement
 	) throws java.sql.SQLException {
 		super.checkClose();
 		statement.setLargeMaxRows(arg0);
-	}
-
-	@Override
-	public long getLargeMaxRows()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return statement.getLargeMaxRows();
-	}
-
-	@Override
-	public long[] executeLargeBatch()
-		throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeBatch();
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-		,int arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0, arg1);
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-		,java.lang.String[] arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0, arg1);
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0);
-	}
-
-	@Override
-	public long executeLargeUpdate(
-		java.lang.String arg0
-		,int[] arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.executeLargeUpdate(arg0, arg1);
-	}
-
-	@Override
-	public java.lang.String enquoteLiteral(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.enquoteLiteral(arg0);
-	}
-
-	@Override
-	public java.lang.String enquoteIdentifier(
-		java.lang.String arg0
-		,boolean arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.enquoteIdentifier(arg0, arg1);
-	}
-
-	@Override
-	public boolean isSimpleIdentifier(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.isSimpleIdentifier(arg0);
-	}
-
-	@Override
-	public java.lang.String enquoteNCharLiteral(
-		java.lang.String arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return statement.enquoteNCharLiteral(arg0);
-	}
-
-	@Override
-	public void setFetchSize(
-		int arg0
-	) throws java.sql.SQLException {
-		super.checkClose();
-		statement.setFetchSize(arg0);
 	}
 
 	@Override

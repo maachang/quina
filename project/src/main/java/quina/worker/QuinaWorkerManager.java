@@ -1,9 +1,9 @@
 package quina.worker;
 
-import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import quina.QuinaServiceThread;
 import quina.exception.QuinaException;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
@@ -239,7 +239,7 @@ final class QuinaWorkerManager {
 			// Pushコール実行.
 			handle.pushCall(no, em);
 			// そのまま登録.
-			threads[no].push(em);
+			threads[no].offer(em);
 		// ワーカーIDが設定されていない場合.
 		} else {
 			// 新しいIDをセット.
@@ -252,7 +252,7 @@ final class QuinaWorkerManager {
 			handle.pushCall(no, em);
 			// ワーカー登録.
 			em.setWorkerNo(no);
-			threads[no].push(em);
+			threads[no].offer(em);
 		}
 	}
 
@@ -266,7 +266,7 @@ final class QuinaWorkerManager {
 	
 	// QuinaWorkerThread.
 	protected static final class QuinaWorkerThread
-		extends Thread {
+		extends QuinaServiceThread<QuinaWorkerCall> {
 		// waitタイムアウト値.
 		private static final int TIMEOUT = 1000;
 
@@ -285,15 +285,15 @@ final class QuinaWorkerManager {
 
 		// wait管理.
 		private final QuinaWait wait;
-
-		// スレッド停止フラグ.
-		private volatile boolean stopFlag = true;
-
-		// スレッド開始完了フラグ.
-		private final Flag startThreadFlag = new Flag(false);
-
-		// スレッド終了フラグ.
-		private final Flag endThreadFlag = new Flag(false);
+		
+		// ワーカーコール.
+		private QuinaWorkerCallHandler callHandle = null;
+		
+		// 全体ワーカー共通開始処理.
+		private boolean startCommonCallFlag = false;
+		
+		// 全体ワーカー開始処理.
+		private boolean startCallFlag = false;
 
 		/**
 		 * コンストラクタ.
@@ -317,18 +317,7 @@ final class QuinaWorkerManager {
 		public int getWorkerNo() {
 			return no;
 		}
-
-		/**
-		 * ワーカースレッドに処理を登録.
-		 *
-		 * @param em 登録するワーカを設定します.
-		 * @throws IOException
-		 */
-		public void push(QuinaWorkerCall em) {
-			queue.offer(em);
-			wait.signal();
-		}
-
+		
 		/**
 		 * 現在登録され待機中のワーカー数を取得.
 		 * @return int 登録され待機中のワーカー数が返却されます.
@@ -338,89 +327,32 @@ final class QuinaWorkerManager {
 		}
 
 		/**
-		 * ワーカーを開始する.
+		 * 新しいワーカーコールをセット.
 		 */
-		public void startThread() {
-			stopFlag = false;
-			startThreadFlag.set(false);
-			endThreadFlag.set(false);
-			setDaemon(true);
-			start();
+		@Override
+		public void offer(QuinaWorkerCall em) {
+			queue.offer(em);
+			wait.signal();
+		}
+		
+		/**
+		 * ワーカーコールを取得.
+		 */
+		@Override
+		public QuinaWorkerCall poll() {
+			QuinaWorkerCall ret = null;
+			// ワーカーCallを取得.
+			if ((ret = queue.poll()) == null) {
+				wait.await(TIMEOUT);
+			}
+			return ret;
 		}
 
 		/**
-		 * ワーカーを停止する.
+		 * 開始スレッドコール.
 		 */
-		public void stopThread() {
-			stopFlag = true;
-		}
-
-		/**
-		 * ワーカーが停止命令が既に出されているかチェック.
-		 * @return
-		 */
-		public boolean isStopThread() {
-			return stopFlag;
-		}
-
-		/**
-		 * ワーカーが開始しているかチェック.
-		 * @return
-		 */
-		public boolean isStartupThread() {
-			return startThreadFlag.get();
-		}
-
-		/**
-		 * ワーカーが終了しているかチェック.
-		 * @return
-		 */
-		public boolean isExitThread() {
-			return endThreadFlag.get();
-		}
-
-		/**
-		 * スレッド開始完了まで待機.
-		 * @param timeout タイムアウトのミリ秒を設定します.
-		 *                0以下を設定した場合、無限に待ちます.
-		 * @return boolean [true]の場合、正しく終了しました.
-		 */
-		public boolean awaitStartup() {
-			return QuinaWait.await(-1L, startThreadFlag);
-		}
-
-		/**
-		 * スレッド開始完了まで待機.
-		 * @param timeout タイムアウトのミリ秒を設定します.
-		 *                0以下を設定した場合、無限に待ちます.
-		 * @return boolean [true]の場合、正しく終了しました.
-		 */
-		public boolean awaitStartup(long timeout) {
-			return QuinaWait.await(timeout, startThreadFlag);
-		}
-
-		/**
-		 * スレッド終了まで待機.
-		 * @return boolean [true]の場合、正しく終了しました.
-		 */
-		public boolean awaitExit() {
-			return QuinaWait.await(-1L, endThreadFlag);
-		}
-
-		/**
-		 * スレッド終了まで待機.
-		 * @param timeout タイムアウトのミリ秒を設定します.
-		 *                0以下を設定した場合、無限に待ちます.
-		 * @return boolean [true]の場合、正しく終了しました.
-		 */
-		public boolean awaitExit(long timeout) {
-			return QuinaWait.await(timeout, endThreadFlag);
-		}
-
-		/**
-		 * スレッド実行.
-		 */
-		public void run() {
+		@Override
+		protected void startThreadCall() {
 			final int len = callHandles.size();
 			
 			// スレッド開始呼び出し.
@@ -435,9 +367,14 @@ final class QuinaWorkerManager {
 				} catch(Exception e) {
 				}
 			}
-			
-			// スレッド実行.
-			final ThreadDeath td = execute();
+		}
+		
+		/**
+		 * 終了スレッドコール.
+		 */
+		@Override
+		protected void endThreadCall() {
+			final int len = callHandles.size();
 			
 			// スレッド終了呼び出し.
 			for(int i = 0; i < len; i ++) {
@@ -454,192 +391,187 @@ final class QuinaWorkerManager {
 			
 			// スレッド終了完了.
 			endThreadFlag.set(true);
-			if (td != null) {
-				throw td;
-			}
 		}
-
+		
 		/**
-		 * ワーカースレッド実行処理.
+		 * 実行処理.
 		 */
-		protected final ThreadDeath execute() {
+		@Override
+		protected void executeCall(QuinaWorkerCall workerCall)
+			throws Throwable {
+			if(workerCall == null) {
+				return;
+			}
 			int id = this.no;
-			QuinaWorkerCall call = null;
-			QuinaWorkerCallHandler callHandle = null;
-			boolean startCommonCallFlag = false;
-			boolean startCallFlag = false;
-			ThreadDeath ret = null;
-			boolean endFlag = false;
+			
+			// 変数初期化.
+			callHandle = null;
+			startCommonCallFlag = false;
+			startCallFlag = false;
 
 			// スレッド開始完了.
 			startThreadFlag.set(true);
-			while (!endFlag && !stopFlag) {
-				try {
-					while (!endFlag && !stopFlag) {
-						call = null;
-						callHandle = null;
-						startCommonCallFlag = false;
-						startCallFlag = false;
-						// ワーカーCallを取得.
-						if ((call = queue.poll()) == null) {
-							wait.await(TIMEOUT);
-							continue;
-						}
-						// QuinaWorkerCallを処理する
-						// 対象ワーカーハンドルを取得.
-						callHandle = callHandles.get(call.getId());
-						// 対象ワーカーハンドルが存在する場合.
-						if(callHandle == null) {
-							// 既に破棄されてる場合.
-							if(handle.isDestroy(id, call)) {
-								handle.destroy(id, call);
-								continue;
-							}
-							// 全体ワーカー共通開始処理.
-							handle.startCommonCall(id, call);
-							startCommonCallFlag = true;
-							
-							// 全体ワーカー開始処理.
-							handle.startCall(id, call);
-							startCallFlag = true;
-							
-							// 全体ワーカー要素を実行.
-							if(!handle.executeCall(id, call)) {
-								// ワーカー要素を破棄.
-								handle.destroy(id, call);
-							}
-							
-							// 全体ワーカー要素の終了処理.
-							handle.endCall(id, call);
-							startCallFlag = false;
-							// 全体ワーカー共通終了処理.
-							handle.endCommonCall(id, call);
-							startCommonCallFlag = false;
-						// 対象ワーカーハンドルが存在しない場合.
-						} else {
-							// 既に破棄されてる場合.
-							if(callHandle.isDestroy(id, call)) {
-								callHandle.destroy(id, call);
-								continue;
-							}
-							
-							// 全体ワーカー共通開始処理.
-							handle.startCommonCall(id, call);
-							startCommonCallFlag = true;
-							
-							// 対象ワーカー開始処理.
-							callHandle.startCall(id, call);
-							startCallFlag = true;
-							
-							// 対象ワーカー要素を実行.
-							if(!callHandle.executeCall(id, call)) {
-								// ワーカー要素を破棄.
-								callHandle.destroy(id, call);
-							}
-							
-							// 対象ワーカー要素の終了処理.
-							callHandle.endCall(id, call);
-							startCallFlag = false;
-							
-							// 全体ワーカー共通終了処理.
-							handle.endCommonCall(id, call);
-							startCommonCallFlag = false;
-						}
-					}
-				} catch (Throwable to) {
-					//to.printStackTrace();
-					// スレッド中止.
-					if (to instanceof InterruptedException) {
-						endFlag = true;
-					// threadDeathが発生した場合.
-					} else if (to instanceof ThreadDeath) {
-						endFlag = true;
-						ret = (ThreadDeath) to;
-					}
-					// エラーの場合はワーカーを破棄.
-					if(call != null) {
-						// 例外処理用ハンドラを呼び出す.
-						try {
-							handle.errorCall(id, call, to);
-						} catch(Exception e) {}
-						// 対象ワーカーハンドルが存在する場合.
-						if(callHandle != null) {
-							// startCallが呼ばれてる場合.
-							if(startCallFlag) {
-								try {
-									// ワーカー要素の利用終了の場合.
-									callHandle.endCall(id, call);
-								} catch(Exception e) {}
-							}
-							// startCommonCallが呼ばれてる場合.
-							if(startCommonCallFlag) {
-								try {
-									// 全体ワーカー共通終了処理.
-									handle.endCommonCall(id, call);
-								} catch(Exception e) {}
-							}
-							try {
-								// 破棄処理.
-								callHandle.destroy(id, call);
-							} catch(Exception e) {}
-						// 対象ワーカーハンドルが存在しない場合.
-						} else {
-							// startCallが呼ばれてる場合.
-							if(startCallFlag) {
-								try {
-									// ワーカー要素の利用終了の場合.
-									handle.endCall(id, call);
-								} catch(Exception e) {}
-							}
-							// startCommonCallが呼ばれてる場合.
-							if(startCommonCallFlag) {
-								try {
-									// 全体ワーカー共通終了処理.
-									handle.endCommonCall(id, call);
-								} catch(Exception e) {}
-							}
-							try {
-								handle.destroy(id, call);
-							} catch(Exception e) {
-								try {
-									// 破棄処理.
-									call.destroy(id);
-								} catch(Exception ee) {}
-							}
-						}
-					}
+			// QuinaWorkerCallを処理する
+			// 対象ワーカーハンドルを取得.
+			callHandle = callHandles.get(workerCall.getId());
+			// 対象ワーカーハンドルが存在する場合.
+			if(callHandle == null) {
+				// 既に破棄されてる場合.
+				if(handle.isDestroy(id, workerCall)) {
+					handle.destroy(id, workerCall);
+					return;
 				}
+				// 全体ワーカー共通開始処理.
+				handle.startCommonCall(id, workerCall);
+				startCommonCallFlag = true;
+				
+				// 全体ワーカー開始処理.
+				handle.startCall(id, workerCall);
+				startCallFlag = true;
+				
+				// 全体ワーカー要素を実行.
+				if(!handle.executeCall(id, workerCall)) {
+					// ワーカー要素を破棄.
+					handle.destroy(id, workerCall);
+				}
+				
+				// 全体ワーカー要素の終了処理.
+				handle.endCall(id, workerCall);
+				startCallFlag = false;
+				// 全体ワーカー共通終了処理.
+				handle.endCommonCall(id, workerCall);
+				startCommonCallFlag = false;
+			// 対象ワーカーハンドルが存在しない場合.
+			} else {
+				// 既に破棄されてる場合.
+				if(callHandle.isDestroy(id, workerCall)) {
+					callHandle.destroy(id, workerCall);
+					return;
+				}
+				
+				// 全体ワーカー共通開始処理.
+				handle.startCommonCall(id, workerCall);
+				startCommonCallFlag = true;
+				
+				// 対象ワーカー開始処理.
+				callHandle.startCall(id, workerCall);
+				startCallFlag = true;
+				
+				// 対象ワーカー要素を実行.
+				if(!callHandle.executeCall(id, workerCall)) {
+					// ワーカー要素を破棄.
+					callHandle.destroy(id, workerCall);
+				}
+				
+				// 対象ワーカー要素の終了処理.
+				callHandle.endCall(id, workerCall);
+				startCallFlag = false;
+				
+				// 全体ワーカー共通終了処理.
+				handle.endCommonCall(id, workerCall);
+				startCommonCallFlag = false;
 			}
+		}
+		
+		/**
+		 * 後始末処理.
+		 */
+		@Override
+		protected void cleanUpCall() {
+			int id = this.no;
+			QuinaWorkerCall workerCall;
 			// ワーカースレッド処理後の後始末.
 			while(true) {
-				call = null;callHandle = null;
+				workerCall = null;
+				callHandle = null;
 				try {
 					// 実行ワーカーを取得して破棄.
-					if ((call = queue.poll()) == null) {
+					if ((workerCall = queue.poll()) == null) {
 						break;
 					}
 					// QuinaWorkerCallを処理する
 					// 対象ワーカーハンドルを取得.
-					callHandle = callHandles.get(call.getId());
+					callHandle = callHandles.get(workerCall.getId());
 					// 対象ワーカーハンドルが存在する場合.
 					if(callHandle != null) {
 						try {
-							callHandle.destroy(id, call);
+							callHandle.destroy(id, workerCall);
 						} catch(Exception e) {}
 					// 対象ワーカーハンドルが存在しない場合.
 					} else {
 						try {
-							handle.destroy(id, call);
+							handle.destroy(id, workerCall);
 						} catch(Exception e) {
 							try {
-								call.destroy(id);
+								workerCall.destroy(id);
 							} catch(Exception ee) {}
 						}
 					}
 				} catch (Throwable to) {
 				}
 			}
-			return ret;
+		}
+		
+		/**
+		 * エラーコール.
+		 */
+		@Override
+		protected void errorThreadCall(
+			QuinaWorkerCall workerCall, Throwable td) {
+			if(workerCall == null) {
+				return;
+			}
+			int id = this.no;
+			
+			// 例外処理用ハンドラを呼び出す.
+			try {
+				handle.errorCall(id, workerCall, td);
+			} catch(Exception e) {}
+			// 対象ワーカーハンドルが存在する場合.
+			if(callHandle != null) {
+				// startCallが呼ばれてる場合.
+				if(startCallFlag) {
+					try {
+						// ワーカー要素の利用終了の場合.
+						callHandle.endCall(id, workerCall);
+					} catch(Exception e) {}
+				}
+				// startCommonCallが呼ばれてる場合.
+				if(startCommonCallFlag) {
+					try {
+						// 全体ワーカー共通終了処理.
+						handle.endCommonCall(id, workerCall);
+					} catch(Exception e) {}
+				}
+				try {
+					// 破棄処理.
+					callHandle.destroy(id, workerCall);
+				} catch(Exception e) {}
+			// 対象ワーカーハンドルが存在しない場合.
+			} else {
+				// startCallが呼ばれてる場合.
+				if(startCallFlag) {
+					try {
+						// ワーカー要素の利用終了の場合.
+						handle.endCall(id, workerCall);
+					} catch(Exception e) {}
+				}
+				// startCommonCallが呼ばれてる場合.
+				if(startCommonCallFlag) {
+					try {
+						// 全体ワーカー共通終了処理.
+						handle.endCommonCall(id, workerCall);
+					} catch(Exception e) {}
+				}
+				try {
+					handle.destroy(id, workerCall);
+				} catch(Exception e) {
+					try {
+						// 破棄処理.
+						workerCall.destroy(id);
+					} catch(Exception ee) {}
+				}
+			}
 		}
 	}
 }
