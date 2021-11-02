@@ -20,8 +20,8 @@ import quina.util.Flag;
 public class QuinaDataSource implements DataSource {
 	
 	/** プーリングデータ格納用. **/
-	protected final Queue<QuinaProxyConnection> pooling =
-		new ConcurrentLinkedQueue<QuinaProxyConnection>();
+	protected final Queue<QuinaConnection> pooling =
+		new ConcurrentLinkedQueue<QuinaConnection>();
 
 	/** JDBCDefine. **/
 	private QuinaJDBCConfig define;
@@ -46,7 +46,7 @@ public class QuinaDataSource implements DataSource {
 	public void destroy() {
 		if (!destroyFlag.setToGetBefore(true)) {
 			// 保持しているコネクションを全て破棄.
-			QuinaProxyConnection conn;
+			QuinaConnection conn;
 			if (pooling.size() > 0) {
 				while ((conn = pooling.poll()) != null) {
 					try {
@@ -84,7 +84,7 @@ public class QuinaDataSource implements DataSource {
 	
 	// Poolingにセット.
 	protected boolean pushPooling(
-		QuinaProxyConnection conn) {
+		QuinaConnection conn) {
 		if(destroyFlag.get() ||
 			define.getPoolingSize() < pooling.size()) {
 			try {
@@ -140,20 +140,20 @@ public class QuinaDataSource implements DataSource {
 	}
 	
 	// QuinaProxyConnectionを取得.
-	private QuinaProxyConnection _getQuinaProxyConnection(
+	private QuinaConnection _getQuinaProxyConnection(
 		boolean notProxy, String user, String passwd)
 		throws SQLException {
 		checkDestroy();
 		Connection c = _getSrcConnection(
 			define, define.getUrl(), user, passwd);
-		QuinaProxyConnection ret = QuinaProxyUtil.getConnection(
+		QuinaConnection ret = QuinaProxyUtil.getConnection(
 			notProxy, this, c);
 		return ret;
 	}
 	
 	@Override
-	public QuinaProxyConnection getConnection() throws SQLException {
-		QuinaProxyConnection conn;
+	public QuinaConnection getConnection() throws SQLException {
+		QuinaConnection conn;
 		// プーリング情報から取得.
 		while((conn = pooling.poll()) != null) {
 			// ReOpenが成功した場合.
@@ -168,7 +168,7 @@ public class QuinaDataSource implements DataSource {
 	}
 
 	@Override
-	public QuinaProxyConnection getConnection(
+	public QuinaConnection getConnection(
 		String username, String password) throws SQLException {
 		return _getQuinaProxyConnection(
 			true, define.getUser(), define.getPassword());

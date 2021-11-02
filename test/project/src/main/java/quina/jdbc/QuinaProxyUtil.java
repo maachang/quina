@@ -18,23 +18,23 @@ public final class QuinaProxyUtil {
 	
 	/** Connectionクラス名. **/
 	protected static final String CONNECT_CLASS_NAME =
-		QuinaProxyConnection.class.getName();
+		QuinaConnection.class.getName();
 	
 	/** Statementクラス名. **/
 	protected static final String STATEMENT_CLASS_NAME =
-		QuinaProxyStatement.class.getName();
+		QuinaStatement.class.getName();
 	
 	/** PreparedStatementクラス名. **/
 	protected static final String PREPARED_STATEMENT_CLASS_NAME =
-		QuinaProxyPreparedStatement.class.getName();
+		QuinaPreparedStatement.class.getName();
 	
 	/** CallableStatementクラス名. **/
 	protected static final String CALLABLE_STATEMENT_CLASS_NAME =
-		QuinaProxyCallableStatement.class.getName();
+		QuinaCallableStatement.class.getName();
 	
 	/** ResultSetクラス名. **/
 	protected static final String RESULT_SET_CLASS_NAME =
-		QuinaProxyResultSet.class.getName();
+		QuinaResultSet.class.getName();
 	
 	/**
 	 * QuinaProxyConnectionオブジェクトを取得.
@@ -43,9 +43,9 @@ public final class QuinaProxyUtil {
 	 * @param base 対象のConnectionオブジェクトを設定します.
 	 * @return QuinaProxyConnection オブジェクトが返却されます.
 	 */
-	protected static final QuinaProxyConnection getConnection(
+	protected static final QuinaConnection getConnection(
 		boolean notProxy, QuinaDataSource source, Connection base) {
-		return (QuinaProxyConnection)Quina.get()
+		return (QuinaConnection)Quina.get()
 			.getProxyScopedManager().getObject(
 				CONNECT_CLASS_NAME,
 				notProxy, source, base);
@@ -57,9 +57,9 @@ public final class QuinaProxyUtil {
 	 * @param base 対象のStatementオブジェクトを設定します.
 	 * @return QuinaProxyStatement オブジェクトが返却されます.
 	 */
-	protected static final QuinaProxyStatement getStatement(
-		QuinaProxyConnection conn, Statement base) {
-		return (QuinaProxyStatement)Quina.get()
+	protected static final QuinaStatement getStatement(
+		QuinaConnection conn, Statement base) {
+		return (QuinaStatement)Quina.get()
 			.getProxyScopedManager().getObject(
 				STATEMENT_CLASS_NAME,
 				conn, base);
@@ -71,9 +71,9 @@ public final class QuinaProxyUtil {
 	 * @param base 対象のPreparedStatementオブジェクトを設定します.
 	 * @return QuinaProxyPreparedStatement オブジェクトが返却されます.
 	 */
-	protected static final QuinaProxyPreparedStatement getPreparedStatement(
-		QuinaProxyConnection conn, PreparedStatement base) {
-		return (QuinaProxyPreparedStatement)Quina.get()
+	protected static final QuinaPreparedStatement getPreparedStatement(
+		QuinaConnection conn, PreparedStatement base) {
+		return (QuinaPreparedStatement)Quina.get()
 			.getProxyScopedManager().getObject(
 				PREPARED_STATEMENT_CLASS_NAME,
 				conn, base);
@@ -85,9 +85,9 @@ public final class QuinaProxyUtil {
 	 * @param base 対象のCallableStatementオブジェクトを設定します.
 	 * @return QuinaProxyCallableStatement オブジェクトが返却されます.
 	 */
-	protected static final QuinaProxyCallableStatement getCallableStatement(
-		QuinaProxyConnection conn, CallableStatement base) {
-		return (QuinaProxyCallableStatement)Quina.get()
+	protected static final QuinaCallableStatement getCallableStatement(
+		QuinaConnection conn, CallableStatement base) {
+		return (QuinaCallableStatement)Quina.get()
 			.getProxyScopedManager().getObject(
 				CALLABLE_STATEMENT_CLASS_NAME,
 				conn, base);
@@ -99,12 +99,61 @@ public final class QuinaProxyUtil {
 	 * @param base 対象のCallableStatementオブジェクトを設定します.
 	 * @return QuinaProxyCallableStatement オブジェクトが返却されます.
 	 */
-	protected static final QuinaProxyResultSet getResultSet(
+	protected static final QuinaResultSet getResultSet(
 		AbstractQuinaProxyStatement stmt, ResultSet base) {
-		return (QuinaProxyResultSet)Quina.get()
+		return (QuinaResultSet)Quina.get()
 			.getProxyScopedManager().getObject(
 				RESULT_SET_CLASS_NAME,
 			stmt, base);
+	}
+	
+	// 文字列のURLParamsから指定したキーに対するValue位置を取得.
+	private static final int[] urlParamValue(
+		String urlParams, String key) {
+		if(key == null || key.isEmpty()) {
+			throw new QuinaException(
+				"The specified Key information is empty.");
+		}
+		char c;
+		int keyP = Alphabet.indexOf(urlParams, key);
+		if(keyP == -1 ||
+			((c = urlParams.charAt(keyP -1)) != ';' &&
+			c != '?' && c != '&' && c != ' '
+		)) {
+			return null;
+		}
+		final int keyLen = key.length();
+		final int len = urlParams.length();
+		int eqP = -1;
+		int endP = len;
+		for(int i = keyP + keyLen ; i < len; i ++) {
+			if((c = urlParams.charAt(i)) == '=') {
+				if(eqP != -1) {
+					return null;
+				}
+				eqP = keyP + keyLen + 1;
+			} else if(c == ';'|| c == '&') {
+				endP = i;
+				break;
+			}
+		}
+		if(eqP == -1) {
+			return null;
+		}
+		return new int[] {eqP, endP};
+	}
+	
+	/**
+	 * 対象URLパラメータに指定Keyの条件が存在するか
+	 * チェック.
+	 * @param urlParams URLパラメータを設定します.
+	 * @param key 存在確認をするKey情報を取得します.
+	 * @return boolean trueの場合、存在します.
+	 */
+	public static final boolean eqURLParamsToKey(
+		String urlParams, String key) {
+		return urlParamValue(urlParams, key) != null;
+		
 	}
 	
 	/**
@@ -117,40 +166,15 @@ public final class QuinaProxyUtil {
 	 */
 	public static final boolean eqURLParamsToKeyValue(
 		String urlParams, String key, String value) {
-		if(key == null || key.isEmpty()) {
-			throw new QuinaException(
-				"The specified Key information is empty.");
-		} else if(value == null || value.isEmpty()) {
+		if(value == null || value.isEmpty()) {
 			throw new QuinaException(
 				"The specified Value information is empty.");
 		}
-		char c;
-		int keyP = Alphabet.indexOf(urlParams, key);
-		if(keyP == -1 ||
-			((c = urlParams.charAt(keyP -1)) != ';' &&
-			c != '?' && c != '&' && c != ' '
-		)) {
-			return false;
-		}
-		final int keyLen = key.length();
-		final int len = urlParams.length();
-		int eqP = -1;
-		int endP = len;
-		for(int i = keyP + keyLen ; i < len; i ++) {
-			if((c = urlParams.charAt(i)) == '=') {
-				if(eqP != -1) {
-					return false;
-				}
-				eqP = keyP + keyLen + 1;
-			} else if(c == ';'|| c == '&') {
-				endP = i;
-				break;
-			}
-		}
-		if(eqP == -1) {
+		int[] valuePos = urlParamValue(urlParams, key);
+		if(valuePos == null) {
 			return false;
 		}
 		return Alphabet.eq(
-			value, urlParams.substring(eqP, endP).trim());
+			value, urlParams.substring(valuePos[0], valuePos[1]).trim());
 	}
 }

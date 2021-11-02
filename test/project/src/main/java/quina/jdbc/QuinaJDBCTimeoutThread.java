@@ -9,7 +9,7 @@ import quina.QuinaServiceThread;
  * PoolingConnectionタイムアウト監視スレッド.
  */
 class QuinaJDBCTimeoutThread
-	extends QuinaServiceThread<QuinaProxyConnection> {
+	extends QuinaServiceThread<QuinaConnection> {
 	
 	// 利用中を示すタイムアウト値.
 	protected static final long NONE_TIMEOUT = -1L;
@@ -21,8 +21,8 @@ class QuinaJDBCTimeoutThread
 	private long timeout;
 	
 	// タイムアウト監視Queue.
-	private Queue<QuinaProxyConnection> queue =
-		new ConcurrentLinkedQueue<QuinaProxyConnection>();
+	private Queue<QuinaConnection> queue =
+		new ConcurrentLinkedQueue<QuinaConnection>();
 	
 	/**
 	 * コンストラクタ.
@@ -36,7 +36,7 @@ class QuinaJDBCTimeoutThread
 	 * データ追加.
 	 */
 	@Override
-	public void offer(QuinaProxyConnection value) {
+	public void offer(QuinaConnection value) {
 		queue.offer(value);
 	}
 
@@ -44,7 +44,7 @@ class QuinaJDBCTimeoutThread
 	 * 1つの情報を取得.
 	 */
 	@Override
-	protected QuinaProxyConnection poll() {
+	protected QuinaConnection poll() {
 		return queue.poll();
 	}
 
@@ -52,7 +52,7 @@ class QuinaJDBCTimeoutThread
 	 * タイムアウト実行処理.
 	 */
 	@Override
-	protected void executeCall(QuinaProxyConnection conn)
+	protected void executeCall(QuinaConnection conn)
 		throws Throwable {
 		long time;
 		// 既に破棄されてる場合.
@@ -87,7 +87,7 @@ class QuinaJDBCTimeoutThread
 	 * 後始末実行.
 	 */
 	protected void cleanUpCall() {
-		QuinaProxyConnection conn;
+		QuinaConnection conn;
 		while(true) {
 			try {
 				if((conn = queue.poll()) == null) {

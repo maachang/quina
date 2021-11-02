@@ -68,9 +68,31 @@ public class MySqlKind implements QuinaJDBCKind {
 		return Alphabet.startsWith(url, "jdbc:mysql:");
 	}
 	
-	// 指定禁止URLパラメータ設定群.
+	// 存在しない場合に追加するURLパラメータ群.
+	private static final String[] NOT_EXIST_URL_PARAMS =
+		new String[] {
+			// 文字コード.
+			"characterEncoding", "utf8"
+			// ParameterMetaDataの利用を有効にする.
+			,"generateSimpleParameterMetadata", "true"
+			// SSL接続を無効にする.
+			,"useSSL", "false"
+		};
+	
+	/**
+	 * 存在しない場合に追加するURLパラメータ群を取得.
+	 * @return String[] key, value, ... で設定されます.
+	 */
+	public String[] addByNotExistUrlParams() {
+		return NOT_EXIST_URL_PARAMS;
+	}
+	
+	// 指定禁止URLパラメータ群.
 	private static final String[] NOT_URL_PARAMS =
-		new String[] { "useSSL", "true" };
+		new String[] {
+			// SSL接続がONの場合エラー.
+			"useSSL", "true"
+		};
 	
 	/**
 	 * 指定禁止URLパラメータ群を取得.

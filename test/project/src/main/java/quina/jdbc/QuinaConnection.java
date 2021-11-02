@@ -20,7 +20,7 @@ import quina.util.collection.ObjectList;
  * ProxyConnection.
  */
 @ProxyScoped
-public abstract class QuinaProxyConnection
+public abstract class QuinaConnection
 	implements Connection {
 	// 接続確認用SQL.
 	private static final String ECHO_SQL = "select (1);";
@@ -256,10 +256,10 @@ public abstract class QuinaProxyConnection
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyStatement createStatement()
+	public QuinaStatement createStatement()
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyStatement)appendStatement(
+		return (QuinaStatement)appendStatement(
 			QuinaProxyUtil.getStatement(
 				this, connection.createStatement())
 		);
@@ -267,11 +267,11 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyStatement createStatement(
+	public QuinaStatement createStatement(
 		int resultSetType, int resultSetConcurrency)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyStatement)appendStatement(
+		return (QuinaStatement)appendStatement(
 			QuinaProxyUtil.getStatement(
 				this, connection.createStatement(
 				resultSetType, resultSetConcurrency))
@@ -281,10 +281,10 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyCallableStatement prepareCall(String sql)
+	public QuinaCallableStatement prepareCall(String sql)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyCallableStatement)appendStatement(
+		return (QuinaCallableStatement)appendStatement(
 			QuinaProxyUtil.getCallableStatement(
 				this, connection.prepareCall(getSQL(sql)))
 		);
@@ -292,11 +292,11 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyCallableStatement prepareCall(
+	public QuinaCallableStatement prepareCall(
 		String sql, int resultSetType, int resultSetConcurrency)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyCallableStatement)appendStatement(
+		return (QuinaCallableStatement)appendStatement(
 			QuinaProxyUtil.getCallableStatement(
 				this, connection.prepareCall(
 					getSQL(sql), resultSetType, resultSetConcurrency))
@@ -305,11 +305,11 @@ public abstract class QuinaProxyConnection
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyCallableStatement prepareCall(
+	public QuinaCallableStatement prepareCall(
 			String sql, int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
 		checkClose();
-		return (QuinaProxyCallableStatement)appendStatement(
+		return (QuinaCallableStatement)appendStatement(
 			QuinaProxyUtil.getCallableStatement(
 				this, connection.prepareCall(
 					getSQL(sql), resultSetType, resultSetConcurrency,
@@ -319,12 +319,12 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyStatement createStatement(
+	public QuinaStatement createStatement(
 		int resultSetType, int resultSetConcurrency,
 		int resultSetHoldability)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyStatement)appendStatement(
+		return (QuinaStatement)appendStatement(
 			QuinaProxyUtil.getStatement(
 				this, connection.createStatement(
 				resultSetType, resultSetConcurrency,
@@ -334,10 +334,10 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(String sql)
+	public QuinaPreparedStatement prepareStatement(String sql)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
+		return (QuinaPreparedStatement)appendStatement(
 			QuinaProxyUtil.getPreparedStatement(
 				this, connection.prepareStatement(getSQL(sql)))
 		);
@@ -345,11 +345,11 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(
+	public QuinaPreparedStatement prepareStatement(
 		String sql, int resultSetType, int resultSetConcurrency)
 			throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
+		return (QuinaPreparedStatement)appendStatement(
 			QuinaProxyUtil.getPreparedStatement(
 				this, connection.prepareStatement(
 					getSQL(sql), resultSetType, resultSetConcurrency))
@@ -358,11 +358,11 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(
+	public QuinaPreparedStatement prepareStatement(
 		String sql, int resultSetType, int resultSetConcurrency,
 		int resultSetHoldability) throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
+		return (QuinaPreparedStatement)appendStatement(
 			QuinaProxyUtil.getPreparedStatement(
 				this, connection.prepareStatement(
 					getSQL(sql), resultSetType, resultSetConcurrency,
@@ -372,11 +372,11 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(
+	public QuinaPreparedStatement prepareStatement(
 		String sql, int autoGeneratedKeys)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
+		return (QuinaPreparedStatement)appendStatement(
 			QuinaProxyUtil.getPreparedStatement(
 				this, connection.prepareStatement(
 					getSQL(sql), autoGeneratedKeys))
@@ -385,11 +385,11 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(
+	public QuinaPreparedStatement prepareStatement(
 		String sql, int[] columnIndexes)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
+		return (QuinaPreparedStatement)appendStatement(
 			QuinaProxyUtil.getPreparedStatement(
 				this, connection.prepareStatement(
 					getSQL(sql), columnIndexes))
@@ -398,15 +398,24 @@ public abstract class QuinaProxyConnection
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement
+	public QuinaPreparedStatement prepareStatement
 		(String sql, String[] columnNames)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
+		return (QuinaPreparedStatement)appendStatement(
 			QuinaProxyUtil.getPreparedStatement(
 				this, connection.prepareStatement(
 					getSQL(sql), columnNames))
 		);
+	}
+	
+	// I/Oステートメントを追加.
+	private final void addIoStatement(AbstractIoStatement<?> ios) {
+		if(ioStatementList == null) {
+			ioStatementList =
+				new ObjectList<AbstractIoStatement<?>>();
+		}
+		ioStatementList.add(ios);
 	}
 	
 	/**
@@ -418,7 +427,7 @@ public abstract class QuinaProxyConnection
 		throws SQLException {
 		checkClose();
 		IoStatement ret = new IoStatement(this);
-		ioStatementList.add(ret);
+		addIoStatement(ret);
 		return ret;
 	}
 	
@@ -435,7 +444,7 @@ public abstract class QuinaProxyConnection
 		checkClose();
 		IoStatement ret = new IoStatement(
 			this, resultSetType, resultSetConcurrency);
-		ioStatementList.add(ret);
+		addIoStatement(ret);
 		return ret;
 	}
 	
@@ -455,7 +464,7 @@ public abstract class QuinaProxyConnection
 		IoStatement ret = new IoStatement(
 			this, resultSetType, resultSetConcurrency,
 			resultSetHoldability);
-		ioStatementList.add(ret);
+		addIoStatement(ret);
 		return ret;
 	}
 	
@@ -470,7 +479,7 @@ public abstract class QuinaProxyConnection
 		checkClose();
 		IoStatement ret = new IoStatement(
 			this, autoGeneratedKeys);
-		ioStatementList.add(ret);
+		addIoStatement(ret);
 		return ret;
 	}
 	
@@ -485,7 +494,7 @@ public abstract class QuinaProxyConnection
 		checkClose();
 		IoStatement ret = new IoStatement(
 			this, (Object)columnIndexes);
-		ioStatementList.add(ret);
+		addIoStatement(ret);
 		return ret;
 	}
 	
@@ -500,7 +509,7 @@ public abstract class QuinaProxyConnection
 		checkClose();
 		IoStatement ret = new IoStatement(
 			this,(Object)columnNames);
-		ioStatementList.add(ret);
+		addIoStatement(ret);
 		return ret;
 	}
 }

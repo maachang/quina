@@ -106,10 +106,11 @@ public class QuinaJDBCService implements QuinaService {
 				// dataSourceを生成してセット.
 				o = json.valueAt(i);
 				if(o != null && o instanceof Map) {
-					QuinaJDBCConfig define = QuinaJDBCConfig.create(
+					QuinaJDBCConfig conf = QuinaJDBCConfig.create(
 						json.keyAt(i), (Map)o);
-					dataSources.put(define.getName(),
-						new QuinaDataSource(define));
+					conf.fix();
+					dataSources.put(conf.getName(),
+						new QuinaDataSource(conf));
 					ret = true;
 				}
 			}

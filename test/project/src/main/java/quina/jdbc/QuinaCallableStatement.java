@@ -12,7 +12,7 @@ import quina.annotation.proxy.ProxyScoped;
  * QuinaProxyCallableStatement.
  */
 @ProxyScoped
-public abstract class QuinaProxyCallableStatement
+public abstract class QuinaCallableStatement
 	extends AbstractQuinaProxyStatement
 	implements CallableStatement {
 	
@@ -32,14 +32,14 @@ public abstract class QuinaProxyCallableStatement
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyResultSet getGeneratedKeys() throws SQLException {
+	public QuinaResultSet getGeneratedKeys() throws SQLException {
 		return QuinaProxyUtil.getResultSet(
 			this, statement.getGeneratedKeys());
 	}
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyResultSet executeQuery() throws SQLException {
+	public QuinaResultSet executeQuery() throws SQLException {
 		return QuinaProxyUtil.getResultSet(
 			this, statement.executeQuery());
 	}

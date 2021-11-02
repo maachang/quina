@@ -51,6 +51,8 @@ public class QuinaJDBCConfig {
 	private IndexMap<String, Object> properties = null;
 	// 接続先のURLパラメータ.
 	private String urlParams = "";
+	// URLパラメータタイプ.
+	private boolean urlType = false;
 	
 	// プーリングサイズ.
 	private Integer poolingSize = null;
@@ -161,39 +163,104 @@ public class QuinaJDBCConfig {
 	public void fix() {
 		// 今回の処理でFix完了の場合.
 		if(!fixFlag.setToGetBefore(true)) {
+			String key;
 			// 利用禁止のURLパラメータを取得.
-			String[] kv = kind.notUrlParams();
+			String[] strAry = kind.notUrlParams();
 			// チェックが必要な場合.
-			if(kv.length != 0 && !urlParams.isEmpty()) {
-				// URLパラメータをデコード.
-				String url = StringUtil.urlDecode(urlParams, "UTF8");
-				final int len = kv.length;
+			if(strAry.length != 0 &&
+				urlParams != null && !urlParams.isEmpty()) {
+				String value;
+				final int len = strAry.length;
 				for(int i = 0; i < len; i += 2) {
+					// key, valueを取得.
+					key = StringUtil.urlEncode(strAry[i], "UTF8");
+					value = StringUtil.urlEncode(strAry[i + 1], "UTF8");
 					// チェック処理.
 					if(QuinaProxyUtil.eqURLParamsToKeyValue(
-						url, kv[i], kv[i + 1])) {
+						urlParams, key, value)) {
 						throw new QuinaException(
 							"URL parameters that cannot be specified " +
-							"are set (key: " + kv[i] + ", value: " +
-							kv[i + 1] + ") ");
+							"are set (key: " + strAry[i] + ", value: " +
+							strAry[i + 1] + ") ");
 					}
 				}
 			}
+			strAry = null;
+			
 			// 利用禁止のPropertyを取得.
-			kv = kind.notUrlParams();
+			Object[] objAry = kind.notProperty();
 			// チェックが必要な場合.
-			if(kv.length != 0 && !properties.isEmpty()) {
-				String value;
-				final int len = kv.length;
+			if(objAry.length != 0 &&
+				properties != null && !properties.isEmpty()) {
+				Object value;
+				final int len = objAry.length;
 				for(int i = 0; i < len; i += 2) {
+					key = "" + objAry[i];
 					// チェック処理.
-					if((value = properties.getString(kv[i])) != null) {
-						if(Alphabet.eq(kv[i+1], value)) {
+					if(properties.containsKey(key)) {
+						value = properties.get(key);
+						if(value == objAry[i +1] ||
+							(value != null && value.equals(objAry[i + 1]))) {
 							throw new QuinaException(
 								"Properties that cannot be specified " +
-								"are set (key: " + kv[i] + ", value: " +
-								kv[i+1] + ") ");
+								"are set (key: " + objAry[i] + ", value: " +
+								objAry[i+1] + ") ");
 						}
+					}
+				}
+			}
+			objAry = null;
+			
+			// 存在しない場合定義するURLパラメータを取得.
+			strAry = kind.addByNotExistUrlParams();
+			// 処理が必要な場合.
+			if(strAry.length != 0) {
+				final int len = strAry.length;
+				for(int i = 0; i < len; i += 2) {
+					// keyを取得.
+					key = StringUtil.urlEncode(strAry[i], "UTF8");
+					// URLパラメータが存在しない場合.
+					if(urlParams == null || urlParams.isEmpty()) {
+						if(urlType) {
+							urlParams = "?" + key + "=" +
+								StringUtil.urlEncode(strAry[i + 1], "UTF8");
+						} else {
+							urlParams = ";" + key + "=" +
+								StringUtil.urlEncode(strAry[i + 1], "UTF8");
+						}
+					// 指定キー情報が存在しない.
+					} else if(!QuinaProxyUtil.eqURLParamsToKey(urlParams, key)) {
+						if(urlType) {
+							urlParams += "&" + key + "=" +
+								StringUtil.urlEncode(strAry[i + 1], "UTF8");
+						} else {
+							urlParams += ";" + key + "=" +
+								StringUtil.urlEncode(strAry[i + 1], "UTF8");
+						}
+					}
+				}
+			}
+			strAry = null;
+			
+			// 存在しない場合定義するプロパティを取得.
+			objAry = kind.notProperty();
+			// 処理が必要な場合.
+			if(objAry.length != 0) {
+				final int len = objAry.length;
+				for(int i = 0; i < len; i += 2) {
+					key = "" + objAry[i];
+					// プロパティ設定内容が定義されてないか存在しない場合.
+					if(properties == null || properties.isEmpty()) {
+						// 定義されてない場合は生成.
+						if(properties == null) {
+							properties = new IndexMap<String, Object>();
+						}
+						// 追加処理.
+						properties.put(key, objAry[i + 1]);
+					// 指定プロパティキーが存在しない場合.
+					} else if(!properties.containsKey(key)) {
+						// 追加処理.
+						properties.put(key, objAry[i + 1]);
 					}
 				}
 			}
@@ -383,7 +450,6 @@ public class QuinaJDBCConfig {
 	 * @return Integer プーリングサイズが返却されます.
 	 */
 	public Integer getPoolingSize() {
-		checkFix();
 		if(poolingSize == null) {
 			return QuinaJDBCConstants.getPoolingSize();
 		}
@@ -396,7 +462,6 @@ public class QuinaJDBCConfig {
 	 * @return boolean trueの場合SQLの終端のセミコロンは不要です.
 	 */
 	public boolean isNotSemicolon() {
-		checkFix();
 		return notSemicolon;
 	}
 
@@ -544,6 +609,7 @@ public class QuinaJDBCConfig {
 		} else if(urlParams instanceof Map) {
 			this.urlParams = convertUrlParams((Map)urlParams, urlType);
 		}
+		this.urlType = urlType;
 		return this;
 	}
 

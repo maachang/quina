@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import quina.exception.QuinaException;
 import quina.jdbc.AbstractQuinaProxyStatement;
-import quina.jdbc.QuinaProxyConnection;
-import quina.jdbc.QuinaProxyResultSet;
+import quina.jdbc.QuinaConnection;
+import quina.jdbc.QuinaResultSet;
 import quina.util.Flag;
 import quina.util.NumberUtil;
 import quina.util.collection.ObjectList;
@@ -17,11 +17,11 @@ import quina.util.collection.ObjectList;
 public abstract class AbstractIoStatement<T>
 	implements Closeable {
 	// jdbc connection.
-	protected QuinaProxyConnection conn = null;
+	protected QuinaConnection conn = null;
 	// jdbc statement.
 	protected AbstractQuinaProxyStatement stmt = null;
 	// resultSet.
-	protected QuinaProxyResultSet rs = null;
+	protected QuinaResultSet rs = null;
 	// prepared statement params.
 	protected ObjectList<Object> params = null;
 	// statement生成パラメータ.
@@ -34,7 +34,7 @@ public abstract class AbstractIoStatement<T>
 	 * @param conn JDBCコネクションを設定します.
 	 * @param args Statement用のパラメータを設定します.
 	 */
-	protected void init(QuinaProxyConnection conn, Object... args) {
+	protected void init(QuinaConnection conn, Object... args) {
 		try {
 			if(conn.isClosed() || conn.isDestroy()) {
 				throw new QuinaException(
@@ -193,6 +193,6 @@ public abstract class AbstractIoStatement<T>
 		} else {
 			this.stmt = conn.prepareStatement(sql);
 		}
-		return stmt;
+		return this.stmt;
 	}
 }

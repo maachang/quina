@@ -15,6 +15,14 @@ public interface QuinaJDBCKind {
 	public boolean isUrl(String url);
 	
 	/**
+	 * 存在しない場合に追加するURLパラメータ群を取得.
+	 * @return String[] key, value, ... で設定されます.
+	 */
+	default String[] addByNotExistUrlParams() {
+		return new String[] {};
+	}
+	
+	/**
 	 * 指定禁止URLパラメータ群を取得.
 	 * @return String[] key, value, ... で設定されます.
 	 */
@@ -23,11 +31,19 @@ public interface QuinaJDBCKind {
 	}
 	
 	/**
-	 * 指定禁止プロパティ群を取得.
-	 * @return String[] key, value, ... で設定されます.
+	 * 存在しない場合に追加するプロパティ群を取得.
+	 * @return Object[] key, value, ... で設定されます.
 	 */
-	default String[] notProperty() {
-		return new String[] {};
+	default Object[] addByNotExistProperty() {
+		return new Object[] {};
+	}
+	
+	/**
+	 * 指定禁止プロパティ群を取得.
+	 * @return Object[] key, value, ... で設定されます.
+	 */
+	default Object[] notProperty() {
+		return new Object[] {};
 	}
 
 

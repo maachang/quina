@@ -9,7 +9,7 @@ import quina.annotation.proxy.ProxyScoped;
  * QinaProxyStatement.
  */
 @ProxyScoped
-public abstract class QuinaProxyStatement
+public abstract class QuinaStatement
 	extends AbstractQuinaProxyStatement
 	implements Statement {
 	

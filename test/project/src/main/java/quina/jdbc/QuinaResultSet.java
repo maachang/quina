@@ -14,7 +14,7 @@ import quina.util.Flag;
  * QuinaProxyResultSet.
  */
 @ProxyScoped
-public abstract class QuinaProxyResultSet
+public abstract class QuinaResultSet
 	implements ResultSet {
 	
 	/**

@@ -17,7 +17,7 @@ public abstract class AbstractQuinaProxyStatement
 	/**
 	 * ProxyConnection.
 	 */
-	protected QuinaProxyConnection connection;
+	protected QuinaConnection connection;
 	
 	/**
 	 * クローズフラグ.
@@ -42,7 +42,7 @@ public abstract class AbstractQuinaProxyStatement
 	 * @param statement 元のStatementを設定します.
 	 */
 	@ProxyInitialSetting
-	protected void setting(QuinaProxyConnection connection,
+	protected void setting(QuinaConnection connection,
 		Statement statement) {
 		if(connection == null || statement == null) {
 			throw new NullPointerException();
@@ -84,7 +84,7 @@ public abstract class AbstractQuinaProxyStatement
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyResultSet executeQuery(String sql)
+	public QuinaResultSet executeQuery(String sql)
 		throws SQLException {
 		checkClose();
 		return QuinaProxyUtil.getResultSet(this,
@@ -175,7 +175,7 @@ public abstract class AbstractQuinaProxyStatement
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyConnection getConnection()
+	public QuinaConnection getConnection()
 		throws SQLException {
 		checkClose();
 		return connection;
@@ -183,7 +183,7 @@ public abstract class AbstractQuinaProxyStatement
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyResultSet getResultSet()
+	public QuinaResultSet getResultSet()
 		throws SQLException {
 		checkClose();
 		return QuinaProxyUtil.getResultSet(

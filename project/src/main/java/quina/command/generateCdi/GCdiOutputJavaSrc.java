@@ -677,7 +677,8 @@ public class GCdiOutputJavaSrc {
 					
 					println(w, 3, "new quina.annotation.proxy.QuinaProxy() {");
 					println(w, 4, "public Class<?> getProxyClass() {");
-					println(w, 5, "return quinax.proxy.AutoProxyQuinaProxyStatement.class;");
+					println(w, 5, "return " +
+						GCdiUtil.getAutoProxyClassName(clazzName) + ".class;");
 					println(w, 4, "}");
 					println(w, 4, "public Object newInstance(");
 					println(w, 5, "quina.annotation.proxy.ProxySettingArgs args) {");

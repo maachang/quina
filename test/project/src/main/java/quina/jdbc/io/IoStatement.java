@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 
 import quina.exception.QuinaException;
-import quina.jdbc.QuinaProxyConnection;
-import quina.jdbc.QuinaProxyResultSet;
+import quina.jdbc.QuinaConnection;
+import quina.jdbc.QuinaResultSet;
 
 /**
  * I/O用ステートメント.
@@ -27,7 +27,7 @@ public class IoStatement
 	 * @param args 対象のStatementを取得するパラメータを設定します.
 	 */
 	public IoStatement(
-		QuinaProxyConnection conn, Object... args) {
+		QuinaConnection conn, Object... args) {
 		init(conn, args);
 	}
 	
@@ -117,7 +117,7 @@ public class IoStatement
 			if(query) {
 				// DbResultを返却.
 				return DbResult.create(
-					(QuinaProxyResultSet)ps.executeQuery(),
+					(QuinaResultSet)ps.executeQuery(),
 					this);
 			} else {
 				// 処理件数を返却.

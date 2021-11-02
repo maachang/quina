@@ -6,9 +6,10 @@
         ,password: password
         ,urlParams: {
             characterEncoding: utf8
-            ,useSSL: false
+            //,useSSL: false
             ,serverTimezone: "Asia/Tokyo"
             ,rewriteBatchedStatements: true
+            //,generateSimpleParameterMetadata: true
         }
     }
 }

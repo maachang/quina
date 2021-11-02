@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import quina.exception.QuinaException;
-import quina.jdbc.QuinaProxyResultSet;
+import quina.jdbc.QuinaResultSet;
 import quina.json.JsonOut;
 import quina.util.collection.AbstractEntryIterator;
 import quina.util.collection.AbstractKeyIterator;
@@ -31,7 +31,7 @@ public class DbResult implements
 	// IoStatement.
 	private AbstractIoStatement<?> ioStmt = null;
 	// resultSet.
-	private QuinaProxyResultSet rs = null;
+	private QuinaResultSet rs = null;
 	// keyIndex.
 	private KeyIndex metaColumns = null;
 	// metaNames.
@@ -73,7 +73,7 @@ public class DbResult implements
 	 * @return
 	 */
 	protected static final DbResult create(
-		final QuinaProxyResultSet rs,
+		final QuinaResultSet rs,
 		final AbstractIoStatement<?> ioStmt) {
 		try {
 			DbResult ret = new DbResult();

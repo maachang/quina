@@ -33,8 +33,22 @@ public class JsonMap
 	 *             key, value, key, value ... のように設定します.
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static final JsonMap of(Object... args) {
-		return new JsonMap(args);
+		if(args == null || args.length <= 0) {
+			return new JsonMap();
+		} else if(args.length == 1) {
+			Object o = args[0];
+			if(o instanceof Map) {
+				return new JsonMap((Map<String, Object>)o);
+			} else if(o instanceof IndexKeyValueList) {
+				return new JsonMap(
+					(IndexKeyValueList<String, Object>)o);
+			}
+			return new JsonMap(o, null);
+		} else {
+			return new JsonMap(args);
+		}
 	}
 	
 	/**
@@ -75,7 +89,7 @@ public class JsonMap
 	 *             key, value, key, value ... のように設定します.
 	 */
 	public JsonMap(final Object... args) {
-		if(args == null) {
+		if(args == null || args.length == 0) {
 			return;
 		}
 		final int len = args.length;
