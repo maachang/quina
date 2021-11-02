@@ -87,9 +87,6 @@ public class IoStatement
 	 * @return String sql文が返却されます.
 	 */
 	protected final String getExecuteSql() {
-		if(sqlBuf == null || sqlBuf.length() == 0) {
-			return null;
-		}
 		return sqlBuf.toString();
 	}
 	

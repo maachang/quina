@@ -18,27 +18,15 @@ public class TestDBJsonGet implements RESTfulGetSync {
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
 		QuinaDataSource ds = QuinaJDBCService.dataSource("testMySql");
-		QuinaConnection conn = null;
-		try {
-			conn = ds.getConnection();
+		try(QuinaConnection conn = ds.getConnection()) {
 			IoStatement io = conn.ioStatement();
 			io.sql("select id, name, grade from TestTable").
 				sql("where id=?").
 				params(1001);
 			DbResult rs = io.executeQuery();
-			JsonMap ret = rs.hasNext() ? JsonMap.of(rs.next()) : JsonMap.of();
-			conn.close();
-			conn = null;
-			return ret;
+			return rs.hasNext() ? JsonMap.of(rs.next()) : JsonMap.of();
 		} catch(Exception e) {
-			e.printStackTrace();
 			throw new QuinaException(e);
-		} finally {
-			if(conn != null) {
-				try {
-					conn.close();
-				} catch(Exception e) {}
-			}
 		}
 	}
 

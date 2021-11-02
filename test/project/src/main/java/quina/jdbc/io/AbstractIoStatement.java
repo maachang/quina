@@ -178,6 +178,7 @@ public abstract class AbstractIoStatement<T>
 	 * @return AbstractQuinaProxyStatement Statementが返却されます.
 	 * @throws Exception 例外.
 	 */
+	/*
 	protected AbstractQuinaProxyStatement createStatement()
 		throws Exception {
 		AbstractQuinaProxyStatement ret;
@@ -199,7 +200,7 @@ public abstract class AbstractIoStatement<T>
 		// リストにセット.
 		this.stmtList.add(ret);
 		return ret;
-	}
+	}*/
 	
 	/**
 	 * PreparedStatementを取得.
