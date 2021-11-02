@@ -10,8 +10,11 @@ import quina.annotation.proxy.ProxyInitialSetting;
 import quina.annotation.proxy.ProxyInjectMethod;
 import quina.annotation.proxy.ProxyOverride;
 import quina.annotation.proxy.ProxyScoped;
+import quina.jdbc.io.AbstractIoStatement;
+import quina.jdbc.io.IoStatement;
 import quina.util.AtomicNumber64;
 import quina.util.Flag;
+import quina.util.collection.ObjectList;
 
 /**
  * ProxyConnection.
@@ -41,6 +44,9 @@ public abstract class QuinaProxyConnection
 	
 	// クローズフラグ.
 	private final Flag closeFlag = new Flag(true);
+	
+	// I/Oステートメント管理.
+	private ObjectList<AbstractIoStatement<?>> ioStatementList = null;
 	
 	/**
 	 * 初期設定.
@@ -79,6 +85,19 @@ public abstract class QuinaProxyConnection
 		return dataSource.getDefine();
 	}
 	
+	// I/Oステートメントリストをクリア.
+	protected void closeIoStatement() {
+		if(ioStatementList != null) {
+			final int len = ioStatementList.size();
+			for(int i = 0; i < len; i ++) {
+				try {
+					ioStatementList.get(i).close();
+				} catch(Exception e) {}
+			}
+			ioStatementList = null;
+		}
+	}
+	
 	/**
 	 * データ破棄.
 	 */
@@ -87,6 +106,7 @@ public abstract class QuinaProxyConnection
 		destroyFlag.set(true);
 		lastPoolingTime.set(
 			QuinaJDBCTimeoutThread.DESTROY_TIMEOUT);
+		closeIoStatement();
 		Connection c = connection;
 		connection = null;
 		dataSource = null;
@@ -194,6 +214,8 @@ public abstract class QuinaProxyConnection
 				destroy();
 			// プーリングする場合.
 			} else {
+				// IoStatementを破棄.
+				closeIoStatement();
 				// 物理的にクローズせずに
 				// 仮クローズ.
 				lastPoolingTime.set(
@@ -242,18 +264,21 @@ public abstract class QuinaProxyConnection
 				this, connection.createStatement())
 		);
 	}
-
+	
 	@Override
 	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(String sql)
+	public QuinaProxyStatement createStatement(
+		int resultSetType, int resultSetConcurrency)
 		throws SQLException {
 		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
-			QuinaProxyUtil.getPreparedStatement(
-				this, connection.prepareStatement(getSQL(sql)))
+		return (QuinaProxyStatement)appendStatement(
+			QuinaProxyUtil.getStatement(
+				this, connection.createStatement(
+				resultSetType, resultSetConcurrency))
 		);
 	}
-
+	
+	
 	@Override
 	@ProxyOverride
 	public QuinaProxyCallableStatement prepareCall(String sql)
@@ -264,20 +289,7 @@ public abstract class QuinaProxyConnection
 				this, connection.prepareCall(getSQL(sql)))
 		);
 	}
-
-	@Override
-	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(
-		String sql, int resultSetType, int resultSetConcurrency)
-			throws SQLException {
-		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
-			QuinaProxyUtil.getPreparedStatement(
-				this, connection.prepareStatement(
-					getSQL(sql), resultSetType, resultSetConcurrency))
-		);
-	}
-
+	
 	@Override
 	@ProxyOverride
 	public QuinaProxyCallableStatement prepareCall(
@@ -288,20 +300,6 @@ public abstract class QuinaProxyConnection
 			QuinaProxyUtil.getCallableStatement(
 				this, connection.prepareCall(
 					getSQL(sql), resultSetType, resultSetConcurrency))
-		);
-	}
-
-	@Override
-	@ProxyOverride
-	public QuinaProxyPreparedStatement prepareStatement(
-		String sql, int resultSetType, int resultSetConcurrency,
-		int resultSetHoldability) throws SQLException {
-		checkClose();
-		return (QuinaProxyPreparedStatement)appendStatement(
-			QuinaProxyUtil.getPreparedStatement(
-				this, connection.prepareStatement(
-					getSQL(sql), resultSetType, resultSetConcurrency,
-					resultSetHoldability))
 		);
 	}
 
@@ -318,7 +316,60 @@ public abstract class QuinaProxyConnection
 					resultSetHoldability))
 		);
 	}
-
+	
+	@Override
+	@ProxyOverride
+	public QuinaProxyStatement createStatement(
+		int resultSetType, int resultSetConcurrency,
+		int resultSetHoldability)
+		throws SQLException {
+		checkClose();
+		return (QuinaProxyStatement)appendStatement(
+			QuinaProxyUtil.getStatement(
+				this, connection.createStatement(
+				resultSetType, resultSetConcurrency,
+				resultSetHoldability))
+		);
+	}
+	
+	@Override
+	@ProxyOverride
+	public QuinaProxyPreparedStatement prepareStatement(String sql)
+		throws SQLException {
+		checkClose();
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(getSQL(sql)))
+		);
+	}
+	
+	@Override
+	@ProxyOverride
+	public QuinaProxyPreparedStatement prepareStatement(
+		String sql, int resultSetType, int resultSetConcurrency)
+			throws SQLException {
+		checkClose();
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), resultSetType, resultSetConcurrency))
+		);
+	}
+	
+	@Override
+	@ProxyOverride
+	public QuinaProxyPreparedStatement prepareStatement(
+		String sql, int resultSetType, int resultSetConcurrency,
+		int resultSetHoldability) throws SQLException {
+		checkClose();
+		return (QuinaProxyPreparedStatement)appendStatement(
+			QuinaProxyUtil.getPreparedStatement(
+				this, connection.prepareStatement(
+					getSQL(sql), resultSetType, resultSetConcurrency,
+					resultSetHoldability))
+		);
+	}
+	
 	@Override
 	@ProxyOverride
 	public QuinaProxyPreparedStatement prepareStatement(
@@ -331,7 +382,7 @@ public abstract class QuinaProxyConnection
 					getSQL(sql), autoGeneratedKeys))
 		);
 	}
-
+	
 	@Override
 	@ProxyOverride
 	public QuinaProxyPreparedStatement prepareStatement(
@@ -344,7 +395,7 @@ public abstract class QuinaProxyConnection
 					getSQL(sql), columnIndexes))
 		);
 	}
-
+	
 	@Override
 	@ProxyOverride
 	public QuinaProxyPreparedStatement prepareStatement
@@ -357,5 +408,99 @@ public abstract class QuinaProxyConnection
 					getSQL(sql), columnNames))
 		);
 	}
+	
+	/**
+	 * I/Oステートメントを取得.
+	 * @return IoStatement I/Oステートメントが返却されます.
+	 * @throws SQLException SQL例外.
+	 */
+	public IoStatement ioStatement()
+		throws SQLException {
+		checkClose();
+		IoStatement ret = new IoStatement(this);
+		ioStatementList.add(ret);
+		return ret;
+	}
+	
+	/**
+	 * I/Oステートメントを取得.
+	 * @param resultSetType ResultSet定数.
+	 * @param resultSetConcurrency ResultSet定数.
+	 * @return IoStatement I/Oステートメントが返却されます.
+	 * @throws SQLException SQL例外.
+	 */
+	public IoStatement ioStatement(
+		int resultSetType, int resultSetConcurrency)
+		throws SQLException {
+		checkClose();
+		IoStatement ret = new IoStatement(
+			this, resultSetType, resultSetConcurrency);
+		ioStatementList.add(ret);
+		return ret;
+	}
+	
+	/**
+	 * I/Oステートメントを取得.
+	 * @param resultSetType ResultSet定数.
+	 * @param resultSetConcurrency ResultSet定数.
+	 * @param resultSetHoldability ResultSet定数.
+	 * @return IoStatement I/Oステートメントが返却されます.
+	 * @throws SQLException SQL例外.
+	 */
+	public IoStatement ioStatement(
+		int resultSetType, int resultSetConcurrency,
+		int resultSetHoldability)
+		throws SQLException {
+		checkClose();
+		IoStatement ret = new IoStatement(
+			this, resultSetType, resultSetConcurrency,
+			resultSetHoldability);
+		ioStatementList.add(ret);
+		return ret;
+	}
+	
+	/**
+	 * I/Oステートメントを取得.
+	 * @param autoGeneratedKeys 自動生成キーを返すかどうかを示すフラグ.
+	 * @return IoStatement I/Oステートメントが返却されます.
+	 * @throws SQLException SQL例外.
+	 */
+	public IoStatement ioStatement(int autoGeneratedKeys)
+		throws SQLException {
+		checkClose();
+		IoStatement ret = new IoStatement(
+			this, autoGeneratedKeys);
+		ioStatementList.add(ret);
+		return ret;
+	}
+	
+	/**
+	 * I/Oステートメントを取得.
+	 * @param columnIndexes 挿入された行から返される列を示す列インデックスの配列.
+	 * @return IoStatement I/Oステートメントが返却されます.
+	 * @throws SQLException SQL例外.
+	 */
+	public IoStatement ioStatement(int[] columnIndexes)
+		throws SQLException {
+		checkClose();
+		IoStatement ret = new IoStatement(
+			this, (Object)columnIndexes);
+		ioStatementList.add(ret);
+		return ret;
+	}
+	
+	/**
+	 * I/Oステートメントを取得.
+	 * @param columnNames 挿入された行から返される列を示す列名の配列.
+	 * @return IoStatement I/Oステートメントが返却されます.
+	 * @throws SQLException SQL例外.
+	 */
+	public IoStatement ioStatement(String[] columnNames)
+		throws SQLException {
+		checkClose();
+		IoStatement ret = new IoStatement(
+			this,(Object)columnNames);
+		ioStatementList.add(ret);
+		return ret;
+	}
 }
-

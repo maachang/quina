@@ -14,6 +14,8 @@ import java.util.Queue;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import quina.exception.QuinaException;
+
 /**
  * 日付関連ユーティリティ.
  */
@@ -392,5 +394,124 @@ public class DateUtil {
 			return java.util.Date.from(((ZonedDateTime)v).toInstant());
 		}
 		throw new DateException("Failed to convert Date object.");
+	}
+	
+	/**
+	 * 時間変換.
+	 * @param o 変換対象のオブジェクトを設定します.
+	 * @return java.sql.Time 変換された内容が返却されます.
+	 */
+	public static final java.sql.Time parseTime(Object o) {
+		if (o == null) {
+			return null;
+		} else if (o instanceof java.util.Date) {
+			return getTime((java.util.Date) o);
+		} else if (o instanceof Long) {
+			return getTime((Long) o);
+		} else if (o instanceof Number) {
+			return getTime(((Number) o).longValue());
+		} else if (o instanceof String) {
+			if (NumberUtil.isNumeric(o)) {
+				return getTime(NumberUtil.parseLong((String) o));
+			}
+			return getTime((String) o);
+		}
+		throw new QuinaException("java.sql.Time conversion failed: " + o);
+	}
+	
+	/** 時間のみ表現. **/
+	private static final java.sql.Time getTime(long d) {
+		return getTime(new java.util.Date(d));
+	}
+
+	/** 時間のみ表現. **/
+	private static final java.sql.Time getTime(java.util.Date n) {
+		return new java.sql.Time(n.getTime());
+	}
+	
+	// 文字列から時間取得.
+	public static final java.sql.Time getTime(String value) {
+		if (value == null || (value = value.trim()).length() <= 0) {
+			return null;
+		}
+		java.sql.Time ret = (java.sql.Time) stringTime(value);
+		if (ret == null) {
+			ret = (java.sql.Time) cutTime(value);
+		}
+		return ret;
+	}
+
+	/** 連続文字での時間フォーマット変換. **/
+	@SuppressWarnings("deprecation")
+	private static final java.util.Date stringTime(String value) {
+		char c;
+		final int len = value.length();
+		for (int i = 0; i < len; i++) {
+			c = value.charAt(i);
+			if (!(c >= '0' && c <= '9')) {
+				// 数値以外の条件が格納されている場合は処理しない.
+				return null;
+			}
+		}
+
+		// java.sql.Time.
+		if (len < 2) {
+			if (len == 0) {
+				java.util.Date d = new java.util.Date();
+				return new java.sql.Time(d.getHours(), d.getMinutes(), d.getSeconds());
+			} else {
+				return new java.sql.Time(NumberUtil.parseInt(value), 0, 0);
+			}
+		}
+		if (len < 4) {
+			return new java.sql.Time(NumberUtil.parseInt(value.substring(0, 2)), 0, 0);
+		} else if (len < 6) {
+			return new java.sql.Time(NumberUtil.parseInt(value.substring(0, 2)),
+				NumberUtil.parseInt(value.substring(2, 4)), 0);
+		} else {
+			return new java.sql.Time(NumberUtil.parseInt(value.substring(0, 2)),
+				NumberUtil.parseInt(value.substring(2, 4)), NumberUtil.parseInt(value.substring(4, 6)));
+		}
+	}
+	
+	/** 区切り文字による時間フォーマット変換. **/
+	@SuppressWarnings("deprecation")
+	private static final java.util.Date cutTime(String value) {
+		char c;
+		int len = value.length();
+		List<String> list = new ArrayList<String>();
+		StringBuilder buf = null;
+		for (int i = 0; i < len; i++) {
+			c = value.charAt(i);
+			if (c >= '0' && c <= '9') {
+				if (buf == null) {
+					buf = new StringBuilder();
+				}
+				buf.append(c);
+			} else if (buf != null) {
+				list.add(buf.toString());
+				buf = null;
+			}
+		}
+		if (buf != null) {
+			list.add(buf.toString());
+			buf = null;
+		}
+		switch (len) {
+		case 0:
+			return null;
+		case 1:
+			return new java.sql.Time(
+				NumberUtil.parseInt(list.get(0)), 0, 0);
+		case 2:
+			return new java.sql.Time(
+				NumberUtil.parseInt(list.get(0)),
+				NumberUtil.parseInt(list.get(1)), 0);
+		default:
+			return new java.sql.Time(
+				NumberUtil.parseInt(list.get(0)),
+				NumberUtil.parseInt(list.get(1)),
+				NumberUtil.parseInt(list.get(2)));
+		}
 	}
 }

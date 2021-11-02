@@ -175,14 +175,16 @@ public abstract class AbstractQuinaProxyStatement
 	
 	@Override
 	@ProxyOverride
-	public QuinaProxyConnection getConnection() throws SQLException {
+	public QuinaProxyConnection getConnection()
+		throws SQLException {
 		checkClose();
 		return connection;
 	}
 
 	@Override
 	@ProxyOverride
-	public QuinaProxyResultSet getResultSet() throws SQLException {
+	public QuinaProxyResultSet getResultSet()
+		throws SQLException {
 		checkClose();
 		return QuinaProxyUtil.getResultSet(
 			this, getStatement().getResultSet());

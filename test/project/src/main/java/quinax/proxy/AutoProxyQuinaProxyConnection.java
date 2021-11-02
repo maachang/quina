@@ -65,25 +65,6 @@ public final class AutoProxyQuinaProxyConnection
 	}
 
 	@Override
-	public java.sql.Statement createStatement(
-		int arg0
-		,int arg1
-		,int arg2
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return connection.createStatement(arg0, arg1, arg2);
-	}
-
-	@Override
-	public java.sql.Statement createStatement(
-		int arg0
-		,int arg1
-	) throws java.sql.SQLException {
-		super.checkClose();
-		return connection.createStatement(arg0, arg1);
-	}
-
-	@Override
 	public java.sql.SQLWarning getWarnings()
 		throws java.sql.SQLException {
 		super.checkClose();
