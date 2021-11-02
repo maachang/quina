@@ -271,7 +271,12 @@ public class JsonMap
 		
 		// 次の情報を取得.
 		private boolean nextValue(boolean hasNext) {
-			if(entry != null) {
+			if(list == null) {
+				if(hasNext) {
+					return false;
+				}
+				throw new NoSuchElementException();
+			} else if(entry != null) {
 				return true;
 			} else if(position >= list.length) {
 				if(hasNext) {

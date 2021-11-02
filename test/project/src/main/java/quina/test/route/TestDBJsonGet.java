@@ -26,7 +26,7 @@ public class TestDBJsonGet implements RESTfulGetSync {
 				sql("where id=?").
 				params(1001);
 			DbResult rs = io.executeQuery();
-			JsonMap ret = JsonMap.of(rs.next());
+			JsonMap ret = rs.hasNext() ? JsonMap.of(rs.next()) : JsonMap.of();
 			conn.close();
 			conn = null;
 			return ret;

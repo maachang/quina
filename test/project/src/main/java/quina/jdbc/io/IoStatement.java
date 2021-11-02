@@ -78,8 +78,8 @@ public class IoStatement
 	 * 実行用のSQLとパラメーターをクリア.
 	 */
 	protected final void clearSqlAndParmas() {
+		super.clearParmas();
 		sqlBuf = null;
-		params = null;
 	}
 	
 	/**
@@ -123,12 +123,10 @@ public class IoStatement
 				// 処理件数を返却.
 				long ret = ps.executeLargeUpdate();
 				ps.close();
-				stmt = null;
 				return ret;
 			}
 		} catch(QuinaException qe) {
 			if(ps != null) {
-				stmt = null;
 				try {
 					ps.close();
 				} catch(Exception e) {}
@@ -136,7 +134,6 @@ public class IoStatement
 			throw qe;
 		} catch(Exception e) {
 			if(ps != null) {
-				stmt = null;
 				try {
 					ps.close();
 				} catch(Exception ee) {}
