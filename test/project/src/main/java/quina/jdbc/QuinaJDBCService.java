@@ -275,11 +275,18 @@ public class QuinaJDBCService implements QuinaService {
 			throw new QuinaException(
 				"The service has not started.");
 		}
+		QuinaDataSource ret = null;
 		lock.readLock().lock();
 		try {
-			return dataSources.get(name);
+			ret = dataSources.get(name);
 		} finally {
 			lock.readLock().unlock();
 		}
+		// 存在しない場合は例外.
+		if(ret == null) {
+			throw new QuinaException("The target DataSource \"" +
+				name + "\" does not exist. ");
+		}
+		return ret;
 	}
 }
