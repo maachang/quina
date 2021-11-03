@@ -60,22 +60,24 @@ public abstract class QuinaConnection
 	 */
 	@ProxyInitialSetting
 	protected void setting(Boolean notPooling,
-		QuinaDataSource dataSource,
-		Connection connection) {
+		QuinaDataSource dataSource, Connection connection) {
 		if(notPooling == null || dataSource == null ||
 			connection == null) {
 			throw new NullPointerException();
 		}
-		this.notPooling = notPooling;
-		this.dataSource = dataSource;
-		this.connection = connection;
-		// コネクションの初期設定.
-		this.dataSource.getConfig()
-			.appendConnection(
-				this.connection);
-		
-		// 初期設定.
-		this.closeFlag.set(false);
+		// closeがtrueの場合.
+		if(closeFlag.setToGetBefore(false)) {
+			// 初期データセット.
+			this.notPooling = notPooling;
+			this.dataSource = dataSource;
+			this.connection = connection;
+			// コネクションの初期設定.
+			this.dataSource.getConfig()
+				.appendConnection(
+					this.connection);
+			// コネクションカウントを１UP.
+			this.dataSource.incConnectionCount();
+		}
 	}
 	
 	/**
@@ -106,8 +108,12 @@ public abstract class QuinaConnection
 	 * データ破棄.
 	 */
 	public void destroy() {
+		// 今回破棄される場合.
+		if(!destroyFlag.setToGetBefore(true)) {
+			// コネクションカウントを１デクリメント.
+			dataSource.decConnectionCount();
+		}
 		closeFlag.set(true);
-		destroyFlag.set(true);
 		lastPoolingTime.set(
 			QuinaJDBCTimeoutThread.DESTROY_TIMEOUT);
 		closeIoStatement();

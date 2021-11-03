@@ -118,9 +118,7 @@ public class IoStatement
 					this);
 			} else {
 				// 処理件数を返却.
-				long ret = ps.executeLargeUpdate();
-				ps.close();
-				return ret;
+				return ps.executeLargeUpdate();
 			}
 		} catch(QuinaException qe) {
 			if(ps != null) {

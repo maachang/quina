@@ -158,7 +158,7 @@ public final class HttpServerUtil {
 				// CoreExceptionで、ステータスが５００以下の場合は
 				// エラー表示なし.
 				if(e instanceof CoreException) {
-					if((status = ((CoreException)e).getStatus()) > 500) {
+					if((status = ((CoreException)e).getStatus()) >= 500) {
 						noErrorFlag = true;
 					}
 				// それ以外の例外の場合はエラー表示.

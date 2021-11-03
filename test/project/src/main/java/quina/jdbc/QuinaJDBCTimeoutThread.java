@@ -58,7 +58,7 @@ class QuinaJDBCTimeoutThread
 		throws Throwable {
 		Queue<QuinaConnection> q = null;
 		QuinaDataSource ds;
-		QuinaConnection conn;
+		QuinaConnection conn = null;
 		final int len = dataSources.size();
 		int no = 0;
 		int timeoutId = -1;
@@ -76,7 +76,7 @@ class QuinaJDBCTimeoutThread
 			// 処理対象のDataSourceを取得.
 			ds = dataSources.valueAt(no ++);
 			// Pooling対象のQueueを取得.
-			q = ds.pooling;
+			q = ds.getPooling();
 			// Queueに情報が存在しない場合.
 			if(q.size() <= 0) {
 				Thread.sleep(50L);
@@ -86,6 +86,7 @@ class QuinaJDBCTimeoutThread
 			while(!stopFlag) {
 				Thread.sleep(50L);
 				try {
+					conn = null;
 					// 取得できなかった場合.
 					if((conn = q.poll()) == null) {
 						break;
@@ -95,6 +96,7 @@ class QuinaJDBCTimeoutThread
 						if(conn.getTimeoutId() == timeoutId) {
 							// プーリングセット.
 							ds.pushPooling(conn);
+							// このDataSourceの処理を終了.
 							break;
 						// タイムアウトしている場合.
 						}
@@ -110,7 +112,16 @@ class QuinaJDBCTimeoutThread
 							ds.pushPooling(conn);
 						}
 					}
-				} catch(Exception e ) {}
+				} catch(Exception e ) {
+					// エラーが発生した場合.
+					if(conn != null) {
+						// コネクションを破棄.
+						try {
+							conn.destroy();
+						} catch(Exception ee) {}
+						conn = null;
+					}
+				}
 			}
 		}
 	}

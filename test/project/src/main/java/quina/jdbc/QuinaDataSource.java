@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
+import quina.util.AtomicNumber;
 import quina.util.Flag;
 
 /**
@@ -20,15 +21,18 @@ import quina.util.Flag;
 public class QuinaDataSource implements DataSource {
 	
 	/** プーリングデータ格納用. **/
-	protected final Queue<QuinaConnection> pooling =
+	private final Queue<QuinaConnection> pooling =
 		new ConcurrentLinkedQueue<QuinaConnection>();
-
+	
 	/** JDBCConfig. **/
 	private QuinaJDBCConfig config;
 	
 	/** オブジェクト破棄チェック. **/
 	private final Flag destroyFlag = new Flag();
-
+	
+	/** 現在のコネクション数. **/
+	private final AtomicNumber connectionCount =new AtomicNumber(0);
+	
 	/**
 	 * コンストラクタ.
 	 * @param config QuinaJDBCDefineを設定します.
@@ -40,7 +44,7 @@ public class QuinaDataSource implements DataSource {
 	/**
 	 * DataSourceを破棄.
 	 */
-	public void destroy() {
+	protected void destroy() {
 		if (!destroyFlag.setToGetBefore(true)) {
 			// 保持しているコネクションを全て破棄.
 			QuinaConnection conn;
@@ -86,6 +90,37 @@ public class QuinaDataSource implements DataSource {
 		// プーリングにセット.
 		pooling.offer(conn);
 		return true;
+	}
+	
+	/**
+	 * Pooling管理オブジェクトを取得.
+	 * @return Queue<QuinaConnection> Pooling管理オブジェクトが
+	 *                                返却されます.
+	 */
+	protected Queue<QuinaConnection> getPooling() {
+		return pooling;
+	}
+	
+	/**
+	 * コネクションカウントを１UP.
+	 */
+	protected void incConnectionCount() {
+		connectionCount.inc();
+	}
+	
+	/**
+	 * コネクションカウントを１Down.
+	 */
+	protected void decConnectionCount() {
+		connectionCount.dec();
+	}
+	
+	/**
+	 * コネクションカウントを取得.
+	 * @return int 現在のコネクションカウントが返却されます.
+	 */
+	public int getConnectionCount() {
+		return connectionCount.get();
 	}
 
 	/**

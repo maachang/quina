@@ -1,6 +1,8 @@
 package quina.json;
 
 import java.util.AbstractList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import quina.util.collection.ObjectList;
@@ -11,13 +13,13 @@ import quina.util.collection.ObjectList;
  * add などの追加処理は行えません.
  */
 public class JsonList extends AbstractList<Object> {
-	private final Object[] array;
+	private final ObjectList<Object> list;
 	
 	/**
 	 * コンストラクタ.
 	 */
 	protected JsonList() {
-		array = new Object[0];
+		list = new ObjectList<Object>();
 	}
 	
 	/**
@@ -31,13 +33,13 @@ public class JsonList extends AbstractList<Object> {
 	
 	/**
 	 * コンストラクタ.
-	 * @param list List情報を設定します.
+	 * @param array Object配列を設定します.
 	 */
 	public JsonList(List<?> list) {
 		final int len = list == null ? 0 : list.size();
-		array = new Object[len];
+		this.list = new ObjectList<Object>(len);
 		for(int i = 0; i < len; i ++) {
-			array[i] = list.get(i);
+			this.list.add(list.get(i));
 		}
 	}
 	
@@ -46,11 +48,10 @@ public class JsonList extends AbstractList<Object> {
 	 * @param list List情報を設定します.
 	 */
 	public JsonList(ObjectList<?> list) {
-		final int len = list == null ?
-			0 : list.size();
-		array = new Object[len];
+		final int len = list == null ? 0 : list.size();
+		this.list = new ObjectList<Object>(len);
 		for(int i = 0; i < len; i ++) {
-			array[i] = list.get(i);
+			this.list.add(list.get(i));
 		}
 	}
 	
@@ -59,21 +60,74 @@ public class JsonList extends AbstractList<Object> {
 	 * @param array リスト情報を設定します.
 	 */
 	public JsonList(Object... array) {
-		final int len = array == null ?
-			0 : array.length;
-		this.array = new Object[len];
-		System.arraycopy(array, 0, this.array,
-			0, len);
+		final int len = array == null ? 0 : array.length;
+		this.list = new ObjectList<Object>(len);
+		for(int i = 0; i < len; i ++) {
+			this.list.add(array[i]);
+		}
+	}
+	
+	@Override
+	public void clear() {
+		list.clear();
 	}
 
 	@Override
 	public Object get(int index) {
-		return array[index];
+		return list.get(index);
 	}
 
 	@Override
 	public int size() {
-		return array.length;
+		return list.size();
 	}
-
+	
+	@Override
+	public boolean add(Object value) {
+		list.add(value);
+		return true;
+	}
+	
+	@Override
+	public void add(int index, Object value) {
+		list.add(index, value);
+	}
+	
+	@Override
+	public Object set(int index, Object value) {
+		return list.set(index, value);
+	}
+	
+	@Override
+	@SuppressWarnings("rawtypes")
+	public boolean addAll(Collection c) {
+		try {
+			final Iterator it = c.iterator();
+			while(it.hasNext()) {
+				list.add(it.next());
+			}
+		} catch(Exception e) {
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	@SuppressWarnings("rawtypes")
+	public boolean addAll(int index, Collection c) {
+		try {
+			final Iterator it = c.iterator();
+			while(it.hasNext()) {
+				list.add(index, it.next());
+			}
+		} catch(Exception e) {
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public Object remove(int index) {
+		return list.remove(index);
+	}
 }

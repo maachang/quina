@@ -96,11 +96,7 @@ public class DbResult implements
 			} catch(Exception e) {}
 			rs = null;
 		}
-		if(ioStmt != null) {
-			AbstractIoStatement<?> stmt = ioStmt;
-			ioStmt = null;
-			stmt.close();
-		}
+		ioStmt = null;
 		rs = null;
 		row = null;
 		nowRow = null;
