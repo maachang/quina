@@ -1,15 +1,15 @@
 package quina.jdbc;
 
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import quina.QuinaServiceThread;
+import quina.util.collection.IndexKeyValueList;
 
 /**
  * PoolingConnectionタイムアウト監視スレッド.
  */
 class QuinaJDBCTimeoutThread
-	extends QuinaServiceThread<QuinaConnection> {
+	extends QuinaServiceThread<Object> {
 	
 	// 利用中を示すタイムアウト値.
 	protected static final long NONE_TIMEOUT = -1L;
@@ -20,15 +20,18 @@ class QuinaJDBCTimeoutThread
 	// タイムアウト値.
 	private long timeout;
 	
-	// タイムアウト監視Queue.
-	private Queue<QuinaConnection> queue =
-		new ConcurrentLinkedQueue<QuinaConnection>();
+	// データソース管理.
+	private IndexKeyValueList<String, QuinaDataSource> dataSources;
 	
 	/**
 	 * コンストラクタ.
+	 * @param dataSources dataSourceを管理するオブジェクトを設定します.
 	 * @param timeout タイムアウト値を設定します.
 	 */
-	public QuinaJDBCTimeoutThread(long timeout) {
+	protected QuinaJDBCTimeoutThread(
+		IndexKeyValueList<String, QuinaDataSource> dataSources,
+		long timeout) {
+		this.dataSources = dataSources;
 		this.timeout = timeout;
 	}
 	
@@ -36,8 +39,7 @@ class QuinaJDBCTimeoutThread
 	 * データ追加.
 	 */
 	@Override
-	public void offer(QuinaConnection value) {
-		queue.offer(value);
+	public void offer(Object value) {
 	}
 
 	/**
@@ -45,57 +47,71 @@ class QuinaJDBCTimeoutThread
 	 */
 	@Override
 	protected QuinaConnection poll() {
-		return queue.poll();
+		return null;
 	}
 
 	/**
 	 * タイムアウト実行処理.
 	 */
 	@Override
-	protected void executeCall(QuinaConnection conn)
+	protected void executeCall(Object o)
 		throws Throwable {
-		long time;
-		// 既に破棄されてる場合.
-		if(conn == null || conn.isDestroy()) {
-			// この内容は除外.
-			conn = null;
-			Thread.sleep(50L);
-			return;
-		// 利用中(time = NONE_TIMEOUT)の場合.
-		} else if((time = conn.getLastPoolingTime()) == NONE_TIMEOUT) {
-			Thread.sleep(50L);
-			return;
-		}
-		try {
-			// タイムアウトしている場合.
-			if(time + timeout < System.currentTimeMillis()) {
-				// 破棄して除外.
-				conn.destroy();
-				conn = null;
-			}
-		} finally {
-			// タイムアウトしてない.
-			if(conn != null) {
-				// 今回評価した内容は終端に追加.
-				queue.offer(conn);
-			}
-		}
-		Thread.sleep(50L);
-	}
-	
-	/**
-	 * 後始末実行.
-	 */
-	protected void cleanUpCall() {
+		Queue<QuinaConnection> q = null;
+		QuinaDataSource ds;
 		QuinaConnection conn;
-		while(true) {
-			try {
-				if((conn = queue.poll()) == null) {
-					return;
-				}
-				conn.destroy();
-			} catch(Exception e) {}
+		final int len = dataSources.size();
+		int no = 0;
+		int timeoutId = -1;
+		while (!stopFlag) {
+			// タイムアウトチェック対象のDataSourceの項番を取得.
+			if(no >= len) {
+				no = 0;
+			}
+			// 今回処理分のタイムアウトIDを取得.
+			if(timeoutId >= 1000) {
+				timeoutId = 0;
+			} else {
+				timeoutId ++;
+			}
+			// 処理対象のDataSourceを取得.
+			ds = dataSources.valueAt(no ++);
+			// Pooling対象のQueueを取得.
+			q = ds.pooling;
+			// Queueに情報が存在しない場合.
+			if(q.size() <= 0) {
+				Thread.sleep(50L);
+				continue;
+			}
+			// Queueに情報が存在する場合タイムアウトチェック.
+			while(!stopFlag) {
+				Thread.sleep(50L);
+				try {
+					// 取得できなかった場合.
+					if((conn = q.poll()) == null) {
+						break;
+					// 破棄されてない場合.
+					} else if(!conn.isDestroy()) {
+						// 今回チェック済みの条件を検出.
+						if(conn.getTimeoutId() == timeoutId) {
+							// プーリングセット.
+							ds.pushPooling(conn);
+							break;
+						// タイムアウトしている場合.
+						}
+						if(conn.getLastPoolingTime() + timeout <
+							System.currentTimeMillis()) {
+							// 破棄して除外.
+							conn.destroy();
+						// タイムアウトしてない場合.
+						} else {
+							// 処理済みとしてTimeoutIdをセット.
+							conn.setTimeoutId(timeoutId);
+							// プーリングセット.
+							ds.pushPooling(conn);
+						}
+					}
+				} catch(Exception e ) {}
+			}
 		}
 	}
-	
 }

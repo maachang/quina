@@ -140,15 +140,9 @@ public class QuinaJDBCService implements QuinaService {
 			if(dataSources.size() > 0) {
 				// TimeoutThreadを生成.
 				timeoutThread = new QuinaJDBCTimeoutThread(
-					config.getLong("timeout"));
+					dataSources, config.getLong("timeout"));
 				// TimeoutThreadを開始.
 				timeoutThread.startThread();
-				// DataSourceにTimeoutThreadを登録.
-				final int len = dataSources.size();
-				for(int i = 0; i < len; i ++) {
-					dataSources.valueAt(i)
-						.setTimeoutThread(timeoutThread);
-				}
 			}
 		} finally {
 			lock.writeLock().unlock();

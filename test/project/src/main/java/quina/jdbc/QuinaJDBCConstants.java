@@ -68,7 +68,7 @@ public class QuinaJDBCConstants {
 	/**
 	 * 最大のプーリングサイズ.
 	 */
-	protected static final int MAX_POOLING_SIZE = 512;
+	protected static final int MAX_POOLING_SIZE = 9999;
 	
 	/**
 	 * プーリングサイズ.

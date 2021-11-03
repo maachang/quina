@@ -12,6 +12,7 @@ import quina.annotation.proxy.ProxyOverride;
 import quina.annotation.proxy.ProxyScoped;
 import quina.jdbc.io.AbstractIoStatement;
 import quina.jdbc.io.IoStatement;
+import quina.util.AtomicNumber;
 import quina.util.AtomicNumber64;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
@@ -32,6 +33,9 @@ public abstract class QuinaConnection
 	// 最終プーリング時間.
 	protected final AtomicNumber64 lastPoolingTime =
 		new AtomicNumber64();
+	
+	// タイムアウト識別ID.
+	private final AtomicNumber timeoutId = new AtomicNumber(-1);
 	
 	// プーリング対象のデータソース.
 	private QuinaDataSource dataSource;
@@ -66,7 +70,7 @@ public abstract class QuinaConnection
 		this.dataSource = dataSource;
 		this.connection = connection;
 		// コネクションの初期設定.
-		this.dataSource.getDefine()
+		this.dataSource.getConfig()
 			.appendConnection(
 				this.connection);
 		
@@ -76,13 +80,13 @@ public abstract class QuinaConnection
 	
 	/**
 	 * QuinaJDBCDefineを取得.
-	 * @return QuinaJDBCDefine defineが返却されます.
+	 * @return QuinaJDBCConfig defineが返却されます.
 	 * @exception SQLException SQL例外.
 	 */
-	public QuinaJDBCConfig getDefine()
+	public QuinaJDBCConfig getConfig()
 		throws SQLException {
 		checkClose();
-		return dataSource.getDefine();
+		return dataSource.getConfig();
 	}
 	
 	// I/Oステートメントリストをクリア.
@@ -145,7 +149,7 @@ public abstract class QuinaConnection
 		try {
 			stm = connection.createStatement();
 			rs = stm.executeQuery(
-				dataSource.getDefine().getSQL(ECHO_SQL));
+				dataSource.getConfig().getSQL(ECHO_SQL));
 			rs.next();
 			rs.close(); rs = null;
 			stm.close(); stm = null;
@@ -185,6 +189,22 @@ public abstract class QuinaConnection
 	 */
 	protected long getLastPoolingTime() {
 		return lastPoolingTime.get();
+	}
+	
+	/**
+	 * タイムアウトIDを設定.
+	 * @param id タイムアウトIDを設定します.
+	 */
+	protected void setTimeoutId(int id) {
+		timeoutId.set(id);
+	}
+	
+	/**
+	 * タイムアウトIDを取得.
+	 * @return int タイムアウトIDが返却されます.
+	 */
+	protected int getTimeoutId() {
+		return timeoutId.get();
 	}
 	
 	/**
@@ -242,7 +262,7 @@ public abstract class QuinaConnection
 	 * @return String 整形されたSQLが返却されます.
 	 */
 	protected String getSQL(String sql) {
-		return dataSource.getDefine().getSQL(sql);
+		return dataSource.getConfig().getSQL(sql);
 	}
 	
 	/**
@@ -251,7 +271,7 @@ public abstract class QuinaConnection
 	 * @return Statement 反映されたStatementが返却されます.
 	 */
 	protected final Statement appendStatement(Statement stmt) {
-		return dataSource.getDefine().appendStatement(stmt);
+		return dataSource.getConfig().appendStatement(stmt);
 	}
 
 	@Override

@@ -23,21 +23,18 @@ public class QuinaDataSource implements DataSource {
 	protected final Queue<QuinaConnection> pooling =
 		new ConcurrentLinkedQueue<QuinaConnection>();
 
-	/** JDBCDefine. **/
-	private QuinaJDBCConfig define;
-	
-	/** タイムアウト監視スレッド. **/
-	private QuinaJDBCTimeoutThread timeoutThread;
+	/** JDBCConfig. **/
+	private QuinaJDBCConfig config;
 	
 	/** オブジェクト破棄チェック. **/
 	private final Flag destroyFlag = new Flag();
 
 	/**
 	 * コンストラクタ.
-	 * @param define QuinaJDBCDefineを設定します.
+	 * @param config QuinaJDBCDefineを設定します.
 	 */
-	protected QuinaDataSource(QuinaJDBCConfig define) {
-		this.define = define;
+	protected QuinaDataSource(QuinaJDBCConfig config) {
+		this.config = config;
 	}
 	
 	/**
@@ -74,19 +71,13 @@ public class QuinaDataSource implements DataSource {
 		}
 	}
 	
-	/**
-	 * タイムアウト監視スレッドを設定.
-	 * @param timeoutThread タイムアウトスレッドを設定します.
-	 */
-	protected void setTimeoutThread(QuinaJDBCTimeoutThread timeoutThread) {
-		this.timeoutThread = timeoutThread;
-	}
-	
 	// Poolingにセット.
 	protected boolean pushPooling(
 		QuinaConnection conn) {
+		// 既に破棄されてるか、Pooling管理数を超えてる場合.
 		if(destroyFlag.get() ||
-			define.getPoolingSize() < pooling.size()) {
+			config.getPoolingSize() < pooling.size()) {
+			// プーリングせずに廃棄.
 			try {
 				conn.destroy();
 			} catch(Exception e) {}
@@ -94,23 +85,21 @@ public class QuinaDataSource implements DataSource {
 		}
 		// プーリングにセット.
 		pooling.offer(conn);
-		// タイムアウト監視セット.
-		timeoutThread.offer(conn);
 		return true;
 	}
 
 	/**
-	 * QuinaJDBCDefineを取得.
-	 * @return QuinaJDBCDefineが返却されます.
+	 * QuinaJDBCConfigを取得.
+	 * @return QuinaJDBCConfigが返却されます.
 	 */
-	public QuinaJDBCConfig getDefine() {
-		return define;
+	public QuinaJDBCConfig getConfig() {
+		return config;
 	}
 	
 	/**
 	 * JDBCコネクションの取得.
 	 * 
-	 * @param define DbDefineを設定します.
+	 * @param config DbDefineを設定します.
 	 * @param url    対象の接続先を設定します.
 	 * @param user   対象のユーザ名を設定します.
 	 * @param passwd 対象のパスワードを設定します.
@@ -118,24 +107,24 @@ public class QuinaDataSource implements DataSource {
 	 * @exception SQLExceptino SQL例外.
 	 */
 	protected static final Connection _getSrcConnection(
-		QuinaJDBCConfig define, String url, String user, String passwd)
+		QuinaJDBCConfig config, String url, String user, String passwd)
 		throws SQLException {
 		Connection ret;
 		Properties p = new java.util.Properties();
-		define.appendProperty(p);
+		config.appendProperty(p);
 		if (user == null || user.isEmpty()) {
 			p.put("user", "");
 			p.put("password", "");
-			ret = define.getKind().getDriver().connect(
-				url + define.getUrlParams(), p);
+			ret = config.getKind().getDriver().connect(
+				url + config.getUrlParams(), p);
 		} else {
 			p.put("user", user);
 			p.put("password", passwd);
-			ret = define.getKind().getDriver().connect(
-				url + define.getUrlParams(), p);
+			ret = config.getKind().getDriver().connect(
+				url + config.getUrlParams(), p);
 		}
-		ret.setReadOnly(define.isReadOnly());
-		ret.setAutoCommit(define.isAutoCommit());
+		ret.setReadOnly(config.isReadOnly());
+		ret.setAutoCommit(config.isAutoCommit());
 		return ret;
 	}
 	
@@ -145,7 +134,7 @@ public class QuinaDataSource implements DataSource {
 		throws SQLException {
 		checkDestroy();
 		Connection c = _getSrcConnection(
-			define, define.getUrl(), user, passwd);
+			config, config.getUrl(), user, passwd);
 		QuinaConnection ret = QuinaProxyUtil.getConnection(
 			notProxy, this, c);
 		return ret;
@@ -164,14 +153,14 @@ public class QuinaDataSource implements DataSource {
 		}
 		// 新規コネクションで取得.
 		return _getQuinaProxyConnection(
-			false, define.getUser(), define.getPassword());
+			false, config.getUser(), config.getPassword());
 	}
 
 	@Override
 	public QuinaConnection getConnection(
 		String username, String password) throws SQLException {
 		return _getQuinaProxyConnection(
-			true, define.getUser(), define.getPassword());
+			true, config.getUser(), config.getPassword());
 	}
 
 	@Override
