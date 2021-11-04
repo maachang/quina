@@ -1,8 +1,6 @@
 package quina.json;
 
 import java.util.AbstractList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import quina.util.collection.ObjectList;
@@ -96,34 +94,6 @@ public class JsonList extends AbstractList<Object> {
 	@Override
 	public Object set(int index, Object value) {
 		return list.set(index, value);
-	}
-	
-	@Override
-	@SuppressWarnings("rawtypes")
-	public boolean addAll(Collection c) {
-		try {
-			final Iterator it = c.iterator();
-			while(it.hasNext()) {
-				list.add(it.next());
-			}
-		} catch(Exception e) {
-			return false;
-		}
-		return true;
-	}
-	
-	@Override
-	@SuppressWarnings("rawtypes")
-	public boolean addAll(int index, Collection c) {
-		try {
-			final Iterator it = c.iterator();
-			while(it.hasNext()) {
-				list.add(index, it.next());
-			}
-		} catch(Exception e) {
-			return false;
-		}
-		return true;
 	}
 	
 	@Override

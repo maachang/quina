@@ -1,19 +1,20 @@
 package quina.jdbc.io;
 
 import java.io.IOException;
-import java.sql.PreparedStatement;
 
 import quina.exception.QuinaException;
 import quina.jdbc.QuinaConnection;
+import quina.jdbc.QuinaPreparedStatement;
 import quina.jdbc.QuinaResultSet;
+import quina.util.collection.ObjectList;
 
 /**
  * I/O用ステートメント.
  */
 public class IoStatement
 	extends AbstractIoStatement<IoStatement> {
-	// query result.
-	protected DbResult result = null;
+	// query result list.
+	protected ObjectList<DbResult> resultList = null;
 	// sql buffer.
 	protected StringBuilder sqlBuf = null;
 	
@@ -24,7 +25,8 @@ public class IoStatement
 	/**
 	 * コンストラクタ.
 	 * @param conn JDBCコネクションを設定します.
-	 * @param args 対象のStatementを取得するパラメータを設定します.
+	 * @param args 対象のPreparedStatementを取得する
+	 *             パラメータを設定します.
 	 */
 	public IoStatement(
 		QuinaConnection conn, Object... args) {
@@ -33,12 +35,15 @@ public class IoStatement
 	
 	@Override
 	public void close() throws IOException {
-		if(result != null) {
-			DbResult rs = result;
-			result = null;
-			try {
-				rs.close();
-			} catch(Exception e) {}
+		if(resultList != null) {
+			final ObjectList<DbResult> rsList = resultList;
+			resultList = null;
+			final int len = rsList.size();
+			for(int i = 0; i < len; i ++) {
+				try {
+					rsList.get(i).close();
+				} catch(Exception e) {}
+			}
 		}
 		sqlBuf = null;
 		super.close();
@@ -99,17 +104,15 @@ public class IoStatement
 	protected final Object executeStatement(boolean query) {
 		// 実行SQLとパラメーターを取得.
 		String sql = getExecuteSql();
-		Object[] params = getExecuteParams();
-		// PreparedStatementで処理.
-		PreparedStatement ps = null;
+		// QuinaPreparedStatementで処理.
+		QuinaPreparedStatement ps = null;
 		try {
-			// PrepareStatementを取得.
-			ps = (PreparedStatement)prepareStatement(sql);
-			// パラメータが存在する場合.
-			if(params != null && params.length > 0) {
-				// PreparedStatementパラメータをセット.
-				DbUtil.preParams(ps, ps.getParameterMetaData(), params);
-			}
+			// QuinaPreparedStatementを取得.
+			ps = prepareStatement(sql);
+			
+			// パラメータを反映.
+			this.updateParams(ps);
+			
 			// query返却が必要な場合.
 			if(query) {
 				// DbResultを返却.
@@ -142,12 +145,22 @@ public class IoStatement
 	 * @return DbResult Query実行結果が返却されます.
 	 */
 	public DbResult executeQuery() {
+		// クローズチェック.
 		checkClose();
+		// 実行可能かチェック.
 		checkExecute();
+		// DbResultを取得.
 		Object o = executeStatement(true);
+		// 登録されてたSQLとパラメータをクリア.
 		clearSqlAndParmas();
-		this.result = (DbResult)o;
-		return this.result;
+		// DbResultを取得.
+		DbResult rs = (DbResult)o;
+		// DbResultを登録.
+		if(resultList == null) {
+			resultList = new ObjectList<DbResult>();
+		}
+		resultList.add(rs);
+		return rs;
 	}
 	
 	/**
@@ -155,10 +168,30 @@ public class IoStatement
 	 * @return long 処理結果の件数が返却されます.
 	 */
 	public long executeUpdate() {
+		// クローズチェック.
 		checkClose();
+		// 実行可能かチェック.
 		checkExecute();
+		// 書き込み処理系を実行.
 		Object o = executeStatement(false);
+		// 登録されてたSQLとパラメータをクリア.
 		clearSqlAndParmas();
+		// 処理結果の件数を返却.
 		return (Long)o;
+	}
+	
+	/**
+	 * 更新実行.
+	 * @param out out[0]に処理結果の件数が設定されます.
+	 * @return IoStatement このオブジェクトが返却されます.
+	 */
+	public IoStatement executeUpdate(long[] out) {
+		// 処理結果の件数をセット.
+		if(out != null && out.length > 0) {
+			out[0] = executeUpdate();
+		} else {
+			executeUpdate();
+		}
+		return this;
 	}
 }

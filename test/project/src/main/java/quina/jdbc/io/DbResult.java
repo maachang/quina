@@ -24,6 +24,7 @@ import quina.util.collection.TypesKeyValue;
 /**
  * Result返却オブジェクト.
  */
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class DbResult implements
 	Iterator<Map<String, Object>>, Closeable {
 	private DbResult() {}
@@ -40,11 +41,12 @@ public class DbResult implements
 	private int[] metaTypes = null;
 	// ResultRow.
 	private DbResultValue row = null;
-	// 現在取得注のResultRow.
+	// 現在取得してるResultRow.
 	private DbResultValue nowRow = null;
 	
 	// メタデータの中身を取得.
-	private final void getMeta(final ResultSetMetaData data)
+	private final void getMeta(
+		final ResultSetMetaData data)
 		throws SQLException {
 		String s;
 		final int len = data.getColumnCount();
@@ -163,7 +165,7 @@ public class DbResult implements
 	 * 全情報をListとして取得.
 	 * @return List<Map<String, Object>> 全情報が返却されます.
 	 */
-	protected List<Map<String, Object>> getRows() {
+	public List<Map<String, Object>> getRows() {
 		return getRows(-1);
 	}
 	
@@ -173,19 +175,41 @@ public class DbResult implements
 	 *            -1を設定した場合、全体を取得します.
 	 * @return List<Map<String, Object>> 取得情報が返却されます.
 	 */
-	protected List<Map<String, Object>> getRows(int limit) {
+	public List<Map<String, Object>> getRows(int limit) {
 		check();
-		limit = limit <= -1 ? -1 : limit;
 		final List<Map<String, Object>> ret =
 			new ArrayList<Map<String, Object>>();
+		getRows(limit, ret);
+		return ret;
+	}
+	
+	/**
+	 * 指定サイズの情報までをListとして取得.
+	 * @param out 出力先のListオブジェクトを設定します.
+	 * @return List Listオブジェクトが返却されます.
+	 */
+	public List getRows(List out) {
+		getRows( -1, out);
+		return out;
+	}
+	
+	/**
+	 * 指定サイズの情報までをListとして取得.
+	 * @param limit 取得サイズを設定します.
+	 *            -1を設定した場合、全体を取得します.
+	 * @param out 出力先のListオブジェクトを設定します.
+	 * @return List Listオブジェクトが返却されます.
+	 */
+	public List getRows(int limit, List out) {
+		check();
+		limit = limit <= -1 ? -1 : limit;
 		while(hasNext()) {
-			if(limit != -1 && ret.size() >= limit) {
+			if(limit != -1 && out.size() >= limit) {
 				break;
 			}
-			ret.add(new DbResultCopyValue(row));
-			row = null;
+			out.add(((DbResultValue)next()).getCopy());
 		}
-		return ret;
+		return out;
 	}
 	
 	/**
@@ -212,7 +236,8 @@ public class DbResult implements
 	}
 	
 	// KeyComparable.
-	private static final class KeyComparable implements Comparable<Object> {
+	private static final class KeyComparable
+		implements Comparable<Object> {
 		protected String key;
 		protected int no;
 		
@@ -280,15 +305,21 @@ public class DbResult implements
 	}
 	
 	// 1行のデータ.
-	@SuppressWarnings("rawtypes")
 	private static final class DbResultValue
-		implements Map<String, Object>, AbstractKeyIterator.Base<String>,
-		AbstractEntryIterator.Base<String, Object>, TypesKeyValue<String, Object> {
+		implements Map<String, Object>,
+		AbstractKeyIterator.Base<String>,
+		AbstractEntryIterator.Base<String, Object>,
+		TypesKeyValue<String, Object> {
+		
 		private final DbResult parent;
 		
 		// コンストラクタ.
 		protected DbResultValue(DbResult p) {
 			this.parent = p;
+		}
+		
+		public CopyDbResultValue getCopy() {
+			return new CopyDbResultValue(this);
 		}
 		
 		@Override
@@ -426,15 +457,14 @@ public class DbResult implements
 	}
 	
 	// 1行のCopyデータ.
-	@SuppressWarnings("rawtypes")
-	private static final class DbResultCopyValue
+	private static final class CopyDbResultValue
 		implements Map<String, Object>, AbstractKeyIterator.Base<String>,
 		AbstractEntryIterator.Base<String, Object>, TypesKeyValue<String, Object> {
 		private KeyIndex keyIndex;
 		private Object[] values;
 		
 		// コンストラクタ.
-		protected DbResultCopyValue(DbResultValue rv) {
+		protected CopyDbResultValue(DbResultValue rv) {
 			KeyIndex index = rv.parent.metaColumns;
 			final int len = index.size();
 			final Object[] vals = new Object[len];
