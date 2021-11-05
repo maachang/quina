@@ -9,7 +9,7 @@ import quina.jdbc.QuinaResultSet;
 import quina.util.collection.ObjectList;
 
 /**
- * I/O用ステートメント.
+ * Read/Write用ステートメント.
  */
 public class IoStatement
 	extends AbstractIoStatement<IoStatement> {
