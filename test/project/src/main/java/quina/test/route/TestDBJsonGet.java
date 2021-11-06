@@ -27,14 +27,14 @@ public class TestDBJsonGet implements RESTfulGetSync {
 				.sql("where id=?")
 				.params(1001)
 				.executeQuery()
-				.getRows(ret);
+				.getList(ret);
 			
 			// id=2001を取得.
 			io.sql("select id, name, grade from TestTable")
 				.sql("where id=?")
 				.params(2001)
 				.executeQuery()
-				.getRows(ret);
+				.getList(ret);
 			
 			return ret;
 		} catch(Exception e) {

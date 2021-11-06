@@ -20,13 +20,16 @@ import quina.json.JsonOut;
 import quina.util.collection.AbstractEntryIterator;
 import quina.util.collection.AbstractKeyIterator;
 import quina.util.collection.TypesKeyValue;
+import quina.util.collection.mc.McCollection;
+import quina.util.collection.mc.McList;
 
 /**
  * Result返却オブジェクト.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class DbResult implements
-	Iterator<Map<String, Object>>, Closeable {
+	Iterator<Map<String, Object>>, Closeable,
+	McCollection<McList<Map<String, Object>>, Map<String, Object>> {
 	private DbResult() {}
 	
 	// IoStatement.
@@ -43,6 +46,17 @@ public class DbResult implements
 	private DbResultValue row = null;
 	// 現在取得してるResultRow.
 	private DbResultValue nowRow = null;
+	
+	/**
+	 * 新しい空のオブジェクトを生成します.
+	 * @return McCollection<T, V> 新しいオブジェクトが返却されます.
+	 */
+	@Override
+	public McCollection<McList<Map<String, Object>>, Map<String, Object>>
+		newInstance() {
+		// McListを作成.
+		return new McList<Map<String, Object>>();
+	}
 	
 	// メタデータの中身を取得.
 	private final void getMeta(
@@ -162,45 +176,14 @@ public class DbResult implements
 	}
 	
 	/**
-	 * 全情報をListとして取得.
-	 * @return List<Map<String, Object>> 全情報が返却されます.
-	 */
-	public List<Map<String, Object>> getRows() {
-		return getRows(-1);
-	}
-	
-	/**
-	 * 指定サイズの情報までをListとして取得.
-	 * @param max 取得サイズを設定します.
-	 *            -1を設定した場合、全体を取得します.
-	 * @return List<Map<String, Object>> 取得情報が返却されます.
-	 */
-	public List<Map<String, Object>> getRows(int limit) {
-		check();
-		final List<Map<String, Object>> ret =
-			new ArrayList<Map<String, Object>>();
-		getRows(limit, ret);
-		return ret;
-	}
-	
-	/**
 	 * 指定サイズの情報までをListとして取得.
 	 * @param out 出力先のListオブジェクトを設定します.
-	 * @return List Listオブジェクトが返却されます.
-	 */
-	public List getRows(List out) {
-		getRows( -1, out);
-		return out;
-	}
-	
-	/**
-	 * 指定サイズの情報までをListとして取得.
 	 * @param limit 取得サイズを設定します.
 	 *            -1を設定した場合、全体を取得します.
-	 * @param out 出力先のListオブジェクトを設定します.
 	 * @return List Listオブジェクトが返却されます.
 	 */
-	public List getRows(int limit, List out) {
+	@Override
+	public List getList(List out, int limit) {
 		check();
 		limit = limit <= -1 ? -1 : limit;
 		while(hasNext()) {
