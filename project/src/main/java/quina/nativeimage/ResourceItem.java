@@ -129,8 +129,25 @@ public class ResourceItem implements NativeImageConfig {
 		return false;
 	}
 	
+	// ￥マークが含まれた場合の出力処理.
+	private String outYenString(String str) {
+		char c;
+		final int len = str.length();
+		StringBuilder buf = new StringBuilder();
+		for(int i = 0; i < len; i ++) {
+			c = str.charAt(i);
+			if(c == '\\') {
+				buf.append("\\\\");
+			} else {
+				buf.append(c);
+			}
+		}
+		return buf.toString();
+	}
+	
+	// コンフィグ出力.
 	private void outResource(StringBuilder buf, int tab, boolean commaFlag) {
-		if(includeRegExpList.size() > 0 && excludeRegExpList.size() > 0) {
+		if(includeRegExpList.size() > 0 || excludeRegExpList.size() > 0) {
 			StringUtil.println(buf, tab,
 				(commaFlag ? "," : "") + "\"resources\": {");
 			commaFlag = false;
@@ -144,7 +161,7 @@ public class ResourceItem implements NativeImageConfig {
 				for(int i = 0; i < len; i ++) {
 					StringUtil.println(buf, tab + 2,
 						comma +
-						"{\"pattern\": \"" + includeRegExpList.get(i) + "\"}"
+						"{\"pattern\": \"" + outYenString(includeRegExpList.get(i)) + "\"}"
 					);
 					comma = ",";
 				}
@@ -163,7 +180,7 @@ public class ResourceItem implements NativeImageConfig {
 				for(int i = 0; i < len; i ++) {
 					StringUtil.println(buf, tab + 2,
 						comma +
-						"{\"pattern\": \"" + excludeRegExpList.get(i) + "\"}"
+						"{\"pattern\": \"" + outYenString(excludeRegExpList.get(i)) + "\"}"
 					);
 					comma = ",";
 				}

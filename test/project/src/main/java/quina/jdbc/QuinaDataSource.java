@@ -24,6 +24,9 @@ public class QuinaDataSource implements DataSource {
 	private final Queue<QuinaConnection> pooling =
 		new ConcurrentLinkedQueue<QuinaConnection>();
 	
+	/** JDBCService. **/
+	private QuinaJDBCService service;
+	
 	/** JDBCConfig. **/
 	private QuinaJDBCConfig config;
 	
@@ -35,9 +38,12 @@ public class QuinaDataSource implements DataSource {
 	
 	/**
 	 * コンストラクタ.
+	 * @param service QuinaJDBCServiceを設定します.
 	 * @param config QuinaJDBCDefineを設定します.
 	 */
-	protected QuinaDataSource(QuinaJDBCConfig config) {
+	protected QuinaDataSource(
+		QuinaJDBCService service, QuinaJDBCConfig config) {
+		this.service = service;
 		this.config = config;
 	}
 	
@@ -132,7 +138,7 @@ public class QuinaDataSource implements DataSource {
 	}
 	
 	/**
-	 * JDBCコネクションの取得.
+	 * 直接JDBCからコネクションの取得.
 	 * 
 	 * @param config DbDefineを設定します.
 	 * @param url    対象の接続先を設定します.
@@ -141,7 +147,7 @@ public class QuinaDataSource implements DataSource {
 	 * @return Connection コネクション情報が返却されます.
 	 * @exception SQLExceptino SQL例外.
 	 */
-	protected static final Connection _getSrcConnection(
+	protected static final Connection _getRawConnection(
 		QuinaJDBCConfig config, String url, String user, String passwd)
 		throws SQLException {
 		Connection ret;
@@ -168,7 +174,7 @@ public class QuinaDataSource implements DataSource {
 		boolean notProxy, String user, String passwd)
 		throws SQLException {
 		checkDestroy();
-		Connection c = _getSrcConnection(
+		Connection c = _getRawConnection(
 			config, config.getUrl(), user, passwd);
 		QuinaConnection ret = QuinaProxyUtil.getConnection(
 			notProxy, this, c);
@@ -178,22 +184,59 @@ public class QuinaDataSource implements DataSource {
 	@Override
 	public QuinaConnection getConnection() throws SQLException {
 		QuinaConnection conn;
-		// プーリング情報から取得.
-		while((conn = pooling.poll()) != null) {
-			// ReOpenが成功した場合.
-			if(conn.reOpen()) {
-				// プーリングオブジェクトを返却.
-				return conn;
-			}
+		
+		// コネクションタイムアウト値を取得.
+		long timeout = -1L;
+		if(config.getConnectionTimeout() != -1) {
+			timeout = System.currentTimeMillis() +
+				(long)config.getConnectionTimeout();
 		}
-		// 新規コネクションで取得.
-		return _getQuinaProxyConnection(
-			false, config.getUser(), config.getPassword());
+		
+		// 最大コネクション数を取得.
+		int maxConnection = config.getMaxConnection();
+		// サービスが終了するまで実行.
+		while(!service.isExit()) {
+			
+			// プーリング情報から取得.
+			while((conn = pooling.poll()) != null) {
+				// ReOpenが成功した場合.
+				if(conn.reOpen()) {
+					// プーリングオブジェクトを返却.
+					return conn;
+				}
+			}
+			
+			// Maxコネクション数が設定されてる場合
+			// 現状が最大コネクション数を上回ってる場合は
+			// 一定時間待機してリトライ.
+			if(maxConnection != -1 &&
+				maxConnection <= connectionCount.get()) {
+				// 一定期間待機.
+				try {
+					Thread.sleep(5L);
+				} catch(Exception e) {}
+				
+				// コネクションタイムアウトを検知.
+				if(timeout != -1L &&
+					System.currentTimeMillis() > timeout) {
+					throw new SQLException(
+						"The connection has timed out.");
+				}
+				continue;
+			}
+			
+			// プーリングコネクションを新規作成.
+			return _getQuinaProxyConnection(
+				false, config.getUser(), config.getPassword());
+		}
+		// コネクション取得失敗例外.
+		throw new SQLException("Failed to get the connection.");
 	}
 
 	@Override
 	public QuinaConnection getConnection(
 		String username, String password) throws SQLException {
+		// プーリングしないコネクションを生成.
 		return _getQuinaProxyConnection(
 			true, config.getUser(), config.getPassword());
 	}

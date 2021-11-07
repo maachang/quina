@@ -1,9 +1,11 @@
 {
-    pooling: 15
-    ,testMySql: {
+    testMySql: {
         url: "jdbc:mysql://localhost:3306/testdb"
         ,user: testUser
         ,password: password
+        ,poolingSize: 15
+        //,maxConnection: 30
+        //,connectionTimeout: 1500
         ,urlParams: {
             characterEncoding: utf8
             //,useSSL: false

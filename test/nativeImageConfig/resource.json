@@ -1,5 +1,6 @@
 {
 	"bundles": [
 		{"name": "com.mysql.cj.LocalizedErrorMessages"}
+		,{"name": "com.mysql.cj.TlsSettings"}
 	]
 }

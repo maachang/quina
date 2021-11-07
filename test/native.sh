@@ -42,7 +42,7 @@ OPTIONS="${OPTIONS} -H:+AddAllCharsets"
 # コンパイルエラー時の例外出力.
 OPTIONS="${OPTIONS} -H:+ReportExceptionStackTraces"
 # ビルド時にエラーを発生させないようにする.
-OPTIONS="${OPTIONS} -H:+ReportUnsupportedElementsAtRuntime"
+#OPTIONS="${OPTIONS} -H:+ReportUnsupportedElementsAtRuntime"
 # 不完全なクラスパスでイメージをビルドできるようにします.
 OPTIONS="${OPTIONS} --allow-incomplete-classpath"
 

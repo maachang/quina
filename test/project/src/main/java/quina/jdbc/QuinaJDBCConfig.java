@@ -37,12 +37,12 @@ public class QuinaJDBCConfig {
 	private String user = null;
 	// 認証パスワード.
 	private String password = null;
+	// 接続タイムアウト値.
+	private Integer timeout = null;
 	// 読み込み専用の接続.
 	private boolean readOnly = false;
 	// 自動コミット.
 	private boolean autoCommit = false;
-	// 接続タイムアウト値.
-	private Integer timeout = null;
 	// トランザクションレベル.
 	private Integer transactionLevel = null;
 	// ResultSetに対する１度の取得サイズ.
@@ -56,6 +56,10 @@ public class QuinaJDBCConfig {
 	
 	// プーリングサイズ.
 	private Integer poolingSize = null;
+	// 最大コネクション数.
+	private Integer maxConnection = null;
+	// コネクションタイムアウト.
+	private Integer connectionTimeout = null;
 	
 	// oracle の jdbc接続など、末尾に；を付けるとエラーになるものは[true].
 	// oracleやderbyなど.
@@ -94,7 +98,7 @@ public class QuinaJDBCConfig {
 	 * コンフィグ情報を読み込む.
 	 * @param name 定義名を設定します.
 	 * @param conf 対象のコンフィグ定義を設定します.
-	 * @return QuinaJDBCKind kin情報が返却されます.
+	 * @return QuinaJDBCConfig kin情報が返却されます.
 	 */
 	public static final QuinaJDBCConfig create(
 		String name, Map<String,Object> conf) {
@@ -109,7 +113,7 @@ public class QuinaJDBCConfig {
 	 * 直接設定.
 	 * @param name Kind名を設定します.
 	 * @param url 接続URLを設定します.
-	 * @return QuinaJDBCKind kin情報が返却されます.
+	 * @return QuinaJDBCConfig kin情報が返却されます.
 	 */
 	public static final QuinaJDBCConfig create(
 		String name, String url) {
@@ -120,7 +124,7 @@ public class QuinaJDBCConfig {
 	 * 直接設定.
 	 * @param name Kind名を設定します.
 	 * @param url 接続URLを設定します.
-	 * @return QuinaJDBCKind kin情報が返却されます.
+	 * @return QuinaJDBCConfig kin情報が返却されます.
 	 */
 	public static final QuinaJDBCConfig create(
 		String name, String url, QuinaJDBCKind kind) {
@@ -262,6 +266,20 @@ public class QuinaJDBCConfig {
 						// 追加処理.
 						properties.put(key, objAry[i + 1]);
 					}
+				}
+			}
+			
+			// Maxコネクションが設定されてる場合.
+			int maxConn = this.getMaxConnection();
+			if(maxConn != -1) {
+				// プーリングサイズの１．２５倍以上
+				// Maxコネクション数が設定されていない場合.
+				int poolSize = (int)(
+					(double)this.getPoolingSize() * 1.25d);
+				if(poolSize > maxConn) {
+					// プーリングサイズの１．２５倍を
+					// Maxコネクション数とする.
+					this.setMaxConnection(poolSize);
 				}
 			}
 		}
@@ -457,6 +475,36 @@ public class QuinaJDBCConfig {
 	}
 	
 	/**
+	 * MaxConnectionを取得.
+	 * @return Integer MaxConnectionが返却されます.
+	 */
+	public Integer getMaxConnection() {
+		if(maxConnection == null) {
+			return QuinaJDBCConstants.getMaxConnection();
+		}
+		return maxConnection;
+	}
+	
+	/**
+	 * Maxコネクション数が設定されてるか取得.
+	 * @return boolean trueの場合設定されています.
+	 */
+	public boolean isMaxConnection() {
+		return getMaxConnection() != -1;
+	}
+	
+	/**
+	 * コネクションタイムアウト値を取得.
+	 * @return Integer コネクションタイムアウト値が返却されます.
+	 */
+	public Integer getConnectionTimeout() {
+		if(connectionTimeout ==null) {
+			return QuinaJDBCConstants.getConnectionTimeout();
+		}
+		return connectionTimeout;
+	}
+	
+	/**
 	 * SQLの末端にセミコロンを付与させない場合は
 	 * 「true」が返却されます.
 	 * @return boolean trueの場合SQLの終端のセミコロンは不要です.
@@ -469,9 +517,10 @@ public class QuinaJDBCConfig {
 	 * 認証ユーザー情報を設定.
 	 * @param user 認証ユーザーを設定します.
 	 * @param password 認証パスワードを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
-	public QuinaJDBCConfig setUser(String user, String password) {
+	public QuinaJDBCConfig setUser(
+		String user, String password) {
 		checkFix();
 		this.user = user;
 		this.password = password;
@@ -481,7 +530,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * 認証ユーザー情報を設定.
 	 * @param user 認証ユーザーを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setUser(String user) {
 		checkFix();
@@ -492,7 +541,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * 認証パスワード情報を設定.
 	 * @param password 認証パスワードを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setPassword(String password) {
 		checkFix();
@@ -503,7 +552,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * 読み込みモードをセット.
 	 * @param readOnly trueの場合読み込みモードで実行されます.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setReadOnly(boolean readOnly) {
 		checkFix();
@@ -514,7 +563,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * オートコミットモードをセット.
 	 * @param autoCommit trueの場合オートコミットです.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setAutoCommit(boolean autoCommit) {
 		checkFix();
@@ -525,11 +574,11 @@ public class QuinaJDBCConfig {
 	/**
 	 * BusyTimeoutを設定.
 	 * @param timeout BusyTimeout値を設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setTimeout(Integer timeout) {
 		checkFix();
-		if(timeout == null || timeout < 0) {
+		if(timeout == null || timeout <= 0) {
 			timeout = null;
 		}
 		this.timeout = timeout;
@@ -539,7 +588,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * トランザクションレベルを設定.
 	 * @param transactionLevel トランザクションレベルを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setTransactionLevel(Object transactionLevel) {
 		checkFix();
@@ -550,7 +599,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * フェッチサイズを設定.
 	 * @param fetchSize フェッチサイズを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setFetchSize(Integer fetchSize) {
 		checkFix();
@@ -561,7 +610,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * プロパティ群を設定.
 	 * @param properties プロパティ群を設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setProperties(
 		Map<String, Object> properties) {
@@ -580,7 +629,7 @@ public class QuinaJDBCConfig {
 	/**
 	 * URLパラメータを設定.
 	 * @param urlParams Urlパラメータを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	public QuinaJDBCConfig setUrlParams(String urlParams) {
 		return setUrlParams(null, urlParams);
@@ -593,7 +642,7 @@ public class QuinaJDBCConfig {
 	 *                falseの場合 url;xxx=yyy;aaa=bbb で
 	 *                定義されます.
 	 * @param urlParams Urlパラメータを設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
 	@SuppressWarnings("rawtypes")
 	public QuinaJDBCConfig setUrlParams(Boolean urlType, Object urlParams) {
@@ -615,23 +664,71 @@ public class QuinaJDBCConfig {
 
 	/**
 	 * プーリング管理数を設定.
-	 * @param poolingSize プーリング数を設定します.
-	 * @return QuinaJDBCKind オブジェクトが返却されます.
+	 * @param size プーリング数を設定します.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
 	 */
-	public QuinaJDBCConfig setPoolingSize(Integer poolingSize) {
+	public QuinaJDBCConfig setPoolingSize(Integer size) {
 		checkFix();
-		if(poolingSize != null) {
-			if(poolingSize < QuinaJDBCConstants.MIN_POOLING_SIZE) {
-				poolingSize = QuinaJDBCConstants.MIN_POOLING_SIZE;
-			} else if(poolingSize > QuinaJDBCConstants.MAX_POOLING_SIZE) {
-				poolingSize = QuinaJDBCConstants.MAX_POOLING_SIZE;
+		if(size != null) {
+			if(size < QuinaJDBCConstants.MIN_POOLING_SIZE) {
+				size = QuinaJDBCConstants.MIN_POOLING_SIZE;
+			} else if(size > QuinaJDBCConstants.MAX_POOLING_SIZE) {
+				size = QuinaJDBCConstants.MAX_POOLING_SIZE;
 			}
-			this.poolingSize = poolingSize;
+			this.poolingSize = size;
 		} else {
-			this.poolingSize = null;
+			this.poolingSize = QuinaJDBCConstants.getPoolingSize();
 		}
 		return this;
 	}
+	
+	/**
+	 * 最大コネクション数を設定.
+	 * @param conn 最大コネクション数を設定します.
+	 *             0以下を設定した場合、無効に設定出来ます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
+	 */
+	public QuinaJDBCConfig setMaxConnection(Integer conn) {
+		checkFix();
+		if(conn != null) {
+			if(conn <= 0) {
+				conn = -1;
+			} else if(conn < QuinaJDBCConstants.MIN_MAX_CONNECTION) {
+				conn = QuinaJDBCConstants.MIN_MAX_CONNECTION;
+			} else if(conn > QuinaJDBCConstants.MAX_MAX_CONNECTION) {
+				conn = QuinaJDBCConstants.MAX_MAX_CONNECTION;
+			}
+			this.maxConnection = conn;
+		} else {
+			this.maxConnection = QuinaJDBCConstants.getMaxConnection();
+		}
+		return this;
+	}
+	
+	/**
+	 * 最大コネクション数を設定.
+	 * @param timeout 最大コネクション数を設定します.
+	 *                0以下を設定した場合、無効に設定出来ます.
+	 * @return QuinaJDBCConfig オブジェクトが返却されます.
+	 */
+	public QuinaJDBCConfig setConnectionTimeout(Integer timeout) {
+		checkFix();
+		if(timeout != null) {
+			if(timeout <= 0) {
+				timeout = -1;
+			} else if(timeout < QuinaJDBCConstants.MIN_CONNECTION_TIMEOUT) {
+				timeout = QuinaJDBCConstants.MIN_CONNECTION_TIMEOUT;
+			} else if(timeout > QuinaJDBCConstants.MAX_CONNECTION_TIMEOUT) {
+				timeout = QuinaJDBCConstants.MAX_CONNECTION_TIMEOUT;
+			}
+			this.connectionTimeout = timeout;
+		} else {
+			this.connectionTimeout =
+				QuinaJDBCConstants.getConnectionTimeout();
+		}
+		return this;
+	}
+
 
 	// URLに合わせたSQL終端のセミコロン許可を判別してセット.
 	protected QuinaJDBCConfig setNotSemicolon() {
@@ -645,32 +742,51 @@ public class QuinaJDBCConfig {
 		Boolean f;
 		Integer i;
 		Map m;
+		
 		String user = StringUtil.parseString(conf.get("user"));
 		String password = StringUtil.parseString(conf.get("password"));
 		if(password == null || password.isEmpty()) {
 			password = StringUtil.parseString(conf.get("passwd"));
 		}
 		this.setUser(user, password);
+		
 		f = BooleanUtil.parseBoolean(conf.get("readOnly"));
 		if(f != null) {
 			this.setReadOnly(f);
 		}
+		
 		f = BooleanUtil.parseBoolean(conf.get("autoCommit"));
 		if(f != null) {
 			this.setAutoCommit(f);
 		}
+		
 		this.setTimeout(NumberUtil.parseInt(conf.get("timeout")));
+		
 		this.setTransactionLevel(conf.get("transactionLevel"));
 		i = NumberUtil.parseInt(conf.get("fetchSize"));
 		if(i == null) {
 			i = NumberUtil.parseInt(conf.get("fetch"));
 		}
 		this.setFetchSize(i);
+		
 		i = NumberUtil.parseInt(conf.get("poolingSize"));
 		if(i == null) {
 			i = NumberUtil.parseInt(conf.get("poolSize"));
 		}
 		this.setPoolingSize(i);
+		
+		i = NumberUtil.parseInt(conf.get("maxConnection"));
+		if(i == null) {
+			i = NumberUtil.parseInt(conf.get("maxConn"));
+		}
+		this.setMaxConnection(i);
+		
+		i = NumberUtil.parseInt(conf.get("connectionTimeout"));
+		if(i == null) {
+			i = NumberUtil.parseInt(conf.get("connTimeout"));
+		}
+		this.setConnectionTimeout(i);
+		
 		m = null;
 		if(conf.get("params") instanceof Map) {
 			m = new IndexMap((Map)conf.get("params"));

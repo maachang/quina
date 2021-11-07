@@ -110,7 +110,7 @@ public class QuinaJDBCService implements QuinaService {
 						json.keyAt(i), (Map)o);
 					conf.fix();
 					dataSources.put(conf.getName(),
-						new QuinaDataSource(conf));
+						new QuinaDataSource(this, conf));
 					ret = true;
 				}
 			}
