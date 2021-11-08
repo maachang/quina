@@ -1,5 +1,6 @@
 package quina.nativeimage;
 
+import quina.exception.QuinaException;
 import quina.util.StringUtil;
 import quina.util.collection.ObjectList;
 
@@ -52,6 +53,16 @@ public class ResourceItem implements NativeImageConfig {
 	 * @return ResourceItem このオブジェクトが返却されます.
 	 */
 	public ResourceItem addBundleItem(String name) {
+		if(name == null || (name = name.trim()).isEmpty()) {
+			throw new QuinaException("The class name is not set.");
+		}
+		// 同一条件は追加しない.
+		final int len = bundleList.size();
+		for(int i = 0; i < len; i ++) {
+			if(name.equals(bundleList.get(i))) {
+				return this;
+			}
+		}
 		bundleList.add(name);
 		return this;
 	}
@@ -59,24 +70,44 @@ public class ResourceItem implements NativeImageConfig {
 	/**
 	 * Class.getResource()やClass.getResourceAsStream()に対する
 	 * Resourse定義追加条件を正規表現で設定します.
-	 * @param regexp 正規表現を設定します.
+	 * @param regex 正規表現を設定します.
 	 *               ＜例＞ ".*／Resource.*txt$"
 	 * @return ResourceItem このオブジェクトが返却されます.
 	 */
-	public ResourceItem addIncludeItem(String regexp) {
-		includeRegExpList.add(regexp);
+	public ResourceItem addIncludeItem(String regex) {
+		if(regex == null || (regex = regex.trim()).isEmpty()) {
+			throw new QuinaException("The regex is not set.");
+		}
+		// 同一条件は追加しない.
+		final int len = includeRegExpList.size();
+		for(int i = 0; i < len; i ++) {
+			if(regex.equals(includeRegExpList.get(i))) {
+				return this;
+			}
+		}
+		includeRegExpList.add(regex);
 		return this;
 	}
 	
 	/**
 	 * Class.getResource()やClass.getResourceAsStream()に対する
 	 * Resourse定義除外条件を正規表現で設定します.
-	 * @param regexp 正規表現を設定します.
+	 * @param regex 正規表現を設定します.
 	 *               ＜例＞ ".*／Resource.*txt$"
 	 * @return ResourceItem このオブジェクトが返却されます.
 	 */
-	public ResourceItem addExcludeItem(String regexp) {
-		excludeRegExpList.add(regexp);
+	public ResourceItem addExcludeItem(String regex) {
+		if(regex == null || (regex = regex.trim()).isEmpty()) {
+			throw new QuinaException("The regex is not set.");
+		}
+		// 同一条件は追加しない.
+		final int len = excludeRegExpList.size();
+		for(int i = 0; i < len; i ++) {
+			if(regex.equals(excludeRegExpList.get(i))) {
+				return this;
+			}
+		}
+		excludeRegExpList.add(regex);
 		return this;
 	}
 	

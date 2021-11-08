@@ -186,7 +186,11 @@ public class GCdiUtil {
 	 */
 	public static final String createClassName(
 		String packageName, String fileName) {
-		fileName = fileName.substring(0, fileName.length() - 6);
+		if(fileName.endsWith(".class")) {
+			fileName = fileName.substring(0, fileName.length() - 6);
+		} else if(fileName.endsWith(".properties")) {
+			fileName = fileName.substring(0, fileName.length() - 11);
+		}
 		if(packageName.isEmpty()) {
 			return fileName;
 		}
@@ -225,24 +229,26 @@ public class GCdiUtil {
 	/**
 	 * Classディレクトリからクラス名一覧を取得.
 	 * @param out クラス名一覧を格納するリストを設定します.
+	 * @param params 対象のGCぢParamsを設定します.
 	 * @param classDir クラスディレクトリ名を設定します.
 	 * @return int 取得したクラス名一覧数が返却されます.
 	 */
 	public static final int findClassDirByClassNames(
-		List<String> out, String classDir) {
+		List<String> out, GCdiParams params, String classDir) {
 		if(out == null) {
 			throw new QuinaException(
 				"The list object to store the result is not set.");
 		}
 		classDir = AnnotationUtil.slashPath(classDir);
 		int[] ret = new int[] {0};
-		_findClassDirByClassNames(out, ret, "", classDir);
+		_findClassDirByClassNames(out, params, ret, "", classDir);
 		return ret[0];
 	}
 	
 	// Classディレクトリからクラス名一覧を取得.
 	private static final void _findClassDirByClassNames(
-		List<String> out, int[] count, String packageName, String classDir) {
+		List<String> out, GCdiParams params, int[] count, String packageName,
+		String classDir) {
 		String target;
 		File f = new File(classDir);
 		String[] list = f.list();
@@ -253,11 +259,17 @@ public class GCdiUtil {
 			if(new File(target).isDirectory()) {
 				// 今回のディレクトリで再帰処理.
 				_findClassDirByClassNames(
-					out, count, createPackageName(packageName, list[i]), target);
+					out, params, count, createPackageName(
+						packageName, list[i]), target);
 			// クラスファイルの場合.
 			} else if(list[i].endsWith(".class")) {
 				out.add(createClassName(packageName, list[i]));
 				count[0] ++;
+			// リソースファイルの場合.
+			} else if(params.resourceItemFlag &&
+				list[i].endsWith(".properties")) {
+				params.resList.add(
+					createClassName(packageName, list[i]));
 			}
 		}
 	}
@@ -265,9 +277,17 @@ public class GCdiUtil {
 	// ZipEntry.getName() をクラス名に変換.
 	private static final String zipEntryNameByClassName(String fileName) {
 		char c;
+		int len;
 		StringBuilder buf = new StringBuilder();
-		// .class を除外た文字列で実行.
-		int len = fileName.length() - 6;
+		if(fileName.endsWith(".class")) {
+			// .class を除外た文字列で実行.
+			len = fileName.length() - 6;
+		} else if(fileName.endsWith(".properties")) {
+			// .properties を除外た文字列で実行.
+			len = fileName.length() - 11;
+		} else {
+			len = fileName.length();
+		}
 		for(int i = 0; i < len; i ++) {
 			c = fileName.charAt(i);
 			if(c == '/') {
@@ -282,11 +302,13 @@ public class GCdiUtil {
 	/**
 	 * 指定jarファイルからクラス名一覧を取得.
 	 * @param out クラス名一覧を格納するリストを設定します.
+	 * @param params 対象のGCdiParamsを設定します.
 	 * @param jarFileName jarファイル名を設定します.
 	 * @return int 取得したクラス名一覧数が返却されます.
 	 * @throws Exception 例外.
 	 */
-	public static final int findJarByClassNames(List<String> out, String jarFileName)
+	public static final int findJarByClassNames(
+		List<String> out, GCdiParams params, String jarFileName)
 		throws Exception {
 		if(out == null) {
 			throw new QuinaException(
@@ -309,9 +331,14 @@ public class GCdiUtil {
 				// META-INF 以下は無視.
 				if(name.startsWith("META-INF/")) {
 					continue;
+				// クラスファイルの場合.
 				} else if(name.endsWith(".class")) {
 					out.add(zipEntryNameByClassName(name));
 					ret ++;
+				// リソースファイルの場合.
+				} else if(params.resourceItemFlag &&
+					name.endsWith(".properties")) {
+					params.resList.add(zipEntryNameByClassName(name));
 				}
 			}
 			zip.close();

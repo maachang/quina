@@ -17,6 +17,7 @@ import java.util.List;
 import quina.annotation.AnnotationUtil;
 import quina.command.generateCdi.GCdiExtraction;
 import quina.command.generateCdi.GCdiOutputJavaSrc;
+import quina.command.generateCdi.GCdiOutputResourceItem;
 import quina.command.generateCdi.GCdiParams;
 import quina.command.generateCdi.GCdiUtil;
 import quina.command.generateCdi.NativeImages;
@@ -94,6 +95,10 @@ public class GenerateCdi {
 		System.out.println("  -n [--nativeImage] {directory}");
 		System.out.println("     Set the config definition output destination directory");
 		System.out.println("     for Native-Image of graalvm.");
+		System.out.println("  -r [--resource]");
+		System.out.println("     Add the \".properties\" file in the class or jar for the ");
+		System.out.println("     target classpath to Resoure.json which is defined in the ");
+		System.out.println("     Native Image of GraalVM. ");
 		System.out.println();
 	}
 	
@@ -202,12 +207,16 @@ public class GenerateCdi {
 		
 		// GraalVMのNative-Imageコンフィグ出力先ディレクトリを取得.
 		String nativeImgDir = args.get("-n", "--nativeImage");
-		if(nativeImgDir == null || nativeImgDir.isEmpty()) {
+		if(nativeImgDir == null ||
+			(nativeImgDir = nativeImgDir.trim()).isEmpty()) {
 			nativeImgDir = "nativeImageConfig";
 		}
 		
 		// nativeImgDirディレクトリを整頓.
 		nativeImgDir = AnnotationUtil.slashPath(nativeImgDir);
+		
+		// classPath内のリソースファイルをResourceItemに含めるか取得.
+		boolean resourceItemFlag = args.isValue("-r", "--resource");
 		
 		// 処理開始.
 		System.out.println("start " + this.getClass().getSimpleName() +
@@ -245,19 +254,20 @@ public class GenerateCdi {
 			
 			// params.
 			GCdiParams params = new GCdiParams(
-				clazzDir, verboseFlag, jarFileArray);
+				clazzDir, verboseFlag, resourceItemFlag, jarFileArray);
 			
 			// クラス一覧を取得.
 			List<String> clazzList = new ArrayList<String>();
 			// クラスディレクトリのクラス一覧を取得.
 			if(clazzDir != null) {
-				GCdiUtil.findClassDirByClassNames(clazzList, clazzDir);
+				GCdiUtil.findClassDirByClassNames(clazzList, params, clazzDir);
 			}
 			// jarファイル群からクラス一覧を取得.
 			if(jarFileArray.length > 0) {
 				int len = jarFileArray.length;
 				for(int i = 0; i < len; i ++) {
-					GCdiUtil.findJarByClassNames(clazzList, jarFileArray[i]);
+					GCdiUtil.findJarByClassNames(
+						clazzList, params, jarFileArray[i]);
 				}
 			}
 			
@@ -267,6 +277,9 @@ public class GenerateCdi {
 			
 			// 出力先のソースコードを全削除.
 			GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
+			
+			// 最初にリソースファイルをResourceItemにセット.
+			GCdiOutputResourceItem.outputResourceItem(params);
 			
 			// GraalVM用のNativeImageコンフィグ群を出力.
 			NativeImages.outputNativeConfig(nativeImgDir, null);

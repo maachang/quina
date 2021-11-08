@@ -154,6 +154,11 @@
       <!-- output java source path. -->
 			<arg value="-s" />
 			<arg value="${src.dir}" />
+      <!-- output jar path. -->
+			<arg value="-j" />
+			<arg value="${externalLib.dir}" /> 
+      <!-- output resource item. -->
+			<arg value="-r" />
 		</java>
   </target>
 

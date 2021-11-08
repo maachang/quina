@@ -37,6 +37,12 @@ public class GCdiParams {
 	// classLoader.
 	public ClassLoader cl;
 	
+	// resourceファイルが見つかったらResourceItem登録判定.
+	public boolean resourceItemFlag;
+	
+	// resourceファイル.
+	public final List<String> resList = new ArrayList<String>();
+	
 	/**
 	 * コンストラクタ.
 	 * @param clazzDir
@@ -44,10 +50,12 @@ public class GCdiParams {
 	 * @param jarDirArray
 	 * @throws Exception
 	 */
-	public GCdiParams(String clazzDir, boolean verbose, String... jarDirArray)
+	public GCdiParams(String clazzDir, boolean verbose,
+		boolean resourceItemFlag, String... jarDirArray)
 		throws Exception {
 		this.cl = GCdiUtil.createClassLoader(clazzDir, jarDirArray);
 		this.verbose = verbose;
+		this.resourceItemFlag = resourceItemFlag;
 	}
 	
 	/**
@@ -67,6 +75,7 @@ public class GCdiParams {
 			&& cdiList.size() == 0 && any == null
 			&& errList.size() == 0 && qsrvList.size() == 0
 			&& hndList.size() == 0 && prxList.size() == 0
+			&& resList.size() == 0
 		;
 	}
 	
@@ -117,5 +126,13 @@ public class GCdiParams {
 	 */
 	public boolean isProxyScopedEmpty() {
 		return prxList.size() == 0;
+	}
+	
+	/**
+	 * ResourceItem定義が空の場合.
+	 * @return
+	 */
+	public boolean isResourceItemEmpty() {
+		return resList.size() == 0;
 	}
 }

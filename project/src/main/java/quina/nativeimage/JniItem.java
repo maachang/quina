@@ -41,6 +41,9 @@ public class JniItem implements NativeImageConfig {
 	 * @return JniItem このオブジェクトが返却されます.
 	 */
 	public JniItem addItem(String name) {
+		if(name == null || (name = name.trim()).isEmpty()) {
+			throw new QuinaException("The class name is not set.");
+		}
 		detailList.add(DetailNativeItem.create(name));
 		return this;
 	}

@@ -72,7 +72,21 @@ public class GCdiExtraction {
 				Object o;
 				try {
 					o = GCdiUtil.newInstance(c);
+				} catch(java.lang.NoClassDefFoundError e) {
+					if(params.verbose) {
+						System.out.println(
+							"  > [WARNING] " + e.getClass().getName() +
+							": " + c.getName());
+					}
+					// クラスロードエラーは無視.
+					continue;
 				} catch(Exception e) {
+					if(params.verbose) {
+						System.out.println(
+							"  > [WARNING] " + e.getClass().getName() +
+							": " + c.getName());
+					}
+					// 例外も無視.
 					continue;
 				}
 				// アノテーションなしのコンポーネントの場合.
