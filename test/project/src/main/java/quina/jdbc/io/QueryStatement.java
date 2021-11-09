@@ -37,4 +37,31 @@ public class QueryStatement
 			clearSqlAndParmas();
 		}
 	}
+	
+	/**
+	 * Select用のSQL文を生成.
+	 * 使い方は以下のように使います.
+	 * 
+	 * QueryStatement stmt = conn.ioStatement();
+	 * keyValues.put("age", 25);
+	 * keyValues.put("name", "hoge");
+	 * stmt.selectSQL("testTable", "age", "name")
+	 *     .sql("where id=?")
+	 *     .params(100);
+	 *     .executeUpdate();
+	 * 
+	 * 以下のようなSQL文が実行されます.
+	 * > select age, name from testTable where id=100;
+	 * 
+	 * @param tableName テーブル名を設定します.
+	 * @param values 追加対象のkey=カラム名,value=要素の
+	 *               Mapを設定します.
+	 * @return QueryStatement 書き込みで発行された結果を返却します.
+	 */
+	public QueryStatement selectSQL(String tableName, String... columns) {
+		clearParmas();
+		super.sqlBuf = new StringBuilder();
+		DbUtil.createSelectSQL(sqlBuf, tableName, columns);
+		return this;
+	}
 }

@@ -23,14 +23,16 @@ public class TestDBJsonGet implements RESTfulGetSync {
 			
 			// id=1001を取得.
 			qe = conn.queryStatement();
-			qe.sql("select id, name, grade from TestTable")
+			//qe.sql("select id, name, grade from TestTable")
+			qe.selectSQL("TestTable", "id", "name")
 				.sql("where id=?")
 				.params(1001)
 				.executeQuery()
 				.getList(ret);
 			
 			// id=2001を取得.
-			qe.sql("select id, name, grade from TestTable")
+			//qe.sql("select id, name, grade from TestTable")
+			qe.selectSQL("TestTable", "id", "name")
 				.sql("where id=?")
 				.params(2001)
 				.executeQuery()

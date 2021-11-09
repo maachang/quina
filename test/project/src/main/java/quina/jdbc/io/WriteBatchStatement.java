@@ -38,6 +38,21 @@ public class WriteBatchStatement
 	/**
 	 * コンストラクタ.
 	 * Insert用のSQLを自動生成します.
+	 * 
+	 * WriteBatchStatement wbs =
+	 *   conn.writeBatchStatement(
+	 *     "testTable", "id", "age", "name");
+	 * wbs.params(100, 25, "hoge")
+	 *    .add()
+	 *    .params(200, 32, "tanaka");
+	 *    .add()
+	 *    .execute();
+	 * 
+	 * これによりtestTableに対して
+	 *   id=100, age=25, name=hoge
+	 *   id=200, age=32, name=tanaka
+	 * がインサートされます.
+	 * 
 	 * @param conn JDBCコネクションを設定します.
 	 * @param tableName テーブル名を設定します.
 	 * @param columns カラム名群を設定します.
