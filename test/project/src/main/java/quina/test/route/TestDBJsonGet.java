@@ -9,28 +9,28 @@ import quina.http.server.response.SyncResponse;
 import quina.jdbc.QuinaConnection;
 import quina.jdbc.QuinaDataSource;
 import quina.jdbc.QuinaJDBCService;
-import quina.jdbc.io.IoStatement;
+import quina.jdbc.io.QueryStatement;
 import quina.json.JsonList;
 
 @Route("/json/jdbc/testTable")
 public class TestDBJsonGet implements RESTfulGetSync {
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
-		IoStatement io;
+		QueryStatement qe;
 		QuinaDataSource ds = QuinaJDBCService.dataSource("testMySql");
 		try(QuinaConnection conn = ds.getConnection()) {
 			JsonList ret = new JsonList();
 			
 			// id=1001を取得.
-			io = conn.ioStatement();
-			io.sql("select id, name, grade from TestTable")
+			qe = conn.queryStatement();
+			qe.sql("select id, name, grade from TestTable")
 				.sql("where id=?")
 				.params(1001)
 				.executeQuery()
 				.getList(ret);
 			
 			// id=2001を取得.
-			io.sql("select id, name, grade from TestTable")
+			qe.sql("select id, name, grade from TestTable")
 				.sql("where id=?")
 				.params(2001)
 				.executeQuery()

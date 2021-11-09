@@ -8,7 +8,7 @@ import quina.jdbc.QuinaPreparedStatement;
  * WriteBatch用Statement.
  */
 public class WriteBatchStatement
-	extends AbstractIoStatement<WriteBatchStatement> {
+	extends AbstractStatement<WriteBatchStatement> {
 	
 	// コンストラクタ.
 	@SuppressWarnings("unused")
@@ -18,18 +18,37 @@ public class WriteBatchStatement
 	 * コンストラクタ.
 	 * @param conn JDBCコネクションを設定します.
 	 * @param sql 対象のSQL文を設定します.
-	 * @param args 対象のPreparedStatementを取得する
-	 *             パラメータを設定します.
 	 */
 	public WriteBatchStatement(
-		QuinaConnection conn, String sql,Object... args) {
+		QuinaConnection conn, String sql) {
 		if(sql == null || (sql = sql.trim()).isEmpty()) {
 			throw new QuinaException(
 				"The SQL statement to be executed is not set.");
 		}
 		try {
-			init(conn, args);
+			init(conn);
 			prepareStatement(sql);
+		} catch(QuinaException qe) {
+			throw qe;
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+	}
+	
+	/**
+	 * コンストラクタ.
+	 * Insert用のSQLを自動生成します.
+	 * @param conn JDBCコネクションを設定します.
+	 * @param tableName テーブル名を設定します.
+	 * @param columns カラム名群を設定します.
+	 */
+	public WriteBatchStatement(
+		QuinaConnection conn, String tableName, String... columns) {
+		StringBuilder buf = new StringBuilder();
+		DbUtil.createInsert(buf, tableName, columns);
+		try {
+			init(conn);
+			prepareStatement(buf.toString());
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {
@@ -64,8 +83,6 @@ public class WriteBatchStatement
 			this.updateParams(ps);
 			// Batchセット.
 			ps.addBatch();
-			// パラメータクリア.
-			clearParmas();
 			return this;
 		} catch(QuinaException qe) {
 			if(ps != null) {
@@ -81,6 +98,9 @@ public class WriteBatchStatement
 				} catch(Exception ee) {}
 			}
 			throw new QuinaException(e);
+		} finally {
+			// パラメータクリア.
+			clearParmas();
 		}
 	}
 	

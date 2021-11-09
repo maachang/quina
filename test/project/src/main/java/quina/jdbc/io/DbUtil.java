@@ -9,16 +9,21 @@ import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import quina.exception.QuinaException;
 import quina.util.BooleanUtil;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
 import quina.util.StringUtil;
+import quina.util.collection.ObjectList;
 
 /**
  * DBUtil.
  */
-public class DbUtil {
+final class DbUtil {
 	private DbUtil() {}
 	
 	/**
@@ -327,5 +332,121 @@ public class DbUtil {
 			}
 		}
 		return data;
+	}
+	
+	/**
+	 * Insert用のSQLを作成.
+	 * @param out SQL出力先のStringBuiderを設定します.
+	 * @param table テーブル名を設定します.
+	 * @param columns insert対象のColumn名群を設定します.
+	 */
+	public static final void createInsert(
+		StringBuilder out, String table, String... columns) {
+		if(table == null || (table = table.trim()).isEmpty()) {
+			throw new QuinaException("The table name is not set.");
+		} else if(columns == null || columns.length == 0) {
+			throw new QuinaException("The column name is not set.");
+		}
+		final int len = columns.length;
+		out.append("insert into ")
+			.append(table).append("(");
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				out.append(", ");
+			}
+			out.append(columns[i]);
+		}
+		out.append(") ").append("values (");
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				out.append(", ");
+			}
+			out.append("?");
+		}
+		out.append(")");
+	}
+
+	
+	/**
+	 * Insert用のSQLを作成してパラメータセット.
+	 * @param out SQL出力先のStringBuiderを設定します.
+	 * @param table テーブル名を設定します.
+	 * @param params パラメータを設定します.
+	 *               column, value, column, value...
+	 *               で設定します.
+	 */
+	public static final void createInsert(
+		StringBuilder out, String table, ObjectList<Object> params) {
+		if(table == null || (table = table.trim()).isEmpty()) {
+			throw new QuinaException("The table name is not set.");
+		} else if(params == null || params.size() == 0) {
+			throw new QuinaException("The column name is not set.");
+		}
+		int cnt = 0;
+		final int len = params.size();
+		final Object[] values = new Object[len >> 1];
+		out.append("insert into ")
+			.append(table).append("(");
+		for(int i = 0; i < len; i += 2) {
+			if(i != 0) {
+				out.append(", ");
+			}
+			out.append(params.get(i));
+			values[cnt ++] = params.get(i + 1);
+		}
+		out.append(") ").append("values (");
+		for(int i = 0; i < len; i += 2) {
+			if(i != 0) {
+				out.append(", ");
+			}
+			out.append("?");
+		}
+		out.append(")");
+		params.clearAndSetAll(values);
+	}
+	
+	/**
+	 * Insert用のSQLを作成してパラメータセット.
+	 * @param out SQL出力先のStringBuiderを設定します.
+	 * @param params パラメータを設定します.
+	 *               column, value, column, value...
+	 *               で設定します.
+	 * @param table テーブル名を設定します.
+	 * @param Map<String, Object> data Insert対象の
+	 *                                 内容を設定します.
+	 */
+	public static final void createInsert(
+		StringBuilder out, ObjectList<Object> params, String table,
+		Map<String, Object> data) {
+		if(table == null || (table = table.trim()).isEmpty()) {
+			throw new QuinaException("The table name is not set.");
+		} else if(data == null || data.size() == 0) {
+			throw new QuinaException("The column name is not set.");
+		}
+		int cnt = 0;
+		final int len = data.size();
+		final Object[] values = new Object[len];
+		Entry<String, Object> e;
+		Iterator<Entry<String, Object>> itr = data.entrySet().iterator();
+		out.append("insert into ")
+			.append(table).append("(");
+		while(itr.hasNext()) {
+			e = itr.next();
+			if(cnt != 0) {
+				out.append(", ");
+			}
+			out.append(e.getKey());
+			values[cnt ++] = e.getValue();
+		}
+		itr = null; e = null;
+		out.append(") ").append("values (");
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				out.append(", ");
+			}
+			out.append("?");
+		}
+		out.append(")");
+		params.clearAndSetAll(values);
 	}
 }

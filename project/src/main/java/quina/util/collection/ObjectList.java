@@ -42,21 +42,7 @@ public final class ObjectList<T> implements ReadList<T> {
 	 * @param 初期設定情報を設定します.
 	 */
 	public ObjectList(Object... o) {
-		if (o != null && o.length > 0) {
-			int oLen = o.length;
-			int len = oLen + (oLen >> 1);
-			if (len < DEF) {
-				len = DEF;
-			}
-			max = len;
-			list = new Object[len];
-			length = oLen;
-			System.arraycopy(o, 0, list, 0, oLen);
-		} else {
-			max = DEF;
-			list = new Object[max];
-			length = 0;
-		}
+		clearAndSetAll(o);
 	}
 
 	/**
@@ -223,6 +209,28 @@ public final class ObjectList<T> implements ReadList<T> {
 			buf.append(list[i]);
 		}
 		return buf.append("]").toString();
+	}
+	
+	/**
+	 * 初期化して内容を設定.
+	 * @param o 設定内容を設定します.
+	 */
+	public void clearAndSetAll(Object... o) {
+		if (o != null && o.length > 0) {
+			int oLen = o.length;
+			int len = oLen + (oLen >> 1);
+			if (len < DEF) {
+				len = DEF;
+			}
+			max = len;
+			list = new Object[len];
+			length = oLen;
+			System.arraycopy(o, 0, list, 0, oLen);
+		} else {
+			max = DEF;
+			list = new Object[max];
+			length = 0;
+		}
 	}
 
 	/**

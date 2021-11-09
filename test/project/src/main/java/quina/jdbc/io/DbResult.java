@@ -33,7 +33,7 @@ public class DbResult implements
 	private DbResult() {}
 	
 	// IoStatement.
-	private AbstractIoStatement<?> ioStmt = null;
+	private AbstractStatement<?> ioStmt = null;
 	// resultSet.
 	private QuinaResultSet rs = null;
 	// keyIndex.
@@ -90,7 +90,7 @@ public class DbResult implements
 	 */
 	protected static final DbResult create(
 		final QuinaResultSet rs,
-		final AbstractIoStatement<?> ioStmt) {
+		final AbstractStatement<?> ioStmt) {
 		try {
 			DbResult ret = new DbResult();
 			ret.ioStmt = ioStmt;
