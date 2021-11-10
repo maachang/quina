@@ -24,7 +24,7 @@ public class TestDBJsonGet implements RESTfulGetSync {
 			// id=1001を取得.
 			qe = conn.queryStatement();
 			//qe.sql("select id, name, grade from TestTable")
-			qe.selectSQL("TestTable", "id", "name")
+			qe.selectSQL("TestTable", "id", "name", "grade")
 				.sql("where id=?")
 				.params(1001)
 				.executeQuery()
@@ -32,7 +32,7 @@ public class TestDBJsonGet implements RESTfulGetSync {
 			
 			// id=2001を取得.
 			//qe.sql("select id, name, grade from TestTable")
-			qe.selectSQL("TestTable", "id", "name")
+			qe.selectSQL("TestTable", "id", "name", "grade")
 				.sql("where id=?")
 				.params(2001)
 				.executeQuery()

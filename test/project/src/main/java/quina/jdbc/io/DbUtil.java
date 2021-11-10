@@ -34,7 +34,7 @@ final class DbUtil {
 	 * @param params 対象のパラメータを設定します.
 	 */
 	public static final void preParams(
-		final PreparedStatement pre, final ParameterMetaData meta, final Object... params)
+		final PreparedStatement pre, final ParameterMetaData meta, final Object[] params)
 		throws Exception {
 		int len = params.length;
 		for (int i = 0; i < len; i++) {
@@ -335,6 +335,23 @@ final class DbUtil {
 	}
 	
 	/**
+	 * ObjectListに対して指定Valuesのデータをクリアしてセット.
+	 * @param params ObjectListを設定します.
+	 * @param values ObjectListをクリアして設定する
+	 *               Value群を設定します.
+	 * @return ObjectList<Object> ObjectListが返却されます.
+	 */
+	public static final ObjectList<Object> clearAndSetAll(
+		ObjectList<Object> params, Object[] values) {
+		if(params == null) {
+			params = new ObjectList<Object>(values);
+		} else {
+			params.clearAndSetAll(values);
+		}
+		return params;
+	}
+	
+	/**
 	 * Insert用のSQLを作成.
 	 * @param out SQL出力先のStringBuiderを設定します.
 	 * @param table テーブル名を設定します.
@@ -376,7 +393,7 @@ final class DbUtil {
 	 *               で設定します.
 	 *               この処理で出力先のパラメータにもなります.
 	 */
-	public static final void createInsert(
+	public static final ObjectList<Object> createInsert(
 		StringBuilder out, String table, ObjectList<Object> params) {
 		if(table == null || (table = table.trim()).isEmpty()) {
 			throw new QuinaException("The table name is not set.");
@@ -403,7 +420,8 @@ final class DbUtil {
 			out.append("?");
 		}
 		out.append(")");
-		params.clearAndSetAll(values);
+		// パラメータに新規セット.
+		return clearAndSetAll(params, values);
 	}
 	
 	/**
@@ -413,7 +431,7 @@ final class DbUtil {
 	 * @param table テーブル名を設定します.
 	 * @param data Update対象の内容を設定します.
 	 */
-	public static final void createInsert(
+	public static final ObjectList<Object> createInsert(
 		StringBuilder out, ObjectList<Object> params, String table,
 		Map<String, Object> data) {
 		if(table == null || (table = table.trim()).isEmpty()) {
@@ -445,7 +463,8 @@ final class DbUtil {
 			out.append("?");
 		}
 		out.append(")");
-		params.clearAndSetAll(values);
+		// パラメータに新規セット.
+		return clearAndSetAll(params, values);
 	}
 	
 	/**
@@ -455,7 +474,7 @@ final class DbUtil {
 	 * @param table テーブル名を設定します.
 	 * @param data Update対象の内容を設定します.
 	 */
-	public static final void createUpdate(
+	public static final ObjectList<Object> createUpdate(
 		StringBuilder out, ObjectList<Object> params, String table,
 		Map<String, Object> data) {
 		if(table == null || (table = table.trim()).isEmpty()) {
@@ -478,7 +497,8 @@ final class DbUtil {
 			values[cnt ++] = e.getValue();
 		}
 		itr = null; e = null;
-		params.clearAndSetAll(values);
+		// パラメータに新規セット.
+		return clearAndSetAll(params, values);
 	}
 	
 	/**
@@ -490,7 +510,7 @@ final class DbUtil {
 	 *             column, value, column, value...
 	 *             で設定します.
 	 */
-	public static final void createUpdateSQL(
+	public static final ObjectList<Object> createUpdateSQL(
 		StringBuilder out, ObjectList<Object> params, String table,
 		Object... data) {
 		if(table == null || (table = table.trim()).isEmpty()) {
@@ -509,7 +529,8 @@ final class DbUtil {
 			out.append(data[i]).append("=?");
 			values[cnt ++] = data[i + 1];
 		}
-		params.clearAndSetAll(values);
+		// パラメータに新規セット.
+		return clearAndSetAll(params, values);
 	}
 	
 	/**

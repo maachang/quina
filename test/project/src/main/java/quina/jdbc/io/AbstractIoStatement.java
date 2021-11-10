@@ -102,6 +102,9 @@ public abstract class AbstractIoStatement<T>
 			// パラメータを反映.
 			this.updateParams(ps);
 			
+			System.out.println("params: " + (params == null ? 0 : params.size())
+				+ " sql: " + sql);
+			
 			// 現在利用中のPreparedStatementをセット.
 			nowStatement = ps;
 			

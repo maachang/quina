@@ -24,7 +24,7 @@ public class IoStatement
 		QuinaConnection conn, Object... args) {
 		init(conn, args);
 	}
-
+	
 	/**
 	 * Query実行.
 	 * @return DbResult Query実行結果が返却されます.
@@ -45,37 +45,66 @@ public class IoStatement
 	
 	/**
 	 * 更新実行.
-	 * @return long 処理結果の件数が返却されます.
+	 * @return IoStatement このオブジェクトが返却されます.
 	 */
-	public long executeUpdate() {
+	public IoStatement executeUpdate() {
+		return executeUpdate(null, null);
+	}
+	
+	/**
+	 * 更新実行.
+	 * @param out out[0]に処理結果の件数が設定されます.
+	 * @return IoStatement このオブジェクトが返却されます.
+	 */
+	public IoStatement executeUpdate(long[] out) {
+		return executeUpdate(null, out);
+	}
+	
+	/**
+	 * 更新実行.
+	 * @param out out out[0]にDbResultが返却されます.
+	 * @param outCount outCount[0]に処理結果の件数が設定されます.
+	 * @return IoStatement このオブジェクトが返却されます.
+	 */
+	public IoStatement executeUpdate(DbResult[] out, long[] outCount) {
 		// クローズチェック.
 		checkClose();
 		// 実行可能かチェック.
 		checkExecute();
 		try {
 			// 書き込み処理系を実行.
-			Object o = executeStatement(false);
-			// 処理結果の件数を返却.
-			return (Long)o;
+			if(outCount != null && outCount.length > 0) {
+				outCount[0] = (Long)executeStatement(false);
+			} else {
+				executeStatement(false);
+			}
+			if(out != null && out.length > 0) {
+				out[0] = getGeneratedKeys();
+			}
+			return this;
 		} finally {
 			// 登録されてたSQLとパラメータをクリア.
 			clearSqlAndParmas();
 		}
 	}
+
 	
 	/**
-	 * 更新実行.
-	 * @param out out[0]に処理結果の件数が設定されます.
-	 * @return DbResult 書き込みで発行された結果を返却します.
+	 * 新規データを挿入.
+	 * この処理の場合sql()呼び出しはせず以下のように実装します.
+	 * 
+	 * IoStatement stmt = conn.ioStatement();
+	 * stmt.params("id", 100, "age", 25, "name", "hoge")
+	 *     .insert("testTable")
+	 *     .commit();
+	 * 
+	 * これにより"testTable"に対してid=100, age=25, name=hoge
+	 * 内容がInsertされます.
+	 * @param tableName テーブル名を設定します.
+	 * @return IoStatement このオブジェクトが返却されます.
 	 */
-	public DbResult executeUpdate(long[] out) {
-		// 処理結果の件数をセット.
-		if(out != null && out.length > 0) {
-			out[0] = executeUpdate();
-		} else {
-			executeUpdate();
-		}
-		return getGeneratedKeys();
+	public IoStatement insert(String tableName) {
+		return insert(null, tableName);
 	}
 	
 	/**
@@ -84,29 +113,33 @@ public class IoStatement
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
 	 * stmt.params("id", 100, "age", 25, "name", "hoge")
-	 *     .insert("testTable");
+	 *     .insert(null, "testTable")
+	 *     .commit();
 	 * 
 	 * これにより"testTable"に対してid=100, age=25, name=hoge
 	 * 内容がInsertされます.
+	 * @param out [0]に書き込みで発行された結果を返却します.
 	 * @param tableName テーブル名を設定します.
-	 * @return DbResult 書き込みで発行された結果を返却します.
+	 * @return IoStatement このオブジェクトが返却されます.
 	 */
-	public DbResult insert(String tableName) {
+	public IoStatement insert(DbResult[] out, String tableName) {
 		super.sqlBuf = new StringBuilder();
-		DbUtil.createInsert(sqlBuf, tableName, params);
-		return executeUpdate(null);
+		params = DbUtil.createInsert(sqlBuf, tableName, params);
+		executeUpdate(out, null);
+		return this;
 	}
 	
 	/**
 	 * 新規データを挿入.
 	 * この処理の場合sql()呼び出しはせず以下のように実装します.
 	 * 
-	 * IoStatement stmt = conn.ioStatement();
 	 * Map<String, Object> keyValues = new HashMap<>();
 	 * keyValues.put("id", 100);
 	 * keyValues.put("age", 25);
 	 * keyValues.put("name", "hoge");
-	 * stmt.insert("testTable", keyValues);
+	 * IoStatement stmt = conn.ioStatement();
+	 * stmt.insert("testTable", keyValues)
+	 *     .commit();
 	 * 
 	 * これにより"testTable"に対してid=100, age=25, name=hoge
 	 * 内容がInsertされます.
@@ -115,11 +148,38 @@ public class IoStatement
 	 *               Mapを設定します.
 	 * @return DbResult 書き込みで発行された結果を返却します.
 	 */
-	public DbResult insert(String tableName,
+	public IoStatement insert(
+		String tableName, Map<String, Object> values) {
+		return insert(null, tableName, values);
+	}
+
+	
+	/**
+	 * 新規データを挿入.
+	 * この処理の場合sql()呼び出しはせず以下のように実装します.
+	 * 
+	 * Map<String, Object> keyValues = new HashMap<>();
+	 * keyValues.put("id", 100);
+	 * keyValues.put("age", 25);
+	 * keyValues.put("name", "hoge");
+	 * IoStatement stmt = conn.ioStatement();
+	 * stmt.insert(null, "testTable", keyValues)
+	 *     .commit();
+	 * 
+	 * これにより"testTable"に対してid=100, age=25, name=hoge
+	 * 内容がInsertされます.
+	 * @param out [0]に書き込みで発行された結果を返却します.
+	 * @param tableName テーブル名を設定します.
+	 * @param values 追加対象のkey=カラム名,value=要素の
+	 *               Mapを設定します.
+	 * @return DbResult 書き込みで発行された結果を返却します.
+	 */
+	public IoStatement insert(DbResult[] out, String tableName,
 		Map<String, Object> values) {
-		super.sqlBuf = new StringBuilder();
-		DbUtil.createInsert(sqlBuf, params, tableName, values);
-		return executeUpdate(null);
+		sqlBuf = new StringBuilder();
+		params = DbUtil.createInsert(sqlBuf, params, tableName, values);
+		executeUpdate(out, null);
+		return this;
 	}
 	
 	/**
@@ -141,12 +201,12 @@ public class IoStatement
 	 * @param tableName テーブル名を設定します.
 	 * @param values 追加対象のkey=カラム名,value=要素の
 	 *               Mapを設定します.
-	 * @return IoStatement 書き込みで発行された結果を返却します.
+	 * @return IoStatement このオブジェクトが返却されます.
 	 */
 	public IoStatement updateSQL(String tableName,
 		Map<String, Object> values) {
-		super.sqlBuf = new StringBuilder();
-		DbUtil.createUpdate(sqlBuf, params, tableName, values);
+		sqlBuf = new StringBuilder();
+		params = DbUtil.createUpdate(sqlBuf, params, tableName, values);
 		return this;
 	}
 	
@@ -155,10 +215,7 @@ public class IoStatement
 	 * 使い方は以下のように使います.
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
-	 * keyValues.put("age", 25);
-	 * keyValues.put("name", "hoge");
-	 * stmt.updateSQL("testTable",
-	 *        "age", 25, "name", "hoge")
+	 * stmt.updateSQL("testTable", "age", 25, "name", "hoge")
 	 *     .sql("where id=?")
 	 *     .params(100);
 	 *     .executeUpdate();
@@ -169,11 +226,11 @@ public class IoStatement
 	 * @param tableName テーブル名を設定します.
 	 * @param values 追加対象のkey=カラム名,value=要素の
 	 *               Mapを設定します.
-	 * @return IoStatement 書き込みで発行された結果を返却します.
+	 * @return IoStatement このオブジェクトが返却されます.
 	 */
 	public IoStatement updateSQL(String tableName, Object... data) {
-		super.sqlBuf = new StringBuilder();
-		DbUtil.createUpdateSQL(sqlBuf, params, tableName, data);
+		sqlBuf = new StringBuilder();
+		params = DbUtil.createUpdateSQL(sqlBuf, params, tableName, data);
 		return this;
 	}
 	
@@ -182,24 +239,23 @@ public class IoStatement
 	 * 使い方は以下のように使います.
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
-	 * keyValues.put("age", 25);
-	 * keyValues.put("name", "hoge");
-	 * stmt.selectSQL("testTable", "age", "name")
+	 * DbResult res = stmt
+	 *     .selectSQL("testTable", "age", "name")
 	 *     .sql("where id=?")
 	 *     .params(100);
-	 *     .executeUpdate();
+	 *     .executeQuery();
 	 * 
 	 * 以下のようなSQL文が実行されます.
 	 * > select age, name from testTable where id=100;
 	 * 
 	 * @param tableName テーブル名を設定します.
-	 * @param values 追加対象のkey=カラム名,value=要素の
+	 * @param values 追加対象のkey=カラム名, value=要素の
 	 *               Mapを設定します.
-	 * @return IoStatement 書き込みで発行された結果を返却します.
+	 * @return IoStatement このオブジェクトが返却されます.
 	 */
 	public IoStatement selectSQL(String tableName, String... columns) {
 		clearParmas();
-		super.sqlBuf = new StringBuilder();
+		sqlBuf = new StringBuilder();
 		DbUtil.createSelectSQL(sqlBuf, tableName, columns);
 		return this;
 	}

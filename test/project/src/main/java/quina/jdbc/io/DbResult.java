@@ -285,6 +285,11 @@ public class DbResult implements
 		public String keyAt(int no) {
 			return list[no].key;
 		}
+		
+		// No情報を取得.
+		public int noAt(int no) {
+			return list[no].no;
+		}
 	}
 	
 	// 1行のデータ.
@@ -452,7 +457,7 @@ public class DbResult implements
 			final int len = index.size();
 			final Object[] vals = new Object[len];
 			for(int i = 0; i < len; i ++) {
-				vals[i] = rv.get(index.keyAt(i));
+				vals[index.noAt(i)] = rv.get(index.keyAt(i));
 			}
 			this.keyIndex = index;
 			this.values = vals;
