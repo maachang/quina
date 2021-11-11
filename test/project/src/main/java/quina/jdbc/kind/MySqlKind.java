@@ -75,6 +75,8 @@ public class MySqlKind implements QuinaJDBCKind {
 			"characterEncoding", "utf8"
 			// ParameterMetaDataの利用を有効にする.
 			,"generateSimpleParameterMetadata", "true"
+			// 認証に失敗するのでこれを入れる.
+			,"allowPublicKeyRetrieval", "true"
 			// SSL接続を無効にする.
 			,"useSSL", "false"
 		};

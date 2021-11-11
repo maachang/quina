@@ -8,6 +8,7 @@
         //,connectionTimeout: 5000
         ,urlParams: {
             characterEncoding: utf8
+            //,allowPublicKeyRetrieval: true,
             //,useSSL: false
             ,serverTimezone: "Asia/Tokyo"
             ,rewriteBatchedStatements: true
