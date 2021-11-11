@@ -147,7 +147,7 @@ public class QuinaJDBCConstants {
 	 * デフォルトのコネクションタイムアウト.
 	 * なし.
 	 */
-	protected static final int DEF_CONNECTION_TIMEOUT = 1500;
+	protected static final int DEF_CONNECTION_TIMEOUT = 2500;
 	
 	/**
 	 * 最小のコネクションタイムアウト.

@@ -5,7 +5,7 @@
         ,password: password
         ,poolingSize: 15
         //,maxConnection: 30
-        //,connectionTimeout: 1500
+        //,connectionTimeout: 5000
         ,urlParams: {
             characterEncoding: utf8
             //,useSSL: false

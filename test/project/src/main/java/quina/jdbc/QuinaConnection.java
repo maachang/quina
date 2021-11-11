@@ -236,6 +236,17 @@ public abstract class QuinaConnection
 	public void close() throws SQLException {
 		// クローズ済みでない場合.
 		if(!closeFlag.setToGetBefore(true)) {
+			// 読み込み専用でない場合はコミットする.
+			if(!connection.isReadOnly()) {
+				try {
+					connection.commit();
+				} catch(SQLException se) {
+					try {
+						destroy();
+					} catch(Exception e) {}
+					throw se;
+				}
+			}
 			// プーリングしない場合.
 			if(notPooling) {
 				// コネクション破棄.

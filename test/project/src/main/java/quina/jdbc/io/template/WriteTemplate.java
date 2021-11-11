@@ -499,6 +499,7 @@ public interface WriteTemplate<T>
 	default T deleteRow(
 		String tableName, PrimaryKey primaryKey, Object... values) {
 		deleteSQL(tableName);
+		setParams(new ObjectList<Object>());
 		DbUtil.wherePrimaryKeys(getSql(), getParams(), primaryKey, values);
 		executeUpdate(null, null);
 		return (T)this;
