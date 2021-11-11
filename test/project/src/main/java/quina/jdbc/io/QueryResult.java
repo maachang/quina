@@ -19,18 +19,17 @@ import quina.jdbc.QuinaResultSet;
 import quina.json.JsonOut;
 import quina.util.collection.AbstractEntryIterator;
 import quina.util.collection.AbstractKeyIterator;
-import quina.util.collection.TypesKeyValue;
 import quina.util.collection.mc.McCollection;
 import quina.util.collection.mc.McList;
 
 /**
- * Result返却オブジェクト.
+ * QueryResult返却オブジェクト.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class DbResult implements
-	Iterator<Map<String, Object>>, Closeable,
-	McCollection<McList<Map<String, Object>>, Map<String, Object>> {
-	private DbResult() {}
+public class QueryResult implements
+	Iterator<QueryResultRow>, Closeable,
+	McCollection<McList<QueryResultRow>, QueryResultRow> {
+	private QueryResult() {}
 	
 	// IoStatement.
 	private AbstractStatement<?> ioStmt = null;
@@ -43,19 +42,18 @@ public class DbResult implements
 	// metaTypes.
 	private int[] metaTypes = null;
 	// ResultRow.
-	private DbResultValue row = null;
+	private QueryResultRow row = null;
 	// 現在取得してるResultRow.
-	private DbResultValue nowRow = null;
+	private QueryResultRow nowRow = null;
 	
 	/**
 	 * 新しい空のオブジェクトを生成します.
 	 * @return McCollection<T, V> 新しいオブジェクトが返却されます.
 	 */
 	@Override
-	public McCollection<McList<Map<String, Object>>, Map<String, Object>>
-		newInstance() {
+	public McCollection<McList<QueryResultRow>, QueryResultRow> newInstance() {
 		// McListを作成.
-		return new McList<Map<String, Object>>();
+		return new McList<QueryResultRow>();
 	}
 	
 	// メタデータの中身を取得.
@@ -78,7 +76,7 @@ public class DbResult implements
 		metaTypes = t; // タイプ群.
 		
 		// 出力オブジェクトを生成.
-		row = new DbResultValue(this);
+		row = new QueryResultRowImpl(this);
 	}
 	
 	/**
@@ -88,11 +86,11 @@ public class DbResult implements
 	 * @param stmt
 	 * @return
 	 */
-	protected static final DbResult create(
+	protected static final QueryResult create(
 		final QuinaResultSet rs,
 		final AbstractStatement<?> ioStmt) {
 		try {
-			DbResult ret = new DbResult();
+			QueryResult ret = new QueryResult();
 			ret.ioStmt = ioStmt;
 			ret.rs = rs;
 			ret.getMeta(rs.getMetaData());
@@ -144,7 +142,7 @@ public class DbResult implements
 	private void check() {
 		if(isClose()) {
 			throw new QuinaException(
-				"DbResult is already closed.");
+				"QueryResult is already closed.");
 		}
 	}
 
@@ -162,7 +160,7 @@ public class DbResult implements
 	}
 
 	@Override
-	public Map<String, Object> next() {
+	public QueryResultRow next() {
 		check();
 		if(rs == null || (nowRow == null && !_row())) {
 			try {
@@ -170,7 +168,7 @@ public class DbResult implements
 			} catch(Exception e) {}
 			throw new NoSuchElementException();
 		}
-		final Map<String, Object> ret = nowRow;
+		final QueryResultRow ret = nowRow;
 		nowRow = null;
 		return ret;
 	}
@@ -190,7 +188,7 @@ public class DbResult implements
 			if(limit != -1 && out.size() >= limit) {
 				break;
 			}
-			out.add(((DbResultValue)next()).getCopy());
+			out.add(next().getCopy());
 		}
 		return out;
 	}
@@ -292,22 +290,20 @@ public class DbResult implements
 		}
 	}
 	
-	// 1行のデータ.
-	private static final class DbResultValue
-		implements Map<String, Object>,
-		AbstractKeyIterator.Base<String>,
-		AbstractEntryIterator.Base<String, Object>,
-		TypesKeyValue<String, Object> {
+	// 1行のデータ実装.
+	private static final class QueryResultRowImpl
+		implements QueryResultRow {
 		
-		private final DbResult parent;
+		private final QueryResult parent;
 		
 		// コンストラクタ.
-		protected DbResultValue(DbResult p) {
+		protected QueryResultRowImpl(QueryResult p) {
 			this.parent = p;
 		}
 		
-		public CopyDbResultValue getCopy() {
-			return new CopyDbResultValue(this);
+		@Override
+		public QueryResultRow getCopy() {
+			return new QueryResultRowMemory(this);
 		}
 		
 		@Override
@@ -445,14 +441,15 @@ public class DbResult implements
 	}
 	
 	// 1行のCopyデータ.
-	private static final class CopyDbResultValue
-		implements Map<String, Object>, AbstractKeyIterator.Base<String>,
-		AbstractEntryIterator.Base<String, Object>, TypesKeyValue<String, Object> {
+	private static final class QueryResultRowMemory
+		implements QueryResultRow {
 		private KeyIndex keyIndex;
 		private Object[] values;
 		
+		protected QueryResultRowMemory() {}
+		
 		// コンストラクタ.
-		protected CopyDbResultValue(DbResultValue rv) {
+		protected QueryResultRowMemory(QueryResultRowImpl rv) {
 			KeyIndex index = rv.parent.metaColumns;
 			final int len = index.size();
 			final Object[] vals = new Object[len];
@@ -461,6 +458,14 @@ public class DbResult implements
 			}
 			this.keyIndex = index;
 			this.values = vals;
+		}
+		
+		@Override
+		public QueryResultRow getCopy() {
+			QueryResultRowMemory ret = new QueryResultRowMemory();
+			ret.keyIndex = keyIndex;
+			ret.values = values;
+			return ret;
 		}
 		
 		@Override

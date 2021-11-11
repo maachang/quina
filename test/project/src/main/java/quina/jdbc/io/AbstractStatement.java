@@ -105,8 +105,10 @@ public abstract class AbstractStatement<T>
 		return false;
 	}
 	
-	// クローズチェック.
-	protected void checkClose() {
+	/**
+	 * クローズチェック.
+	 */
+	public void checkClose() {
 		if(isClosed()) {
 			throw new QuinaException(
 				"The I/O Statement is closed.");
@@ -162,9 +164,11 @@ public abstract class AbstractStatement<T>
 	
 	/**
 	 * 実行用のパラメーターをクリア.
+	 * @return T このオブジェクトが返却されます.
 	 */
-	protected final void clearParmas() {
+	public final T clearParmas() {
 		params = null;
+		return (T)this;
 	}
 
 	
@@ -339,7 +343,8 @@ public abstract class AbstractStatement<T>
 			// パラメータが存在する場合.
 			if(params != null && params.length > 0) {
 				// PreparedStatementパラメータをセット.
-				DbUtil.preParams(ps, ps.getParameterMetaData(), params);
+				DbUtil.preParams(
+					ps, ps.getParameterMetaData(), params);
 			}
 			return ps;
 		} catch(QuinaException qe) {

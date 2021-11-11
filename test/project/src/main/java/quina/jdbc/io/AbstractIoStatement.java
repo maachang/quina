@@ -5,6 +5,7 @@ import java.io.IOException;
 import quina.exception.QuinaException;
 import quina.jdbc.QuinaPreparedStatement;
 import quina.jdbc.QuinaResultSet;
+import quina.jdbc.io.template.BaseTemplate;
 import quina.util.collection.ObjectList;
 
 /**
@@ -12,9 +13,10 @@ import quina.util.collection.ObjectList;
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractIoStatement<T>
-	extends AbstractStatement<T> {
-	// 利用したDbResultを管理..
-	protected ObjectList<DbResult> resultList = null;
+	extends AbstractStatement<T>
+	implements BaseTemplate<T> {
+	// 利用したQueryResultを管理..
+	protected ObjectList<QueryResult> resultList = null;
 	// SQLBuffer.
 	protected StringBuilder sqlBuf = null;
 	// 現在利用中のPreparedStatement.
@@ -23,7 +25,7 @@ public abstract class AbstractIoStatement<T>
 	@Override
 	public void close() throws IOException {
 		if(resultList != null) {
-			final ObjectList<DbResult> rsList = resultList;
+			final ObjectList<QueryResult> rsList = resultList;
 			resultList = null;
 			final int len = rsList.size();
 			for(int i = 0; i < len; i ++) {
@@ -60,7 +62,8 @@ public abstract class AbstractIoStatement<T>
 	/**
 	 * 実行可能チェック.
 	 */
-	protected void checkExecute() {
+	@Override
+	public void checkExecute() {
 		if(sqlBuf == null || sqlBuf.length() ==0) {
 			throw new QuinaException(
 				"The SQL statement to be executed is not set.");
@@ -68,11 +71,67 @@ public abstract class AbstractIoStatement<T>
 	}
 	
 	/**
+	 * 実行用のパラメータを直接設定.
+	 * @param params 実行用のパラメータを直接設定します.
+	 * @return T このオブジェクトが返却されます.
+	 */
+	@Override
+	public T setParams(ObjectList<Object> params) {
+		super.params = params;
+		return (T)this;
+	}
+	
+	/**
+	 * 実行用のパラメータを取得.
+	 * @return ObjectList<Object> 実行用のパラメータが返却されます.
+	 */
+	@Override
+	public ObjectList<Object> getParams() {
+		return super.params;
+	}
+	
+	/**
+	 * 実行用のSQL文をクリア.
+	 * @return StringBuilder 空のStringBuilderが返却されます.
+	 */
+	@Override
+	public StringBuilder clearSql() {
+		sqlBuf = new StringBuilder();
+		return sqlBuf;
+	}
+	
+	/**
+	 * 利用中のSQL文を取得.
+	 * @return StringBuilder 利用中のSQL文が返却されます.
+	 */
+	@Override
+	public StringBuilder getSql() {
+		return sqlBuf;
+	}
+	
+	/**
+	 * SQL用のバッファを設定.
+	 * @param sqlBuf 対象のSQLバッファを設定します.
+	 * @return T このオブジェクトが返却されます.
+	 */
+	@Override
+	public T setSql(StringBuilder sqlBuf) {
+		if(sqlBuf == null) {
+			sqlBuf = new StringBuilder();
+		}
+		this.sqlBuf = sqlBuf;
+		return (T)this;
+	}
+
+	
+	/**
 	 * 実行用のSQLとパラメーターをクリア.
 	 */
-	protected void clearSqlAndParmas() {
+	@Override
+	public T clearSqlAndParmas() {
 		super.clearParmas();
 		sqlBuf = null;
+		return (T)this;
 	}
 	
 	/**
@@ -86,15 +145,15 @@ public abstract class AbstractIoStatement<T>
 	/**
 	 * 実行処理.
 	 * @param query trueの場合Query実行を行います.
-	 * @return Object trueの場合 DbResult が返却されます.
+	 * @return Object trueの場合 QueryResult が返却されます.
 	 *                falseの場合 処理件数が返却されます.
 	 */
-	protected Object executeStatement(boolean query) {
+	public Object executeStatement(boolean query) {
 		// 実行SQLとパラメーターを取得.
 		String sql = getExecuteSql();
 		// QuinaPreparedStatementで処理.
 		QuinaPreparedStatement ps = null;
-		DbResult ret = null;
+		QueryResult ret = null;
 		try {
 			// QuinaPreparedStatementを取得.
 			ps = prepareStatement(sql);
@@ -110,13 +169,13 @@ public abstract class AbstractIoStatement<T>
 			
 			// query返却が必要な場合.
 			if(query) {
-				// DbResultを返却.
-				ret = DbResult.create(
+				// QueryResultを返却.
+				ret = QueryResult.create(
 					(QuinaResultSet)ps.executeQuery(),
 					this);
-				// DbResultを登録.
+				// QueryResultを登録.
 				if(resultList == null) {
-					resultList = new ObjectList<DbResult>();
+					resultList = new ObjectList<QueryResult>();
 				}
 				resultList.add(ret);
 				return ret;
@@ -153,23 +212,23 @@ public abstract class AbstractIoStatement<T>
 	
 	/**
 	 * Insertで付与されたシーケンスID結果を取得.
-	 * @return DbResult シーケンスID結果が返却されます.
+	 * @return QueryResult シーケンスID結果が返却されます.
 	 *                  nullの場合、取得出来ませんでした.
 	 */
-	protected DbResult getGeneratedKeys() {
+	public QueryResult getGeneratedKeys() {
 		if(nowStatement == null || statementArgs == null ||
 			statementArgs.length == 0) {
 			return null;
 		}
-		DbResult ret = null;
+		QueryResult ret = null;
 		try {
-			// DBResultを取得.
-			ret = DbResult.create(
+			// QueryResultを取得.
+			ret = QueryResult.create(
 				nowStatement.getGeneratedKeys(),
 				this);
-			// DbResultを登録.
+			// QueryResultを登録.
 			if(resultList == null) {
-				resultList = new ObjectList<DbResult>();
+				resultList = new ObjectList<QueryResult>();
 			}
 			resultList.add(ret);
 			return ret;

@@ -19,23 +19,13 @@ public class TestDbJsonGetInsert implements RESTfulGetSync {
 		QuinaDataSource ds = QuinaJDBCService.dataSource("testMySql");
 		try(QuinaConnection conn = ds.getConnection()) {
 			io = conn.ioStatement();
-			io.insert("TestTable", params)
+			// １行データを注入・更新.
+			io.upsertRow("TestTable", "id", params)
 				.commit();
-			return new JsonMap("state", "successInsert");
+			return JsonMap.of("state", "success");
 		} catch(Exception e) {
-			try(QuinaConnection conn = ds.getConnection()) {
-				io = conn.ioStatement();
-				io.updateSQL("TestTable", params)
-					.sql("where id=?")
-					.params(params.getInt("id"))
-					.executeUpdate()
-					.commit();
-				return new JsonMap("state", "successUpdate");
-			} catch(Exception ee) {
-				e.printStackTrace();
-				return new JsonMap("state", "error");
-			}
+			e.printStackTrace();
+			return JsonMap.of("state", "error");
 		}
 	}
-
 }

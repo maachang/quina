@@ -51,7 +51,7 @@ public class WriteBatchStatement
 	 * これによりtestTableに対して
 	 *   id=100, age=25, name=hoge
 	 *   id=200, age=32, name=tanaka
-	 * がインサートされます.
+	 * が TestTable に注入されます.
 	 * 
 	 * @param conn JDBCコネクションを設定します.
 	 * @param tableName テーブル名を設定します.

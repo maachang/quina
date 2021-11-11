@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import quina.exception.QuinaException;
+import quina.jdbc.io.template.BaseTemplate;
 import quina.util.BooleanUtil;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
@@ -23,7 +24,7 @@ import quina.util.collection.ObjectList;
 /**
  * DBUtil.
  */
-final class DbUtil {
+public final class DbUtil {
 	private DbUtil() {}
 	
 	/**
@@ -398,7 +399,8 @@ final class DbUtil {
 		if(table == null || (table = table.trim()).isEmpty()) {
 			throw new QuinaException("The table name is not set.");
 		} else if(params == null || params.size() == 0) {
-			throw new QuinaException("The column name is not set.");
+			throw new QuinaException(
+				"No key and value conditions have been set. ");
 		}
 		int cnt = 0;
 		final int len = params.size();
@@ -437,7 +439,8 @@ final class DbUtil {
 		if(table == null || (table = table.trim()).isEmpty()) {
 			throw new QuinaException("The table name is not set.");
 		} else if(data == null || data.size() == 0) {
-			throw new QuinaException("The column name is not set.");
+			throw new QuinaException(
+				"No key and value conditions have been set.");
 		}
 		int cnt = 0;
 		final int len = data.size();
@@ -470,6 +473,38 @@ final class DbUtil {
 	/**
 	 * Update用のSQLを作成してパラメータセット.
 	 * @param out SQL出力先のStringBuiderを設定します.
+	 * @param table テーブル名を設定します.
+	 * @param params パラメータを設定します.
+	 *               column, value, column, value...
+	 *               で設定します.
+	 *               この処理で出力先のパラメータにもなります.
+	 */
+	public static final ObjectList<Object> createUpdate(
+		StringBuilder out, String table, ObjectList<Object> params) {
+		if(table == null || (table = table.trim()).isEmpty()) {
+			throw new QuinaException("The table name is not set.");
+		} else if(params == null || params.size() == 0) {
+			throw new QuinaException(
+				"No key and value conditions have been set.");
+		}
+		int cnt = 0;
+		final int len = params.size();
+		final Object[] values = new Object[len >> 1];
+		out.append("update ").append(table).append(" set ");
+		for(int i = 0; i < len; i += 2) {
+			if(i != 0) {
+				out.append(", ");
+			}
+			out.append(params.get(i)).append("=?");
+			values[cnt ++] = params.get(i + 1);
+		}
+		// パラメータに新規セット.
+		return clearAndSetAll(params, values);
+	}
+	
+	/**
+	 * Update用のSQLを作成してパラメータセット.
+	 * @param out SQL出力先のStringBuiderを設定します.
 	 * @param params 出力先のパラメータを設定します.
 	 * @param table テーブル名を設定します.
 	 * @param data Update対象の内容を設定します.
@@ -480,7 +515,8 @@ final class DbUtil {
 		if(table == null || (table = table.trim()).isEmpty()) {
 			throw new QuinaException("The table name is not set.");
 		} else if(data == null || data.size() == 0) {
-			throw new QuinaException("The column name is not set.");
+			throw new QuinaException(
+				"No key and value conditions have been set.");
 		}
 		int cnt = 0;
 		final int len = data.size();
@@ -497,38 +533,6 @@ final class DbUtil {
 			values[cnt ++] = e.getValue();
 		}
 		itr = null; e = null;
-		// パラメータに新規セット.
-		return clearAndSetAll(params, values);
-	}
-	
-	/**
-	 * Update用のSQLを作成してパラメータセット.
-	 * @param out SQL出力先のStringBuiderを設定します.
-	 * @param params 出力先のパラメータを設定します.
-	 * @param table テーブル名を設定します.
-	 * @param data Update対象の内容を設定します.
-	 *             column, value, column, value...
-	 *             で設定します.
-	 */
-	public static final ObjectList<Object> createUpdateSQL(
-		StringBuilder out, ObjectList<Object> params, String table,
-		Object... data) {
-		if(table == null || (table = table.trim()).isEmpty()) {
-			throw new QuinaException("The table name is not set.");
-		} else if(data == null || data.length == 0) {
-			throw new QuinaException("The column name is not set.");
-		}
-		int cnt = 0;
-		final int len = data.length;
-		final Object[] values = new Object[len >> 1];
-		out.append("update ").append(table).append(" set ");
-		for(int i = 0; i < len; i += 2) {
-			if(i != 0) {
-				out.append(", ");
-			}
-			out.append(data[i]).append("=?");
-			values[cnt ++] = data[i + 1];
-		}
 		// パラメータに新規セット.
 		return clearAndSetAll(params, values);
 	}
@@ -555,5 +559,159 @@ final class DbUtil {
 			out.append(columns[i]);
 		}
 		out.append(" from ").append(table);
+	}
+	
+	/**
+	 * Delete用のSQL文を作成.
+	 * @param out SQL出力先のStringBuiderを設定します.
+	 * @param table テーブル名を設定します.
+	 */
+	public static final void createDeleteSQL(StringBuilder out,
+		String table) {
+		if(table == null || (table = table.trim()).isEmpty()) {
+			throw new QuinaException("The table name is not set.");
+		}
+		out.append("delete from ").append(table);
+	}
+	
+	/**
+	 * Query実行.
+	 * @param bt 対象のBaseTemplateを設定します.
+	 * @return QueryResult Query実行結果が返却されます.
+	 */
+	public static final QueryResult executeQuery(
+		BaseTemplate<?> bt) {
+		// クローズチェック.
+		bt.checkClose();
+		// 実行可能かチェック.
+		bt.checkExecute();
+		try {
+			// QueryResultを取得.
+			return (QueryResult)bt.executeStatement(true);
+		} finally {
+			// 登録されてたSQLとパラメータをクリア.
+			bt.clearSqlAndParmas();
+		}
+	}
+	
+	/**
+	 * 更新実行.
+	 * @param outCount outCount[0]に処理結果の件数が設定されます.
+	 * @param bt 対象のBaseTemplateを設定します.
+	 * @return IoStatement このオブジェクトが返却されます.
+	 */
+	public static final QueryResult executeUpdate(
+		long[] out, BaseTemplate<?> bt) {
+		// クローズチェック.
+		bt.checkClose();
+		// 実行可能かチェック.
+		bt.checkExecute();
+		try {
+			// 書き込み処理系を実行.
+			if(out != null && out.length > 0) {
+				out[0] = (Long)bt.executeStatement(false);
+			} else {
+				bt.executeStatement(false);
+			}
+			return bt.getGeneratedKeys();
+		} finally {
+			// 登録されてたSQLとパラメータをクリア.
+			bt.clearSqlAndParmas();
+		}
+	}
+
+	
+	/**
+	 * primaryKeyのWhere条件を生成.
+	 * @param buf SQL用StringBuilderを設定します.
+	 * @param params PreparedStatement用パラメータを設定します.
+	 * @param primaryKey PrimaryKeyを設定します.
+	 * @param values KeyValue群を設定します.
+	 */
+	public static final void wherePrimaryKeys(
+		StringBuilder buf, ObjectList<Object> params,
+		PrimaryKey primaryKey, Map<String, Object> values) {
+		final int len = primaryKey.size();
+		for(int i = 0; i < len; i ++) {
+			if(!values.containsKey(primaryKey.getKey(i))) {
+				throw new QuinaException(
+					"The specified PrimaryKey \"" +
+					primaryKey.getKey(i) +
+					"\" is not set in values.");
+			}
+			if(i != 0) {
+				buf.append(" and ");
+			}
+			buf.append(" where ").append(primaryKey.getKey(i)).append("=?");
+			params.add(values.get(primaryKey.getKey(i)));
+		}
+	}
+	
+	/**
+	 * primaryKeyのWhere条件を生成.
+	 * @param buf SQL用StringBuilderを設定します.
+	 * @param params PreparedStatement用パラメータを設定します.
+	 * @param primaryKey PrimaryKeyを設定します.
+	 * @param values PrimaryKeyに対するValue群を設定します.
+	 */
+	public static final void wherePrimaryKeys(
+		StringBuilder buf, ObjectList<Object> params,
+		PrimaryKey primaryKey, Object... values) {
+		final int len = primaryKey.size();
+		if(values == null || values.length != len) {
+			throw new QuinaException(
+				"The defined number of PrimaryKeys and the number of" +
+				" values array do not match. ");
+		}
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				buf.append(" and ");
+			}
+			buf.append(" where ").append(primaryKey.getKey(i)).append("=?");
+			params.add(values[i]);
+		}
+	}
+
+	
+	/**
+	 * 指定primaryKeyに対する行情報が存在するかチェック.
+	 * @param wt WriteTemplateを設定します.
+	 * @param table テーブル名を設定します.
+	 * @param primaryKey PrimaryKeyを設定します.
+	 * @param values KeyValue群を設定します.
+	 * @return boolean trueの場合、情報は存在します.
+	 */
+	public static final boolean isPrimaryKeyByRow(
+		BaseTemplate<?> wt, String table,
+		PrimaryKey primaryKey, Map<String, Object> values) {
+		try {
+			StringBuilder buf = wt.clearSql();
+			buf.append("select ");
+			// select文を生成.
+			final int len = primaryKey.size();
+			if(len == 1) {
+				buf.append("count(")
+					.append(primaryKey.getKey(0))
+					.append(") as rowsCount ");
+			} else {
+				buf.append("count(*) as rowsCount ");
+			}
+			buf.append("from ").append(table);
+			ObjectList<Object> params = new ObjectList<Object>();
+			wt.setParams(params);
+			// primaryKeyに対するwhere文を生成.
+			wherePrimaryKeys(buf, params, primaryKey, values);
+			// 実行処理.
+			QueryResult res = executeQuery(wt);
+			// 存在するかチェック.
+			if(res.hasNext()) {
+				// カウントが存在する場合.
+				return res.next().getInt("rowsCount") > 0;
+			}
+			// 存在しない場合.
+			return false;
+		} finally {
+			wt.clearSqlAndParmas();
+		}
 	}
 }
