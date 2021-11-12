@@ -45,7 +45,7 @@
   <!-- ===================================================================== -->
   <!-- all.                                                                  -->
   <!-- ===================================================================== -->
-  <target name="all" depends="clean, compile, genCdi, nextGenCdiCompile, jar"/>
+  <target name="all" depends="clean, delGCdi, compile, genCdi, nextGenCdiCompile, jar"/>
   
   <!-- ===================================================================== -->
   <!-- compile.                                                              -->
@@ -159,6 +159,22 @@
 			<arg value="${externalLib.dir}" /> 
       <!-- output resource item. -->
 			<arg value="-r" />
+		</java>
+  </target>
+
+  <!-- ===================================================================== -->
+  <!-- delete genGCdi.                                                      -->
+  <!-- ===================================================================== -->
+  <target name="delGCdi">
+    <java classname="quina.command.GenerateCdi" fork="true">
+      <classpath refid="path.lib" />
+      <jvmarg value="-Xms128m" />
+      <jvmarg value="-Xmx128m" />
+      <!-- output java source path. -->
+			<arg value="-s" />
+			<arg value="${src.dir}" />
+      <!-- delete output CGdi files. -->
+			<arg value="-d" />
 		</java>
   </target>
 

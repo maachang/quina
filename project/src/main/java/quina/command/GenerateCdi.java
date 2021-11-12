@@ -150,11 +150,13 @@ public class GenerateCdi {
 		
 		// javaソースディレクトリを取得.
 		String javaSourceDir = args.get("-s", "--source");
+		// javaソースディレクトリが指定されていない場合.
 		if(javaSourceDir == null) {
 			outHelp();
 			System.err.println("[ERROR] The output destination Java source directory has not been set.");
 			System.exit(1);
 			return;
+		// javaソースディレクトリが存在しない場合.
 		} else if(!new File(javaSourceDir).isDirectory()) {
 			System.err.println("[ERROR] The specified Java source directory \"" +
 				javaSourceDir + "\" is not a directory. ");
@@ -165,13 +167,20 @@ public class GenerateCdi {
 		// javaソースディレクトリを整頓.
 		javaSourceDir = AnnotationUtil.slashPath(javaSourceDir);
 		
+		// GCdiで出力されるファイル群を全削除して処理終了するか取得.
+		boolean deleteOutFileOnlyFlag = args.isValue("-d", "--delete");
+		
 		// classディレクトリを取得.
 		String clazzDir = args.get("-c", "--class");
+		// classディレクトリが存在しない場合.
 		if(clazzDir != null && !new File(clazzDir).isDirectory()) {
-			System.err.println("[ERROR] The specified class directory \"" +
-				clazzDir + "\" is not a directory. ");
-			System.exit(1);
-			return;
+			// ただしdeleteOutFileOnlyFlagがtrueの場合はエラーにしない.
+			if(!deleteOutFileOnlyFlag) {
+				System.err.println("[ERROR] The specified class directory \"" +
+					clazzDir + "\" is not a directory. ");
+				System.exit(1);
+				return;
+			}
 		}
 		
 		// jar directory Listを取得.
@@ -186,16 +195,25 @@ public class GenerateCdi {
 		
 		// classディレクトリとjarディレクトリの両方が指定されていない場合.
 		if(clazzDir == null && jarDirList.size() == 0) {
-			outHelp();
-			System.err.println(
-				"[ERROR] The extraction source class directory and jar " +
-				"directory has not been set.");
-			System.exit(1);
-			return;
+			// ただしdeleteOutFileOnlyFlagがtrueの場合はエラーにしない.
+			if(!deleteOutFileOnlyFlag) {
+				outHelp();
+				System.err.println(
+					"[ERROR] The extraction source class directory and jar " +
+					"directory has not been set.");
+				System.exit(1);
+				return;
+			}
 		}
 		
 		// classディレクトリを整頓.
-		clazzDir = AnnotationUtil.slashPath(clazzDir);
+		// ただしdeleteOutFileOnlyFlagがtrueの場合はエラーにしない.
+		if(!deleteOutFileOnlyFlag) {
+			clazzDir = AnnotationUtil.slashPath(clazzDir);
+		} else {
+			// deleteOutFileOnlyFlagがtrueの場合はclassディレクトリは空をセット.
+			clazzDir = null;
+		}
 		
 		// jarディレクトリリストを整頓.
 		String[] jarDirArray = null;
@@ -225,15 +243,13 @@ public class GenerateCdi {
 		// classPath内のリソースファイルをResourceItemに含めるか取得.
 		boolean resourceItemFlag = args.isValue("-r", "--resource");
 		
-		// GCdiで出力されるファイル群を全削除して処理終了するか取得.
-		boolean deleteOutFileOnlyFlag = args.isValue("-d", "--delete");
-		
 		// 処理開始.
 		System.out.println("start " + this.getClass().getSimpleName() +
 			" version: " + VERSION);
 		System.out.println();
 		System.out.println(" target outputPath    : " + getFullPath(javaSourceDir));
-		System.out.println(" target classPath     : " + getFullPath(clazzDir));
+		System.out.println(" target classPath     : " +
+			(clazzDir ==null ? "" : getFullPath(clazzDir)));
 		System.out.print(" target jarPath       : ");
 		if(jarDirArray.length > 0) {
 			System.out.println(getFullPath(jarDirArray[0]));
