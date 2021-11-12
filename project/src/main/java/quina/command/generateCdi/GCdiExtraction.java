@@ -46,9 +46,9 @@ public class GCdiExtraction {
 				if(params.isVerbose()) {
 					// 何らかの理由で読み込み失場合.
 					System.out.println();
-					System.out.println("    # loadError    :");
-					System.out.println("        src        : " + className);
-					System.out.println("        error      : " + e);
+					System.out.println("    # loadError       :");
+					System.out.println("        src           : " + className);
+					System.out.println("        error         : " + e);
 				}
 				// クラス取得に失敗する場合は無視.
 				continue;
@@ -61,7 +61,7 @@ public class GCdiExtraction {
 			// NativeImageコンフィグ用アノテーション定義の場合.
 			if(NativeImages.executeExecuteStep(c, params)) {
 				// 読み込まれたら対象クラス名を出力.
-				System.out.println("  > loadNativeConf : " + className);
+				System.out.println("  > loadNativeConf    : " + className);
 			}
 			
 			// 利用可能なアノテーションが定義されていない場合.
@@ -107,7 +107,7 @@ public class GCdiExtraction {
 			// CdiScoped定義のクラスの場合.
 			// 継承アノテーションありで検索.
 			if(GCdiUtil.isAnnotation(c, CdiScoped.class)) {
-				System.out.println("  > cdiScoped      : " + className);
+				System.out.println("  > cdiScoped         : " + className);
 				// Reflectリストに追加.
 				params.refList.add(className);
 				continue;
@@ -116,7 +116,7 @@ public class GCdiExtraction {
 			// ServiceScoped定義のCdiServiceの場合.
 			// 継承アノテーションありで検索.
 			if(GCdiUtil.isAnnotation(c, ServiceScoped.class)) {
-				System.out.println("  > cdiService     : " + className);
+				System.out.println("  > cdiService        : " + className);
 				// Cdiリストに追加.
 				params.cdiList.add(className);
 				// Reflectリストに追加.
@@ -126,7 +126,7 @@ public class GCdiExtraction {
 			
 			// ProxyScoped定義の場合.
 			if(c.isAnnotationPresent(ProxyScoped.class)) {
-				System.out.println("  > proxy          : " + className);
+				System.out.println("  > proxy             : " + className);
 				// ProxyScopedリストに追加.
 				params.prxList.add(className);
 				continue;
@@ -138,7 +138,7 @@ public class GCdiExtraction {
 			// QuinaServiceScoped定義のQuinaServiceの場合.
 			if(o instanceof QuinaService &&
 				c.isAnnotationPresent(QuinaServiceScoped.class)) {
-				System.out.println("  > quinaService   : " + className);
+				System.out.println("  > quinaService      : " + className);
 				// QuinaServiceリストに追加.
 				params.qsrvList.add(className);
 				// Reflectリストに追加.
@@ -149,7 +149,7 @@ public class GCdiExtraction {
 			// CdiHandle定義のCdiAnnotationScopedの場合.
 			if(o instanceof CdiHandle &&
 				c.isAnnotationPresent(CdiHandleScoped.class)) {
-				System.out.println("  > cdiHandle      : " + className);
+				System.out.println("  > cdiHandle         : " + className);
 				// CdiHandleリストに追加.
 				params.hndList.add(className);
 				// Reflectリストに追加.
@@ -163,16 +163,16 @@ public class GCdiExtraction {
 				if(c.isAnnotationPresent(Route.class)) {
 					Route r = (Route)c.getAnnotation(Route.class);
 					if(r != null) {
-						System.out.println("  > route          : " + className);
-						System.out.println("                      path: " + r.value());
+						System.out.println("  > route             : " + className);
+						System.out.println("                         path: " + r.value());
 					} else {
-						System.out.println("  > route          : " + className);
+						System.out.println("  > route             : " + className);
 					}
 					// RouterListに登録.
 					params.routeList.add(className);
 				// @AnyRoute付属のコンポーネントを登録.
 				} else if(c.isAnnotationPresent(AnyRoute.class)) {
-					System.out.println("  > any            : " + className);
+					System.out.println("  > any               : " + className);
 					// AnyRouteに登録.
 					params.any = className;
 				}
@@ -184,13 +184,13 @@ public class GCdiExtraction {
 				if(c.isAnnotationPresent(ErrorRoute.class)) {
 					int[] es = AnnotationRoute.loadErrorRoute(c);
 					if(es == null || es[0] == 0) {
-						System.out.println("  > error          : " + className);
+						System.out.println("  > error             : " + className);
 					} else if(es[1] == 0) {
-						System.out.println("  > error          : " + className);
-						System.out.println("                      status: " + es[0]);
+						System.out.println("  > error             : " + className);
+						System.out.println("                         status: " + es[0]);
 					} else {
-						System.out.println("  > error          : " + className);
-						System.out.println("                      status: " +
+						System.out.println("  > error             : " + className);
+						System.out.println("                         status: " +
 							es[0] + "-" + es[1]);
 					}
 					// ErrorRouteリストに登録.

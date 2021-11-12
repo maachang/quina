@@ -15,10 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import quina.annotation.AnnotationUtil;
+import quina.command.generateCdi.GCdiConstants;
 import quina.command.generateCdi.GCdiExtraction;
 import quina.command.generateCdi.GCdiOutputJavaSrc;
 import quina.command.generateCdi.GCdiOutputResourceItem;
 import quina.command.generateCdi.GCdiParams;
+import quina.command.generateCdi.GCdiRemoveFileOrDir;
 import quina.command.generateCdi.GCdiUtil;
 import quina.command.generateCdi.NativeImages;
 import quina.command.generateCdi.ProxyOutputJavaSrc;
@@ -99,6 +101,8 @@ public class GenerateCdi {
 		System.out.println("     Add the \".properties\" file in the class or jar for the ");
 		System.out.println("     target classpath to Resoure.json which is defined in the ");
 		System.out.println("     Native Image of GraalVM. ");
+		System.out.println("  -d [--delete]");
+		System.out.println("     Delete the file output by this command and exit.");
 		System.out.println();
 	}
 	
@@ -115,10 +119,12 @@ public class GenerateCdi {
 		}
 		// エラーが発生した場合は、生成されるGCi情報を破棄する.
 		try {
-			GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
+			// 
+			GCdiRemoveFileOrDir.removeOutAutoJavaSource(javaSourceDir);
 		} catch(Exception e) {}
 		try {
-			ProxyOutputJavaSrc.removeDirectory(javaSourceDir);
+			// 
+			GCdiRemoveFileOrDir.removeProxyDirectory(javaSourceDir);
 		} catch(Exception e) {}
 	}
 
@@ -209,7 +215,8 @@ public class GenerateCdi {
 		String nativeImgDir = args.get("-n", "--nativeImage");
 		if(nativeImgDir == null ||
 			(nativeImgDir = nativeImgDir.trim()).isEmpty()) {
-			nativeImgDir = "nativeImageConfig";
+			// デフォルト内容をセット.
+			nativeImgDir = GCdiConstants.DEF_NATIVE_CONFIG_DIR;
 		}
 		
 		// nativeImgDirディレクトリを整頓.
@@ -218,13 +225,16 @@ public class GenerateCdi {
 		// classPath内のリソースファイルをResourceItemに含めるか取得.
 		boolean resourceItemFlag = args.isValue("-r", "--resource");
 		
+		// GCdiで出力されるファイル群を全削除して処理終了するか取得.
+		boolean deleteOutFileOnlyFlag = args.isValue("-d", "--delete");
+		
 		// 処理開始.
 		System.out.println("start " + this.getClass().getSimpleName() +
 			" version: " + VERSION);
 		System.out.println();
-		System.out.println(" target outputPath : " + getFullPath(javaSourceDir));
-		System.out.println(" target classPath  : " + getFullPath(clazzDir));
-		System.out.print(" target jarPath    : ");
+		System.out.println(" target outputPath    : " + getFullPath(javaSourceDir));
+		System.out.println(" target classPath     : " + getFullPath(clazzDir));
+		System.out.print(" target jarPath       : ");
 		if(jarDirArray.length > 0) {
 			System.out.println(getFullPath(jarDirArray[0]));
 			int len = jarDirArray.length;
@@ -235,13 +245,28 @@ public class GenerateCdi {
 		} else {
 			System.out.println();
 		}
+		System.out.println(" target outNativeConf : " + getFullPath(nativeImgDir));
 		
 		System.out.println();
 		
+		// 処理開始.
+		long time = System.currentTimeMillis();
+		
+		// GCdiで出力するファイル内容を削除して終了する場合.
+		if(deleteOutFileOnlyFlag) {
+			// ファイルを削除.
+			GCdiRemoveFileOrDir.removeOutGCdi(javaSourceDir, nativeImgDir);
+			time = System.currentTimeMillis() - time;
+			System.out.println("The file output by Generate GCdi has been deleted. ");
+			System.out.println();
+			System.out.println("success: " + time + " msec");
+			System.out.println();
+			// 正常終了.
+			System.exit(0);
+			return;
+		}
+		
 		try {
-			
-			// 処理開始.
-			long time = System.currentTimeMillis();
 			
 			// jarファイル名群を取得.
 			String[] jarFileArray;
@@ -276,7 +301,7 @@ public class GenerateCdi {
 			clazzList = null;
 			
 			// 出力先のソースコードを全削除.
-			GCdiOutputJavaSrc.removeOutAutoJavaSource(javaSourceDir);
+			GCdiRemoveFileOrDir.removeOutAutoJavaSource(javaSourceDir);
 			
 			// 最初にリソースファイルをResourceItemにセット.
 			GCdiOutputResourceItem.outputResourceItem(params);
@@ -305,7 +330,7 @@ public class GenerateCdi {
 			// [Router]ファイル出力.
 			if(!params.isRouteEmpty()) {
 				GCdiOutputJavaSrc.routerScoped(javaSourceDir, params);
-				System.out.println( " routerScoped      : " +
+				System.out.println( " routerScoped         : " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
 			}
@@ -313,7 +338,7 @@ public class GenerateCdi {
 			// [(CDI)ServiceScoped]ファイル出力.
 			if(!params.isCdiEmpty()) {
 				GCdiOutputJavaSrc.serviceScoped(javaSourceDir, params);
-				System.out.println( " serviceScoped     : " +
+				System.out.println( " serviceScoped        : " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
 			}
@@ -321,7 +346,7 @@ public class GenerateCdi {
 			// [QuinaService]ファイル出力.
 			if(!params.isQuinaServiceEmpty()) {
 				GCdiOutputJavaSrc.quinaServiceScoped(javaSourceDir, params);
-				System.out.println( " quinaServiceScoped: " +
+				System.out.println( " quinaServiceScoped   : " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + QUINA_SERVICE_SOURCE_NAME);
 			}
@@ -329,7 +354,7 @@ public class GenerateCdi {
 			// [CdiReflect]ファイル出力.
 			if(!params.isCdiReflectEmpty()) {
 				GCdiOutputJavaSrc.cdiReflect(javaSourceDir, params);
-				System.out.println( " cdiReflect        : " +
+				System.out.println( " cdiReflect           : " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
 			}
@@ -337,7 +362,7 @@ public class GenerateCdi {
 			// [CdiHandle]ファイル出力.
 			if(!params.isCdiHandleEmpty()) {
 				GCdiOutputJavaSrc.cdiHandle(javaSourceDir, params);
-				System.out.println( " cdiHandle         : " +
+				System.out.println( " cdiHandle            : " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
 			}
@@ -345,7 +370,7 @@ public class GenerateCdi {
 			// [ProxyScoped]ファイル出力.
 			if(!params.isProxyScopedEmpty()) {
 				GCdiOutputJavaSrc.proxyScoped(javaSourceDir, params);
-				System.out.println( " proxyScoped       : " +
+				System.out.println( " proxyScoped          : " +
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + PROXY_SCOPED_SOURCE_NAME);
 			}

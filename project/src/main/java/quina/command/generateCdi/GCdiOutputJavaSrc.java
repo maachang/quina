@@ -5,7 +5,6 @@ import static quina.command.generateCdi.GCdiConstants.CDI_DIRECTORY_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_HANDLE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.OUTPUT_SOURCE_ARRAY;
 import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 
@@ -28,7 +27,6 @@ import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.proxy.ProxyScopedManager;
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
-import quina.util.FileUtil;
 import quina.util.StringUtil;
 
 /**
@@ -55,23 +53,6 @@ public class GCdiOutputJavaSrc {
 			}
 		}
 		return buf.toString();
-	}
-	
-	/**
-	 * 出力作のディレクトリ内の自動生成のJavaソースを削除.
-	 * @param outSourceDirectory 出力先ディレクトリを設定します.
-	 * @throws IOException I/O例外.
-	 */
-	public static final void removeOutAutoJavaSource(String outSourceDirectory)
-		throws IOException {
-		String[] javaSrcs = OUTPUT_SOURCE_ARRAY;
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME + "/";
-		int len = javaSrcs.length;
-		for(int i = 0; i < len; i ++) {
-			try {
-				FileUtil.removeFile(outDir + javaSrcs[i]);
-			} catch(Exception e) {}
-		}
 	}
 	
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが

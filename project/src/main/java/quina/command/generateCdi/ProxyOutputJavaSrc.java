@@ -44,7 +44,7 @@ public class ProxyOutputJavaSrc {
 		final int len = prxList == null ? 0 : prxList.size();
 		
 		// 自動生成するProxyオブジェクトのパッケージディレクトリを削除.
-		removeDirectory(outSourceDirectory);
+		GCdiRemoveFileOrDir.removeProxyDirectory(outSourceDirectory);
 		
 		// ProxyScopedオブジェクトが存在しない場合.
 		if(len <= 0) {
@@ -286,16 +286,6 @@ public class ProxyOutputJavaSrc {
 	// StringBuilderにインデントをセット.
 	private static final StringBuilder print(StringBuilder buf, int tab, String... s) {
 		return StringUtil.print(buf, tab, s);
-	}
-	
-	// 出力先のパッケージの削除処理.
-	public static final void removeDirectory(String outSourceDirectory)
-		throws Exception {
-		try {
-			FileUtil.delete(
-				outSourceDirectory + "/" +PROXY_DIRECTORY_NAME);
-		} catch(Exception e) {
-		}
 	}
 	
 	// 出力先のパッケージディレクトリ生成処理.

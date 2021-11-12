@@ -36,14 +36,14 @@ public class GCdiConstants {
 	/**
 	 * Cdi出力先ディレクトリ名.
 	 */
-	public static final String CDI_DIRECTORY_NAME = 
+	public static final String CDI_DIRECTORY_NAME =
 		GCdiUtil.packageNameToDirectory(
 			AnnotationCdiConstants.CDI_PACKAGE_NAME);
 	
 	/**
 	 * ProxyScoped出力先ディレクトリ名.
 	 */
-	public static final String PROXY_DIRECTORY_NAME = 
+	public static final String PROXY_DIRECTORY_NAME =
 		GCdiUtil.packageNameToDirectory(
 			AnnotationProxyScopedConstants.OUTPUT_AUTO_SOURCE_PROXY_PACKAGE_NAME);
 	
@@ -94,6 +94,11 @@ public class GCdiConstants {
 		,CDI_HANDLE_SOURCE_NAME
 		,PROXY_SCOPED_SOURCE_NAME
 	};
+	
+	/**
+	 * デフォルトのNativeConfigDirectory.
+	 */
+	public static final String DEF_NATIVE_CONFIG_DIR = "nativeImageConfig";
 
 	/**
 	 * GenerateCdiで利用対象のアノテーションが定義されているかチェック.

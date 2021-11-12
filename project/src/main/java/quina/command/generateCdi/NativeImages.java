@@ -67,11 +67,14 @@ public class NativeImages {
 		if(charset == null || charset.isEmpty()) {
 			charset = "UTF8";
 		}
+		// 一旦ディエクトリを削除.
+		GCdiRemoveFileOrDir.removeNativeConfigDirectory(directory);
 		try {
 			// ディレクトリ名が存在しない場合.
 			if(!FileUtil.isDir(directory)) {
 				// ディレクトリを作成.
 				FileUtil.mkdirs(directory);
+			} else {
 			}
 			// NativeImage用のコンフィグ定義を出力.
 			final int len = LIST.length;
