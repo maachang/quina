@@ -45,6 +45,12 @@ public interface QuinaJDBCKind {
 	default Object[] notProperty() {
 		return new Object[] {};
 	}
-
-
+	
+	/**
+	 * URLパスのパラメータに対してURLEncodeを有効にするか取得.
+	 * @return boolean trueの場合有効です.
+	 */
+	default boolean isUrlParamsAsEncode() {
+		return true;
+	}
 }

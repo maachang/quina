@@ -220,7 +220,11 @@ public class QuinaDataSource implements DataSource {
 				url + config.getUrlParams(), p);
 		} else {
 			p.put("user", user);
-			p.put("password", passwd);
+			if (passwd == null || passwd.isEmpty()) {
+				p.put("password", "");
+			} else {
+				p.put("password", passwd);
+			}
 			ret = config.getKind().getDriver().connect(
 				url + config.getUrlParams(), p);
 		}

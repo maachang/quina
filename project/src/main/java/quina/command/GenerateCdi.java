@@ -247,7 +247,8 @@ public class GenerateCdi {
 		System.out.println("start " + this.getClass().getSimpleName() +
 			" version: " + VERSION);
 		System.out.println();
-		System.out.println(" target outputPath    : " + getFullPath(javaSourceDir));
+		System.out.println(" target outputPath    : " +
+			getFullPath(javaSourceDir));
 		System.out.println(" target classPath     : " +
 			(clazzDir ==null ? "" : getFullPath(clazzDir)));
 		System.out.print(" target jarPath       : ");
@@ -261,7 +262,8 @@ public class GenerateCdi {
 		} else {
 			System.out.println();
 		}
-		System.out.println(" target outNativeConf : " + getFullPath(nativeImgDir));
+		System.out.println(" target outNativeConf : " +
+			getFullPath(nativeImgDir));
 		
 		System.out.println();
 		
@@ -273,7 +275,7 @@ public class GenerateCdi {
 			// ファイルを削除.
 			GCdiRemoveFileOrDir.removeOutGCdi(javaSourceDir, nativeImgDir);
 			time = System.currentTimeMillis() - time;
-			System.out.println("The file output by Generate GCdi has been deleted. ");
+			System.out.println("The file output by Generate Cdi has been deleted. ");
 			System.out.println();
 			System.out.println("success: " + time + " msec");
 			System.out.println();

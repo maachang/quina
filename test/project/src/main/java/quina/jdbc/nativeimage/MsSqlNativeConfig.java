@@ -11,6 +11,13 @@ import quina.nativeimage.ResourceItem;
  */
 @NativeConfigScoped("com.microsoft.sqlserver.jdbc.SQLServerDriver")
 public class MsSqlNativeConfig {
+	
+	/**
+	 * この定義が正常に動作するバージョン.
+	 * 未検証.
+	 */
+	public static final String VERSION = "none";
+	
 	/**
 	 * リフレクション定義.
 	 */

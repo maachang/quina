@@ -9,7 +9,6 @@ import quina.http.server.response.SyncResponse;
 import quina.jdbc.QuinaConnection;
 import quina.jdbc.QuinaDataSource;
 import quina.jdbc.QuinaJDBCService;
-import quina.jdbc.io.QueryColumns;
 import quina.jdbc.io.QueryStatement;
 import quina.json.JsonList;
 
@@ -18,7 +17,7 @@ public class TestDBJsonGet implements RESTfulGetSync {
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
 		QueryStatement qe;
-		QuinaDataSource ds = QuinaJDBCService.dataSource("testMySql");
+		QuinaDataSource ds = QuinaJDBCService.dataSource("testdb");
 		try(QuinaConnection conn = ds.getConnection()) {
 			JsonList ret = new JsonList();
 			

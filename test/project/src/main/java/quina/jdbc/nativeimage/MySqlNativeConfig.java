@@ -13,6 +13,11 @@ import quina.nativeimage.ResourceItem;
 public class MySqlNativeConfig {
 	
 	/**
+	 * この定義が正常に動作するバージョン.
+	 */
+	public static final String VERSION = "8.0.27";
+	
+	/**
 	 * リフレクション定義.
 	 */
 	@NativeBuildStep

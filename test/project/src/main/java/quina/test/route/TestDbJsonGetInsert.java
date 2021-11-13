@@ -16,7 +16,7 @@ public class TestDbJsonGetInsert implements RESTfulGetSync {
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
 		IoStatement io = null;
-		QuinaDataSource ds = QuinaJDBCService.dataSource("testMySql");
+		QuinaDataSource ds = QuinaJDBCService.dataSource("testdb");
 		try(QuinaConnection conn = ds.getConnection()) {
 			io = conn.ioStatement();
 			// １行データを注入・更新.

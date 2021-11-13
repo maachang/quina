@@ -59,4 +59,13 @@ public class H2Kind implements QuinaJDBCKind {
 		}
 		return Alphabet.startsWith(url, "jdbc:h2:");
 	}
+	
+	/**
+	 * URLパスのパラメータに対してURLEncodeを有効にするか取得.
+	 * @return boolean trueの場合有効です.
+	 */
+	@Override
+	public boolean isUrlParamsAsEncode() {
+		return false;
+	}
 }

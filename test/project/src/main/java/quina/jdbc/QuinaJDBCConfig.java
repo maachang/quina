@@ -168,6 +168,8 @@ public class QuinaJDBCConfig {
 		// 今回の処理でFix完了の場合.
 		if(!fixFlag.setToGetBefore(true)) {
 			String key;
+			// URLをエンコードする必要がある場合.
+			boolean encodeUrl = kind.isUrlParamsAsEncode();
 			// 利用禁止のURLパラメータを取得.
 			String[] strAry = kind.notUrlParams();
 			// チェックが必要な場合.
@@ -176,9 +178,16 @@ public class QuinaJDBCConfig {
 				String value;
 				final int len = strAry.length;
 				for(int i = 0; i < len; i += 2) {
-					// key, valueを取得.
-					key = StringUtil.urlEncode(strAry[i], "UTF8");
-					value = StringUtil.urlEncode(strAry[i + 1], "UTF8");
+					// URLEncodeする場合.
+					if(encodeUrl) {
+						// key, valueを取得.
+						key = StringUtil.urlEncode(strAry[i], "UTF8");
+						value = StringUtil.urlEncode(strAry[i + 1], "UTF8");
+					// URLEncodeが必要ない場合.
+					} else {
+						key = strAry[i];
+						value = strAry[i + 1];
+					}
 					// チェック処理.
 					if(QuinaProxyUtil.eqURLParamsToKeyValue(
 						urlParams, key, value)) {
@@ -221,26 +230,49 @@ public class QuinaJDBCConfig {
 			if(strAry.length != 0) {
 				final int len = strAry.length;
 				for(int i = 0; i < len; i += 2) {
-					// keyを取得.
-					key = StringUtil.urlEncode(strAry[i], "UTF8");
-					// URLパラメータが存在しない場合.
-					if(urlParams == null || urlParams.isEmpty()) {
-						if(urlType) {
-							urlParams = "?" + key + "=" +
-								StringUtil.urlEncode(strAry[i + 1], "UTF8");
-						} else {
-							urlParams = ";" + key + "=" +
-								StringUtil.urlEncode(strAry[i + 1], "UTF8");
+					// URLEncodeする場合.
+					if(encodeUrl) {
+						// keyを取得.
+						key = StringUtil.urlEncode(strAry[i], "UTF8");
+						// URLパラメータが存在しない場合.
+						if(urlParams == null || urlParams.isEmpty()) {
+							if(urlType) {
+								urlParams = "?" + key + "=" +
+									StringUtil.urlEncode(strAry[i + 1], "UTF8");
+							} else {
+								urlParams = ";" + key + "=" +
+									StringUtil.urlEncode(strAry[i + 1], "UTF8");
+							}
+						// 指定キー情報が存在しない.
+						} else if(!QuinaProxyUtil.eqURLParamsToKey(urlParams, key)) {
+							if(urlType) {
+								urlParams += "&" + key + "=" +
+									StringUtil.urlEncode(strAry[i + 1], "UTF8");
+							} else {
+								urlParams += ";" + key + "=" +
+									StringUtil.urlEncode(strAry[i + 1], "UTF8");
+							}
 						}
-					// 指定キー情報が存在しない.
-					} else if(!QuinaProxyUtil.eqURLParamsToKey(urlParams, key)) {
-						if(urlType) {
-							urlParams += "&" + key + "=" +
-								StringUtil.urlEncode(strAry[i + 1], "UTF8");
-						} else {
-							urlParams += ";" + key + "=" +
-								StringUtil.urlEncode(strAry[i + 1], "UTF8");
+					// UrlEncodeが必要ない場合.
+					} else {
+						// keyを取得.
+						key = strAry[i];
+						// URLパラメータが存在しない場合.
+						if(urlParams == null || urlParams.isEmpty()) {
+							if(urlType) {
+								urlParams = "?" + key + "=" + strAry[i + 1];
+							} else {
+								urlParams = ";" + key + "=" + strAry[i + 1];
+							}
+						// 指定キー情報が存在しない.
+						} else if(!QuinaProxyUtil.eqURLParamsToKey(urlParams, key)) {
+							if(urlType) {
+								urlParams += "&" + key + "=" + strAry[i + 1];
+							} else {
+								urlParams += ";" + key + "=" + strAry[i + 1];
+							}
 						}
+
 					}
 				}
 			}
@@ -656,7 +688,7 @@ public class QuinaJDBCConfig {
 				this.urlParams = null;
 			}
 		} else if(urlParams instanceof Map) {
-			this.urlParams = convertUrlParams((Map)urlParams, urlType);
+			this.urlParams = convertUrlParams(kind, (Map)urlParams, urlType);
 		}
 		this.urlType = urlType;
 		return this;
@@ -806,12 +838,15 @@ public class QuinaJDBCConfig {
 	
 	// Map指定したURLパラメータを文字列変換.
 	@SuppressWarnings("rawtypes")
-	private static final String convertUrlParams(Map m, boolean urlType) {
+	private static final String convertUrlParams(
+		QuinaJDBCKind kind, Map m, boolean urlType) {
 		if(m == null || m.size() == 0) {
 			return null;
 		}
 		Entry e;
 		int cnt = 0;
+		// URLをエンコードする必要がある場合.
+		boolean encodeUrl = kind.isUrlParamsAsEncode();
 		final StringBuilder ret = urlType ?
 			new StringBuilder("?") : new StringBuilder(";");
 		final String bcode = urlType ? "&" : ";";
@@ -821,10 +856,15 @@ public class QuinaJDBCConfig {
 			if((cnt ++) != 0) {
 				ret.append(bcode);
 			}
-			//ret.append(e.getKey()).append("=").append(e.getValue());
-			ret.append(StringUtil.urlEncode("" + e.getKey(), "utf8"))
+			// UrlEncodeが必要な場合.
+			if(encodeUrl) {
+				ret.append(StringUtil.urlEncode("" + e.getKey(), "utf8"))
 				.append("=")
 				.append(StringUtil.urlEncode("" + e.getValue(), "utf8"));
+			// UrlEncodeが必要ない場合.
+			} else {
+				ret.append(e.getKey()).append("=").append(e.getValue());
+			}
 		}
 		return ret.toString();
 	}
