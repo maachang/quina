@@ -12,6 +12,6 @@ quinax/
 
 /nativeImageConfig/
 
-/test/testdb/
+/h2db/
 
 quinaTest-*.jar
