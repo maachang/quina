@@ -51,10 +51,11 @@ public interface ErrorComponent {
 	 */
 	default void call(
 		int state, Request req, Response<?> res, Throwable e) {
-		// 例外用のレスポンスを新規作成.
-		res = new AnyResponseImpl(((AbstractResponse<?>)res).getElement());
+		// 真っ更のResponseが必要なので新規作成.
+		res = new AnyResponseImpl(((AbstractResponse<?>)res).getElement(),
+			((AbstractResponse<?>)res).getSrcComponentType());
 		final boolean json = ((AbstractResponse<?>)res)
-			.getComponentType().isRESTful();
+			.getSrcComponentType().isRESTful();
 		// json返却の場合.
 		if(json) {
 			// JSON返却条件を設定.
@@ -77,8 +78,9 @@ public interface ErrorComponent {
 	 */
 	default void call(
 		int state, boolean restful, Request req, Response<?> res) {
-		// 例外用のレスポンスを新規作成.
-		res = new AnyResponseImpl(((AbstractResponse<?>)res).getElement());
+		// 真っ更のResponseが必要なので新規作成.
+		res = new AnyResponseImpl(((AbstractResponse<?>)res).getElement(),
+			((AbstractResponse<?>)res).getSrcComponentType());
 		call(state, restful, req, (AnyResponse)res, null);
 	}
 

@@ -87,7 +87,7 @@ public class QuinaJDBCConfig {
 		}
 		final int len = KIND_LIST.length;
 		for(int i = 0; i < len; i ++) {
-			if(KIND_LIST[i].isUrl(url)) {
+			if(KIND_LIST[i].isUrlByKind(url)) {
 				return KIND_LIST[i];
 			}
 		}
@@ -168,10 +168,12 @@ public class QuinaJDBCConfig {
 		// 今回の処理でFix完了の場合.
 		if(!fixFlag.setToGetBefore(true)) {
 			String key;
+			// 組み込みモードを取得.
+			boolean embeddedFlag = kind.isUrlByEmbedded(url);
 			// URLをエンコードする必要がある場合.
 			boolean encodeUrl = kind.isUrlParamsAsEncode();
 			// 利用禁止のURLパラメータを取得.
-			String[] strAry = kind.notUrlParams();
+			String[] strAry = kind.notUrlParams(embeddedFlag);
 			// チェックが必要な場合.
 			if(strAry.length != 0 &&
 				urlParams != null && !urlParams.isEmpty()) {
@@ -201,7 +203,7 @@ public class QuinaJDBCConfig {
 			strAry = null;
 			
 			// 利用禁止のPropertyを取得.
-			Object[] objAry = kind.notProperty();
+			Object[] objAry = kind.notProperty(embeddedFlag);
 			// チェックが必要な場合.
 			if(objAry.length != 0 &&
 				properties != null && !properties.isEmpty()) {
@@ -225,7 +227,7 @@ public class QuinaJDBCConfig {
 			objAry = null;
 			
 			// 存在しない場合定義するURLパラメータを取得.
-			strAry = kind.addByNotExistUrlParams();
+			strAry = kind.addByNotExistUrlParams(embeddedFlag);
 			// 処理が必要な場合.
 			if(strAry.length != 0) {
 				final int len = strAry.length;
@@ -279,7 +281,7 @@ public class QuinaJDBCConfig {
 			strAry = null;
 			
 			// 存在しない場合定義するプロパティを取得.
-			objAry = kind.notProperty();
+			objAry = kind.notProperty(embeddedFlag);
 			// 処理が必要な場合.
 			if(objAry.length != 0) {
 				final int len = objAry.length;
@@ -355,7 +357,16 @@ public class QuinaJDBCConfig {
 	public String getUrl() {
 		return url;
 	}
-
+	
+	/**
+	 * 組み込みモードかチェック.
+	 * @return boolean trueの場合組み込みモードです.
+	 *                 falseの場合サーバーモードです.
+	 */
+	public boolean isEmbedded() {
+		return kind.isUrlByEmbedded(url);
+	}
+	
 	/**
 	 * 認証ユーザ名を取得.
 	 * @return String ユーザ名が返却されます.
@@ -927,7 +938,7 @@ public class QuinaJDBCConfig {
 	// SQLの末端に「；」セミコロンを付けるとNGかチェック.
 	private static final boolean checkNotSemicolon(String url) {
 		// java 11 以降は derby は対象とならないのでQuinaでは対象としない.
-		if(OracleKind.value().isUrl(url)) {
+		if(OracleKind.value().isUrlByKind(url)) {
 			return true;
 		}
 		return false;
@@ -935,8 +946,8 @@ public class QuinaJDBCConfig {
 	
 	// URL定義のパラメータ定義.
 	private static final boolean checkUrlType(String url) {
-		if(MsSqlKind.value().isUrl(url)
-			|| H2Kind.value().isUrl(url)) {
+		if(MsSqlKind.value().isUrlByKind(url)
+			|| H2Kind.value().isUrlByKind(url)) {
 			// ; でURLパラメータをセット.
 			return false;
 		}

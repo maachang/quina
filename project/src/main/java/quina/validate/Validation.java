@@ -14,10 +14,10 @@ import quina.util.StringUtil;
  * 以下のように実装することで、Httpパラメータを検証します.
  *
  * Validation v = new Validation(
- * 	"name", "String", "not null", // name文字パラメータで、必須情報.
+ * 	"name", "String", "null", // name文字パラメータで、必須情報.
  * 	"age", "Number", "", // age数値パラメータ.
  * 	"comment", "String", "max 128", // comment文字パラメータで、最大文字が128文字.
- * 	"X-Test-Code", "String", "not null" // X-Test-CodeHttpヘッダパラメータで、必須.
+ * 	"X-Test-Code", "String", "null" // X-Test-CodeHttpヘッダパラメータで、必須.
  * );
  *
  * これを以下のように行う事で検証処理が実現出来ます.

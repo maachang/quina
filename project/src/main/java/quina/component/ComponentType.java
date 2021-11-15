@@ -162,7 +162,7 @@ public enum ComponentType {
 	}
 
 	/**
-	 * RESTful系のコンポーネントタイプかチェック.
+	 * 現在のコンポーネントがRESTful系のコンポーネントタイプかチェック.
 	 * @return boolean trueの場合はRESTful系のコンポーネントです.
 	 */
 	public boolean isRESTful() {
@@ -170,7 +170,7 @@ public enum ComponentType {
 	}
 
 	/**
-	 * 同期系のコンポーネントタイプかチェック.
+	 * 現在のコンポーネントが同期系のコンポーネントタイプかチェック.
 	 * @return boolean trueの場合は同期系のコンポーネントです.
 	 */
 	public boolean isSync() {

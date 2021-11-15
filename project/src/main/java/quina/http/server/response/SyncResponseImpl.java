@@ -35,12 +35,14 @@ public class SyncResponseImpl
 	/**
 	 * コンストラクタ.
 	 * @param element Http要素を設定します.
+	 * @param componentType コンポーネントタイプを設定します.
 	 */
-	public SyncResponseImpl(HttpElement element) {
+	public SyncResponseImpl(HttpElement element, ComponentType componentType) {
 		if(element == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
 		this.element = element;
+		this.setSrcComponentType(componentType);
 	}
 	
 	/**

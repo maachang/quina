@@ -54,7 +54,7 @@ public class Db2Kind implements QuinaJDBCKind {
 	 * @return trueの場合一致しています.
 	 */
 	@Override
-	public boolean isUrl(String url) {
+	public boolean isUrlByKind(String url) {
 		if(url == null) {
 			return false;
 		}

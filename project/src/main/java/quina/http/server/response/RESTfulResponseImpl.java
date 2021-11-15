@@ -35,12 +35,14 @@ public class RESTfulResponseImpl
 	/**
 	 * コンストラクタ.
 	 * @param element Http要素を設定します.
+	 * @param componentType コンポーネントタイプを設定します.
 	 */
-	public RESTfulResponseImpl(HttpElement element) {
+	public RESTfulResponseImpl(HttpElement element, ComponentType componentType) {
 		if(element == null) {
 			throw new QuinaException("The specified argument is null.");
 		}
 		this.element = element;
+		this.setSrcComponentType(componentType);
 	}
 	
 	/**

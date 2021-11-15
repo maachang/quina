@@ -40,7 +40,7 @@ public interface ErrorSyncComponent extends ErrorComponent {
 	@Override
 	default void call(int state, Request req, Response<?> res, Throwable e) {
 		final boolean restful = ((AbstractResponse<?>)res)
-			.getComponentType().isRESTful();
+			.getSrcComponentType().isRESTful();
 		// ResponseがSyncResponseでない場合は変換.
 		if(!(res instanceof SyncResponse)) {
 			res = new SyncResponseImpl(res);

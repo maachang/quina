@@ -15,7 +15,7 @@ public class MySqlNativeConfig {
 	/**
 	 * この定義が正常に動作するバージョン.
 	 */
-	public static final String VERSION = "8.0.27";
+	public static final String SUCCESS_VERSION = "8.0.27";
 	
 	/**
 	 * リフレクション定義.

@@ -3,6 +3,8 @@ package quina.http.server.response;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import quina.Quina;
+import quina.QuinaConfig;
 import quina.component.ComponentType;
 import quina.http.Header;
 import quina.http.HttpConstants;
@@ -47,6 +49,8 @@ public abstract class AbstractResponse<T>
 	protected Bool sendFlag = new Bool(false);
 	/** SendData処理フラグ. **/
 	protected Bool execSendDataFlag = new Bool(false);
+	/** 元のコンポーネントタイプ **/
+	protected ComponentType srcComponentType = null;
 	/** Read-Writeロックオブジェクト. **/
 	protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -68,6 +72,7 @@ public abstract class AbstractResponse<T>
 			this.corsMode = res.corsMode;
 			this.sendFlag.set(res.sendFlag.get());
 			this.execSendDataFlag.set(res.execSendDataFlag.get());
+			this.srcComponentType = res.srcComponentType;
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -477,6 +482,36 @@ public abstract class AbstractResponse<T>
 	 * @return ComponentType コンポーネントタイプが返却されます.
 	 */
 	public abstract ComponentType getComponentType();
+	
+	/**
+	 * 元のコンポーネントタイプをセット.
+	 * @param componentType 対象のコンポーネントタイプを設定します.
+	 */
+	protected void setSrcComponentType(ComponentType componentType) {
+		if(componentType == null) {
+			// コンポーネントタイプが設定されてない場合.
+			// エラー４０４などのエラー返却に対してRESTfulで
+			// 返却するか取得.
+			QuinaConfig conf = Quina.get().getHttpServerConfig();
+			if(conf.getBoolean("error404RESTful")) {
+				// RESTful返却の場合.
+				componentType = ComponentType.RESTful;
+			} else {
+				// 通常返却の場合.
+				componentType = ComponentType.Any;
+			}
+		}
+		this.srcComponentType = componentType;
+
+	}
+	
+	/**
+	 * 元のコンポーネントタイプを取得.
+	 * @return ComponentType 元のコンポーネントタイプが返却されます.
+	 */
+	public ComponentType getSrcComponentType() {
+		return srcComponentType;
+	}
 
 	/**
 	 * 対象のHTTPヘッダを生成します.

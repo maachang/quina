@@ -81,7 +81,7 @@ public final class HttpServerUtil {
 			if(comp == null) {
 				// エラー404返却.
 				if(res == null) {
-					res = new AnyResponseImpl(em);
+					res = new AnyResponseImpl(em, null);
 				}
 				res.setStatus(404);
 				HttpServerUtil.sendError(req, res, null);
@@ -94,15 +94,15 @@ public final class HttpServerUtil {
 				switch(ctype.getAttributeType()) {
 				// このコンポーネントは同期コンポーネントの場合.
 				case ComponentConstants.ATTRIBUTE_SYNC:
-					res = new SyncResponseImpl(em);
+					res = new SyncResponseImpl(em, ctype);
 					break;
 				// このコンポーネントはRESTful系の場合.
 				case ComponentConstants.ATTRIBUTE_RESTFUL:
-					res = new RESTfulResponseImpl(em);
+					res = new RESTfulResponseImpl(em, ctype);
 					break;
 				// Anyレスポンス.
 				default:
-					res = new AnyResponseImpl(em);
+					res = new AnyResponseImpl(em, ctype);
 				}
 				// レスポンスをセット.
 				em.setResponse(res);
@@ -174,7 +174,7 @@ public final class HttpServerUtil {
 						LOG.error("# error (url: \"" + req.getUrl() + "\").", e);
 					}
 				// ワーニング表示の場合.
-				} else if(LOG.isWarnEnabled()) {
+				} else if(noErrorFlag && LOG.isWarnEnabled()) {
 					if(status >= 0) {
 						LOG.warn("# warning (status: "
 							+ status + " url: \"" + req.getUrl() + "\").");

@@ -29,7 +29,8 @@ public class OracleKind implements QuinaJDBCKind {
 	 * Driverオブジェクトを取得.
 	 * @return java.sql.Driver Driverオブジェクトが返却されます.
 	 */
-	public final java.sql.Driver getDriver() {
+	@Override
+	public java.sql.Driver getDriver() {
 		java.sql.Driver driver = drivers.get();
 		if(driver == null) {
 			Class<?> c;
@@ -53,7 +54,7 @@ public class OracleKind implements QuinaJDBCKind {
 	 * @return trueの場合一致しています.
 	 */
 	@Override
-	public boolean isUrl(String url) {
+	public boolean isUrlByKind(String url) {
 		if(url == null) {
 			return false;
 		}

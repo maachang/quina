@@ -28,7 +28,8 @@ public class MySqlKind implements QuinaJDBCKind {
 	 * Driverオブジェクトを取得.
 	 * @return java.sql.Driver Driverオブジェクトが返却されます.
 	 */
-	public final java.sql.Driver getDriver() {
+	@Override
+	public java.sql.Driver getDriver() {
 		java.sql.Driver driver = drivers.get();
 		if(driver == null) {
 			Class<?> c;
@@ -61,7 +62,7 @@ public class MySqlKind implements QuinaJDBCKind {
 	 * @return trueの場合一致しています.
 	 */
 	@Override
-	public boolean isUrl(String url) {
+	public boolean isUrlByKind(String url) {
 		if(url == null) {
 			return false;
 		}
@@ -83,9 +84,12 @@ public class MySqlKind implements QuinaJDBCKind {
 	
 	/**
 	 * 存在しない場合に追加するURLパラメータ群を取得.
+	 * @param embedded 組み込みモードの場合はtrueを設定します.
 	 * @return String[] key, value, ... で設定されます.
 	 */
-	public String[] addByNotExistUrlParams() {
+	@Override
+	public String[] addByNotExistUrlParams(boolean embedded) {
+		// サーバーモードのみ.
 		return NOT_EXIST_URL_PARAMS;
 	}
 	
@@ -98,10 +102,12 @@ public class MySqlKind implements QuinaJDBCKind {
 	
 	/**
 	 * 指定禁止URLパラメータ群を取得.
+	 * @param embedded 組み込みモードの場合はtrueを設定します.
 	 * @return String[] key, value, ... で設定されます.
 	 */
 	@Override
-	public String[] notUrlParams() {
+	public String[] notUrlParams(boolean embedded) {
+		// サーバーモードのみ.
 		return NOT_URL_PARAMS;
 	}
 }

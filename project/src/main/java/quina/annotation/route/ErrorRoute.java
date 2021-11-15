@@ -43,9 +43,15 @@ import java.lang.annotation.Target;
  *   @ErrorRoute(start=500, end=599)
  *     Httpステータス５００～５９９の範囲のエラー登録.
  *  
- *  3. 1と2以外のエラー登録.
- *   @ErrorRoute or @ErrorRoute()
- *     1と2で登録した以外のHttpステータスが発生した場合に呼び出されます.
+ *  3. 範囲URLルート登録.
+ *   @ErrorRoute(route="/jdbc/console/")
+ *     /jdbc/console/* のURLでエラーが発生した場合に呼び出されます.
+ *  
+ *  4. 1と2と3以外のエラー登録.
+ *   @ErrorRoute()
+ *     1と2と3で登録した以外のHttpステータスが発生した場合に呼び出されます.
+ *  
+ *  また1と3,または2と3は併用定義が可能です.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -64,4 +70,9 @@ public @interface ErrorRoute {
 	 * 範囲Httpステータス終了値.
 	 */
 	public int end() default 0;
+	
+	/**
+	 * 範囲URLルート.
+	 */
+	public String route() default "/";
 }

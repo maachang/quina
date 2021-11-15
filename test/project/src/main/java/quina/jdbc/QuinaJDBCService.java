@@ -21,11 +21,11 @@ import quina.util.collection.TypesClass;
  */
 @QuinaServiceScoped("jdbc")
 public class QuinaJDBCService implements QuinaService {
-	// コンフィグ名.
-	private static final String CONFIG_NAME = "jdbc";
-	
 	@LogDefine
 	private Log log;
+	
+	// コンフィグ名.
+	private static final String CONFIG_NAME = "jdbc";
 	
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
@@ -147,7 +147,7 @@ public class QuinaJDBCService implements QuinaService {
 		} finally {
 			lock.writeLock().unlock();
 		}
-		log.info(" startService " + this.getClass().getName());
+		log.info("@ startService " + this.getClass().getName());
 	}
 	
 	@Override
@@ -206,7 +206,7 @@ public class QuinaJDBCService implements QuinaService {
 			lock.writeLock().unlock();
 		}
 		if(startFlag.get()) {
-			log.info(" stopService " + this.getClass().getName());
+			log.info("@ stopService " + this.getClass().getName());
 		}
 		startFlag.set(false);
 	}
