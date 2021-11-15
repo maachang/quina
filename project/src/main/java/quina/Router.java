@@ -109,7 +109,7 @@ public final class Router {
 		manager.put(validation, responseInitialSetting, component);
 		return this;
 	}
-
+	
 	/**
 	 * エラーが発生した時の実行コンポーネントを設定します.
 	 * @param component エラーコンポーネントを設定します.
@@ -117,13 +117,13 @@ public final class Router {
 	 */
 	public Router error(ErrorComponent component) {
 		// annotationの定義からHttpステータス条件を取得.
-		int[] startEndStatus = AnnotationRoute.loadErrorRoute(component);
-		if(startEndStatus == null) {
+		Object[] def = AnnotationRoute.loadErrorRoute(component);
+		if(def == null) {
 			// 存在しない場合は共通エラー登録.
-			return error(0, 0, component);
+			return error(0, 0, null, component);
 		}
 		// 存在する場合はAnnotation定義のHttpステータスを設定.
-		return error(startEndStatus[0], startEndStatus[1], component);
+		return error((int)def[0], (int)def[1], (String)def[2], component);
 	}
 	
 	/**
@@ -133,11 +133,7 @@ public final class Router {
 	 * @return Router このオブジェクトが返却されます.
 	 */
 	public Router error(int status, ErrorComponent component) {
-		if(status <= 0) {
-			throw new QuinaException(
-				"The specified Http status is out of range.");
-		}
-		return error(status, 0, component);
+		return error(status, null, component);
 	}
 	
 	/**
@@ -149,10 +145,48 @@ public final class Router {
 	 */
 	public Router error(int startStatus, int endStatus,
 		ErrorComponent component) {
+		return error(startStatus, endStatus, null, component);
+	}
+	
+	/**
+	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param component エラーコンポーネントを設定します.
+	 * @param route 指定URLを含むエラーに対して優先的に実行されます.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router error(String route, ErrorComponent component) {
+		return error(0, 0, route, component);
+	}
+	
+	/**
+	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param status 対象Httpステータスが発生した場合にエラー実行します.
+	 * @param route 指定URLを含むエラーに対して優先的に実行されます.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router error(int status, String route, ErrorComponent component) {
+		if(status <= 0) {
+			throw new QuinaException(
+				"The specified Http status is out of range.");
+		}
+		return error(status, 0, route, component);
+	}
+	
+	/**
+	 * エラーが発生した時の実行コンポーネントを設定します.
+	 * @param startStatus 開始範囲のHttpステータスを設定します.
+	 * @param endStatus 終了範囲のHttpステータスを設定します.
+	 * @param route 指定URLを含むエラーに対して優先的に実行されます.
+	 * @param component 実行コンポーネントを設定します.
+	 * @return Router このオブジェクトが返却されます.
+	 */
+	public Router error(int startStatus, int endStatus,
+		String route, ErrorComponent component) {
 		// Annotationを注入.
 		injectComponent(component);
 		// エラー登録.
-		manager.putError(startStatus, endStatus, component);
+		manager.putError(startStatus, endStatus, route, component);
 		return this;
 	}
 
@@ -263,10 +297,11 @@ public final class Router {
 	/**
 	 * エラー発生時に呼び出されるコンポーネントを取得.
 	 * @param status 対象のHTTPエラーステータスを設定します.
+	 * @param url 対象のURLを設定します.
 	 * @return ErrorComponent エラーコンポーネントが返却されます.
 	 */
-	public ErrorComponent getError(int status) {
-		return manager.getError(status);
+	public ErrorComponent getError(int status, String url) {
+		return manager.getError(status, url);
 	}
 
 	/**

@@ -67,9 +67,9 @@ public class AnnotationRoute {
 	/**
 	 * Annotationに定義されてるErrorルートが定義されてるか取得.
 	 * @param c エラーコンポーネントを設定します.
-	 * @return int[] {start, end} の条件で返却されます.
+	 * @return Object[] {start, end, route} の条件で返却されます.
 	 */
-	public static final int[] loadErrorRoute(ErrorComponent c) {
+	public static final Object[] loadErrorRoute(ErrorComponent c) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
@@ -79,9 +79,9 @@ public class AnnotationRoute {
 	/**
 	 * Annotationに定義されてるErrorルートが定義されてるか取得.
 	 * @param c エラーコンポーネントクラスを設定します.
-	 * @return int[] {start, end} の条件で返却されます.
+	 * @return Object[] {start, end, route} の条件で返却されます.
 	 */
-	public static final int[] loadErrorRoute(Class<?> c) {
+	public static final Object[] loadErrorRoute(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
@@ -91,19 +91,19 @@ public class AnnotationRoute {
 		}
 		// 単独ステータス指定.
 		if(error.status() > 0) {
-			return new int[] {error.status(), 0};
+			return new Object[] {error.status(), 0, error.route()};
 		// 範囲ステータス指定.
 		} else if(error.start() > 0) {
 			if(error.end() > 0) {
 				// 範囲ステータス指定.
-				return new int[] {error.start(), error.end()};
+				return new Object[] {error.start(), error.end(), error.route()};
 			} else {
 				// 単独ステータス指定.
-				return new int[] {error.start(), 0};
+				return new Object[] {error.start(), 0, error.route()};
 			}
 		}
 		// any指定.
-		return new int[] {0, 0};
+		return new Object[] {0, 0, error.route()};
 	}
 	
 	/**

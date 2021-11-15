@@ -20,8 +20,10 @@ import quina.validate.VType;
 	type=VType.String,
 	conditions="null",
 	message=ConsoleLogin.LOGIN_ERROR_MESSAGE)
+
 @Validate(name="password",
 	type=VType.String)
+
 @Validate(name=QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_KEY,
 	type=VType.String,
 	conditions="null",
@@ -46,7 +48,11 @@ public class ConsoleLogin implements RESTfulGetSync {
 			throw new HttpException(401, LOGIN_ERROR_MESSAGE);
 		}
 		// ログイン認証に成功した場合返却用のログイン認証コードを生成.
-		String signeture = req.getHeader().getString(QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_KEY);
-		return JsonMap.of("status", "success", "authCode", service.createLoginValue(signeture));
+		String signeture = params.getString(
+			QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_PARAM);
+		return JsonMap.of(
+			"status", "success"
+			,"type", "jdbcConsole"
+			,"authCode", service.createLoginValue(signeture));
 	}
 }

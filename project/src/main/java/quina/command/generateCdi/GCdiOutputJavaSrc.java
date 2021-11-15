@@ -191,19 +191,24 @@ public class GCdiOutputJavaSrc {
 				c = GCdiUtil.getClass(clazzName, params);
 				// pubilcのクラス定義のみ対象とする.
 				if(isPublicClass(c)) {
-					int[] es = AnnotationRoute.loadErrorRoute(c);
-					println(w, 2, "");
-					if(es[0] == 0) {
-						println(w, 2, "// Register the \""+ clazzName + "\"");
-						println(w, 2, "// component in the @ErrorRoute.");
-					} else if(es[1] == 0) {
-						println(w, 2, "// Register the \""+ clazzName + "\"");
-						println(w, 2, "// component in the @ErrorRoute(" +
-							es[0] + ")");
-						println(w, 2, "// Register the \""+ clazzName + "\"");
-						println(w, 2, "// component in the @ErrorRoute(" +
-							es[0] + ", " + es[1] + ")");
+					StringBuilder buf = new StringBuilder();
+					Object[] es = AnnotationRoute.loadErrorRoute(c);
+					int esLen = es == null ? 0 : es.length;
+					for(int e = 0; e < esLen; e ++) {
+						if(e != 0) {
+							buf.append(", ");
+						}
+						if(es[e] instanceof String) {
+							buf.append("\"").append(es[e]).append("\"");
+						} else {
+							buf.append(es[e]);
+						}
 					}
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// component in the @ErrorRoute(" +
+						buf.toString() + ")");
+					buf = null;
 					println(w, 2, "router.error(new " + clazzName + "());");
 				}
 			}

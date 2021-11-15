@@ -1,7 +1,6 @@
 package quina.validate;
 
 import quina.exception.QuinaException;
-import quina.util.StringUtil;
 
 /**
  * １つのValidate要素.
@@ -51,10 +50,29 @@ final class VElement {
 			try {
 				// カラム名の[X-]を取り、-を抜いて、最初の文字を小文字に変換.
 				// [X-Test-Code] -> testCode.
-				column = StringUtil.changeString(column.substring(2), "-", "");
-				column = column.substring(0, 1).toLowerCase() + column.substring(1);
+				char c;
+				boolean big = false;
+				final int len = column.length();
+				StringBuilder buf = new StringBuilder(
+					column.substring(2, 3).toLowerCase());
+				for(int i = 3; i < len; i ++) {
+					c = column.charAt(i);
+					if(c == '-') {
+						big = true;
+						continue;
+					}
+					if(big && 'a' <= c && 'z' >= c) {
+						buf.append((char)(c - 32));
+					} else {
+						buf.append(c);
+					}
+					big = false;
+				}
+				column = buf.toString();
 			} catch (Exception e) {
-				throw new QuinaException(500, "Failed to get header information '" + column + ".'", e);
+				throw new QuinaException(500,
+					"Failed to get header information '" +
+					column + ".'", e);
 			}
 		}
 		return column;

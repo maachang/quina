@@ -47,14 +47,16 @@ public class JDBCConsoleService {
 	
 	// タイムアウト値を取得.
 	private final long getTimeout() {
-		
 		Long timeout = service().getConfig().getLong("loginTimeout");
-		// タイムアウトが存在しない場合は１５分タイムアウト.
+		// タイムアウトが存在しない場合はデフォルト値.
 		if(timeout == null) {
-			timeout = 900000L;
-		// タイムアウトが５分以下の場合５分タイムアウト.
-		} else if(timeout <= 300000L) {
-			timeout = 300000L;
+			timeout = QuinaJDBCConsoleConstants.DEF_LOGIN_TIMEOUT;
+		// タイムアウトが最小時間の場合.
+		} else if(timeout <= QuinaJDBCConsoleConstants.MIN_LOGIN_TIMEOUT) {
+			timeout = QuinaJDBCConsoleConstants.MIN_LOGIN_TIMEOUT;
+		// タイムアウトが最大時間の場合.
+		} else if(timeout >= QuinaJDBCConsoleConstants.MAX_LOGIN_TIMEOUT) {
+			timeout = QuinaJDBCConsoleConstants.MAX_LOGIN_TIMEOUT;
 		}
 		return timeout;
 	}

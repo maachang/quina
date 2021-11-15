@@ -182,17 +182,24 @@ public class GCdiExtraction {
 			} else if(o instanceof ErrorComponent) {
 				// @ErrorRoute付属のコンポーネントを登録.
 				if(c.isAnnotationPresent(ErrorRoute.class)) {
-					int[] es = AnnotationRoute.loadErrorRoute(c);
-					if(es == null || es[0] == 0) {
-						System.out.println("  > error             : " + className);
-					} else if(es[1] == 0) {
-						System.out.println("  > error             : " + className);
-						System.out.println("                         status: " + es[0]);
-					} else {
-						System.out.println("  > error             : " + className);
-						System.out.println("                         status: " +
-							es[0] + "-" + es[1]);
+					StringBuilder buf = new StringBuilder();
+					Object[] es = AnnotationRoute.loadErrorRoute(c);
+					int esLen = es == null ? 0 : es.length;
+					for(int e = 0; e < esLen; e ++) {
+						if(e != 0) {
+							buf.append(", ");
+						}
+						if(es[e] instanceof String) {
+							buf.append("\"").append(es[e]).append("\"");
+						} else {
+							buf.append(es[e]);
+						}
 					}
+					System.out.println("  > error             : " + className);
+					if(esLen > 0) {
+						System.out.println("                          " + buf.toString());
+					}
+					buf = null;
 					// ErrorRouteリストに登録.
 					params.errList.add(className);
 				}

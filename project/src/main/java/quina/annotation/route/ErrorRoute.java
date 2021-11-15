@@ -74,5 +74,5 @@ public @interface ErrorRoute {
 	/**
 	 * 範囲URLルート.
 	 */
-	public String route() default "/";
+	public String route() default "";
 }

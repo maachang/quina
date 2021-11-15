@@ -332,7 +332,7 @@ public final class HttpServerUtil {
 		}
 		// エラーコンポーネントを取得.
 		ErrorComponent component =
-			Quina.router().getError(res.getStatusNo());
+			Quina.router().getError(res.getStatusNo(), req.getUrl());
 		// エラー実行.
 		if(e == null) {
 			// ステータスが４００未満の場合.

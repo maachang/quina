@@ -20,6 +20,9 @@ public class HttpServerConstants {
 
 	// サーバーソケットのバインドポート番号.
 	private static final int DEF_BIND_SERVER_SOCKET_PORT = 3333;
+	
+	// デフォルトではエラー４０４でのRESTful返却モード.
+	private static final boolean DEF_ERROR404_RESTFUL = true;
 
 	// HttpResponseのNoCacheのモード.
 	private static final Bool noCacheMode = new Bool(DEF_NO_CACHE_MODE);
@@ -29,6 +32,9 @@ public class HttpServerConstants {
 
 	// [Browser]でのCrossDomain対応のモード.
 	private static final Bool crossDomainMode = new Bool(DEF_CROSS_DOMAIN_MODE);
+	
+	// error404でのRESTful返却のモード.
+	private static final Bool error404RESTful = new Bool(DEF_ERROR404_RESTFUL);
 
 	// サーバーソケットのバインドポート番号.
 	private static final Number32 bindServerSocketPort =
@@ -97,4 +103,21 @@ public class HttpServerConstants {
 	public static final void setBindServerSocketPort(int port) {
 		bindServerSocketPort.set(port);
 	}
+	
+	/**
+	 * エラー４０４での返却にRESTfulで返却するかを取得.
+	 * @return boolean [true]の場合RESTfulで返却します.
+	 */
+	public static final boolean isError404RESTful() {
+		return error404RESTful.get();
+	}
+
+	/**
+	 * エラー４０４での返却にRESTfulで返却するかを設定.
+	 * @param mode [true]の場合RESTfulで返却します.
+	 */
+	public static final void setError404RESTful(boolean mode) {
+		error404RESTful.set(mode);
+	}
+
 }

@@ -54,7 +54,7 @@ public class HttpServerService implements QuinaService {
 		// 受信タイムアウト値.
 		,"timeout", TypesClass.Long, NioConstants.getTimeout()
 		// ４０４エラーのレスポンスタイプ.
-		,"error404RESTful", TypesClass.Boolean, false
+		,"error404RESTful", TypesClass.Boolean, HttpServerConstants.isError404RESTful()
 	);
 	
 	// Nioサーバコア.

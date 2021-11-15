@@ -56,22 +56,101 @@ public class ComponentManager {
 	}
 	
 	/**
+	 * Route条件が格納される要素情報.
+	 */
+	protected static final class RouteElement {
+		// RouteなしのErrorComponent.
+		private ErrorComponent anyComponent;
+		// route, errorComponent, .... が格納される.
+		private ObjectList<Object> list = null;
+		
+		/**
+		 * エラーコンポーネントを登録.
+		 * @param route 指定URLを含むエラーに対して優先的に実行されます.
+		 * @param component 実行コンポーネントを設定します.
+		 */
+		public void put(String route, ErrorComponent component) {
+			// 指定コンポーネントが存在しない.
+			if(component == null) {
+				throw new QuinaException(
+					"The specified error component is not set.");
+			}
+			// routeが設定されていない場合.
+			if(route == null || (route = route.trim()).isEmpty()) {
+				// 共通コンポーネントとして登録.
+				anyComponent = component;
+				return;
+			}
+			// リストが存在しない場合.
+			if(list == null) {
+				list = new ObjectList<Object>();
+				// 追加.
+				list.add(route);
+				list.add(component);
+				return;
+			}
+			// リストが存在する場合.
+			final int len = list.size();
+			for(int i = 0; i < len; i += 2) {
+				// 以前に同じRoute設定されてる場合はSet.
+				if(route.equals(list.getString(i))) {
+					list.set(i + 1, component);
+					return;
+				}
+			}
+			// 追加.
+			list.add(route);
+			list.add(component);
+		}
+		
+		/**
+		 * 指定URLに近い存在の条件を取得.
+		 * @param url 対象のURLを設定します.
+		 * @return ErrorComponent エラーコンポーネントが返却されます.
+		 */
+		public ErrorComponent get(String url) {
+			// URLが設定されてない場合.
+			if(url == null || (url = url.trim()).isEmpty()) {
+				return anyComponent;
+			// route条件が存在しない場合.
+			} else if(list == null) {
+				return anyComponent;
+			}
+			// 最もrouteに近い条件を取得.
+			String route;
+			int count = 0;
+			ErrorComponent ret = null;
+			final int len = list.size();
+			for(int i = 0; i < len; i += 2) {
+				if(url.startsWith(route = list.getString(i)) &&
+					count < route.length()) {
+					ret = (ErrorComponent)list.get(i + 1);
+					count = route.length();
+				}
+			}
+			// route条件が存在しない場合.
+			if(ret == null) {
+				return anyComponent;
+			}
+			return ret;
+		}
+	}
+	
+	/**
 	 * 対象エラーコンポーネントに対する有効ステータス範囲要素.
 	 */
 	protected static final class RangeStatusElement {
 		private int startStatus;
 		private int endStatus;
-		private ErrorComponent ErrorComponent;
+		private RouteElement routeElement;
 		
 		/**
 		 * コンストラクタ.
 		 * @param startStatus
 		 * @param endStatus
-		 * @param ErrorComponent
 		 */
 		public RangeStatusElement(
-			int startStatus, int endStatus,
-			ErrorComponent ErrorComponent) {
+			int startStatus, int endStatus) {
 			if(startStatus > endStatus) {
 				int n = startStatus;
 				startStatus = endStatus;
@@ -79,7 +158,7 @@ public class ComponentManager {
 			}
 			this.startStatus = startStatus;
 			this.endStatus = endStatus;
-			this.ErrorComponent = ErrorComponent;
+			this.routeElement = new RouteElement();
 		}
 		
 		/**
@@ -109,18 +188,21 @@ public class ComponentManager {
 		}
 		
 		/**
-		 * エラーコンポーネント.
-		 * @return
+		 * エラーコンポーネントを登録.
+		 * @param route
+		 * @param cmp
 		 */
-		public ErrorComponent getErrorComponent() {
-			return ErrorComponent;
+		public void put(String route, ErrorComponent cmp) {
+			routeElement.put(route, cmp);
 		}
 		
-		@Override
-		public String toString() {
-			return new StringBuilder()
-				.append(startStatus).append(" - ")
-				.append(endStatus).toString();
+		/**
+		 * エラーコンポーネントを取得.
+		 * @param url
+		 * @return
+		 */
+		public ErrorComponent get(String url) {
+			return routeElement.get(url);
 		}
 	}
 	
@@ -129,15 +211,15 @@ public class ComponentManager {
 	 */
 	protected static final class ErrorComponentManager {
 		// 指定ステータスでエラーコンポーネントを管理.
-		private IndexKeyValueList<Integer, ErrorComponent> singleManager =
-			new IndexKeyValueList<Integer, ErrorComponent>();
+		private IndexKeyValueList<Integer, RouteElement> singleManager =
+			new IndexKeyValueList<Integer, RouteElement>();
 		
 		// 範囲指定のステータスでエラーコンポーネントを管理.
 		private ObjectList<RangeStatusElement> rangeManager =
 			new ObjectList<RangeStatusElement>();
 		
 		// 登録ステータス以外のステータスに対応するエラーコンポーネント.
-		private ErrorComponent anyErrorComponent;
+		private RouteElement anyRouteElement = null;
 		
 		/**
 		 * コンストラクタ.
@@ -146,14 +228,33 @@ public class ComponentManager {
 		
 		/**
 		 * 指定ステータスでエラーコンポーネント登録.
-		 * @param state 
+		 * @param state
+		 * @param route
 		 * @param cmp
 		 */
-		public void putSingle(int state, ErrorComponent cmp) {
+		public void putSingle(int state, String route, ErrorComponent cmp) {
 			if(cmp == null) {
 				throw new QuinaException("No error component is specified.");
 			}
-			singleManager.put(state, cmp);
+			RouteElement em = singleManager.get(state);
+			if(em == null) {
+				em = new RouteElement();
+				singleManager.put(state, em);
+			}
+			em.put(route, cmp);
+		}
+		
+		// stateStateとendStateに一致するRangeStatusElementを取得.
+		private final RangeStatusElement searchRange(int startState, int endState) {
+			RangeStatusElement em;
+			final int len = rangeManager.size();
+			for(int i = 0; i < len; i ++) {
+				em = rangeManager.get(i);
+				if(em.startStatus == startState && em.endStatus ==endState) {
+					return em;
+				}
+			}
+			return null;
 		}
 		
 		/**
@@ -162,19 +263,32 @@ public class ComponentManager {
 		 * @param endState
 		 * @param cmp
 		 */
-		public void putRange(int startState, int endState, ErrorComponent cmp) {
+		public void putRange(
+			int startState, int endState, String route, ErrorComponent cmp) {
 			if(cmp == null) {
 				throw new QuinaException("No error component is specified.");
 			}
-			rangeManager.add(new RangeStatusElement(startState, endState, cmp));
+			RangeStatusElement em = searchRange(startState, endState);
+			if(em ==null) {
+				em = new RangeStatusElement(startState, endState);
+				rangeManager.add(em);
+			}
+			em.put(route, cmp);
 		}
 		
 		/**
 		 * 登録ステータス以外のステータスに対応するエラーコンポーネント登録.
+		 * @param route
 		 * @param cmp
 		 */
-		public void any(ErrorComponent cmp) {
-			anyErrorComponent = cmp;
+		public void any(String route, ErrorComponent cmp) {
+			if(cmp == null) {
+				throw new QuinaException("No error component is specified.");
+			}
+			if(anyRouteElement == null) {
+				anyRouteElement = new RouteElement();
+			}
+			anyRouteElement.put(route, cmp);
 		}
 		
 		/**
@@ -182,12 +296,17 @@ public class ComponentManager {
 		 * @param state
 		 * @return
 		 */
-		public ErrorComponent get(int state) {
+		public ErrorComponent get(int state, String url) {
+			ErrorComponent ret = null;
 			// 単一ステータスで検索.
-			ErrorComponent ret = singleManager.get(state);
-			if(ret != null) {
-				return ret;
+			RouteElement em = singleManager.get(state);
+			if(em != null) {
+				ret = em.get(url);
+				if(ret != null) {
+					return ret;
+				}
 			}
+			em = null;
 			
 			// 範囲ステータスで検索.
 			RangeStatusElement rse;
@@ -195,50 +314,22 @@ public class ComponentManager {
 			for(int i = 0; i < len; i ++) {
 				rse = rangeManager.get(i);
 				if(rse.match(state)) {
-					return rse.getErrorComponent();
+					ret = rse.get(url);
+					if(ret != null) {
+						return ret;
+					}
 				}
 			}
 			
-			// その他ステータス内容を返却.
-			return anyErrorComponent == null ?
-				DefaultErrorComponent.getInstance() :
-				anyErrorComponent;
-		}
-		
-		/**
-		 * 文字列を出力.
-		 * @param space
-		 * @param buf
-		 * @return
-		 */
-		public StringBuilder toString(int space, StringBuilder buf) {
-			int len = singleManager.size();
-			buf.append("\n");
-			toSpace(buf, space).append("single: ").append(len).append("\n");
-			toSpace(buf, space + 2);
-			for(int i = 0; i < len; i ++) {
-				if(i != 0) {
-					buf.append(", ");
+			// anyステータス内容を返却.
+			if(anyRouteElement != null) {
+				ret = anyRouteElement.get(url);
+				if(ret != null) {
+					return ret;
 				}
-				buf.append(singleManager.keyAt(i));
 			}
-			buf.append("\n");
-			
-			len = rangeManager.size();
-			toSpace(buf, space).append("range: ").append(len).append("\n");
-			toSpace(buf, space + 2);
-			for(int i = 0; i < len; i ++) {
-				if(i != 0) {
-					buf.append(", ");
-				}
-				buf.append(rangeManager.get(i));
-			}
-			buf.append("\n");
-			
-			toSpace(buf, space).append("any: ")
-				.append(anyErrorComponent == null ? "default" : "original")
-				.append("\n");
-			return buf;
+			// 存在しない場合.
+			return DefaultErrorComponent.getInstance();
 		}
 	}
 
@@ -421,59 +512,6 @@ public class ComponentManager {
 			throw new HttpException(405,
 				"The specified method: PATCH cannot be used for this URL.");
 		}
-
-		/**
-		 * 文字列変換.
-		 * @param out 文字列出力先のStringBuilderを設定します.
-		 * @param spacePos 改行後のスペース入力値を設定します.
-		 * @return StringBuilder
-		 */
-		public StringBuilder toString(StringBuilder out, int spacePos) {
-			spacePos += 1;
-			ComponentManager.toSpace(out, spacePos).append("all: ");
-			if(all == null) {
-				out.append("null\n");
-			} else {
-				out.append("\n");
-				all.toString(out, spacePos);
-			}
-			ComponentManager.toSpace(out, spacePos).append("get: ");
-			if(get == null) {
-				out.append("null\n");
-			} else {
-				out.append("\n");
-				get.toString(out, spacePos);
-			}
-			ComponentManager.toSpace(out, spacePos).append("post: ");
-			if(post == null) {
-				out.append("null\n");
-			} else {
-				out.append("\n");
-				post.toString(out, spacePos);
-			}
-			ComponentManager.toSpace(out, spacePos).append("delete: ");
-			if(delete == null) {
-				out.append("null\n");
-			} else {
-				out.append("\n");
-				delete.toString(out, spacePos);
-			}
-			ComponentManager.toSpace(out, spacePos).append("put: ");
-			if(put == null) {
-				out.append("null\n");
-			} else {
-				out.append("\n");
-				put.toString(out, spacePos);
-			}
-			ComponentManager.toSpace(out, spacePos).append("patch: ");
-			if(patch == null) {
-				out.append("null\n");
-			} else {
-				out.append("\n");
-				patch.toString(out, spacePos);
-			}
-			return out;
-		}
 	}
 
 	// コンポーネントの管理は２種類存在する.
@@ -607,35 +645,6 @@ public class ComponentManager {
 		public RegisterComponent getAnyComponent(Method method) {
 			return methodsComponent == null ?
 				null : methodsComponent.getComponent(method);
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder buf = new StringBuilder();
-			return toString(buf, 0).toString();
-		}
-
-		/**
-		 * 文字列変換.
-		 * @param out 文字列出力先のStringBuilderを設定します.
-		 * @param spacePos 改行後のスペース入力値を設定します.
-		 * @return StringBuilder
-		 */
-		public StringBuilder toString(StringBuilder out, int spacePos) {
-			ComponentManager.toSpace(out, spacePos)
-				.append("*AnyElement position: ").append(position).append("\n");
-			ComponentManager.toSpace(out, spacePos)
-				.append("staticPaths: ").append(staticPaths == null ? 0 : staticPaths.size()).append("\n");
-			ComponentManager.toSpace(out, spacePos)
-				.append("anyPath: ").append(anyPath != null).append("\n");
-			ComponentManager.toSpace(out, spacePos)
-				.append("useAnyComponent: [")
-				.append(methodsComponent == null ? "Do not have" : "Have got")
-				.append("]\n");
-			if(methodsComponent != null) {
-				methodsComponent.toString(out, spacePos);
-			}
-			return out;
 		}
 	}
 	
@@ -1135,28 +1144,34 @@ public class ComponentManager {
 	 * 
 	 * @param startState 開始Httpステータスを設定します.
 	 * @param endState 終了Httpステータスを設定します.
+	 * @param route 指定URLを含むエラーに対して優先的に実行されます.
 	 * @param component 対象のコンポーネントを設定します.
 	 */
-	public void putError(int startState, int endState, ErrorComponent component) {
+	public void putError(
+		int startState, int endState, String route, ErrorComponent component) {
+		if(route == null || (route = route.trim()).isEmpty()) {
+			route = null;
+		}
 		if(startState <= 0) {
 			// 全ステータス対応エラーとして登録.
-			ErrorComponentManager.any(component);
+			ErrorComponentManager.any(route, component);
 		} else if(endState <= 0) {
 			// 指定ステータスのエラーとして登録.
-			ErrorComponentManager.putSingle(startState, component);
+			ErrorComponentManager.putSingle(startState, route, component);
 		} else {
 			// 範囲指定のエラーとして登録.
-			ErrorComponentManager.putRange(startState, endState, component);
+			ErrorComponentManager.putRange(startState, endState, route, component);
 		}
 	}
 	
 	/**
 	 * エラー時の登録コンポーネントを取得.
 	 * @param state 対象のHttpステータスを設定します.
+	 * @param url 対象のURLを設定します.
 	 * @return ErrorComponent エラー時のコンポーネントが返却されます.
 	 */
-	public ErrorComponent getError(int state) {
-		return ErrorComponentManager.get(state);
+	public ErrorComponent getError(int state, String url) {
+		return ErrorComponentManager.get(state, url);
 	}
 
 	/**
@@ -1200,64 +1215,11 @@ public class ComponentManager {
 		return rcmp;
 	}
 
-	// AnyElementを文字列出力.
-	private static final void toAnyElementByString(StringBuilder buf, AnyElement now) {
-		int i, len, no;
-		AnyElement em;
-		// このAnyElementを文字列出力.
-		now.toString(buf, now.getPosition() << 1);
-		// AnyElementのstatic条件を文字列出力.
-		if(now.staticPaths != null) {
-			len = now.staticPaths.size();
-			for(i = 0; i < len; i ++) {
-				em = now.staticPaths.valueAt(i);
-				no = em.getPosition() << 1;
-				toSpace(buf, no).
-					append("@static: ").append(" key: \"").
-					append(now.staticPaths.keyAt(i)).append("\"\n");
-				// 次の条件を出力.
-				toAnyElementByString(buf, em);
-			}
-		}
-		// AnyElementのany条件を文字列出力.
-		if((em = now.getAnyPath()) != null) {
-			no = em.getPosition() << 1;
-			toSpace(buf, no).
-				append("@any: \n");
-			// 次の条件を出力.
-			toAnyElementByString(buf, em);
-		}
-	}
-
 	/**
 	 * Etag管理定義情報を取得.
 	 * @return EtagManagerInfo Etag管理定義情報が返却されます.
 	 */
 	public EtagManagerInfo getEtagManagerInfo() {
 		return etagManager.getInfo();
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder buf = new StringBuilder();
-		// staticなコンポーネント管理を出力.
-		int len = staticComponent.size();
-		buf.append("*ComponentManager\n").append("#staticComponents: ").append(len).append("\n");
-		for(int i = 0; i < len; i ++) {
-			toSpace(buf, 2).append("url: ").append(staticComponent.keyAt(i)).append("\n");
-		}
-		buf.append("#anyComponents\n");
-		// AnyElementを出力.
-		toAnyElementByString(buf, rootAnyElement);
-		buf.append("\n");
-		// 指定URLが存在しない場合のコンポーネント実行.
-		buf.append("*notFoundUrlComponent: ")
-			.append(notFoundUrlComponent != null)
-			.append("\n");
-		// エラー発生時のコンポーネントマネージャ.
-		buf.append("*ErrorComponentManager: ");
-		ErrorComponentManager.toString(2, buf)
-			.append("\n");
-		return buf.toString();
 	}
 }

@@ -34,7 +34,8 @@ public class QuinaJDBCConsoleService
 		// グローバルネットワークからのアクセス許可.
 		,"globalAddress", TypesClass.Boolean, false
 		// ログインタイムアウト(30分).
-		,"loginTimeout", TypesClass.Long, 1800000
+		,"loginTimeout", TypesClass.Long,
+			QuinaJDBCConsoleConstants.DEF_LOGIN_TIMEOUT
 	);
 	
 	// サービス開始フラグ.
