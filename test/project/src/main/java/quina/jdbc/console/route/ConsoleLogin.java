@@ -16,10 +16,16 @@ import quina.validate.VType;
 /**
  * コンソールログイン.
  */
-@Validate(name="user", type=VType.String, conditions="null", message=ConsoleLogin.LOGIN_ERROR_MESSAGE)
-@Validate(name="password", type=VType.String)
+@Validate(name="user",
+	type=VType.String,
+	conditions="null",
+	message=ConsoleLogin.LOGIN_ERROR_MESSAGE)
+@Validate(name="password",
+	type=VType.String)
 @Validate(name=QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_KEY,
-	type=VType.String, conditions="null", message=ConsoleLogin.LOGIN_ERROR_MESSAGE)
+	type=VType.String,
+	conditions="null",
+	message=ConsoleLogin.LOGIN_ERROR_MESSAGE)
 
 @Route("/quina/jdbc/console/{user}/{password}/login")
 public class ConsoleLogin implements RESTfulGetSync {
