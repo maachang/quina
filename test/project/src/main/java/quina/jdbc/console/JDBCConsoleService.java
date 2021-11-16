@@ -5,6 +5,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import quina.QuinaConfig;
 import quina.annotation.cdi.ServiceScoped;
 import quina.exception.QuinaException;
+import quina.http.Request;
+import quina.http.Response;
 import quina.util.SeabassCipher;
 import quina.util.Xor128;
 import quina.util.collection.IndexKeyValueList;
@@ -145,8 +147,8 @@ public class JDBCConsoleService {
 		return ret;
 	}
 	
-	// ログイン認証コードが返却されます.
-	private final String getAuthLoginCode(
+	// ログイン認証トークンが返却されます.
+	private final String getAuthLoginToken(
 		Xor128 rand, long now, byte[] binarySignature, String loginKey) {
 		// 返却コードを取得.
 		return SeabassCipher.binaryEncode(rand, getLoginKeyAddTime(
@@ -173,18 +175,46 @@ public class JDBCConsoleService {
 	}
 	
 	/**
-	 * 対象のログイン情報の内容が正しいかチェック.
-	 * @param out 新しいログイン認証コードが返却されます.
-	 *            この内容を処理結果のHTTPResponseのヘッダに設定して返却します.
-	 * @param signature シグニチャーを設定します.
-	 * @param value ログイン情報を設定します.
+	 * 対象のログイン認証トークンが正しいかチェック.
+	 * @param req 対象のHttpRequestを設定します.
+	 * @param res 対象のHttpResponseを設定します.
 	 * @return boolean trueの場合正しいログイン情報です.
 	 */
-	public boolean isLoginValue(String[] out, String signature, String value) {
+	public boolean isLoginToken(Request req, Response<?> res) {
+		// Requestヘッダからシグニチャーを取得.
+		String segnature = req.getHeader().get(
+			QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_KEY);
+		// Requestヘッダからログイン認証トークンを取得.
+		String token = req.getHeader().get(
+			QuinaJDBCConsoleConstants.LOGIN_AUTH_TOKEN);
+		// ログイン認証.
+		String[] out = new String[1];
+		boolean ret = isLoginToken(out, segnature, token);
+		// 正しく認証された場合.
+		if(ret) {
+			// 返却された新しいログイン認証トークンを
+			// Responseヘッダに登録.
+			res.getHeader().put(
+				QuinaJDBCConsoleConstants.LOGIN_AUTH_TOKEN,
+				out[0]);
+		}
+		return ret;
+	}
+	
+	/**
+	 * 対象のログイン認証トークンが正しいかチェック.
+	 * @param out 新しいログイン認証トークンが返却されます.
+	 *            この内容を処理結果のHTTPResponseのヘッダに設定して返却します.
+	 * @param signature シグニチャーを設定します.
+	 * @param token 今回認証チェックするログイン認証トークンを設定します.
+	 * @return boolean trueの場合正しいログイン情報です.
+	 */
+	public boolean isLoginToken(
+		String[] out, String signature, String token) {
 		if(signature == null || signature.isEmpty()) {
 			throw new QuinaException("No signature has been set.");
-		} else if(value == null || value.isEmpty()) {
-			throw new QuinaException("login value is not set.");
+		} else if(token == null || token.isEmpty()) {
+			throw new QuinaException("login token is not set.");
 		}
 		if(out != null && out.length > 0) {
 			out[0] = null;
@@ -199,7 +229,8 @@ public class JDBCConsoleService {
 		// デコード変換.
 		byte[] bin = null;
 		try {
-			bin = SeabassCipher.binaryDecode(value, binarySignature);
+			bin = SeabassCipher.binaryDecode(
+				token, binarySignature);
 		} catch(Exception e) {
 			// 解析に失敗した場合は[false]返却.
 			return false;
@@ -221,7 +252,8 @@ public class JDBCConsoleService {
 			return false;
 		}
 		// キーコードを取得.
-		final String loginKey = new String(bin, 0, bin.length - 8);
+		final String loginKey = new String(
+			bin, 0, bin.length - 8);
 		// 対象のキー情報が存在するかチェック.
 		boolean ret;
 		lock.readLock().lock();
@@ -241,9 +273,9 @@ public class JDBCConsoleService {
 				lock.writeLock().unlock();
 			}
 			// 認証が成功した場合のみ、
-			// 新しい認証コードを生成してoutにセット.
+			// 新しいログイン認証トークンを生成してoutにセット.
 			if(out != null && out.length > 0) {
-				out[0] = getAuthLoginCode(
+				out[0] = getAuthLoginToken(
 					getRand(), now, binarySignature, loginKey);
 			}
 		}
@@ -251,23 +283,24 @@ public class JDBCConsoleService {
 	}
 	
 	/**
-	 * ログイン情報を作成.
+	 * ログイン認証トークンを作成.
 	 * @param signature シグニチャーを設定します.
-	 * @return String ログイン結果の情報が返却されます.
+	 * @return String ログイン認証トークンが返却されます.
 	 */
-	public String createLoginValue(String signature) {
-		return createLoginValue(signature, LOGIN_KEY_LENGTH);
+	public String createLoginToken(String signature) {
+		return createLoginToken(signature, LOGIN_KEY_LENGTH);
 	}
 	
 	/**
-	 * 新しいログイン認証コードを作成.
+	 * 新しいログイン認証トークンを作成.
 	 * @param signature シグニチャーを設定します.
 	 * @param keyLen ログインキー長を設定します.
-	 * @return String ログイン認証コードが返却されます.
+	 * @return String ログイン認証トークンが返却されます.
 	 */
-	public String createLoginValue(String signature, int keyLen) {
+	public String createLoginToken(String signature, int keyLen) {
 		if(signature == null || signature.isEmpty()) {
-			throw new QuinaException("No login signature has been set.");
+			throw new QuinaException(
+				"No login signature has been set.");
 		} else if(keyLen < 16) {
 			keyLen = 16;
 		} else if(keyLen > 256) {
@@ -277,7 +310,7 @@ public class JDBCConsoleService {
 		loginTimeoutCheck(-1);
 		// ランダムオブジェクト.
 		Xor128 rand = getRand();
-		// キーコードを取得.
+		// ログインキーを生成.
 		final String loginKey = new String(
 			getLoginKey(rand, keyLen));
 		// 現在時刻を取得.
@@ -285,13 +318,14 @@ public class JDBCConsoleService {
 		// 新しいログイン情報を登録.
 		lock.writeLock().lock();
 		try {
-			// 新しい情報をセット.
+			// ログインキーをセット.
 			loginInfo.put(loginKey, now);
 		} finally {
 			lock.writeLock().unlock();
 		}
-		// ログイン認証コードを返却.
-		return getAuthLoginCode(
+		// ログインキーから、新しいログイン認証トークンを
+		// 生成して返却.
+		return getAuthLoginToken(
 			rand, now, SeabassCipher.createSignature(
 				signature, SignatureSrc),
 			loginKey);

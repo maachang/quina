@@ -6,9 +6,9 @@ package quina.jdbc.console;
 public class QuinaJDBCConsoleConstants {
 	
 	/**
-	 * [HTTP-Header]JDBCコンソール用ログイン認証コード.
+	 * [HTTP-Header]JDBCコンソール用ログイン認証トークン.
 	 */
-	public static final String LOGIN_AUTH_CODE_HEAEDER_NAME = "X-Jdbc-Console-Auth-Code";
+	public static final String LOGIN_AUTH_TOKEN = "X-Jdbc-Console-Auth-Token";
 	
 	/**
 	 * [HTTP-Header]JDBCコンソール用シグネチャー.

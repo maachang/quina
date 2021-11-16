@@ -12,7 +12,7 @@ import quina.json.JsonMap;
  * 実行されます.
  */
 @ErrorRoute(route="/quina/jdbc/console/")
-public class ConsoleErrorComponent
+public class ConsoleError
 	implements ErrorCdiSyncComponent {
 	
 	/**

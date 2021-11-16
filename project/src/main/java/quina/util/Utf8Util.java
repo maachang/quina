@@ -289,7 +289,8 @@ public class Utf8Util {
 	 * @param length バイナリの長さを設定します.
 	 * @return char[] 文字列(char[])が返却されます.
 	 */
-	public static final char[] toCharArray(final byte[] value, final int offset, final int length) {
+	public static final char[] toCharArray(
+		final byte[] value, final int offset, final int length) {
 		if (value == null || length == 0) {
 			return value == null ? null : new char[0];
 		}
@@ -306,15 +307,23 @@ public class Utf8Util {
 	/**
 	 * バイナリをUTF8文字列に変換.
 	 * 
-	 * @param out 変換先の文字列(char[])を設定します.
-	 *            この値はlenの半分の長さと同じ長さを設定します.
-	 * @param oOffset 変換先の文字列(char[])のオフセット値を設定します.
+	 * @param value 対象のバイナリを設定します.
+	 * @return String 文字列が返却されます.
+	 */
+	public static final String toString(final byte[] value) {
+		return toString(value, 0, value.length);
+	}
+	
+	/**
+	 * バイナリをUTF8文字列に変換.
+	 * 
 	 * @param value 対象のバイナリを設定します.
 	 * @param offset オフセット値を設定します.
 	 * @param length バイナリの長さを設定します.
-	 * @return int 変換された文字列(char[])の長さが返却されます.
+	 * @return String 文字列が返却されます.
 	 */
-	public static final String toString(final byte[] value, final int offset, final int length) {
+	public static final String toString(
+		final byte[] value, final int offset, final int length) {
 		if (value == null || length == 0) {
 			return value == null ? null : "";
 		}

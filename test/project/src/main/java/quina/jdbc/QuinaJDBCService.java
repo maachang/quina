@@ -1,5 +1,6 @@
 package quina.jdbc;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -282,5 +283,19 @@ public class QuinaJDBCService implements QuinaService {
 				name + "\" does not exist. ");
 		}
 		return ret;
+	}
+	
+	/**
+	 * データソース名群を取得.
+	 * @param out 格納するListを設定します.
+	 * @return int データソース名数が返却されます.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public int getDataSouceNames(List out) {
+		final int len = dataSources.size();
+		for(int i = 0; i < len; i ++) {
+			out.add(dataSources.keyAt(i));
+		}
+		return len;
 	}
 }
