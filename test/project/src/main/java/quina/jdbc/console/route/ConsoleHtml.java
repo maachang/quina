@@ -11,8 +11,8 @@ import quina.component.file.FileComponent;
  * 
  * 一時的に利用(Native化では、Resource内にセット予定).
  */
-@Route("/quina/jdbc/console/*")
+@Route("/quina/jdbc/console/public/*")
 @FilePath("./console/")
-@ResponseSwitch(cache=Switch.Off)
+@ResponseSwitch(cache=Switch.On)
 public class ConsoleHtml extends FileComponent {
 }

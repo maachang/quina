@@ -22,7 +22,7 @@ conditions="null",
 message=DataSourceList.ERROR_MESSAGE)
 
 // Route.
-@Route("/quina/jdbc/console/dataSourceList")
+@Route("/quina/jdbc/console/getDataSources")
 
 /**
  * データソース一覧を取得.

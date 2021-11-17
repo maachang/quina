@@ -2,6 +2,7 @@ package quina.component.file;
 
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
+import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
@@ -214,6 +215,11 @@ public class FileComponent implements FileAttributeComponent {
 		String path = urlAndComponentUrlByMargeLocalPath(
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),
 			req.getUrl(), targetDir);
+		// 拡張子に対するmimeTypeをResponseヘッダにセット.
+		String mimeType = MimeTypes.getInstance().getFileNameToMimeType(req.getUrl());
+		if(mimeType != null) {
+			res.setContentType(mimeType);
+		}
 		// 拡張子がgzのファイルが存在しない場合.
 		if(!FileUtil.isFile(path + ".gz")) {
 			// 対象のファイルが存在しない場合.
