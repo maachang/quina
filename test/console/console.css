@@ -1,0 +1,65 @@
+@charset "UTF-8";
+
+/** base html **/
+html {
+    height: 100%;
+    overflow: hidden;
+    
+    /* font. */
+    font-family: '游ゴシック', YuGothic, 'メイリオ', Meiryo,
+        'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', Verdana,
+        Roboto, 'Droid Sans', sans-serif;
+
+    /* color */
+    color: #5f5f5f;
+}
+
+/** base body. **/
+body {
+    background:#dfdfdf;
+}
+
+/** base button. **/
+.base_button {
+    margin-top: 5px;
+    font-size: 16px;
+    position: relative;
+    display: inline-block;
+    padding: 0.25em 0.5em;
+    text-decoration: none;
+    color: #FFF;
+    background: #8f8f8f;/*color*/
+    border: solid 1px #6f6f6f;/*line color*/
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+/* click base button. */
+.base_button:active {
+    border: solid 1px #2f2f2f;
+    box-shadow: none;
+    text-shadow: none;
+    font-weight:bold;
+}
+
+/* base input text. */
+.base_input_text {
+    border: 0;
+    padding: 5px;
+    color: #444;
+    border: solid 1px #ccc;
+    margin: 0 0 10px;
+    border-radius: 5px;
+}
+
+/** base selectbox. **/
+.base_select {
+    border: 0;
+    padding: 5px;
+    color: #555;
+    border: solid 1px #6f6f6f;/*line color*/
+    background: #efefef;/*color*/
+    margin: 0 0 10px;
+    border-radius: 5px;
+}
