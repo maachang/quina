@@ -3,7 +3,6 @@ package quina.component;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
 import quina.http.HttpStatus;
-import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.HttpServerUtil;
@@ -49,7 +48,7 @@ public class ExecuteComponent {
 	}
 
 	/**
-	 * URLを指定してコンポーネントを実行.
+	 * コンポーネントを実行.
 	 * @param em 対象のHttp要素を設定します.
 	 */
 	public final void execute(HttpElement em) {
@@ -64,8 +63,7 @@ public class ExecuteComponent {
 	 * @param em 対象のHttp要素を設定します.
 	 */
 	public final void execute(String url, HttpElement em) {
-		HttpServerUtil.execComponent(
-			url, em, MimeTypes.getInstance(), custom.get());
+		HttpServerUtil.execComponent(url, em, custom.get());
 	}
 	
 	/**

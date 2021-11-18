@@ -13,7 +13,6 @@ import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
 import quina.http.HttpStatus;
 import quina.http.Method;
-import quina.http.MimeTypes;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
@@ -39,11 +38,10 @@ public final class HttpServerUtil {
 	 * URLを指定してコンポーネントを実行.
 	 * @param em Httpy要素を設定します.
 	 * @param url URLを設定します.
-	 * @param mime MimeTypesを設定します.
 	 * @param custom パラメータ解析のカスタム条件を設定します.
 	 */
 	public static final void execComponent(
-		String url, HttpElement em, MimeTypes mime,
+		String url, HttpElement em,
 		HttpCustomAnalysisParams custom) {
 		// 接続が切断されてる場合は処理しない.
 		if(!em.isConnection()) {
@@ -343,17 +341,40 @@ public final class HttpServerUtil {
 			// エラー出力.
 			component.call(res.getStatusNo(), req, res);
 		} else {
+			// エラーメッセージを取得.
+			// 余分な文字列は削除する.
+			String message = getErrorMessage(e.getMessage());
 			// Nio例外の場合.
 			if(e instanceof CoreException) {
 				CoreException core = (CoreException)e;
-				res.setStatus(core.getStatus(), core.getMessage());
+				res.setStatus(core.getStatus(), message);
 			// それ以外の例外の場合.
 			} else {
-				res.setStatus(500, e.getMessage());
+				res.setStatus(500, message);
 			}
 			// エラー出力.
 			component.call(res.getStatusNo(), req, res, e);
 		}
+	}
+	
+	// 例外メッセージをhttpステータスメッセージに変換する.
+	private static final String getErrorMessage(String message) {
+		char c;
+		StringBuilder buf = new StringBuilder();
+		final int len = message.length();
+		for(int i = 0; i < len; i ++) {
+			c = message.charAt(i);
+			if(c == '\"' || c =='\'' || c == '\r') {
+				buf.append("");
+			} else if(c == '\n' || c == '\t') {
+				buf.append(" ");
+			} else if(c == ':') {
+				buf.append("");
+			} else {
+				buf.append(c);
+			}
+		}
+		return buf.toString();
 	}
 
 	/**

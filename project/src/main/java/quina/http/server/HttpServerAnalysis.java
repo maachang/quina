@@ -37,10 +37,10 @@ public class HttpServerAnalysis {
 		HttpElement element, String charset,
 		byte[] recvBin) {
 		// リクエストヘッダ作成中のステータスでない場合.
-		if(element.getState() !=
-			HttpElementState.STATE_RECEIVING_HEADER) {
-			return true;
-		}
+		//if(element.getState() !=
+		//	HttpElementState.STATE_RECEIVING_HEADER) {
+		//	return true;
+		//}
 		// バッファからHTTPヘッダ終端情報が存在するかチェック.
 		final NioBuffer buffer = element.getBuffer();
 		try {
@@ -75,7 +75,7 @@ public class HttpServerAnalysis {
 			}
 			byte[] b = new byte[firstPoint];
 			buffer.read(b);
-			buffer.skip(HttpConstants.END_LINE_LENGTH);
+			buffer.skip(HttpConstants.END_HEADER_LENGTH);
 			String v = new String(b, charset).trim();
 			b = null;
 			String[] list = v.split(" ");

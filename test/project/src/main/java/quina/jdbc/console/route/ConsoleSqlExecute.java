@@ -1,5 +1,8 @@
 package quina.jdbc.console.route;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import quina.annotation.cdi.Inject;
 import quina.annotation.route.Route;
 import quina.annotation.validate.Validate;
@@ -20,8 +23,6 @@ import quina.json.JsonMap;
 import quina.util.Alphabet;
 import quina.util.Base64;
 import quina.util.StringUtil;
-import quina.util.Utf8Util;
-import quina.util.collection.ObjectList;
 import quina.validate.VType;
 
 //LoginシグニチャーValidate.
@@ -76,8 +77,10 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 		String dataSource = params.getString("dataSource");
 		// SQL情報を取得.
 		String sql = getSql(params);
+		
 		// 複数のSQLとして分解.
-		ObjectList<String> sqlList = multipleSql(sql);
+		List<String> sqlList = multipleSql(sql);
+		
 		sql = null;
 		// DataSourceを取得.
 		QuinaDataSource ds = QuinaJDBCService
@@ -99,8 +102,8 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 	// Base64変換されたSQL文を取得.
 	private static final String getSql(Params params) {
 		try {
-			String ret = Utf8Util.toString(
-				Base64.decode(params.getString("sql")));
+			String ret = new String(
+				Base64.decode(params.getString("sql")), "UTF8");
 			params.remove("sql");
 			return ret;
 		} catch(QuinaException qe) {
@@ -111,8 +114,8 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 	}
 	
 	// 対象のSQLが複数実行のSQLの場合分ける.
-	private static final ObjectList<String> multipleSql(String sql) {
-		ObjectList<String> ret = new ObjectList<String>();
+	private static final List<String> multipleSql(String sql) {
+		List<String> ret = new ArrayList<String>();
 		String one;
 		int start = 0;
 		int pos;
@@ -136,7 +139,7 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 	
 	// SQL群を実行.
 	private static final int executeSqlList(
-		JsonList out, QuinaDataSource ds, ObjectList<String> sqlList) {
+		JsonList out, QuinaDataSource ds, List<String> sqlList) {
 		int ret = 0;
 		final int len = sqlList.size();
 		IoStatement ios = null;

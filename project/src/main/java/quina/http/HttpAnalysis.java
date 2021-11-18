@@ -250,9 +250,9 @@ public class HttpAnalysis {
 		throws IOException {
 		HttpElementState state = element.getState();
 		// 既に受信終了の場合.
-		if(state == HttpElementState.STATE_END_RECV) {
-			return true;
-		}
+		//if(state == HttpElementState.STATE_END_RECV) {
+		//	return true;
+		//}
 		NioRecvBody body;
 		HttpReceiveChunked chunked;
 		// 受信Bodyデータが作成されていない場合.

@@ -137,6 +137,7 @@ public class HttpServerWorkerCallHandler
 				if(HttpServerAnalysis.getRequest(
 					element, null, recvBin)) {
 					// リクエストオブジェクト作成完了.
+					recvBin = null;
 					continue;
 				}
 				// 完了していないので、次の受信処理で行う.
@@ -154,6 +155,7 @@ public class HttpServerWorkerCallHandler
 					element.getRequest().getContentLength(),
 					recvBin)) {
 					// 受診処理が完了したので次の処理に移行.
+					recvBin = null;
 					continue;
 				}
 				// body読み込みが完了してない場合はfalseが返却されるので、

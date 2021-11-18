@@ -22,27 +22,94 @@
 (function(_g) {
 "use strict";
 
-// Get the DataSource list and generate a SelectBox .
-var loadDataSourceList = function() {
-    // load login session.
-    var header = loadLoginSession();
-    if(isNull(header)) {
-        // redirect to login page.
-        movePage("./login.html");
-        return;
+// update work area.
+var flushWorkArea = function(html) {
+    document.getElementById("workArea").innerHTML = html;
+}
+
+// newLine.
+var newLine = function(count) {
+    if(isNull(count)) {
+        return "<br>";
     }
-    // call ajax.
-    ajax("GET",
-        "/quina/jdbc/console/getDataSources", null, header,
-        function(state, result, responseHeader) {
-            var value = parseJSON(result);
-            if(isNull(value) || isNull(value = value.value)) {
-                // redirect to login page.
-                movePage("./login.html");
-                return;
+    var ret = "";
+    count = count|0;
+    for(var i = 0; i < count; i ++) {
+        ret += "<br>";
+    }
+    return ret;
+}
+
+var space = function(count) {
+    if(isNull(count)) {
+        return "&nbsp;"
+    }
+    var ret = "";
+    count = count|0;
+    for(var i = 0; i < count; i ++) {
+        ret += "&nbsp;";
+    }
+    return ret;
+}
+
+// create button.
+var createButton = function(view, js) {
+    var btn = "<a href='javascript:void(0);' class='base_button' onclick='javascript:" +
+        js + ";'>" + view + "</a>";
+    return btn;
+}
+
+// Create a text area for SQL execution. 
+var createSqlTextArea = function() {
+    var maxHeight = window.innerHeight;
+    var tarea = "<textarea id='sql' name='sql' class='base_input_text_area' style='width:70%;";
+    tarea += "height:" + ((maxHeight * 0.65)|0) + "px;";
+    tarea += "ime-mode:inactive;"
+    tarea += "'";
+    tarea += " spellcheck='false'";
+    tarea += " placeholder='Set the SQL statement you want to execute.'></textarea>";
+    return tarea;
+}
+
+// clear sql text area button.
+var clearSqlTextAreaButton = function() {
+    return createButton("c l e a r", "clearSqlTextArea()");
+}
+
+// execute button.
+var executeSqlButton = function() {
+    return createButton("execute", "executeSql()");
+}
+
+// Clear resultJSON and generate SQL Text Area. 
+var clearResultJSONAndGenerateSqlTextAreaButton = function() {
+    return createButton("c l e a r", "confirmAndViewSqlTextArea()");
+}
+
+// logout button.
+var logoutButton = function() {
+    return createButton("logout", "accessLogoutConsole()");
+}
+
+// create view sql area.
+var viewSqlTextArea = function() {
+    flushWorkArea(
+        clearSqlTextAreaButton() +
+        space() +
+        executeSqlButton() +
+        newLine() +
+        createSqlTextArea()
+    );
+}
+
+// confirm and create view sql area.
+var confirmAndViewSqlTextArea = function() {
+    confirmWindow("Is it okay to clear the processing result contents?",
+        function(yes) {
+            if(yes == true) {
+                viewSqlTextArea()
+                setErrorMessage("");
             }
-            // generate select box.
-            createDataSourceSelectBox(value);
         });
 }
 
@@ -51,29 +118,151 @@ var createDataSourceSelectBox = function(list) {
     var sbox = "<select size='1' name='selectDataSource' id='selectDataSource' " +
         "class='base_select' style='width:25%' onchange='javascript:onChangeSelectDataSource(this);'>";
     sbox += "\n<option value='' hidden>* Select the DataSource to connect to</option>";
+    var selected = false;
     var len = list.length;
-    var beforeSelect = getBefoerSelectDataSource();
+    var beforeSelect = getSelectDataSource();
     for(var i = 0; i < len; i ++) {
         sbox += "\n<option value='" + list[i] + "'";
         if(beforeSelect != null && beforeSelect == list[i]) {
             sbox += " selected";
+            selected = true;
         }
         sbox += ">" + list[i] + "</option>";
     }
     sbox += "</select>";
+    sbox += space(5) + logoutButton();
     document.getElementById("dataSourceList").innerHTML = sbox;
+
+    // select dataSource name.
+    if(selected) {
+        // view sql text area.
+        viewSqlTextArea();
+    }
 }
 
-// 選択したDataSource名を記録.
+// Generate the list HTML returned by the select statement.
+var createResultTable = function(width, list) {
+    if(isNull(list) || list.length == 0) {
+        return "";
+    }
+    var i, j;
+    var cnt = 0;
+    // Extract and sort columns.
+    var o = list[0];
+    var keys = [];
+    for(var k in o) {
+        keys[cnt ++] = k; 
+    }
+    keys.sort();
+    var lenJ = keys.length;
+    var ret = "<table class='base_table' style='width:"+ width +"'><thead><tr>";
+    // header.
+    for(j = 0; j < lenJ; j ++) {
+        ret += "<th>" + keys[j] + "</th>";
+    }
+    ret += "</tr></thead>";
+    // body.
+    var len = list.length - 1;
+    for(var i = 1; i < len; i ++) {
+        o = list[i];
+        ret += "<tbody><tr>";
+        for(j = 0; j < lenJ; j ++) {
+            ret += "<td>" + o[keys[j]] + "</td>";
+        }
+        ret += "</tr></tbody>";
+    }
+    // food.
+    ret += "<tfoot><tr>";
+    o = list[len];
+    for(j = 0; j < lenJ; j ++) {
+        ret += "<td>" + o[keys[j]] + "</td>";
+    }
+    ret += "</tr></tfoot>";
+    // end.
+    return ret + "</table>";
+}
+
+// create view sql.
+var createSqlView = function(width, sql) {
+    return "<div class='sql_view' style='width:"+ width +"'>" +
+        sql + "</div>";
+}
+
+// view result json.
+var viewResultJSON = function(resultJSON) {
+    var o, t;
+    var sqlList = resultJSON.sqlList;
+    var resultValue = resultJSON.value;
+    var len = sqlList.length;
+
+    var width = "60%";
+
+    // sql text area button.
+    var html = clearResultJSONAndGenerateSqlTextAreaButton() + newLine(2);
+    
+    for(var i = 0; i < len; i ++) {
+        o = resultValue[i];
+        html += createSqlView(width, sqlList[i]) + newLine();
+        // Other than select.
+        if((t = typeof(o)) == "number") {
+            html += createResultTable("30%", [{"result": o}]);
+        // select query.
+        } else if(t == "object") {
+            html += createResultTable(width, o);
+        }
+        // new line.
+        html += newLine(2);
+    }
+    // view work area.
+    flushWorkArea(html);
+}
+
+// access logout console.
+var accessLogoutConsole = function() {
+    confirmWindow("Log out of the jdbc console. Is it OK?",
+    function(yes) {
+        if(yes == true) {
+            logoutConsole();
+            clearAlertWindow(true);
+            return true;
+        }
+    });
+}
+
+// logout console.
+var logoutConsole = function() {
+    nowLoading();
+    try {
+        clearLoginSession();
+        localStorage.removeItem("selectDataSource");
+        movePage("./login.html");
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
+}
+
+// errorMessage.
+var setErrorMessage = function(msg) {
+    if(isNull(msg) || (msg = "" + msg.trim()).length == 0) {
+        msg = "";
+    }
+    var e = document.getElementById("errorMessage");
+    e.innerHTML = msg;
+}
+
+// Save the selected DataSource name.
 var onChangeSelectDataSource = function(e) {
     var idx = e.selectedIndex;
     var value = e.options[idx].value;
     // The new dataSource has changed.
     localStorage.setItem("selectDataSource", value);
+    // view sql text area.
+    viewSqlTextArea();
 }
 
-// 前回選択したDataSource名を取得.
-var getBefoerSelectDataSource = function() {
+// Get the previously selected DataSource name.
+var getSelectDataSource = function() {
     var ret = localStorage.getItem("selectDataSource");
     if(isNull(ret)) {
         return null;
@@ -81,25 +270,145 @@ var getBefoerSelectDataSource = function() {
     return ret;
 }
 
+// clear sql text area.
+var clearSqlTextArea = function() {
+    var tarea = document.getElementById("sql");
+    if(isNull(tarea)) {
+        return;
+    }
+    if(tarea.value.length != 0) {
+        confirmWindow("Clears the entered SQL content. Is it OK?",
+        function(yes) {
+            if(yes == true) {
+                tarea.value = "";
+                setErrorMessage("");
+            }
+        });
+    }
+}
+
+// Get the DataSource list and generate a SelectBox .
+var loadDataSourceList = function() {
+    setErrorMessage("");
+    nowLoading();
+    try {
+        // load login session.
+        var header = loadLoginSession();
+        if(isNull(header)) {
+            // logout console.
+            logoutConsole();
+            return;
+        }
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
+    // call ajax.
+    ajax("GET",
+        "/quina/jdbc/console/getDataSources", null, header,
+        function(state, result, responseHeader) {
+            try {
+                var value = parseJSON(result);
+                if(isNull(value) || isNull(value = value.value)) {
+                    // logout console.
+                    logoutConsole();
+                    return;
+                }
+                // generate select box.
+                createDataSourceSelectBox(value);
+            } finally {
+                clearNowLoading();
+            }
+        });
+}
+
+// execute sql.
+var executeSql = function() {
+    var header, params;
+    setErrorMessage("");
+    nowLoading();
+    try {
+        // load login session.
+        header = loadLoginSession();
+        if(isNull(header)) {
+            // logout console.
+            logoutConsole();
+            return;
+        }
+        var dataSource = getSelectDataSource();
+        if(isNull(dataSource) || (dataSource = dataSource.trim()).length == 0) {
+            setErrorMessage("dataSource is not specified.");
+            clearNowLoading();
+            return;
+        }
+        var tarea = document.getElementById("sql");
+        if(isNull(tarea) || (sql = tarea.value.trim()).length == 0) {
+            setErrorMessage("The SQL statement to be executed does not exist.");
+            clearNowLoading();
+            return;
+        }
+        // Convert the sql statement to base64. 
+        var sql = btoa(sql);
+        // create json params.
+        params = {"dataSource": dataSource, "sql": sql};
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
+    // call ajax.
+    ajax("JSON",
+        "/quina/jdbc/console/executeSql", params, header,
+        function(state, result, responseHeader) {
+            try {
+                var resultJSON = parseJSON(result);
+                if(isNull(resultJSON)) {
+                    // result error.
+                    setErrorMessage("Execution processing failed.");
+                    return;
+                }
+                // success login.
+                if(state == 200) {
+                    if(isNull(resultJSON.value)) {
+                        // result error.
+                        setErrorMessage("Execution processing failed.");
+                        return;
+                    }
+                    // save login session.
+                    saveLoginSession(null, responseHeader);
+                    // view result json.
+                    viewResultJSON(resultJSON);
+                } else {
+                    // login error.
+                    setErrorMessage(resultJSON.message);
+                }
+            } finally {
+                clearNowLoading();
+            }
+        });
+}
+
 _g.loadDataSourceList = loadDataSourceList;
 _g.onChangeSelectDataSource = onChangeSelectDataSource;
+_g.clearSqlTextArea = clearSqlTextArea;
+_g.executeSql = executeSql;
+_g.accessLogoutConsole = accessLogoutConsole;
+_g.confirmAndViewSqlTextArea = confirmAndViewSqlTextArea;
 
 })(this);
 </script>
 
 </head>
 <body onload="javascript:loadDataSourceList();">
+    <div id="nowLoadingView"></div>
+    <div id="alertView"></div>
     <div id="pageId">
         <div style="position:absolute;left:2%;top:1%;width:96%;">
 
-            <div id="dataSourceList">
-                <select size='1' name='selectDataSource' id='selectDataSource'
-                    class='base_select' style='width:25%'>
-                    <option value='' hidden>* Select the DataSource to connect to</option>
-                </select>
+            <div id="dataSourceList"></div>
+
+            <div id="errorMessage" style="color:#7f0000"></div>
+            <div id="workArea">
             </div>
-
-
 
         </div>
     </div>

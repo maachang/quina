@@ -55,41 +55,55 @@ var clearLogin = function() {
 
 // action login.
 var loginAction = function() {
-    setErrorMessage("");
-    var user = document.getElementById("user").value;
-    var password = document.getElementById("password").value;
-    // Exception if user name is not set. 
-    if(isNull(user) ||
-        (user = "" + user.trim()).length == 0) {
-        setErrorMessage("The user name has not been set.");
-        return false;
+    nowLoading();
+    try {
+        setErrorMessage("");
+        var user = document.getElementById("user").value;
+        var password = document.getElementById("password").value;
+        // Exception if user name is not set. 
+        if(isNull(user) ||
+            (user = "" + user.trim()).length == 0) {
+            clearNowLoading();
+            setErrorMessage("The user name has not been set.");
+            return false;
+        }
+        // If no password is set, set empty.
+        if(isNull(password)) {
+            password = "";
+        }
+        // Generate a signature.
+        var signetureCode = createSignetuer();
+    } catch(e) {
+        clearNowLoading();
+        throw e;
     }
-    // If no password is set, set empty.
-    if(isNull(password)) {
-        password = "";
-    }
-    // Generate a signature.
-    var signetureCode = createSignetuer();
     // auth login.
     ajax("GET",
         "/quina/jdbc/console/" + user + "/" + password + "/login",
         null, {"X-Jdbc-Console-Signeture": signetureCode},
         function(state, result, responseHeader) {
-            var value = parseJSON(result);
-            if(isNull(value)) {
-                // login error.
-                setErrorMessage("Failed to login to the jdbc console.");
-                return;
-            }
-            // success login.
-            if(state == 200) {
-                // save login session.
-                saveLoginSession(signetureCode, responseHeader);
-                // success login next page.
-                movePage("./console.html")
-            } else {
-                // login error.
-                setErrorMessage(value.message);
+            try {
+                var value = parseJSON(result);
+                if(isNull(value)) {
+                    // login error.
+                    setErrorMessage("Failed to login to the jdbc console.");
+                    clearNowLoading();
+                    return;
+                }
+                // success login.
+                if(state == 200) {
+                    // save login session.
+                    saveLoginSession(signetureCode, responseHeader);
+                    // success login next page.
+                    movePage("./console.html")
+                } else {
+                    // login error.
+                    setErrorMessage(value.message);
+                    clearNowLoading();
+                }
+            } catch(e) {
+                clearNowLoading();
+                throw e;
             }
         });
 }
@@ -104,6 +118,8 @@ _g.clearLogin = clearLogin;
 
 </head>
 <body>
+    <div id="nowLoadingView"></div>
+    <div id="alertView"></div>
     <div id="pageId">
         <div style="position:absolute;left:4%;top:5%;width:94%;">
             <div style="font-weight:bold;font-size:24px;" >
@@ -113,13 +129,15 @@ _g.clearLogin = clearLogin;
             <div id="errorMessage" style="color:#7f0000"></div>
             <div style="width:60%">
                 <div style="font-weight:bold;" >user name</div>
-                <input type="user" name="user" id="user" class="base_input_text" style="margin-left:10px;width:70%;ime-mode:disabled;"
-                    placeholder="user name">
+                <input type="user" name="user" id="user" class="base_input_text"
+                    style="margin-left:10px;width:70%;ime-mode:disabled;"
+                    spellcheck="false" placeholder="user name">
             </div>
             <div style="width:60%">
                 <div style="font-weight:bold;" >password</div>
-                <input type="password" name="password" id="password" class="base_input_text" style="margin-left:10px;width:70%;ime-mode:disabled;"
-                    placeholder="password">
+                <input type="password" name="password" id="password" class="base_input_text"
+                    style="margin-left:10px;width:70%;ime-mode:disabled;"
+                    spellcheck="false" placeholder="password">
             </div>
             
             <div style="margin-top:15px">

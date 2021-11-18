@@ -47,19 +47,73 @@ body {
 .base_input_text {
     border: 0;
     padding: 5px;
-    color: #444;
+    color: #777;
     border: solid 1px #ccc;
     margin: 0 0 10px;
     border-radius: 5px;
+}
+
+/* base input text placeholder. */
+.base_input_text::placeholder {
+    color: #888;
 }
 
 /** base selectbox. **/
 .base_select {
     border: 0;
     padding: 5px;
-    color: #555;
+    color: #777;
     border: solid 1px #6f6f6f;/*line color*/
     background: #efefef;/*color*/
     margin: 0 0 10px;
     border-radius: 5px;
 }
+
+/* base input text area. */
+.base_input_text_area {
+    resize: none;
+    border: 0;
+    padding: 5px;
+    color: #bbb;
+    border: solid 1px #ddd;
+    background: #4f4f4f;/*color*/
+    margin: 0 0 10px;
+    border-radius: 5px;
+}
+
+/* base input text area placeholder. */
+.base_input_text_area::placeholder {
+    color: #aaa;
+}
+
+.base_table {
+    border: solid 1px #888;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.base_table th, .base_table td {
+    border: solid 1px #888;
+    font-size: smaller;
+    color: #5c5c5c;
+    background: #cccccc;/*color*/
+}
+ 
+.base_table thead tr th {
+    border: solid 1px #888;
+    font-size: smaller;
+    color: #444;
+    background: #aaa;/*color*/
+}
+
+.sql_view {
+    padding: 8px;
+    border: solid 1px #888;
+    font-size: smaller;
+    color: #666;
+    background: #ccc;/*color*/
+    font-weight: bold;
+    /* 5px radius */
+    border-radius: 5px;
+}
+
