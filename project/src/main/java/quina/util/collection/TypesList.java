@@ -1,23 +1,22 @@
-package quina.json;
+package quina.util.collection;
 
 import java.util.AbstractList;
 import java.util.List;
 
-import quina.util.collection.ObjectList;
-import quina.util.collection.QuinaList;
+import quina.json.JsonList;
 
 /**
- * JsonList.
+ * TypesList.
  */
-public class JsonList extends AbstractList<Object>
-	implements QuinaList<Object> {
-	private final ObjectList<Object> list;
+public class TypesList<T> extends AbstractList<T>
+	implements QuinaList<T> {
+	private final ObjectList<T> list;
 	
 	/**
 	 * コンストラクタ.
 	 */
-	protected JsonList() {
-		list = new ObjectList<Object>();
+	protected TypesList() {
+		list = new ObjectList<T>();
 	}
 	
 	/**
@@ -33,9 +32,9 @@ public class JsonList extends AbstractList<Object>
 	 * コンストラクタ.
 	 * @param array Object配列を設定します.
 	 */
-	public JsonList(List<?> list) {
+	public TypesList(List<T> list) {
 		final int len = list == null ? 0 : list.size();
-		this.list = new ObjectList<Object>(len);
+		this.list = new ObjectList<T>(len);
 		for(int i = 0; i < len; i ++) {
 			this.list.add(list.get(i));
 		}
@@ -45,9 +44,9 @@ public class JsonList extends AbstractList<Object>
 	 * コンストラクタ.
 	 * @param list List情報を設定します.
 	 */
-	public JsonList(ObjectList<?> list) {
+	public TypesList(ObjectList<T> list) {
 		final int len = list == null ? 0 : list.size();
-		this.list = new ObjectList<Object>(len);
+		this.list = new ObjectList<T>(len);
 		for(int i = 0; i < len; i ++) {
 			this.list.add(list.get(i));
 		}
@@ -57,11 +56,12 @@ public class JsonList extends AbstractList<Object>
 	 * コンストラクタ.
 	 * @param array リスト情報を設定します.
 	 */
-	public JsonList(Object... array) {
+	@SuppressWarnings("unchecked")
+	public TypesList(Object... array) {
 		final int len = array == null ? 0 : array.length;
-		this.list = new ObjectList<Object>(len);
+		this.list = new ObjectList<T>(len);
 		for(int i = 0; i < len; i ++) {
-			this.list.add(array[i]);
+			this.list.add((T)array[i]);
 		}
 	}
 	
@@ -71,7 +71,7 @@ public class JsonList extends AbstractList<Object>
 	}
 
 	@Override
-	public Object get(int index) {
+	public T get(int index) {
 		return list.get(index);
 	}
 
@@ -81,23 +81,23 @@ public class JsonList extends AbstractList<Object>
 	}
 	
 	@Override
-	public boolean add(Object value) {
+	public boolean add(T value) {
 		list.add(value);
 		return true;
 	}
 	
 	@Override
-	public void add(int index, Object value) {
+	public void add(int index, T value) {
 		list.add(index, value);
 	}
 	
 	@Override
-	public Object set(int index, Object value) {
+	public T set(int index, T value) {
 		return list.set(index, value);
 	}
 	
 	@Override
-	public Object remove(int index) {
+	public T remove(int index) {
 		return list.remove(index);
 	}
 }

@@ -1,6 +1,7 @@
 package quina;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -8,8 +9,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import quina.exception.QuinaException;
 import quina.json.Json;
 import quina.util.Flag;
+import quina.util.collection.BlankList;
+import quina.util.collection.BlankMap;
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.IndexMap;
+import quina.util.collection.QuinaList;
+import quina.util.collection.QuinaMap;
 import quina.util.collection.TreeKey;
 import quina.util.collection.TypesClass;
 import quina.util.collection.TypesElement;
@@ -22,6 +27,15 @@ import quina.util.collection.TypesKeyValue;
  */
 public final class QuinaConfig implements
 	TypesKeyValue<String, Object> {
+	
+	
+	// blankMap.
+	private static final QuinaMap<String, Object> BLANK_MAP =
+		new BlankMap<String, Object>();
+	// blankList.
+	private static final QuinaList<Object> BLANK_LIST =
+		new BlankList<Object>();
+	
 	/**
 	 * QuinaConfig要素.
 	 */
@@ -110,6 +124,16 @@ public final class QuinaConfig implements
 					case String:
 						this.value = this.getString();
 						break;
+					case List:
+						this.value = this.get();
+						if(this.value == null || !(this.value instanceof List)) {
+							this.value = BLANK_LIST;
+						}
+					case Map:
+						if(this.value == null || !(this.value instanceof Map)) {
+							this.value = BLANK_MAP;
+						}
+						break;
 					}
 				} catch(Exception e) {
 					this.value = null;
@@ -143,6 +167,9 @@ public final class QuinaConfig implements
 				return "\"" + o + "\"";
 			case Date:
 				return Json.dateToString((java.util.Date)o);
+			case List:
+			case Map:
+				return Json.encode(o);
 			}
 			return o.toString();
 		}
@@ -362,6 +389,34 @@ public final class QuinaConfig implements
 		} finally {
 			lock.readLock().unlock();
 		}
+	}
+	
+	/**
+	 * Mapで取得.
+	 * @param key 対象のキーを設定します.
+	 * @return QuinaMap<String, Object> Mapが返却されます.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public QuinaMap<String, Object> getMap(Object key) {
+		Object ret = get(key);
+		if(ret == null || !(ret instanceof QuinaMap)) {
+			return BLANK_MAP;
+		}
+		return (QuinaMap)ret;
+	}
+	
+	/**
+	 * Listで取得.
+	 * @param key 対象のキーを設定します.
+	 * @return QuinaList<Object> Listが返却されます.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public QuinaList<Object> getList(Object key) {
+		Object ret = get(key);
+		if(ret == null || !(ret instanceof QuinaList)) {
+			return BLANK_LIST;
+		}
+		return (QuinaList)ret;
 	}
 
 	/**

@@ -91,6 +91,9 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 		// SQL実行.
 		executeSqlList(resultList, ds, sqlList);
 		
+		// SQLListをbase64変換.
+		sqlListByBase64(sqlList);
+		
 		// 正常終了.
 		return JsonMap.of(
 			"status", "success"
@@ -124,21 +127,70 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 			if(pos == -1) {
 				one = sql.substring(start, sql.length()).trim();
 				if(!one.isEmpty()) {
-					ret.add(one);
+					ret.add(trimSql(one));
 				}
 				break;
 			}
 			one = sql.substring(start, pos).trim();
 			if(!one.isEmpty()) {
-				ret.add(one);
+				ret.add(trimSql(one));
 			}
 			start = pos + 1;
 		}
 		return ret;
 	}
 	
+	// １つのSQLの改行等をクリア.
+	private static final String trimSql(String sql) {
+		char c;
+		int cote = -1;
+		boolean beforeYen = false;
+		StringBuilder buf = new StringBuilder();
+		final int len = sql.length();
+		for(int i = 0; i < len; i ++) {
+			c = sql.charAt(i);
+			if(cote != -1) {
+				if(!beforeYen && c == cote) {
+					buf.append("\'");
+					cote = -1;
+				} else {
+					buf.append(c);
+				}
+			} else if(c =='\r') {
+				buf.append("");
+			} else if(!beforeYen && (c =='\"' || c == '\'')) {
+				cote = c;
+				buf.append("\'");
+			} else if(c == '\t' || c == '\n') {
+				buf.append(" ");
+			} else {
+				buf.append(c);
+			}
+			if(c == '\\') {
+				beforeYen = true;
+			} else {
+				beforeYen = false;
+			}
+		}
+		return buf.toString();
+	}
+	
+	// SQLListをBase64変換.
+	private static final void sqlListByBase64(List<String> sqlList) {
+		try {
+			String sql;
+			final int len = sqlList.size();
+			for(int i = 0; i < len; i ++) {
+				sql = sqlList.get(i);
+				sqlList.set(i, Base64.encode(sql.getBytes("UTF8")));
+			}
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+	}
+	
 	// SQL群を実行.
-	private static final int executeSqlList(
+	private final int executeSqlList(
 		JsonList out, QuinaDataSource ds, List<String> sqlList) {
 		int ret = 0;
 		final int len = sqlList.size();
@@ -175,16 +227,8 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 		}
 	}
 	
-	private static final void rollback(IoStatement ios) {
-		if(ios != null) {
-			try {
-				ios.rollback();
-			} catch(Exception e) {}
-		}
-	}
-	
-	// SQLの実行.
-	private static final void executeSql(
+	// 1つのSQLの実行.
+	private final void executeSql(
 		JsonList out, IoStatement ios, String sql) {
 		char c;
 		// executeQuery実行.
@@ -192,9 +236,10 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 			((c = sql.charAt(6)) == ' ' || c == '\t' ||
 			c == '\r' || c == '\n')) {
 			JsonList list = new JsonList();
+			// 最大件数を設定して取得.
 			ios.sql(sql)
 				.executeQuery()
-				.getList(list);
+				.getList(list, service.getResultQuerySize());
 			out.add(list);
 		// executeUpdate実行.
 		} else {
@@ -203,5 +248,13 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 			out.add(res[0]);
 		}
 	}
-
+	
+	// ロールバック.
+	private static final void rollback(IoStatement ios) {
+		if(ios != null) {
+			try {
+				ios.rollback();
+			} catch(Exception e) {}
+		}
+	}
 }

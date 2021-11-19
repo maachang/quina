@@ -19,8 +19,7 @@ import java.util.Set;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class IndexMap<K, V> implements AbstractKeyIterator.Base<K>,
 	AbstractEntryIterator.Base<K, V>,
-	Map<K, V>,
-	TypesKeyValue<K, V> {
+	QuinaMap<K, V> {
 
 	private IndexKeyValueList<K, V> list;
 

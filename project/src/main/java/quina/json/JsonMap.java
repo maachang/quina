@@ -10,6 +10,7 @@ import java.util.Set;
 
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.ObjectList;
+import quina.util.collection.QuinaMap;
 
 /**
  * JsonMap.
@@ -17,7 +18,8 @@ import quina.util.collection.ObjectList;
  * put などの追加処理は行えません.
  */
 public class JsonMap
-	extends AbstractMap<String, Object> {
+	extends AbstractMap<String, Object>
+	implements QuinaMap<String, Object> {
 	private final JsonSet jsonSet = new JsonSet();
 	
 	/**

@@ -51,6 +51,7 @@ var clearLogin = function() {
     setErrorMessage("");
     document.getElementById("user").value = "";
     document.getElementById("password").value = "";
+    document.getElementById("user").focus();
 }
 
 // action login.
@@ -108,16 +109,61 @@ var loginAction = function() {
         });
 }
 
+// init call.
+var initCall = function() {
+    // focus select dataSource.
+    timeLagCall(function() {
+        var em;
+        em = document.getElementById("user")
+        em.focus();
+        addEvent(em, "keydown", function(e) {
+            // enter.
+            if(e.keyCode == 13) {
+                e.preventDefault();
+                // login.
+                loginAction();
+            // ↑ or tab.
+            } else if(e.keyCode == 38 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("password").focus();
+            // ↓ or tab.
+            } else if(e.keyCode == 40 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("password").focus();
+            }
+        });
+        em = document.getElementById("password");
+        addEvent(em, "keydown", function(e) {
+            // enter.
+            if(e.keyCode == 13) {
+                e.preventDefault();
+                // login.
+                loginAction();
+            // ↑ or tab.
+            } else if(e.keyCode == 40 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("user").focus();
+            // ↑ or tab.
+            } else if(e.keyCode == 38 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("user").focus();
+            }
+        });
+
+    });
+}
+
 _g.createSignetuer = createSignetuer;
 _g.setErrorMessage = setErrorMessage;
 _g.loginAction = loginAction;
 _g.clearLogin = clearLogin;
+_g.initCall = initCall;
 
 })(this);
 </script>
 
 </head>
-<body>
+<body onload="javascript:initCall();">
     <div id="nowLoadingView"></div>
     <div id="alertView"></div>
     <div id="pageId">
@@ -131,13 +177,15 @@ _g.clearLogin = clearLogin;
                 <div style="font-weight:bold;" >user name</div>
                 <input type="user" name="user" id="user" class="base_input_text"
                     style="margin-left:10px;width:70%;ime-mode:disabled;"
-                    spellcheck="false" placeholder="user name">
+                    spellcheck="false" placeholder="user name" autocomplete="off">
             </div>
             <div style="width:60%">
                 <div style="font-weight:bold;" >password</div>
                 <input type="password" name="password" id="password" class="base_input_text"
                     style="margin-left:10px;width:70%;ime-mode:disabled;"
-                    spellcheck="false" placeholder="password">
+                    spellcheck="false" placeholder="password" autocomplete="off">
+                <input type="password" name="dummy1" value="" style="display:none;" disabled>
+                <input type="password" name="dummy2" value="" style="display:none;" disabled>
             </div>
             
             <div style="margin-top:15px">

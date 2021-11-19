@@ -12,6 +12,7 @@ import quina.util.Alphabet;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
 import quina.util.collection.IndexMap;
+import quina.util.collection.TypesList;
 
 /**
  * Json変換処理.
@@ -375,7 +376,7 @@ public final class Json {
 		final CustomJsonIO conv = convertJsonIO.get();
 		// List.
 		if (type == TYPE_ARRAY) {
-			final List<Object> ret = new ArrayList<Object>();
+			final List<Object> ret = new TypesList<Object>();
 			int flg = 0;
 			for (int i = no + 1; i < len; i++) {
 				value = (String) token.get(i);

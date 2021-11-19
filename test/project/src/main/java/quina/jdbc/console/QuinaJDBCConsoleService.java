@@ -7,6 +7,7 @@ import quina.annotation.log.LogDefine;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.logger.Log;
 import quina.util.Flag;
+import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
 
 /**
@@ -24,9 +25,8 @@ public class QuinaJDBCConsoleService
 		// jdbcConsole.jsonで定義.
 		"jdbcConsole"
 		// コンソールログインユーザー名.
-		,"user", TypesClass.String, "root"
-		// コンソールログインパスワード.
-		,"password", TypesClass.String, ""
+		,"auth", TypesClass.Map, new IndexMap<String, Object>(
+			"root", "")
 		// ローカルホストからのアクセスのみ有効.
 		,"localhostOnly", TypesClass.Boolean, true
 		// 同一ローカルネットワークからのアクセス許可.
@@ -36,6 +36,9 @@ public class QuinaJDBCConsoleService
 		// ログインタイムアウト(30分).
 		,"loginTimeout", TypesClass.Long,
 			QuinaJDBCConsoleConstants.DEF_LOGIN_TIMEOUT
+		// クエリー処理受け取り件数.
+		,"resultQuerySize", TypesClass.Integer,
+			QuinaJDBCConsoleConstants.DEF_RESULT_QUERY_COUNT
 	);
 	
 	// サービス開始フラグ.

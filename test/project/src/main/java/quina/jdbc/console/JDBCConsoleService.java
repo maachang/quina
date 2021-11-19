@@ -10,6 +10,7 @@ import quina.http.Response;
 import quina.util.SeabassCipher;
 import quina.util.Xor128;
 import quina.util.collection.IndexKeyValueList;
+import quina.util.collection.QuinaMap;
 
 /**
  * JDBC-Consoleサービス.
@@ -47,21 +48,45 @@ public class JDBCConsoleService {
 		return ret;
 	}
 	
-	// タイムアウト値を取得.
-	private final long getTimeout() {
+	/**
+	 * ログインセッションタイムアウト値を取得.
+	 * @return long ログインセッションタイムアウト値が返却されます.
+	 */
+	public final long getTimeout() {
 		Long timeout = service().getConfig().getLong("loginTimeout");
-		// タイムアウトが存在しない場合はデフォルト値.
+		// 存在しない場合はデフォルト値.
 		if(timeout == null) {
 			timeout = QuinaJDBCConsoleConstants.DEF_LOGIN_TIMEOUT;
-		// タイムアウトが最小時間の場合.
+		// 最小時間の場合.
 		} else if(timeout <= QuinaJDBCConsoleConstants.MIN_LOGIN_TIMEOUT) {
 			timeout = QuinaJDBCConsoleConstants.MIN_LOGIN_TIMEOUT;
-		// タイムアウトが最大時間の場合.
+		// 最大時間の場合.
 		} else if(timeout >= QuinaJDBCConsoleConstants.MAX_LOGIN_TIMEOUT) {
 			timeout = QuinaJDBCConsoleConstants.MAX_LOGIN_TIMEOUT;
 		}
 		return timeout;
 	}
+	
+	/**
+	 * Query処理結果の最大件数を取得.
+	 * @return int Query処理結果の最大件数を取得が返却されます.
+	 */
+	public final int getResultQuerySize() {
+		Integer resultQuerySize = service()
+			.getConfig().getInteger("resultQuerySize");
+		// 存在しない場合はデフォルト値.
+		if(resultQuerySize == null) {
+			resultQuerySize = QuinaJDBCConsoleConstants.DEF_RESULT_QUERY_COUNT;
+		// 最小時間の場合.
+		} else if(resultQuerySize <= QuinaJDBCConsoleConstants.MIN_RESULT_QUERY_COUNT) {
+			resultQuerySize = QuinaJDBCConsoleConstants.MIN_RESULT_QUERY_COUNT;
+		// 最大時間の場合.
+		} else if(resultQuerySize >= QuinaJDBCConsoleConstants.MAX_RESULT_QUERY_COUNT) {
+			resultQuerySize = QuinaJDBCConsoleConstants.MAX_RESULT_QUERY_COUNT;
+		}
+		return resultQuerySize;
+	}
+
 	
 	// ログイン状態がタイムアウトしたかチェック.
 	private final void loginTimeoutCheck(long timeout) {
@@ -163,15 +188,12 @@ public class JDBCConsoleService {
 	 */
 	public boolean isAuthLogin(String user, String password) {
 		final QuinaConfig config = service().getConfig();
-		String confUser = config.getString("user");
-		String confPassword = config.getString("password");
-		if(confUser == null || confUser.isEmpty()) {
-			confUser = "";
+		QuinaMap<String, Object> auth = config.getMap("auth");
+		String confPassword = auth.getString(user);
+		if(confPassword == null) {
+			return false;
 		}
-		if(confPassword == null || confPassword.isEmpty()) {
-			confPassword = "";
-		}
-		return confUser.equals(user) && confPassword.equals(password);
+		return confPassword.equals(password);
 	}
 	
 	/**

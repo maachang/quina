@@ -25,22 +25,6 @@ var ALERT_NO_BUTTON_ID = ALERT_VIEW_ID + "_" + "no";
 // shadow dialog.
 var BACK_DIALOG_SHADOW = "box-shadow: 10px 10px 10px rgba(0,0,0,0.75);"
 
-// 64 code.
-var code64 = "abcdefghijklz+ABCDEFGHIJKLM0123456789/NOPQRSTUVWXYZmnopqrstuvwxy";
-
-// create code64.
-var createCode64 = function(len) {
-    if(isNull(len)) {
-        len = 64;
-    }
-    var rand = new Xor128();
-    var ret = "";
-    for(var i = 0; i < len; i ++) {
-        ret += code64.charAt(rand.next() & 0x03f);
-    }
-    return ret;
-}
-
 // 時間差コール.
 var timeLagCall = function(call) {
     setTimeout(function() {
@@ -231,6 +215,8 @@ var confirmWindow = function(message, call) {
         var em = document.getElementById(ALERT_NO_BUTTON_ID);
         if(!isNull(em)) {
             addEvent(em, "click", noCall);
+            // default cancel focus.
+            em.focus();
         }
     });
 }
@@ -436,6 +422,8 @@ var clearLoginSession = function() {
 _g.isNull = isNull;
 _g.Xor128 = Xor128;
 _g.ajax = ajax;
+_g.addEvent = addEvent;
+_g.timeLagCall = timeLagCall;
 _g.parseJSON = parseJSON;
 _g.encodeJSON = encodeJSON;
 _g.getHeaderKey = getHeaderKey;

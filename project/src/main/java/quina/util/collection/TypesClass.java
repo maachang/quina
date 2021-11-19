@@ -1,5 +1,8 @@
 package quina.util.collection;
 
+import java.util.List;
+import java.util.Map;
+
 import quina.util.Alphabet;
 import quina.util.BooleanUtil;
 import quina.util.DateUtil;
@@ -11,23 +14,39 @@ import quina.util.StringUtil;
  */
 public enum TypesClass {
 	Boolean(TypesConstants.TYPENO_BOOLEAN,
-		"boolean", false, false, true, false, false),
-	Byte(TypesConstants.TYPENO_BYTE,
-		"byte", true, false, false, false, false),
-	Short(TypesConstants.TYPENO_SHORT,
-		"short", true, false, false, false, false),
-	Integer(TypesConstants.TYPENO_INTEGER,
-		"integer", true, false, false, false, false),
-	Long(TypesConstants.TYPENO_LONG,
-		"long", true, false, false, false, false),
-	Float(TypesConstants.TYPENO_FLOAT,
-		"float", true, true, false, false, false),
-	Double(TypesConstants.TYPENO_DOUBLE,
-		"double", true, true ,false, false, false),
-	String(TypesConstants.TYPENO_STRING,
-		"string", false, false, false, true, false),
-	Date(TypesConstants.TYPENO_DATE,
-		"date", false, false, false, false, true);
+		"boolean", false, false, true, false, false,
+		false, false)
+	,Byte(TypesConstants.TYPENO_BYTE,
+		"byte", true, false, false, false, false,
+		false, false)
+	,Short(TypesConstants.TYPENO_SHORT,
+		"short", true, false, false, false, false,
+		false, false)
+	,Integer(TypesConstants.TYPENO_INTEGER,
+		"integer", true, false, false, false, false,
+		false, false)
+	,Long(TypesConstants.TYPENO_LONG,
+		"long", true, false, false, false, false,
+		false, false)
+	,Float(TypesConstants.TYPENO_FLOAT,
+		"float", true, true, false, false, false,
+		false, false)
+	,Double(TypesConstants.TYPENO_DOUBLE,
+		"double", true, true ,false, false, false,
+		false, false)
+	,String(TypesConstants.TYPENO_STRING,
+		"string", false, false, false, true, false,
+		false, false)
+	,Date(TypesConstants.TYPENO_DATE,
+		"date", false, false, false, false, true,
+		false, false)
+	,List(TypesConstants.TYPENO_LIST,
+		"date", false, false, false, false, false,
+		true, false)
+	,Map(TypesConstants.TYPENO_MAP,
+		"date", false, false, false, false, false,
+		false, true)
+	;
 	
 	private int typeNo;
 	private String name;
@@ -36,6 +55,8 @@ public enum TypesClass {
 	private boolean booleanFlag;
 	private boolean stringFlag;
 	private boolean dateFlag;
+	private boolean listFlag;
+	private boolean mapFlag;
 	
 	/**
 	 * コンストラクタ.
@@ -46,16 +67,20 @@ public enum TypesClass {
 	 * @param booleanFlag
 	 * @param stringFlag
 	 * @param dateFlag
+	 * @param listFlag
+	 * @param mapFlag
 	 */
 	private TypesClass(int typeNo, String name, boolean numberFlag, boolean floatFlag,
-		boolean booleanFlag, boolean stringFlag, boolean dateFlag) {
+		boolean booleanFlag, boolean stringFlag, boolean dateFlag, boolean listFlag,
+		boolean mapFlag) {
 		this.typeNo = typeNo;
 		this.name = name;
 		this.numberFlag = numberFlag;
 		this.floatFlag = floatFlag;
 		this.booleanFlag = booleanFlag;
 		this.stringFlag = stringFlag;
-		this.dateFlag = dateFlag;
+		this.listFlag = listFlag;
+		this.mapFlag = mapFlag;
 	}
 
 	/**
@@ -113,8 +138,23 @@ public enum TypesClass {
 	public boolean isDate() {
 		return dateFlag;
 	}
-
-
+	
+	/**
+	 * この情報がListオブジェクトの場合.
+	 * @return boolean trueの場合Listオブジェクトです.
+	 */
+	public boolean isList() {
+		return listFlag;
+	}
+	
+	/**
+	 * この情報がMapオブジェクトの場合.
+	 * @return boolean trueの場合Mapオブジェクトです.
+	 */
+	public boolean isMap() {
+		return mapFlag;
+	}
+	
 	@Override
 	public String toString() {
 		return name;
@@ -169,6 +209,16 @@ public enum TypesClass {
 			return StringUtil.parseString(v);
 		case TypesConstants.TYPENO_DATE:
 			return DateUtil.parseDate(v);
+		case TypesConstants.TYPENO_LIST:
+			if(v instanceof List) {
+				return v;
+			}
+			return null;
+		case TypesConstants.TYPENO_MAP:
+			if(v instanceof Map) {
+				return v;
+			}
+			return null;
 		default: return StringUtil.parseString(v);
 		}
 	}
@@ -216,6 +266,10 @@ public enum TypesClass {
 			return Byte;
 		} else if(clazz.equals("short")) {
 			return Short;
+		} else if(clazz.equals("list") || clazz.equals("array")) {
+			return List;
+		} else if(clazz.equals("map") || clazz.equals("object")) {
+			return Map;
 		}
 		// 検出出来ない場合.
 		return null;
@@ -238,6 +292,8 @@ public enum TypesClass {
 		case TypesConstants.TYPENO_DOUBLE: return Double;
 		case TypesConstants.TYPENO_STRING: return String;
 		case TypesConstants.TYPENO_DATE: return Date;
+		case TypesConstants.TYPENO_LIST: return List;
+		case TypesConstants.TYPENO_MAP: return Map;
 		}
 		// 検出出来ない場合.
 		return null;

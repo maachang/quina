@@ -33,9 +33,24 @@ public class QuinaJDBCConsoleConstants {
 	public static final long MIN_LOGIN_TIMEOUT = 300000L;
 	
 	/**
-	 * 最小のログインタイムアウト値.
+	 * 最大のログインタイムアウト値.
 	 * 120分.
 	 */
 	public static final long MAX_LOGIN_TIMEOUT = 7200000L;
+	
+	/**
+	 * デフォルトのクエリー取得最大件数.
+	 */
+	public static final int DEF_RESULT_QUERY_COUNT = 100;
+	
+	/**
+	 * 最小のクエリー取得最大件数.
+	 */
+	public static final int MIN_RESULT_QUERY_COUNT = 50;
+	
+	/**
+	 * 最大のクエリー取得最大件数.
+	 */
+	public static final int MAX_RESULT_QUERY_COUNT = 500;
 
 }

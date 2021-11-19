@@ -48,4 +48,16 @@ public class TypesConstants {
 	 * DateのTypeNo.
 	 */
 	public static final int TYPENO_DATE = 9;
+	
+	/**
+	 * ListのTypeNo.
+	 */
+	public static final int TYPENO_LIST = 50;
+	
+	/**
+	 * MapのTypeNo.
+	 */
+	public static final int TYPENO_MAP = 51;
+
+
 }
