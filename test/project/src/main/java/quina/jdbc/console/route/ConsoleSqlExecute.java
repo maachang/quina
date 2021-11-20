@@ -229,14 +229,36 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 		}
 	}
 	
+	// executeQueryの実行が必要なSQL文.
+	private static final Object[] executeQueryToSqlHeaderList =
+		new Object[] {
+		"select", 6, "show", 4
+	};
+	
+	// query実行のSQLの場合.
+	private static final boolean isExecuteQueryBySql(String sql) {
+		char c;
+		String code;
+		int pos;
+		Object[] list = executeQueryToSqlHeaderList;
+		final int len = list.length;
+		for(int i = 0; i < len; i += 2) {
+			code = (String)list[i];
+			pos = (Integer)list[i + 1];
+			if(Alphabet.startsWith(sql, code) &&
+				((c = sql.charAt(pos)) == ' ' || c == '\t' ||
+				c == '\r' || c == '\n')) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	// 1つのSQLの実行.
 	private final void executeSql(
 		JsonList out, IoStatement ios, String sql) {
-		char c;
 		// executeQuery実行.
-		if(Alphabet.startsWith(sql, "select") &&
-			((c = sql.charAt(6)) == ' ' || c == '\t' ||
-			c == '\r' || c == '\n')) {
+		if(isExecuteQueryBySql(sql)) {
 			JsonList list = new JsonList();
 			// 最大件数を設定して取得.
 			ios.sql(sql)

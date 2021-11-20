@@ -85,7 +85,7 @@ var SQL_TEXT_AREA_WIDTH = "80%";
 var createSqlTextArea = function() {
     var maxHeight = window.innerHeight;
     var tarea = "<textarea id='sql' name='sql' class='base_input_text_area' " +
-    "style='width:" + SQL_TEXT_AREA_WIDTH + ";margin-left:12px;";
+    "style='width:" + SQL_TEXT_AREA_WIDTH + ";margin-left:16px;";
     tarea += "height:" + ((maxHeight * 0.625)|0) + "px;";
     tarea += "ime-mode:inactive;"
     tarea += "'";
@@ -214,6 +214,9 @@ var createViewNumber = function(zero, no) {
     return no;
 }
 
+// Odd color of table body.
+var TABLE_BODY_BY_ODD_BK_COLOR = "#e7e7e7";
+
 // Generate the list HTML returned by the select statement.
 var createResultTable = function(isNumber, width, keys, list) {
     if(isNull(list) || list.length == 0) {
@@ -231,29 +234,40 @@ var createResultTable = function(isNumber, width, keys, list) {
         ret += "<th>" + keys[j] + "&nbsp;</th>";
     }
     ret += "</tr></thead>";
+    // odd rows.
+    var odd = " style='background:" + TABLE_BODY_BY_ODD_BK_COLOR + "'";
+    var appendOdd = "";
     // body.
     var len = list.length - 1;
     for(var i = 0; i < len; i ++) {
+        appendOdd = ""
+        if((i & 1) == 1) {
+            appendOdd = odd;
+        } 
         o = list[i];
         ret += "<tbody><tr>";
         if(isNumber == true) {
             // append row no.
-            ret += "<td>" + createViewNumber(5, i + 1) + "&nbsp;</td>";
+            ret += "<td" + appendOdd + ">" + createViewNumber(5, i + 1) + "&nbsp;</td>";
         }
         for(j = 0; j < lenJ; j ++) {
-            ret += "<td>" + o[keys[j]] + "&nbsp;</td>";
+            ret += "<td" + appendOdd + ">" + o[keys[j]] + "&nbsp;</td>";
         }
         ret += "</tr></tbody>";
     }
+    appendOdd = ""
+    if((len & 1) == 1) {
+        appendOdd = odd;
+    } 
     // food.
     ret += "<tfoot><tr>";
     if(isNumber == true) {
         // append row no.
-        ret += "<td>" + createViewNumber(5, len + 1) + "&nbsp;</td>";
+        ret += "<td" + appendOdd + ">" + createViewNumber(5, len + 1) + "&nbsp;</td>";
     }
     o = list[len];
     for(j = 0; j < lenJ; j ++) {
-        ret += "<td>" + o[keys[j]] + "&nbsp;</td>";
+        ret += "<td" + appendOdd + ">" + o[keys[j]] + "&nbsp;</td>";
     }
     ret += "</tr></tfoot>";
     // end.
@@ -334,7 +348,7 @@ var viewResultJSON = function(resultJSON) {
         html += newLine();
     }
     // view work area.
-    flushWorkArea(html);
+    flushWorkArea(html + clearResultJSONAndGenerateSqlTextAreaButton());
 }
 
 // access logout console.
