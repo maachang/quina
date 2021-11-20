@@ -15,7 +15,7 @@ import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerConstants;
 import quina.net.nio.tcp.server.NioServerCore;
 import quina.util.Flag;
-import quina.util.collection.IndexMap;
+import quina.util.collection.QuinaMap;
 import quina.util.collection.TypesClass;
 import quina.worker.QuinaWorkerConstants;
 import quina.worker.QuinaWorkerService;
@@ -115,7 +115,7 @@ public class HttpServerService implements QuinaService {
 			// コンフィグ情報を読み込む.
 			ret = config.loadConfig(configDir);
 			// mimeTypeのコンフィグ読み込み.
-			IndexMap<String, Object> json = QuinaUtil.loadJson(
+			QuinaMap<String, Object> json = QuinaUtil.loadJson(
 				configDir, MIME_CONFIG_FILE);
 			// jsonが取得できた場合.
 			if(json != null) {

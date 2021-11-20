@@ -5,7 +5,7 @@ import quina.json.Json;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
-import quina.util.collection.IndexMap;
+import quina.util.collection.QuinaMap;
 
 /**
  * Quina関連のユーティリティ.
@@ -116,9 +116,9 @@ public final class QuinaUtil {
 	 * json情報をロード.
 	 * @param configDir コンフィグディレクトリ名を設定します.
 	 * @param name ファイル名(拡張子なし)を設定します.
-	 * @return IndexMap<String, Object> JSON情報が返却されます.
+	 * @return QuinaMap<String, Object> JSON情報が返却されます.
 	 */
-	public static final IndexMap<String, Object> loadJson(
+	public static final QuinaMap<String, Object> loadJson(
 		String configDir, String name) {
 		return loadJson(configDir, name, "UTF8");
 	}
@@ -128,10 +128,10 @@ public final class QuinaUtil {
 	 * @param configDir コンフィグディレクトリ名を設定します.
 	 * @param name ファイル名(拡張子なし)を設定します.
 	 * @param charset 文字コードを設定します.
-	 * @return IndexMap<String, Object> JSON情報が返却されます.
+	 * @return QuinaMap<String, Object> JSON情報が返却されます.
 	 */
 	@SuppressWarnings("unchecked")
-	public static final IndexMap<String, Object> loadJson(
+	public static final QuinaMap<String, Object> loadJson(
 		String configDir, String name, String charset) {
 		configDir = getDir(configDir);
 		if(!configDir.endsWith("/")) {
@@ -160,10 +160,10 @@ public final class QuinaUtil {
 			// JSON解析をして、Map形式のみ処理をする.
 			final Object json = Json.decode(true,
 				FileUtil.getFileString(fileName, charset));
-			if(!(json instanceof IndexMap)) {
+			if(!(json instanceof QuinaMap)) {
 				return null;
 			}
-			return (IndexMap<String, Object>)json;
+			return (QuinaMap<String, Object>)json;
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {

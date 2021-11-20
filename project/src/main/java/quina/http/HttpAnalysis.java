@@ -135,7 +135,7 @@ public class HttpAnalysis {
 					if(o instanceof Params) {
 						return (Params)o;
 					}
-					// 形式がBinarySearchMap形式の場合はそのまま返却.
+					// 形式がIndexMap形式の場合はそのまま返却.
 					return new Params(((IndexMap)o).getIndexMap());
 				} else {
 					// それ以外のMap形式の場合.

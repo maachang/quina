@@ -21,7 +21,8 @@
     // H2.
     testdb: {
         // 組み込みモード実行.
-        url: "jdbc:h2:~/project/quina/test/h2db/testdb"
+        //url: "jdbc:h2:~/project/quina/test/h2db/testdb"
+        url: "jdbc:h2:./h2db/testdb"
         ,user: "sa"
         ,password: ""
         ,poolingSize: 15

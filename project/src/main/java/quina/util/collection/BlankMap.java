@@ -46,4 +46,14 @@ public class BlankMap<K, V> extends AbstractMap<K, V>
 	public V put(K key, V value) {
 		return null;
 	}
+
+	@Override
+	public K keyAt(int no) {
+		return null;
+	}
+
+	@Override
+	public V valueAt(int no) {
+		return null;
+	}
 }

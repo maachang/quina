@@ -1,442 +1,638 @@
+/**
+ * jdbc console js.
+ */
 (function(_g) {
 "use strict";
 
-// nowLoading-z-index.
-var NOW_LOADING_ZINDEX = 500;
+// max upload file size.
+var MAX_UPLOAD_FILE_SIZE = 0x00100000;
 
-// nowLoadingViewId.
-var NOW_LOADING_VIEW_ID = "nowLoadingView";
+// tab space.
+var _TABSPACE = '\t';
 
-// nowLoadingBackRGBA.
-var NOW_LOADING_RGBA = {r:32,g:32,b:32,a:0.5};
-
-// alert-z-index.
-var ALERT_ZINDEX = 1000;
-
-// alertViewId.
-var ALERT_VIEW_ID = "alertView";
-
-// alert confirm yes button id.
-var ALERT_YES_BUTTON_ID = ALERT_VIEW_ID + "_" + "yes";
-
-// alert confirm no button id.
-var ALERT_NO_BUTTON_ID = ALERT_VIEW_ID + "_" + "no";
-
-// shadow dialog.
-var BACK_DIALOG_SHADOW = "box-shadow: 10px 10px 10px rgba(0,0,0,0.75);"
-
-// 時間差コール.
-var timeLagCall = function(call) {
-    setTimeout(function() {
-        call();
-    }, 100);
+// register inputTab.
+var regInputTab = function(em) {
+    addEvent(em, "keydown", inputTabElement);
 }
 
-// Screen display while loading.
-var nowLoading = function(rgba) {
-    // get nowLoadingViewId.
-    var em = document.getElementById(NOW_LOADING_VIEW_ID);
-    if(isNull(em)) {
-        return;
+// input tab element.
+var inputTabElement = function(em) {
+    if (em.key === "Tab") {
+        em.preventDefault();
+        var value = this.value;
+        var sPos = this.selectionStart;
+        var ePos = this.selectionEnd;
+        var result = value.slice(0, sPos) +
+            _TABSPACE + value.slice(ePos);
+        var cPos = sPos + _TABSPACE.length;
+        this.value = result;
+        this.setSelectionRange(cPos, cPos);
     }
-    var rgba = NOW_LOADING_RGBA;
-    var w = document.documentElement.scrollWidth || document.body.scrollWidth;
-    var h = document.documentElement.scrollHeight || document.body.scrollHeight;
-    em.innerHTML = "<div style='z-index:" + NOW_LOADING_ZINDEX +
-        ";position:absolute;width:"+w+"px;height:"+h+"px;" +
-        "left:0px;top:0px;background-color:rgba("
-            +rgba.r+","+rgba.g+","+rgba.b+","+rgba.a+");' " +
-        "onclick='event.preventDefault()' " +
-        "ontouchstart='event.preventDefault()' " +
-        "ontouchend='event.preventDefault()' " +
-        "ontouchmove='event.preventDefault()'>" +
-        "</div>";
 }
 
-// Clears the screen display while loading. 
-var clearNowLoading = function() {
-    // get nowLoadingViewId.
-    var em = document.getElementById(NOW_LOADING_VIEW_ID);
-    if(isNull(em)) {
-        return;
+// update work area.
+var flushWorkArea = function(html) {
+    document.getElementById("workArea")
+        .innerHTML = html;
+}
+
+// newLine.
+var newLine = function(count) {
+    if(isNull(count)) {
+        return "<br>";
     }
-    em.innerHTML = "";
+    var ret = "";
+    count = count|0;
+    for(var i = 0; i < count; i ++) {
+        ret += "<br>";
+    }
+    return ret;
 }
 
-// Calculate the optimal size of the dialog display frame. 
-var dialogPositionCalcSize = function() {
-    var w = innerWidth;
-    var h = innerHeight;
-    if(w > h) {
-        var left = (w*0.3)|0;
-        var top = (h*0.2)|0;
-        var width = (w*0.4)|0;
-        var height = (h*0.6)|0;
-        var radius = 10;
+var space = function(count) {
+    if(isNull(count)) {
+        return "&nbsp;"
+    }
+    var ret = "";
+    count = count|0;
+    for(var i = 0; i < count; i ++) {
+        ret += "&nbsp;";
+    }
+    return ret;
+}
+
+// create file upload.
+var createFileUpload = function(id, mime) {
+    var ret = "<input type='file' id='" +
+        id + "' ";
+    if(!isNull(mime) && mime.length > 0) {
+        ret += "accept='" + mime + "' ";
+    }
+    return ret + "style='display:none'>";
+}
+
+// create button.
+var createButton = function(view, js) {
+    var btn = "<a href='javascript:void(0);' class='base_button' onclick='javascript:" +
+        js + ";'>" + view + "</a>";
+    return btn;
+}
+
+// Create a text area for SQL execution. 
+var createSqlTextArea = function() {
+    var maxHeight = window.innerHeight;
+    var tarea = "<textarea id='sql' name='sql' class='base_input_text_area' " +
+    "style='width:70%;margin-left:12px;";
+    tarea += "height:" + ((maxHeight * 0.625)|0) + "px;";
+    tarea += "ime-mode:inactive;"
+    tarea += "'";
+    tarea += " spellcheck='false'";
+    tarea += " placeholder=' Set the SQL statement you want to execute.'></textarea>";
+    return tarea;
+}
+
+// clear sql text area button.
+var clearSqlTextAreaButton = function() {
+    _g.clearSqlTextArea = clearSqlTextArea;
+    return createButton("c l e a r", "clearSqlTextArea()");
+}
+
+// execute button.
+var executeSqlButton = function() {
+    _g.executeSql = executeSql;
+    return createButton("execute", "executeSql()");
+}
+
+// Clear resultJSON and generate SQL Text Area. 
+var clearResultJSONAndGenerateSqlTextAreaButton = function() {
+    _g.confirmAndViewSqlTextArea = confirmAndViewSqlTextArea;
+    return createButton("c l e a r", "confirmAndViewSqlTextArea()");
+}
+
+// logout button.
+var logoutButton = function() {
+    _g.accessLogoutConsole = accessLogoutConsole;
+    return createButton("logout", "accessLogoutConsole()");
+}
+
+// sql file upload button.
+var sqlFileUploadButton = function() {
+    _g.uploadSqlFileButtonToClick = uploadSqlFileButtonToClick;
+    return createFileUpload("uploadSqlFile", ".sql,text/x-sql") +
+        createButton("upload", "uploadSqlFileButtonToClick()");
+}
+
+// create view sql area.
+var viewSqlTextArea = function() {
+    flushWorkArea(
+        clearSqlTextAreaButton() +
+        space() +
+        sqlFileUploadButton() +
+        space() +
+        executeSqlButton() +
+        newLine() +
+        createSqlTextArea()
+    );
+    // focus sql text area.
+    timeLagCall(function() {
+        // load sql file.
+        var em = document.getElementById("uploadSqlFile");
+        addEvent(em, "change", loadToUploadSqlFile);
+        // sql text area to valid TAB key.
+        em = document.getElementById("sql");
+        regInputTab(em);
+        em.focus();
+    });
+}
+
+// confirm and create view sql area.
+var confirmAndViewSqlTextArea = function() {
+    confirmWindow("Is it okay to clear the processing result contents?",
+        function(yes) {
+            if(yes == true) {
+                viewSqlTextArea()
+                setErrorMessage("");
+            }
+        });
+}
+
+// generate select box.
+var createDataSourceSelectBox = function(list) {
+    var sbox = "<select size='1' name='selectDataSource' id='selectDataSource' " +
+        "class='base_select' style='width:25%' onchange='javascript:onChangeSelectDataSource(this);'>";
+    sbox += "\n<option value='' hidden>* Select the DataSource to connect to</option>";
+    var selected = false;
+    var len = list.length;
+    var beforeSelect = getSelectDataSource();
+    for(var i = 0; i < len; i ++) {
+        sbox += "\n<option value='" + list[i] + "'";
+        if(beforeSelect != null && beforeSelect == list[i]) {
+            sbox += " selected";
+            selected = true;
+        }
+        sbox += ">" + list[i] + "</option>";
+    }
+    sbox += "</select>";
+    sbox += space(5) + logoutButton();
+    document.getElementById("dataSourceList").innerHTML = sbox;
+
+    // select dataSource name.
+    if(selected) {
+        // view sql text area.
+        viewSqlTextArea();
     } else {
-        var left = (w*0.15)|0;
-        var top = (h*0.2)|0;
-        var width = (w*0.7)|0;
-        var height = (h*0.6)|0;
-        var radius = 10;
+        // focus select dataSource.
+        timeLagCall(function() {
+            document.getElementById("selectDataSource").focus();
+        });
     }
-    return {w:w,h:h,left:left,top:top,width:width,
-        height:height,radius:radius};
 }
 
-// change html.
-var changeHtml = (function() {
-    var _chkCD = "&<>\'\" \r\n" ;
-    return function( string ) {
-      var len = string.length ;
-      var chkCd = _chkCD ;
-      var ret = "";
-      var c ;
-      for( var i = 0 ; i < len ; i ++ ) {
-        switch( chkCd.indexOf( c = string.charAt( i ) ) ) {
-          case -1: ret += c; break;
-          case 0 : ret += "&amp;" ; break ;
-          case 1 : ret += "&lt;" ; break ;
-          case 2 : ret += "&gt;" ; break ;
-          case 3 : ret += "&#039;" ; break ;
-          case 4 : ret += "&#034;" ; break ;
-          case 5 : ret += "&nbsp;" ; break ;
-          case 6 : ret += "" ; break ;
-          case 7 : ret += "<br>" ; break ;
+// create view sql.
+var createViewSql = function(width, sql) {
+    return "<div class='sql_view' style='width:"+ width +"'>&nbsp;" +
+        atob(sql) + "</div>";
+}
+
+// create view number.
+var createViewNumber = function(zero, no) {
+    var z = "";
+    for(var i = 0; i < zero; i ++) {
+        z += "0";
+    }
+    no = "" + no;
+    if(z.length > no.length) {
+        return z.substring(no.length) + no; 
+    }
+    return no;
+}
+
+// Generate the list HTML returned by the select statement.
+var createResultTable = function(isNumber, width, keys, list) {
+    if(isNull(list) || list.length == 0) {
+        return "";
+    }
+    var i, j, o;
+    var lenJ = keys.length;
+    var ret = "<table class='base_table' style='width:"+ width +"'><thead><tr>";
+    // header.
+    if(isNumber == true) {
+        // append row no.
+        ret += "<th style='width:3%;'>&nbsp;</th>";
+    }
+    for(j = 0; j < lenJ; j ++) {
+        ret += "<th>" + keys[j] + "&nbsp;</th>";
+    }
+    ret += "</tr></thead>";
+    // body.
+    var len = list.length - 1;
+    for(var i = 0; i < len; i ++) {
+        o = list[i];
+        ret += "<tbody><tr>";
+        if(isNumber == true) {
+            // append row no.
+            ret += "<td>" + createViewNumber(5, i + 1) + "&nbsp;</td>";
         }
-      }
-      return ret
+        for(j = 0; j < lenJ; j ++) {
+            ret += "<td>" + o[keys[j]] + "&nbsp;</td>";
+        }
+        ret += "</tr></tbody>";
     }
-})();
-
-// add js event.
-var addEvent = function(node, name, func) {
-    if(isNull(node)) {
-        node = window;
+    // food.
+    ret += "<tfoot><tr>";
+    if(isNumber == true) {
+        // append row no.
+        ret += "<td>" + createViewNumber(5, len + 1) + "&nbsp;</td>";
     }
-    if(node.addEventListener){
-        node.addEventListener(name, func, false);
-    } else if(node.attachEvent){
-        node.attachEvent("on"+name, func);
+    o = list[len];
+    for(j = 0; j < lenJ; j ++) {
+        ret += "<td>" + o[keys[j]] + "&nbsp;</td>";
     }
+    ret += "</tr></tfoot>";
+    // end.
+    return ret + "</table>";
 }
 
-// clear alert window.
-var clearAlertWindow = function(noneNowLoading) {
-    // get alertViewId.
-    var em = document.getElementById(ALERT_VIEW_ID);
-    if(isNull(em)) {
-        return;
-    }
-    em.innerHTML = "";
-    if(noneNowLoading != true) {
-        clearNowLoading();
-    }
+// view count.
+var createViewCount = function(no) {
+    return "<div style='font-size:x-large;font-weight:bold;'><" +
+        createViewNumber(3, no) + "></div>";
 }
 
-// alert window id.
-var ALERT_WINDOW_ID = "alertWindowId";
-
-// create start alert html.
-var createStartAlertHtml = function(message) {
-    var p = dialogPositionCalcSize();
-    return "<div id='" + ALERT_WINDOW_ID + "' style='z-index:" + ALERT_ZINDEX + ";position:absolute;left:" +
-    p.left + "px;top:" + p.top + "px;"+"width:" + p.width + "px;height:" + p.height + "px;border-radius:" +
-    p.radius + "px;word-break:break-all;background:#ffffff;color:#000000;border: solid 2px #efefef;" +
-    BACK_DIALOG_SHADOW + "overflow:auto;'" +
-    ">" +
-    "<div style='margin:10px;font-size:small;color:#666;'>" +
-    changeHtml(message) ;
+// get result table keys.
+var getResultTableKeys = function(list) {
+    if(isNull(list) || list.length == 0) {
+        return [];
+    }
+    var cnt = 0;
+    // Extract and sort columns.
+    var o = list[0];
+    var keys = [];
+    for(var k in o) {
+        keys[cnt ++] = k; 
+    }
+    keys.sort();
+    return keys;
 }
 
-// create end alert html.
-var createEndAlertHtml = function() {
-    return "</div></div>";
+// view result json.
+var viewResultJSON = function(resultJSON) {
+    var o, t, n, keys, no;
+    var sqlList = resultJSON.sqlList;
+    var resultValue = resultJSON.value;
+    var len = sqlList.length;
+
+    var width = "60%";
+
+    // sql text area button.
+    var html = clearResultJSONAndGenerateSqlTextAreaButton() +
+        newLine();
+    
+    for(var i = 0; i < len; i ++) {
+        o = resultValue[i];
+        // Change width for the number of characters.
+        if((n = sqlList[i].length) > 60) {
+            if(n >= 100) {
+                width = "100%";
+            } else {
+                width = n + "%";
+            }
+        } else {
+            width = "60%";
+        }
+        // view count.
+        html += createViewCount(i + 1);
+        // view sql.
+        html += createViewSql(width, sqlList[i]);
+        // Other than select.
+        if((t = typeof(o)) == "number") {
+            html += createResultTable(
+                false, "30%", ["result"], [{"result": o}]);
+        // select query.
+        } else if(t == "object") {
+            // result table keys.
+            keys = getResultTableKeys(o);
+            // Change width for the number of keys.
+            n = keys.length * 10;
+            if(n > 60) {
+                if(n >= 100) {
+                    width = "100%";
+                } else {
+                    width = n + "%";
+                }
+            } else {
+                width = "60%";
+            }
+            // create result table.
+            html += createResultTable(
+                true, width, keys, o);
+        }
+        // new line.
+        html += newLine();
+    }
+    // view work area.
+    flushWorkArea(html);
 }
 
-// new window to alert.
-var alertWindow = function(message) {
-    if(isNull(message) || (message = ("" + message).trim()).length == 0) {
-        return;
-    }
-    // get alertViewId.
-    var em = document.getElementById(ALERT_VIEW_ID);
-    if(isNull(em)) {
-        return;
-    }
-    nowLoading();
-    em.innerHTML = createStartAlertHtml(message) + createEndAlertHtml();
-    // click callback.
-    timeLagCall(function() {
-        var em = document.getElementById("alertWindowId");
-        if(!isNull(em)) {
-            addEvent(em, "click", clearAlertWindow);
+// access logout console.
+var accessLogoutConsole = function() {
+    confirmWindow("Log out of the jdbc console. Is it OK?",
+    function(yes) {
+        if(yes == true) {
+            logoutConsole();
+            clearAlertWindow(true);
+            return true;
         }
     });
 }
 
-// new window to confirm.
-var confirmWindow = function(message, call) {
-    // get alertViewId.
-    var em = document.getElementById(ALERT_VIEW_ID);
-    if(isNull(em)) {
+// click the to upload sql file button.
+var uploadSqlFileButtonToClick = function() {
+    setErrorMessage("");
+    var uploadEm = document.getElementById("uploadSqlFile");
+    uploadEm.click();
+}
+
+// load sql file.
+var loadToUploadSqlFile = function() {
+    var files = this.files;
+    var file = files[0];
+    // not file name.
+    if(isNull(file.name) || file.name.length == 0) {
+        setErrorMessage("Failed to get the uploaded file name.");
         return;
-    } else if(isNull(message) || (message = ("" + message).trim()).length == 0) {
+    // max file size.
+    } else if(file.size > MAX_UPLOAD_FILE_SIZE) {
+        setErrorMessage("A file that is too large has been uploaded.");
         return;
     }
-    // get alertViewId.
-    var em = document.getElementById(ALERT_VIEW_ID);
-    if(isNull(em)) {
-        return;
-    }
-    nowLoading();
-    var p = dialogPositionCalcSize();
-    em.innerHTML = createStartAlertHtml(message) +
-    "<br><br>" +
-    addButton(ALERT_YES_BUTTON_ID, "O&nbsp;&nbsp;K") +
-    "&nbsp;&nbsp;" +
-    addButton(ALERT_NO_BUTTON_ID, "CANCEL") +
-    createEndAlertHtml();
-    // yes no button click callback.
-    timeLagCall(function() {
-        var yesCall = function() {
-            if(!call(true)) {
-                clearAlertWindow()
-            }
-        };
-        var noCall = function() {
-            call(false);
-            clearAlertWindow()
-        };
-        var em = document.getElementById(ALERT_YES_BUTTON_ID);
-        if(!isNull(em)) {
-            addEvent(em, "click", yesCall);
-        }
-        var em = document.getElementById(ALERT_NO_BUTTON_ID);
-        if(!isNull(em)) {
-            addEvent(em, "click", noCall);
-            // default cancel focus.
-            em.focus();
-        }
-    });
-}
-
-// add button.
-var addButton = function(id, view) {
-    return "<a href='javascript:void(0);' id='" + id +
-        "' class='base_button'>" + view + "</a>";
-}
-
-// isNull(undefined or null).
-var isNull = function(value) {
-    return value == undefined || value == null; 
-}
-
-// rand.
-var Xor128 = function(seet) {
-    var o = {v:{a:123456789,b:362436069,c:521288629,d:88675123}} ;
-    o.setSeet = function(s) {
-        try {
-            if(!isNull(s)) {
-                s = parseInt(s);
-            } else {
-                s = Date.now();
-            }
-        } catch(n) {
-            s = Date.now();
-        }
-        if(!isNull(s)) {
-            var n = this.v; s = s|0;
-            n.a=s=1812433253*(s^(s>>30))+1; n.b=s=1812433253*(s^(s>>30))+2;
-            n.c=s=1812433253*(s^(s>>30))+3; n.d=s=1812433253*(s^(s>>30))+4;
-        }
-    }
-    o.next = function() {
-        var n = this.v;
-        var t=n.a ;
-        var r=t ;
-        t = (t << 11) ; t = (t ^ r) ;
-        r = t ; r = (r >> 8) ;
-        t = (t ^ r) ; r = n.b ;
-        n.a = r ; r = n.c ;
-        n.b = r ; r = n.d ;
-        n.c = r ; t = (t ^ r) ;
-        r = (r >> 19) ; r = (r ^ t) ;
-        n.d = r; return r ;
-    }
-    o.setSeet(seet) ;
-    return o;
-}
-
-// ajax.
-var ajax = (function() {
-    var _ax = function() {
-        return new XMLHttpRequest();
-    }
-    var _head = function(m, ax, h){
-        if(m == 'JSON') {
-            ax.setRequestHeader('Content-Type',
-                'application/json');
-        } else if(m == 'POST') {
-            ax.setRequestHeader('Content-Type',
-                'application/x-www-form-urlencoded');
-        }
-        if(!isNull(h)) {
-            for(var k in h) {
-                ax.setRequestHeader(k, h[k]);
-            }
-        }
-    }
-    var _method = function(m) {
-        return m == 'JSON' ? 'POST' : m;
-    }
-    // execute ajax.
-    return function(method, url, params, header, callback) {
-        method = (method+"").toUpperCase() ;
-        var pms = "" ;
-        if(!isNull(params)) {
-            if(typeof(params) == "string") {
-                pms = params ;
-            } else if(method == "JSON") {
-                pms = JSON.stringify(params);
-            } else {
-                for( var k in params ) {
-                    pms += "&" + k + "=" +
-                        encodeURIComponent(params[k]) ;
-                }
-            }
-        }
-        params = null;
-        if(method == "GET" && pms.length > 0) {
-            url = url + "?" + pms;
-            pms = null;
-        }
-        // sync.
-        if(isNull(callback)) {
-            var x = _ax();
-            x.open(_method(method), url, false);
-            _head(method, x, header);
-            x.send(pms);
-            var state = x.status;
-            if(state == 0) {
-                state = 500;
-            }
-            var ret = x.responseText;
-            x.abort() ;
-            if(state < 300) {
-                return ret;
-            }
-            throw new Error(
-                "response status:" + state + " error: " + ret);
-        }
-        // async.
-        var x = _ax();
-        x.open(_method(method), url, true);
-        x.onreadystatechange = function() {
-            if(x.readyState == 4) {
-                try {
-                    var status = x.status;
-                    status == 0 ? 500 : status;
-                    // response headers.
-                    var headers = x.getAllResponseHeaders();
-                    var arr = headers.trim().split(/[\r\n]+/);
-                    var headerMap = {};
-                    arr.forEach(function (line) {
-                        var parts = line.split(': ');
-                        var header = parts.shift();
-                        var value = parts.join(': ');
-                        headerMap[header.toLowerCase()] = value;
-                    })
-                    callback(status, x.responseText, headerMap);
-                } finally {
-                    x.abort();
-                    x = null;
-                    callback = null;
-                }
-            }
-        };
-        _head(method, x, header);
-        x.send(pms);
-    }
-})();
-
-// move page.
-var movePage = function(url) {
-    window.location.href = url;
-}
-
-// encode json value.
-var encodeJSON = function(value) {
-    return JSON.stringify(value);
-}
-
-// parse json value.
-var parseJSON = function(value) {
-    try {
-        value = JSON.parse(value); 
-    } catch(e) {
-        value = undefined;
-    }
-    return value;
-}
-
-// header key.
-var getHeaderKey = function(key) {
-    return key.toLowerCase();
-}
-
-// save login tsession
-var saveLoginSession = function(signetureCode, response) {
-    if(isNull(signetureCode)) {
-        signetureCode = localStorage.getItem("signeture");
-        if(isNull(signetureCode)) {
-            return false;
-        }
-    }
-    // save login session.
-    localStorage.setItem("signeture", signetureCode);
-    localStorage.setItem("jdbcLoginToken",
-        response[getHeaderKey("X-Jdbc-Console-Auth-Token")]);    
-    return true;
-}
-
-// load login session.
-var loadLoginSession = function() {
-    var signetureCode = localStorage.getItem("signeture");
-    var token = localStorage.getItem("jdbcLoginToken");
-    if(isNull(signetureCode) || isNull(token)) {
-        return null;
-    }
-    return {
-        "X-Jdbc-Console-Signeture": signetureCode
-        ,"X-Jdbc-Console-Auth-Token": token
+    // load file to update sql text area.
+    let reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function() {
+        var em = document.getElementById("sql");
+        em.value = reader.result + "\n";
+        em.focus();
     };
 }
 
-// clear login session.
-var clearLoginSession = function() {
-    localStorage.removeItem("signeture");
-    localStorage.removeItem("jdbcLoginToken");
+// logout console.
+var logoutConsole = function() {
+    nowLoading();
+    try {
+        clearLoginSession();
+        localStorage.removeItem("selectDataSource");
+        movePage("./login.html");
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
 }
 
-_g.isNull = isNull;
-_g.Xor128 = Xor128;
-_g.ajax = ajax;
-_g.addEvent = addEvent;
-_g.timeLagCall = timeLagCall;
-_g.parseJSON = parseJSON;
-_g.encodeJSON = encodeJSON;
-_g.getHeaderKey = getHeaderKey;
-_g.movePage = movePage;
+// errorMessage.
+var setErrorMessage = function(msg) {
+    if(isNull(msg) || (msg = "" + msg.trim()).length == 0) {
+        msg = "";
+    }
+    var e = document.getElementById("errorMessage");
+    e.innerHTML = msg;
+}
 
-_g.nowLoading = nowLoading;
-_g.alertWindow = alertWindow;
-_g.confirmWindow = confirmWindow;
-_g.clearAlertWindow = clearAlertWindow;
-_g.clearNowLoading = clearNowLoading;
+// Save the selected DataSource name.
+var onChangeSelectDataSource = function(e) {
+    var idx = e.selectedIndex;
+    var value = e.options[idx].value;
+    // The new dataSource has changed.
+    localStorage.setItem("selectDataSource", value);
+    // view sql text area.
+    viewSqlTextArea();
+}
 
-_g.saveLoginSession = saveLoginSession;
-_g.loadLoginSession = loadLoginSession;
-_g.clearLoginSession = clearLoginSession;
+// Get the previously selected DataSource name.
+var getSelectDataSource = function() {
+    var ret = localStorage.getItem("selectDataSource");
+    if(isNull(ret)) {
+        return null;
+    }
+    return ret;
+}
+
+// clear sql text area.
+var clearSqlTextArea = function() {
+    var tarea = document.getElementById("sql");
+    if(isNull(tarea)) {
+        return;
+    }
+    setErrorMessage("");
+    if(tarea.value.length != 0) {
+        confirmWindow("Clears the entered SQL content. Is it OK?",
+        function(yes) {
+            if(yes == true) {
+                tarea.value = "";
+            }
+            // focus sql text area.
+            document.getElementById("sql").focus();
+        });
+    } else {
+        // focus sql text area.
+        document.getElementById("sql").focus();
+    }
+}
+
+// Get the DataSource list and generate a SelectBox .
+var loadDataSourceList = function() {
+    setErrorMessage("");
+    nowLoading();
+    try {
+        // load login session.
+        var header = loadLoginSession();
+        if(isNull(header)) {
+            // logout console.
+            logoutConsole();
+            return;
+        }
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
+    // call ajax.
+    ajax("GET",
+        "/quina/jdbc/console/getDataSources", null, header,
+        function(state, result, responseHeader) {
+            try {
+                var value = parseJSON(result);
+                if(isNull(value) || isNull(value = value.value)) {
+                    // logout console.
+                    logoutConsole();
+                    return;
+                }
+                // generate select box.
+                createDataSourceSelectBox(value);
+            } finally {
+                clearNowLoading();
+            }
+        });
+}
+
+// execute sql.
+var executeSql = function() {
+    var header, params;
+    setErrorMessage("");
+    nowLoading();
+    try {
+        // load login session.
+        header = loadLoginSession();
+        if(isNull(header)) {
+            // logout console.
+            logoutConsole();
+            return;
+        }
+        var dataSource = getSelectDataSource();
+        if(isNull(dataSource) || (dataSource = dataSource.trim()).length == 0) {
+            setErrorMessage("dataSource is not specified.");
+            clearNowLoading();
+            return;
+        }
+        var tarea = document.getElementById("sql");
+        if(isNull(tarea) || (sql = tarea.value.trim()).length == 0) {
+            setErrorMessage("The SQL statement to be executed does not exist.");
+            clearNowLoading();
+            if(!isNull(tarea)) {
+                tarea.focus();
+            }
+            return;
+        }
+        // Convert the sql statement to base64. 
+        var sql = btoa(cutSqlComment(sql));
+        // create json params.
+        params = {"dataSource": dataSource, "sql": sql};
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
+    // call ajax.
+    ajax("JSON",
+        "/quina/jdbc/console/executeSql", params, header,
+        function(state, result, responseHeader) {
+            try {
+                var resultJSON = parseJSON(result);
+                if(isNull(resultJSON)) {
+                    // result error.
+                    setErrorMessage("Execution processing failed.");
+                    return;
+                }
+                // success login.
+                if(state == 200) {
+                    if(isNull(resultJSON.value)) {
+                        // result error.
+                        setErrorMessage("Execution processing failed.");
+                        return;
+                    }
+                    // save login session.
+                    saveLoginSession(null, responseHeader);
+                    // view result json.
+                    viewResultJSON(resultJSON);
+                } else {
+                    // login error.
+                    setErrorMessage(resultJSON.message);
+                }
+            } finally {
+                clearNowLoading();
+            }
+        });
+}
+
+// cut sql comment.
+var cutSqlComment = function(sql) {
+    if(isNull(sql) || sql.length == 0) {
+        return "";
+    }
+    var c;
+    var len = sql.length;
+    var befYen = false;
+    var cote = null;
+    var lineCmt = false;
+    var cmt = false;
+    var ret = "";
+    for(var i = 0; i < len; i ++) {
+        c = sql.charAt(i);
+        // single or double coating.
+        if(cote != null) {
+            // end coating.
+            // not [\\"] or [\\']
+            if(!befYen && c == cote) {
+                cote = null;
+            }
+            ret += c;
+            // before yen code.
+            befYen = (c == "\\");
+        // [/*] in comment.
+        } else if(cmt) {
+            // [*/] endComment.
+            if(c == "*" && i + 1 < len) {
+                if(sql.charAt(i+1) == "/") {
+                    i ++;
+                    cmt = false;
+                }
+            }
+            // before yen code.
+            befYen = (c == "\\");
+        // in line comment.
+        } else if(lineCmt) {
+            // end line.
+            if(c == '\n') {
+                ret += c;
+                lineCmt = false;
+            }
+            // before yen code.
+            befYen = (c == "\\");
+        // start coating.
+        // not [\\"] or [\\']
+        } else if(!befYen && (c == "\"" || c == "\'")) {
+            cote = c;
+            ret += c;
+            // before yen code.
+            befYen = (c == "\\");
+        // start line comment [--] or [//] or [#]
+        // start comment [/*].
+        } else if(c == "-" || c == "/" || c == "#") {
+            // start [#] line comment.
+            if(c == "#") {
+                lineCmt = true;
+            // start [--] or [//] line comment.
+            // start comment [/*].
+            } else if(i + 1 < len &&
+                (
+                    (c == "/" && sql.charAt(i+1) == "/") ||
+                    (c == "/" && sql.charAt(i+1) == "*") ||
+                    (c == "-" && sql.charAt(i+1) == "-")
+                )
+            ) {
+                // start comment [/*].
+                if((c == "/" && sql.charAt(i+1) == "*")) {
+                    cmt = true;
+                // start [--] or [//] line comment.
+                } else {
+                    lineCmt = true;
+                }
+                i ++;
+            // not line comment or not comment.
+            } else {
+                ret += c;
+            }
+            // before yen code.
+            befYen = (c == "\\");
+        // normal.
+        } else {
+            ret += c;
+            // before yen code.
+            befYen = (c == "\\");
+        }
+    }
+    return ret;
+}
+
+_g.loadDataSourceList = loadDataSourceList;
+_g.onChangeSelectDataSource = onChangeSelectDataSource;
 
 })(this);

@@ -6,7 +6,7 @@ import java.util.Map;
 import quina.util.NumberUtil;
 
 /**
- * IndexMapオブジェクト.
+ * IndexKeyValueListオブジェクト.
  *
  * BinarySearchを使って、データの追加、削除、取得を行います.
  * HashMapと比べると速度は１０倍ぐらいは遅いですが、リソースは

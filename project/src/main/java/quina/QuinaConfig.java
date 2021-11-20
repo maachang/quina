@@ -12,7 +12,6 @@ import quina.util.Flag;
 import quina.util.collection.BlankList;
 import quina.util.collection.BlankMap;
 import quina.util.collection.IndexKeyValueList;
-import quina.util.collection.IndexMap;
 import quina.util.collection.QuinaList;
 import quina.util.collection.QuinaMap;
 import quina.util.collection.TreeKey;
@@ -276,7 +275,7 @@ public final class QuinaConfig implements
 	 * @param boolean true の場合読み込みが成功しました.
 	 */
 	public boolean loadConfig(String configDir) {
-		final IndexMap<String, Object> json = QuinaUtil.loadJson(
+		final QuinaMap<String, Object> json = QuinaUtil.loadJson(
 			configDir, name);
 		return setConfig(json);
 	}
@@ -286,7 +285,7 @@ public final class QuinaConfig implements
 	 * @param json データをセットします.
 	 * @param boolean true の場合読み込みが成功しました.
 	 */
-	public boolean setConfig(Map<String, Object> json) {
+	public boolean setConfig(QuinaMap<String, Object> json) {
 		if(json == null || json.size() <= 0) {
 			return false;
 		}

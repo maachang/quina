@@ -14,7 +14,7 @@ import quina.exception.QuinaException;
 import quina.logger.Log;
 import quina.util.Flag;
 import quina.util.collection.IndexKeyValueList;
-import quina.util.collection.IndexMap;
+import quina.util.collection.QuinaMap;
 import quina.util.collection.TypesClass;
 
 /**
@@ -84,7 +84,7 @@ public class QuinaJDBCService implements QuinaService {
 		lock.writeLock().lock();
 		try {
 			// コンフィグ読み込み.
-			final IndexMap<String, Object> json = QuinaUtil.loadJson(
+			final QuinaMap<String, Object> json = QuinaUtil.loadJson(
 				configDir, CONFIG_NAME);
 			if(json == null) {
 				return true;
@@ -92,8 +92,8 @@ public class QuinaJDBCService implements QuinaService {
 			// pooling定義.
 			final String poolingConfigName = config.getName();
 			Object o = json.get(poolingConfigName);
-			if(o != null && o instanceof Map) {
-				config.setConfig((Map)o);
+			if(o != null && o instanceof QuinaMap) {
+				config.setConfig((QuinaMap)o);
 			}
 			
 			// kind定義.

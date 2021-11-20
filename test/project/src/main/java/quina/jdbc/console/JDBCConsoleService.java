@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import quina.QuinaConfig;
 import quina.annotation.cdi.ServiceScoped;
 import quina.exception.QuinaException;
+import quina.http.HttpException;
 import quina.http.Request;
 import quina.http.Response;
 import quina.util.SeabassCipher;
@@ -352,5 +353,16 @@ public class JDBCConsoleService {
 				signature, SignatureSrc),
 			loginKey);
 	}
-
+	
+	/**
+	 * アクセスが可能かチェック.
+	 * @param req HttpServletRequestを設定します.
+	 */
+	public void checkAccessControll(Request req) {
+		boolean result = QuinaJDBCConsoleService
+			.getService().getIpAccessControll().isAccess(req);
+		if(!result) {
+			throw new HttpException(403, "Access is not allowed.");
+		}
+	}
 }

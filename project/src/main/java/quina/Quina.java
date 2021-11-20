@@ -25,7 +25,7 @@ import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
 import quina.util.TwoStepsFlag;
-import quina.util.collection.IndexMap;
+import quina.util.collection.QuinaMap;
 import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerService;
 
@@ -307,7 +307,7 @@ public final class Quina {
 			return true;
 		}
 		// log.jsonのコンフィグファイルを取得.
-		IndexMap<String, Object> json = QuinaUtil.loadJson(
+		QuinaMap<String, Object> json = QuinaUtil.loadJson(
 			confDir, "log");
 		if(json == null) {
 			return false;
@@ -338,7 +338,7 @@ public final class Quina {
 			return true;
 		}
 		// shutdown.jsonのコンフィグファイルを取得.
-		IndexMap<String, Object> json = QuinaUtil.loadJson(configDir, "shutdown");
+		QuinaMap<String, Object> json = QuinaUtil.loadJson(configDir, "shutdown");
 		if(json == null) {
 			return false;
 		}
@@ -355,7 +355,7 @@ public final class Quina {
 			return true;
 		}
 		// etag.jsonのコンフィグファイルを取得.
-		IndexMap<String, Object> json = QuinaUtil.loadJson(configDir, "etag");
+		QuinaMap<String, Object> json = QuinaUtil.loadJson(configDir, "etag");
 		if(json == null) {
 			return false;
 		}

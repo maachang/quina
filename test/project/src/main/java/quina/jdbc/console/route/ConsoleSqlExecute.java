@@ -31,13 +31,13 @@ type=VType.String,
 conditions="null",
 message=DataSourceList.ERROR_MESSAGE)
 
-// 実行対象のDataSource名.
+// 実行対象のDataSource名をValidate.
 @Validate(name="dataSource",
 	type=VType.String,
 	conditions="null",
 	message="The DataSource name to be executed is not set.")
 
-// 実行対象のSQL(Base64).
+// 実行対象のSQL(Base64)をValidate.
 @Validate(name="sql",
 	type=VType.String,
 	conditions="null",
@@ -68,6 +68,8 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 	 */
 	@Override
 	public Object post(Request req, SyncResponse res, Params params) {
+		// IPアクセス制御.
+		service.checkAccessControll(req);
 		// ログインセッションの認証.
 		if(!service.isLoginToken(req, res)) {
 			// 失敗した場合.

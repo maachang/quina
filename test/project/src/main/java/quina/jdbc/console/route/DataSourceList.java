@@ -46,6 +46,8 @@ public class DataSourceList implements RESTfulGetSync {
 	 */
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
+		// IPアクセス制御.
+		service.checkAccessControll(req);
 		// ログインセッションの認証.
 		if(!service.isLoginToken(req, res)) {
 			// 失敗した場合.

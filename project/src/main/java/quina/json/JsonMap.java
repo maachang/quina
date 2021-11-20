@@ -303,4 +303,16 @@ public class JsonMap
 			return ret;
 		}
 	}
+
+	@Override
+	public String keyAt(int no) {
+		JsonEntry e = jsonSet.list.get(no);
+		return e == null ? null : e.getKey();
+	}
+
+	@Override
+	public Object valueAt(int no) {
+		JsonEntry e = jsonSet.list.get(no);
+		return e == null ? null : e.getValue();
+	}
 }
