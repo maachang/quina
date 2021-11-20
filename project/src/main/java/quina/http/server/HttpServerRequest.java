@@ -190,9 +190,6 @@ public class HttpServerRequest implements Request {
 	public long getContentLength() {
 		lock.readLock().lock();
 		try {
-			if(element.getReceiveBody() != null) {
-				return element.getReceiveBody().getLength();
-			}
 			return contentLength;
 		} finally {
 			lock.readLock().unlock();

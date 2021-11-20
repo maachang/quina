@@ -38,14 +38,23 @@ body {
 /* click base button. */
 .base_button:active {
     border: solid 1px #2f2f2f;
+    background: #787878;/*color*/
     box-shadow: none;
     text-shadow: none;
     font-weight:bold;
 }
 
+/* hover base button. */
+.base_button:hover {
+    border: solid 1px #4f4f4f;
+    background: #a0a0a0;/*color*/
+    box-shadow: none;
+    text-shadow: none;
+}
+
 /* focus base input text. */
 .base_button:focus {
-    outline: solid 2px #a8a8a8;
+    outline: solid 3px #b8b8b8;
 }
 
 
@@ -66,7 +75,7 @@ body {
 
 /* focus base input text. */
 .base_input_text:focus {
-    outline: solid 2px #989898;
+    outline: solid 3px #b8b8b8;
 }
 
 /** base selectbox. **/
@@ -83,7 +92,7 @@ body {
 
 /** focus base selectbox. **/
 .base_select:focus {
-    outline: solid 2px #989898;
+    outline: solid 3px #b8b8b8;
 }
 
 /* base input text area. */
@@ -94,22 +103,23 @@ body {
     color: #5f5f5f;
     font-size:large;
     font-weight: bold;
-    border: solid 1px #5f5f5f;
-    background: #cfcfcf;/*color*/
+    border: solid 1px #8f8f8f;
+    background: #efefef;/*color*/
     /* 8px radius */
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 /* base input text area placeholder. */
 .base_input_text_area::placeholder {
-    color: #7f7f7f;
+    color: #5f5f5f;
 }
 
 /* focus base input text area. */
 .base_input_text_area:focus {
-    outline: solid 2px #989898;
+    outline: solid 3px #b8b8b8;
 }
 
+/* base table. */
 .base_table {
     margin-left: 12px;
     border: solid 1px #888;
@@ -117,28 +127,31 @@ body {
     /*table-layout: fixed;*/
 }
 
+/* base table header */
+.base_table thead tr th {
+    border: solid 1px #888;
+    font-size: smaller;
+    color: #444;
+    background: #cfcfcf;/*color*/
+}
+
+/* base table body. */
 .base_table th, .base_table td {
     text-align: right;
     border: solid 1px #888;
     font-size: smaller;
     color: #5c5c5c;
-    background: #cccccc;/*color*/
+    background: #efefef;/*color*/
 }
  
-.base_table thead tr th {
-    border: solid 1px #888;
-    font-size: smaller;
-    color: #444;
-    background: #aaa;/*color*/
-}
-
+/* view sql */
 .sql_view {
     padding: 8px;
     margin-bottom: 10px;
     border: solid 1px #888;
     font-size: smaller;
     color: #666;
-    background: #ccc;/*color*/
+    background: #efefef;/*color*/
     font-weight: bold;
     /* 5px radius */
     border-radius: 5px;

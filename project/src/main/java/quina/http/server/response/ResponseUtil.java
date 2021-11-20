@@ -17,6 +17,7 @@ import quina.http.HttpException;
 import quina.http.HttpSendChunkedData;
 import quina.http.HttpStatus;
 import quina.http.MimeTypes;
+import quina.http.Request;
 import quina.json.Json;
 import quina.json.JsonBuilder;
 import quina.net.nio.tcp.NioAsyncBuffer;
@@ -79,6 +80,20 @@ public final class ResponseUtil {
 		}
 	}
 
+	/**
+	 * リクエスト側がGZIP対応可能な場合.
+	 * @param req 対象のRequestオブジェクトを設定します.
+	 * @return boolean trueの場合対応しています.
+	 */
+	public static final boolean isRequestByGzip(Request req) {
+		String n = req.getHeader().get("accept-encoding");
+		if (n == null || n.indexOf("gzip") == -1) {
+			return false;
+		}
+		return true;
+	}
+
+
 	// レスポンスの文字コードを取得.
 	private static final String getCharset(AbstractResponse<?> res, String charset) {
 		if(charset == null) {
@@ -93,11 +108,6 @@ public final class ResponseUtil {
 
 	/** GZIPが許可されているかチェック + レスポンスヘッダに付与. **/
 	private static final boolean isGzip(AbstractResponse<?> res) {
-		// リクエストヘッダにGZIPが許可されていない場合は処理しない.
-		String n = res.getRequest().getHeader().get("accept-encoding");
-		if (n == null || n.indexOf("gzip") == -1) {
-			return false;
-		}
 		// レスポンスでGZIP圧縮が許可されている場合.
 		if(res.isGzip()) {
 			// レスポンスヘッダにGZIP圧縮の条件をセット.
@@ -170,40 +180,6 @@ public final class ResponseUtil {
 		sendData(res, data.offer(value));
 	}
 
-	/**
-	 * 送信処理.
-	 * @param res 対象のレスポンスオブジェクトを設定します.
-	 * @param value 送信データを設定します.
-	 * @param length 対象の送信データ長を設定します.
-	 */
-	public static final void send(AbstractResponse<?> res, InputStream value, long length) {
-		send(res, value, length, null);
-	}
-
-	/**
-	 * 送信処理.
-	 * @param res 対象のレスポンスオブジェクトを設定します.
-	 * @param value 送信データを設定します.
-	 * @param length 対象の送信データ長を設定します.
-	 * @param charset 文字コードを設定します.
-	 */
-	public static final void send(AbstractResponse<?> res, InputStream value, long length,
-		String charset) {
-		charset = getCharset(res, charset);
-		NioSendData sendBody = null;
-		// データ長が不明な場合.
-		if(length < 0L) {
-			// チャング送信.
-			length = -1L;
-			res.getHeader().put("Transfer-Encoding", "chunked");
-			sendBody = new HttpSendChunkedData(
-				HttpConstants.getSendChunkedBufferLength(), value);
-		} else {
-			sendBody = new NioSendInputStreamData(value, length);
-		}
-		// データ送信.
-		sendData(res, res.createHeader(length, charset), sendBody);
-	}
 
 	/**
 	 * 送信処理.
@@ -229,6 +205,48 @@ public final class ResponseUtil {
 			throw new HttpException(e);
 		}
 	}
+	
+	/**
+	 * InputStreamで送信処理.
+	 * @param res 対象のレスポンスオブジェクトを設定します.
+	 * @param value 送信データを設定します.
+	 * @param length 対象の送信データ長を設定します.
+	 */
+	public static final void sendInputStream(
+		AbstractResponse<?> res, InputStream value, long length) {
+		sendInputStream(res, value, length, null);
+	}
+
+	/**
+	 * InputStreamで送信処理.
+	 * @param res 対象のレスポンスオブジェクトを設定します.
+	 * @param value 送信データを設定します.
+	 * @param length 対象の送信データ長を設定します.
+	 * @param charset 文字コードを設定します.
+	 */
+	public static final void sendInputStream(
+		AbstractResponse<?> res, InputStream value, long length,
+		String charset) {
+		charset = getCharset(res, charset);
+		NioSendData sendBody = null;
+		// gzipが許可されている場合.
+		// レスポンスにgzip送信を付与.
+		// またInputStreamの場合は元のファイルに対して
+		// 別途圧縮処理等は行わない.
+		isGzip(res);
+		// データ長が不明な場合.
+		if(length < 0L) {
+			// チャング送信.
+			length = -1L;
+			res.getHeader().put("Transfer-Encoding", "chunked");
+			sendBody = new HttpSendChunkedData(
+				HttpConstants.getSendChunkedBufferLength(), value);
+		} else {
+			sendBody = new NioSendInputStreamData(value, length);
+		}
+		// データ送信.
+		sendData(res, res.createHeader(length, charset), sendBody);
+	}
 
 	/**
 	 * 送信処理.
@@ -250,6 +268,11 @@ public final class ResponseUtil {
 	public static final void sendFile(AbstractResponse<?> res, String name, String charset) {
 		charset = getCharset(res, charset);
 		try {
+			// gzipが許可されている場合.
+			// レスポンスにgzip送信を付与.
+			// またファイルの場合は元のファイルに対して
+			// 別途圧縮処理等は行わない.
+			isGzip(res);
 			// ファイル長を取得.
 			final long len = FileUtil.getFileLength(name);
 			if(len == -1L) {
@@ -301,14 +324,15 @@ public final class ResponseUtil {
 	 * @param charset 変換対象の文字コードが設定されます.
 	 * @return OutputStream OutputStreamが返却されます.
 	 */
-	public static final OutputStream sendOutInStream(AbstractResponse<?> res, String charset) {
+	public static final OutputStream sendOutInStream(
+		AbstractResponse<?> res, String charset) {
 		try {
 			// 非同期バッファを生成.
 			NioAsyncBuffer buf = new NioAsyncBuffer();
 			// gzipが許可されてる場合、ヘッダにセット.
 			boolean gzip = isGzip(res);
 			// TransferEncodingをchunkedで、InputStream送信.
-			send(res, buf.getInputStream(), -1, charset);
+			sendInputStream(res, buf.getInputStream(), -1, charset);
 			// gzipが許可されている場合はOutputStreamはGZIP圧縮版で処理.
 			if(gzip) {
 				return new GZIPOutputStream(buf.getOutputStream());

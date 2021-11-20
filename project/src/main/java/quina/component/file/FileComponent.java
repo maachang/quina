@@ -128,7 +128,8 @@ public class FileComponent implements FileAttributeComponent {
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),
 			req.getUrl(), targetDir);
 		// 拡張子に対するmimeTypeをResponseヘッダにセット.
-		String mimeType = MimeTypes.getInstance().getFileNameToMimeType(req.getUrl());
+		String mimeType = MimeTypes.getInstance()
+			.getFileNameToMimeType(req.getUrl());
 		if(mimeType != null) {
 			res.setContentType(mimeType);
 		}
@@ -143,10 +144,13 @@ public class FileComponent implements FileAttributeComponent {
 			res.setGzip(false);
 		// 拡張子がgzのファイルが存在する場合.
 		} else {
-			// gz拡張子のファイルを対象とする.
-			path = path + ".gz";
 			// GzipモードはOn.
 			res.setGzip(true);
+			// gzipモードを正しく設定できた場合.
+			if(res.isGzip()) {
+				// gz拡張子のファイルを対象とする.
+				path = path + ".gz";
+			}
 		}
 		// キャッシュモードが設定されてる場合.
 		if(cacheMode != null) {

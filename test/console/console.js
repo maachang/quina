@@ -78,11 +78,14 @@ var createButton = function(view, js) {
     return btn;
 }
 
+// sql text area width size.
+var SQL_TEXT_AREA_WIDTH = "80%";
+
 // Create a text area for SQL execution. 
 var createSqlTextArea = function() {
     var maxHeight = window.innerHeight;
     var tarea = "<textarea id='sql' name='sql' class='base_input_text_area' " +
-    "style='width:70%;margin-left:12px;";
+    "style='width:" + SQL_TEXT_AREA_WIDTH + ";margin-left:12px;";
     tarea += "height:" + ((maxHeight * 0.625)|0) + "px;";
     tarea += "ime-mode:inactive;"
     tarea += "'";
@@ -128,7 +131,7 @@ var viewSqlTextArea = function() {
         clearSqlTextAreaButton() +
         space() +
         sqlFileUploadButton() +
-        space() +
+        space(5) +
         executeSqlButton() +
         newLine() +
         createSqlTextArea()
@@ -156,10 +159,14 @@ var confirmAndViewSqlTextArea = function() {
         });
 }
 
+// dataSource selectBox widht size;
+var DATA_SOURCE_SELECT_BOX_WIDTH = "30%";
+
 // generate select box.
 var createDataSourceSelectBox = function(list) {
     var sbox = "<select size='1' name='selectDataSource' id='selectDataSource' " +
-        "class='base_select' style='width:25%' onchange='javascript:onChangeSelectDataSource(this);'>";
+        "class='base_select' style='width:" + DATA_SOURCE_SELECT_BOX_WIDTH +
+        ";' onchange='javascript:onChangeSelectDataSource(this);'>";
     sbox += "\n<option value='' hidden>* Select the DataSource to connect to</option>";
     var selected = false;
     var len = list.length;
@@ -191,7 +198,7 @@ var createDataSourceSelectBox = function(list) {
 // create view sql.
 var createViewSql = function(width, sql) {
     return "<div class='sql_view' style='width:"+ width +"'>&nbsp;" +
-        atob(sql) + "</div>";
+        decodeBase64(sql) + "</div>";
 }
 
 // create view number.
@@ -277,7 +284,7 @@ var getResultTableKeys = function(list) {
 
 // view result json.
 var viewResultJSON = function(resultJSON) {
-    var o, t, n, keys, no;
+    var o, t, n, keys;
     var sqlList = resultJSON.sqlList;
     var resultValue = resultJSON.value;
     var len = sqlList.length;
@@ -307,21 +314,17 @@ var viewResultJSON = function(resultJSON) {
         // Other than select.
         if((t = typeof(o)) == "number") {
             html += createResultTable(
-                false, "30%", ["result"], [{"result": o}]);
+                false, "10%", ["result"], [{"result": o}]);
         // select query.
         } else if(t == "object") {
             // result table keys.
             keys = getResultTableKeys(o);
             // Change width for the number of keys.
             n = keys.length * 10;
-            if(n > 60) {
-                if(n >= 100) {
-                    width = "100%";
-                } else {
-                    width = n + "%";
-                }
+            if(n >= 100) {
+                width = "100%";
             } else {
-                width = "60%";
+                width = n + "%";
             }
             // create result table.
             html += createResultTable(
@@ -503,7 +506,8 @@ var executeSql = function() {
             return;
         }
         // Convert the sql statement to base64. 
-        var sql = btoa(cutSqlComment(sql));
+        sql = cutSqlComment(sql).trim();
+        var sql = encodeBase64(sql);
         // create json params.
         params = {"dataSource": dataSource, "sql": sql};
     } catch(e) {

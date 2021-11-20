@@ -1,7 +1,10 @@
 package quina.jdbc.kind;
 
+import quina.exception.QuinaException;
+import quina.jdbc.QuinaJDBCConfig;
 import quina.util.Alphabet;
 import quina.util.AtomicObject;
+import quina.util.FileUtil;
 
 /**
  * H2用Kind.
@@ -69,7 +72,7 @@ public class H2Kind implements QuinaJDBCKind {
 	 */
 	@Override
 	public boolean isUrlByEmbedded(String url) {
-		return Alphabet.indexOf(url, ":tcp:") == -1;
+		return !Alphabet.startsWith(url, "jdbc:h2:tcp:");
 	}
 	
 	/**
@@ -138,6 +141,47 @@ public class H2Kind implements QuinaJDBCKind {
 		}
 		// サーバーモードの場合.
 		return NOT_EXIST_URL_PARAMS_BY_SERVER;
+	}
+
+	/**
+	 * QuinaJDBCConfigのFix完了時に呼び出されます.
+	 * @param config QuinaJDBCConfigを設定します.
+	 */
+	@Override
+	public void fix(QuinaJDBCConfig config) {
+		final String url = config.getUrl();
+		// embeddedでFileアクセスの場合.
+		if(Alphabet.startsWith(url, "jdbc:h2:tcp:", "jdbc:h2:mem:") ||
+			!Alphabet.startsWith(url, "jdbc:h2:", "jdbc:h2:file:")) {
+			return;
+		}
+		
+		// embeddedでFileアクセスの場合はH2は指定したディレクトリを
+		// 生成してくれない.
+		// ここでは、そのディレクトリが存在しない場合は、生成する
+		// 処理を追加する.
+		
+		// ディレクトリ名を取得.
+		String dir = null;
+		if(Alphabet.startsWith(url, "jdbc:h2:file:")) {
+			dir = url.substring("jdbc:h2:file:".length());
+		} else {
+			dir = url.substring("jdbc:h2:".length());
+		}
+		// データーベース名を除外.
+		int p = dir.lastIndexOf("/");
+		// ディレクトリ名が設定されている場合.
+		if(p != -1) {
+			dir = dir.substring(0, p);
+			// ディレクトリ名が存在しない場合、作成する.
+			if(!FileUtil.isDir(dir)) {
+				try {
+					FileUtil.mkdirs(dir);
+				} catch(Exception e) {
+					throw new QuinaException(e);
+				}
+			}
+		}
 	}
 
 }

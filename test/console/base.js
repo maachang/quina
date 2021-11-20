@@ -383,6 +383,122 @@ var parseJSON = function(value) {
     return value;
 }
 
+// utf8ToChar8bit.
+var _utf8ToChar8bit = function(str, off, len) {
+    if(isNull(off)) {
+        off = 0;
+    }
+    if(isNull(len)) {
+        len = str.length;
+    }
+    off = off|0;
+    len = len|0;
+    len += off
+    var lst = [] ;
+    var cnt = 0 ;
+    var c ;
+    for( var i = off ; i < len ; i ++ ) {
+        c = str.charCodeAt(i)|0;
+        if (c < 128) {
+            lst[cnt++] = c|0 ;
+        }
+        else if ((c > 127) && (c < 2048)) {
+            lst[cnt++] = (c >> 6) | 192 ;
+            lst[cnt++] = (c & 63) | 128 ;
+        }
+        else {
+            lst[cnt++] = (c >> 12) | 224 ;
+            lst[cnt++] = ((c >> 6) & 63) | 128 ;
+            lst[cnt++] = (c & 63) | 128 ;
+        }
+    }
+    return lst ;
+}
+
+// char8BitToUtf8.
+var _char8BitToUtf8 = function(str, off, len) {
+    if(isNull(off)) {
+        off = 0;
+    }
+    if(isNull(len)) {
+        len = str.length;
+    }
+    off = off|0;
+    len = len|0;
+    len += off
+    var c ;
+    var ret = "" ;
+    for( var i = off ; i < len ; i ++ ) {
+        c = str[i] & 255;
+        if (c < 128) {
+            ret += String.fromCharCode(c);
+        }
+        else if ((c > 191) && (c < 224)) {
+            ret += String.fromCharCode(((c & 31) << 6) |
+                ((str[i+1] & 255) & 63));
+            i += 1;
+        }
+        else {
+            ret += String.fromCharCode(((c & 15) << 12) |
+                (((str[i+1] & 255) & 63) << 6) |
+                ((str[i+2] & 255) & 63));
+            i += 2;
+        }
+    }
+    return ret ;
+}
+
+// encodeBase64(UTF8 support).
+var _b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var encodeBase64 = function(t) {
+    var a, c, n;
+    var r = '', l = 0, s = 0;
+    t = _utf8ToChar8bit(t, 0, t.length);
+    var tl = t.length;
+    for (n = 0; n < tl; n++) {
+        c = t[n]|0;
+        if (s == 0) {
+            r += _b.charAt((c >> 2) & 63);
+            a = (c & 3) << 4;
+        } else if (s == 1) {
+            r += _b.charAt((a | (c >> 4) & 15));
+            a = (c & 15) << 2;
+        } else if (s == 2) {
+            r += _b.charAt(a | ((c >> 6) & 3));
+            l += 1;
+            r += _b.charAt(c & 63);
+        }
+        l += 1;
+        s += 1;
+        if (s == 3) s = 0;
+    }
+    if (s > 0) {
+        r += _b.charAt(a);
+        l += 1;
+        r += '=';
+        l += 1;
+    }
+    if (s == 1) {
+        r += '=';
+    }
+    return r;
+}
+
+// decodeBase64(UTF8 support).
+var decodeBase64 = function(t) {
+    var c, n;
+    var r = [], s = 0, a = 0;
+    var tl = t.length;
+    for (n = 0; n < tl; n++) {
+        if ((c = _b.indexOf(t.charAt(n))) >= 0) {
+            if (s) r[r.length] = (a | (c >> (6 - s)) & 255);
+            s = (s + 2) & 7;
+            a = (c << s) & 255;
+        }
+    }
+    return _char8BitToUtf8(r, 0, r.length);
+}
+
 // header key.
 var getHeaderKey = function(key) {
     return key.toLowerCase();
@@ -429,6 +545,8 @@ _g.addEvent = addEvent;
 _g.timeLagCall = timeLagCall;
 _g.parseJSON = parseJSON;
 _g.encodeJSON = encodeJSON;
+_g.encodeBase64 = encodeBase64;
+_g.decodeBase64 = decodeBase64;
 _g.getHeaderKey = getHeaderKey;
 _g.movePage = movePage;
 

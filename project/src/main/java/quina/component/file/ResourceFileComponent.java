@@ -1,14 +1,16 @@
-package quina.component.resource;
+package quina.component.file;
 
 import quina.component.Component;
 import quina.component.ComponentConstants;
 import quina.component.ComponentType;
+import quina.http.Request;
+import quina.http.Response;
 
 /**
  * Thread.currentThread().getClassLoader().getResourceAsStream(xxxx)
  * の条件で、Jar内のリソース情報を取得して返却処理する.
  */
-public class ResourceComponent implements Component {
+public class ResourceFileComponent implements Component {
 	// ターゲットResourceディレクトリ.
 	protected String targetResourceDir = null;
 
@@ -28,6 +30,12 @@ public class ResourceComponent implements Component {
 	@Override
 	public int getMethod() {
 		return ComponentConstants.HTTP_METHOD_ALL;
+	}
+
+	@Override
+	public void call(Request req, Response<?> res) {
+		// TODO 自動生成されたメソッド・スタブ
+		
 	}
 
 }

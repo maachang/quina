@@ -1,5 +1,7 @@
 package quina.jdbc.kind;
 
+import quina.jdbc.QuinaJDBCConfig;
+
 public interface QuinaJDBCKind {
 	/**
 	 * Driverオブジェクトを取得.
@@ -66,5 +68,13 @@ public interface QuinaJDBCKind {
 	 */
 	default boolean isUrlParamsAsEncode() {
 		return true;
+	}
+	
+	/**
+	 * QuinaJDBCConfigのFix完了時に呼び出されます.
+	 * @param config QuinaJDBCConfigを設定します.
+	 */
+	default void fix(QuinaJDBCConfig config) {
+		
 	}
 }

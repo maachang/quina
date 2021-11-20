@@ -135,5 +135,36 @@ public class AnnotationRoute {
 		}
 		return filePath.value();
 	}
+	
+	/**
+	 * Annotationに定義されてるResourcePackageのパスを取得.
+	 * @param c コンポーネントを設定します.
+	 * @return String ファイルのパスが返却されます.
+	 *                nullの場合、リソースパッケージが設定されていません.
+	 */
+	public static final String loadResourcePackage(Component c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		return loadResourcePackage(c.getClass());
+	}
+	
+	/**
+	 * Annotationに定義されてるResourcePackageのパスを取得.
+	 * @param c コンポーネントクラスを設定します.
+	 * @return String ファイルのパスが返却されます.
+	 *                nullの場合、リソースパッケージが設定されていません.
+	 */
+	public static final String loadResourcePackage(Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		ResourcePackage resPackage = c.getAnnotation(ResourcePackage.class);
+		if(resPackage == null) {
+			return null;
+		}
+		return resPackage.value();
+	}
+
 
 }

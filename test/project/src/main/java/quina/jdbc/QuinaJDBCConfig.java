@@ -274,7 +274,6 @@ public class QuinaJDBCConfig {
 								urlParams += ";" + key + "=" + strAry[i + 1];
 							}
 						}
-
 					}
 				}
 			}
@@ -316,6 +315,8 @@ public class QuinaJDBCConfig {
 					this.setMaxConnection(poolSize);
 				}
 			}
+			// fix完了処理.
+			kind.fix(this);
 		}
 	}
 	

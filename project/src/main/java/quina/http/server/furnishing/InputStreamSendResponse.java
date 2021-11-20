@@ -66,7 +66,7 @@ public interface InputStreamSendResponse<T> extends AbstractCoreSendResponse<T> 
 			(AbstractResponse<?>)_getResponse();
 		res.startSend();
 		try {
-			ResponseUtil.send(res, value, length, charset);
+			ResponseUtil.sendInputStream(res, value, length, charset);
 		} catch(QuinaException qe) {
 			res.cancelSend();
 			throw qe;

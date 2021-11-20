@@ -406,6 +406,17 @@ public abstract class AbstractResponse<T>
 	 */
 	@Override
 	public T setGzip(boolean mode) {
+		// gzipモードをONに設定.
+		if(mode) {
+			// requestでgzip対応が可能か取得.
+			final boolean reqGzip = ResponseUtil
+				.isRequestByGzip(getRequest());
+			// requestでgzipが不可の場合.
+			if(!reqGzip) {
+				// gzipレスポンスは行わない.
+				mode = false;
+			}
+		}
 		lock.writeLock().lock();
 		try {
 			this.gzipMode = mode;
