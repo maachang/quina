@@ -5,7 +5,7 @@ import quina.http.HttpElement;
 import quina.http.HttpStatus;
 import quina.http.Request;
 import quina.http.Response;
-import quina.http.server.HttpServerUtil;
+import quina.http.server.HttpServerCore;
 import quina.util.AtomicObject;
 
 /**
@@ -63,7 +63,7 @@ public class ExecuteComponent {
 	 * @param em 対象のHttp要素を設定します.
 	 */
 	public final void execute(String url, HttpElement em) {
-		HttpServerUtil.execComponent(url, em, custom.get());
+		HttpServerCore.execComponent(url, em, custom.get());
 	}
 	
 	/**
@@ -71,7 +71,7 @@ public class ExecuteComponent {
 	 * @param em 対象のHTTP要素を設定します.
 	 */
 	public static final void sendError(HttpElement em) {
-		HttpServerUtil.sendError(em);
+		HttpServerCore.sendError(em);
 	}
 	
 	/**
@@ -81,7 +81,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		int status, HttpElement em) {
-		HttpServerUtil.sendError(status, em);
+		HttpServerCore.sendError(status, em);
 	}
 	
 	/**
@@ -91,7 +91,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		HttpStatus status, HttpElement em) {
-		HttpServerUtil.sendError(status, em);
+		HttpServerCore.sendError(status, em);
 	}
 	
 	/**
@@ -102,7 +102,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		int status, String message, HttpElement em) {
-		HttpServerUtil.sendError(status, message, em);
+		HttpServerCore.sendError(status, message, em);
 	}
 	
 	/**
@@ -113,7 +113,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		HttpStatus status, String message, HttpElement em) {
-		HttpServerUtil.sendError(status, message, em);
+		HttpServerCore.sendError(status, message, em);
 	}
 
 	/**
@@ -123,7 +123,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		HttpElement em, Throwable e) {
-		HttpServerUtil.sendError(em, e);
+		HttpServerCore.sendError(em, e);
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		int status, HttpElement em, Throwable e) {
-		HttpServerUtil.sendError(status, em, e);
+		HttpServerCore.sendError(status, em, e);
 	}
 	
 	/**
@@ -145,7 +145,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		HttpStatus status, HttpElement em, Throwable e) {
-		HttpServerUtil.sendError(status, em, e);
+		HttpServerCore.sendError(status, em, e);
 	}
 	
 	/**
@@ -157,7 +157,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		int status, String message, HttpElement em, Throwable e) {
-		HttpServerUtil.sendError(status, message, em, e);
+		HttpServerCore.sendError(status, message, em, e);
 	}
 	
 	/**
@@ -170,7 +170,7 @@ public class ExecuteComponent {
 	public static final void sendError(
 		HttpStatus status, String message, HttpElement em,
 		Throwable e) {
-		HttpServerUtil.sendError(status, message, em, e);
+		HttpServerCore.sendError(status, message, em, e);
 	}
 	
 	/**
@@ -180,7 +180,7 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		Request req, Response<?> res) {
-		HttpServerUtil.sendError(req, res, null);
+		HttpServerCore.sendError(req, res, null);
 	}
 	
 	/**
@@ -191,6 +191,6 @@ public class ExecuteComponent {
 	 */
 	public static final void sendError(
 		Request req, Response<?> res, Throwable e) {
-		HttpServerUtil.sendError(req, res, e);
+		HttpServerCore.sendError(req, res, e);
 	}
 }

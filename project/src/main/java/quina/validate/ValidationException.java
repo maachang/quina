@@ -38,20 +38,4 @@ public class ValidationException extends CoreException {
 	public ValidationException(String m, Throwable e) {
 		super(m, e);
 	}
-
-	public int getStatus() {
-		return super.getStatus();
-	}
-
-	public void setMessage(String msg) {
-		super.setMessage(msg);
-	}
-
-	public String getMessage() {
-		return super.getMessage();
-	}
-
-	public String getLocalizedMessage() {
-		return super.getLocalizedMessage();
-	}
 }

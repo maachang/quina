@@ -45,14 +45,12 @@
   <!-- ===================================================================== -->
   <!-- all.                                                                  -->
   <!-- ===================================================================== -->
-  <target name="all" depends="clean, delGCdi, compile, genCdi, nextGenCdiCompile, jar"/>
+  <target name="all" depends="delGCdi, compile, genCdi, nextGenCdiCompile, jar"/>
   
   <!-- ===================================================================== -->
   <!-- compile.                                                              -->
   <!-- ===================================================================== -->
   <target name="compile">
-    <delete dir="${dest.dir}" />
-    <delete file="${jar.name}" />
     <mkdir dir="${dest.dir}" />
     <mkdir dir="${lib.dir}" />
     <mkdir dir="${externalLib.dir}" />
@@ -71,8 +69,6 @@
   
   <!-- next genCdi compile. -->
   <target name="nextGenCdiCompile">
-    <delete dir="${dest.dir}" />
-    <delete file="${jar.name}" />
     <mkdir dir="${dest.dir}" />
     <javac includeantruntime="false"
            srcdir="${src.dir}"
@@ -91,6 +87,7 @@
   <!-- create JarFile.                                                       -->
   <!-- ===================================================================== -->
   <target name="jar">
+    <delete file="${jar.name}" />
     <jar jarfile="${jar.name}" basedir="${dest.dir}">
     </jar>
   </target>

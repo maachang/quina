@@ -2,6 +2,7 @@ package quina.component.file;
 
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
+import quina.http.HttpException;
 import quina.http.MimeTypes;
 import quina.http.Request;
 import quina.http.Response;
@@ -122,9 +123,8 @@ public class FileComponent implements FileAttributeComponent {
 
 	@Override
 	public void call(Request req, Response<?> res) {
-		// 要求URLパスとローカルディレクトリ名とマージ.
-		String path = FileComponentUtil
-			.urlAndComponentUrlByMargeLocalPath(
+		// 要求URLパスとローカルディレクトリ名をマージ.
+		String path = FileComponentUtil.urlAndComponentUrlByMargeLocalPath(
 			req.getComponentUrl(), req.getComponentUrlSlashCount(),
 			req.getUrl(), targetDir);
 		// 拡張子に対するmimeTypeをResponseヘッダにセット.
@@ -138,7 +138,7 @@ public class FileComponent implements FileAttributeComponent {
 			// 対象のファイルが存在しない場合.
 			if(!FileUtil.isFile(path)) {
 				// 404エラーを返却.
-				throw new QuinaException(404);
+				throw new HttpException(404);
 			}
 			// GzipモードはOff.
 			res.setGzip(false);

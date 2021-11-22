@@ -6,7 +6,8 @@ import quina.exception.CoreException;
  * HttpException.
  */
 public class HttpException extends CoreException {
-	private static final long serialVersionUID = -6152362160134736688L;
+	private static final long serialVersionUID =
+		-6152362160134736688L;
 
 	public HttpException(HttpStatus status) {
 		super(status.getState(), status.getMessage());
@@ -54,12 +55,5 @@ public class HttpException extends CoreException {
 
 	public HttpException(String m, Throwable e) {
 		this(_getStatus(e), m, e);
-	}
-
-	private static final int _getStatus(Throwable e) {
-		if(e instanceof CoreException) {
-			return ((CoreException)e).getStatus();
-		}
-		return 500;
 	}
 }

@@ -26,10 +26,10 @@ import quina.net.nio.tcp.NioUtil;
 import quina.validate.Validation;
 
 /**
- * HttpServerユーティリティ.
+ * HttpServerコンポーネント実行処理.
  */
-public final class HttpServerUtil {
-	private HttpServerUtil() {}
+public final class HttpServerCore {
+	private HttpServerCore() {}
 	
 	// ログ出力.
 	private static final Log LOG = LogFactory.getInstance().get();
@@ -58,7 +58,7 @@ public final class HttpServerUtil {
 		// methodがoptionかチェック.
 		if(Method.OPTIONS.equals(req.getMethod())) {
 			// Option送信.
-			HttpServerUtil.sendOptions(em, req);
+			HttpServerCore.sendOptions(em, req);
 			return;
 		}
 		try {
@@ -82,7 +82,7 @@ public final class HttpServerUtil {
 					res = new AnyResponseImpl(em, null);
 				}
 				res.setStatus(404);
-				HttpServerUtil.sendError(req, res, null);
+				HttpServerCore.sendError(req, res, null);
 				return;
 			}
 			// コンポーネントタイプを取得.
@@ -152,19 +152,22 @@ public final class HttpServerUtil {
 			// ワーニング以上のログ通知が認められてる場合.
 			if(LOG.isWarnEnabled()) {
 				int status = -1;
-				boolean noErrorFlag = false;
+				boolean warnFlag = false;
+				boolean errorFlag = false;
 				// CoreExceptionで、ステータスが５００以下の場合は
 				// エラー表示なし.
 				if(e instanceof CoreException) {
 					if((status = ((CoreException)e).getStatus()) >= 500) {
-						noErrorFlag = true;
+						errorFlag = true;
+					} else {
+						warnFlag = true;
 					}
 				// それ以外の例外の場合はエラー表示.
 				} else {
-					noErrorFlag = true;
+					errorFlag = true;
 				}
 				// エラー表示の場合.
-				if(noErrorFlag && LOG.isErrorEnabled()) {
+				if(errorFlag) {
 					if(status >= 0) {
 						LOG.error("# error (status: "
 							+ status + " url: \"" + req.getUrl() + "\").", e);
@@ -172,7 +175,7 @@ public final class HttpServerUtil {
 						LOG.error("# error (url: \"" + req.getUrl() + "\").", e);
 					}
 				// ワーニング表示の場合.
-				} else if(noErrorFlag && LOG.isWarnEnabled()) {
+				} else if(warnFlag) {
 					if(status >= 0) {
 						LOG.warn("# warning (status: "
 							+ status + " url: \"" + req.getUrl() + "\").");
@@ -183,10 +186,15 @@ public final class HttpServerUtil {
 			}
 			// エラー返却.
 			try {
-				HttpServerUtil.sendError(
-					req, res, e);
+				HttpServerCore.sendError(req, res, e);
 			} catch(Exception ee) {
-				// エラーは無視.
+				// エラー返却失敗の場合は警告ーログを出力.
+				if(LOG.isWarnEnabled()) {
+					LOG.warn("Failed to send the error.", ee);
+				}
+				try {
+					em.close();
+				} catch(Exception eee) {}
 			}
 		}
 	}
@@ -342,15 +350,28 @@ public final class HttpServerUtil {
 			component.call(res.getStatusNo(), req, res);
 		} else {
 			// エラーメッセージを取得.
-			// 余分な文字列は削除する.
-			String message = getErrorMessage(e.getMessage());
-			// Nio例外の場合.
-			if(e instanceof CoreException) {
-				CoreException core = (CoreException)e;
-				res.setStatus(core.getStatus(), message);
-			// それ以外の例外の場合.
+			String message = e.getMessage();
+			// エラーメッセージが存在する場合.
+			if(message != null) {
+				// 余分な文字列は削除する.
+				message = getErrorMessage(message);
+				// Core例外の場合.
+				if(e instanceof CoreException) {
+					CoreException core = (CoreException)e;
+					res.setStatus(core.getStatus(), message);
+				// それ以外の例外の場合.
+				} else {
+					res.setStatus(500, message);
+				}
+			// エラーメッセージが存在しない場合.
 			} else {
-				res.setStatus(500, message);
+				// Core例外の場合.
+				if(e instanceof CoreException) {
+					res.setStatus(((CoreException)e).getStatus());
+				// それ以外の例外の場合.
+				} else {
+					res.setStatus(500);
+				}
 			}
 			// エラー出力.
 			component.call(res.getStatusNo(), req, res, e);

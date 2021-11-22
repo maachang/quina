@@ -1,0 +1,200 @@
+<!DOCTYPE HTML SYSTEM "about:legacy-compat">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex">
+<meta name="description" content="">
+<meta name="keywords" content="">
+<title>jdbc console</title>
+
+<meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8"/>
+<meta http-equiv="content-style-type" content="text/css; charset=utf-8" />
+<meta http-equiv="content-script-type" content="text/javascript; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+
+<link rel="stylesheet" href="./console.css" type="text/css">
+<script src="./base.js"></script>
+
+<style>
+</style>
+
+<script>
+(function(_g) {
+"use strict";
+
+// 64 signetuer code.
+var signetuerCode = "+/abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+// create signetuer.
+var createSignetuer = function(len) {
+    if(isNull(len)) {
+        len = 48;
+    }
+    var rand = new Xor128();
+    var ret = "";
+    for(var i = 0; i < len; i ++) {
+        ret += signetuerCode.charAt(rand.next() & 0x03f);
+    }
+    return ret;
+}
+
+// errorMessage.
+var setErrorMessage = function(msg) {
+    if(isNull(msg) || (msg = "" + msg.trim()).length == 0) {
+        msg = "";
+    }
+    var e = document.getElementById("errorMessage");
+    e.innerHTML = msg;
+}
+
+// clear login input.
+var clearLogin = function() {
+    setErrorMessage("");
+    document.getElementById("user").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("user").focus();
+}
+
+// action login.
+var loginAction = function() {
+    nowLoading();
+    try {
+        setErrorMessage("");
+        var user = document.getElementById("user").value;
+        var password = document.getElementById("password").value;
+        // Exception if user name is not set. 
+        if(isNull(user) ||
+            (user = "" + user.trim()).length == 0) {
+            clearNowLoading();
+            setErrorMessage("The user name has not been set.");
+            return false;
+        }
+        // If no password is set, set empty.
+        if(isNull(password)) {
+            password = "";
+        }
+        // Generate a signature.
+        var signetureCode = createSignetuer();
+    } catch(e) {
+        clearNowLoading();
+        throw e;
+    }
+    // auth login.
+    ajax("GET",
+        "/quina/jdbc/console/" + user + "/" + password + "/login",
+        null, {"X-Jdbc-Console-Signeture": signetureCode},
+        function(state, result, responseHeader) {
+            try {
+                var value = parseJSON(result);
+                if(isNull(value)) {
+                    // login error.
+                    setErrorMessage("Failed to login to the jdbc console.");
+                    clearNowLoading();
+                    return;
+                }
+                // success login.
+                if(state == 200) {
+                    // save login session.
+                    saveLoginSession(signetureCode, responseHeader);
+                    // success login next page.
+                    movePage("./console.html")
+                } else {
+                    // login error.
+                    setErrorMessage(value.message);
+                    clearNowLoading();
+                }
+            } catch(e) {
+                clearNowLoading();
+                throw e;
+            }
+        });
+}
+
+// init call.
+var initCall = function() {
+    // focus select dataSource.
+    timeLagCall(function() {
+        var em;
+        em = document.getElementById("user")
+        em.focus();
+        addEvent(em, "keydown", function(e) {
+            // enter.
+            if(e.keyCode == 13) {
+                e.preventDefault();
+                // login.
+                loginAction();
+            // ↑ or tab.
+            } else if(e.keyCode == 38 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("password").focus();
+            // ↓ or tab.
+            } else if(e.keyCode == 40 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("password").focus();
+            }
+        });
+        em = document.getElementById("password");
+        addEvent(em, "keydown", function(e) {
+            // enter.
+            if(e.keyCode == 13) {
+                e.preventDefault();
+                // login.
+                loginAction();
+            // ↑ or tab.
+            } else if(e.keyCode == 40 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("user").focus();
+            // ↑ or tab.
+            } else if(e.keyCode == 38 || e.keyCode == 9) {
+                e.preventDefault();
+                document.getElementById("user").focus();
+            }
+        });
+
+    });
+}
+
+_g.createSignetuer = createSignetuer;
+_g.setErrorMessage = setErrorMessage;
+_g.loginAction = loginAction;
+_g.clearLogin = clearLogin;
+_g.initCall = initCall;
+
+})(this);
+</script>
+
+</head>
+<body onload="javascript:initCall();">
+    <div id="nowLoadingView"></div>
+    <div id="alertView"></div>
+    <div id="pageId">
+        <div style="position:absolute;left:4%;top:5%;width:94%;">
+            <div style="font-weight:bold;font-size:24px;" >
+                JDBC - console login
+            </div>
+            <br>
+            <div id="errorMessage" style="color:#7f0000"></div>
+            <div style="width:60%">
+                <div style="font-weight:bold;" >user name</div>
+                <input type="user" name="user" id="user" class="base_input_text"
+                    style="margin-left:10px;width:70%;ime-mode:disabled;"
+                    spellcheck="false" placeholder="user name" autocomplete="off">
+            </div>
+            <div style="width:60%">
+                <div style="font-weight:bold;" >password</div>
+                <input type="password" name="password" id="password" class="base_input_text"
+                    style="margin-left:10px;width:70%;ime-mode:disabled;"
+                    spellcheck="false" placeholder="password" autocomplete="off">
+                <input type="password" name="dummy1" value="" style="display:none;" disabled>
+                <input type="password" name="dummy2" value="" style="display:none;" disabled>
+            </div>
+            
+            <div style="margin-top:15px">
+                <a href="javascript:void(0);" class="base_button" onclick="javascript:loginAction();">login</a>
+                &nbsp;
+                <a href="javascript:void(0);" class="base_button" onclick="javascript:clearLogin();">clear</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

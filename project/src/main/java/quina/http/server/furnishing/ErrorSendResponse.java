@@ -1,6 +1,6 @@
 package quina.http.server.furnishing;
 
-import quina.http.server.HttpServerUtil;
+import quina.http.server.HttpServerCore;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.AnyResponseImpl;
 
@@ -63,18 +63,18 @@ public interface ErrorSendResponse<T>
 			if(value == null) {
 				// エラー返却.
 				res.setStatus(state);
-				HttpServerUtil.sendError(getRequest(), res);
+				HttpServerCore.sendError(getRequest(), res);
 			} else if(value instanceof Throwable) {
 				// エラー処理.
-				HttpServerUtil.sendError(getRequest(), res, (Throwable)value);
+				HttpServerCore.sendError(getRequest(), res, (Throwable)value);
 			// 文字列の場合.
 			} else if(value instanceof String) {
 				res.setStatus(state, value.toString());
-				HttpServerUtil.sendError(getRequest(), res);
+				HttpServerCore.sendError(getRequest(), res);
 			// その他オブジェクトの場合.
 			} else {
 				res.setStatus(state);
-				HttpServerUtil.sendError(getRequest(), res);
+				HttpServerCore.sendError(getRequest(), res);
 			}
 		} catch(Exception e) {
 			// HttpElementをクローズ.

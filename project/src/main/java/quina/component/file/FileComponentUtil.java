@@ -15,7 +15,8 @@ public final class FileComponentUtil {
 	 * @return int 文字位置情報が返却されます.
 	 *             -1の場合、見つかりませんでした.
 	 */
-	public static final int positionSlash(final String s, final int targetCount) {
+	public static final int positionSlash(
+		final String s, final int targetCount) {
 		int cnt = 0;
 		final int len = s.length();
 		for(int i = 0; i < len; i ++) {
@@ -38,9 +39,9 @@ public final class FileComponentUtil {
 		int dotCount = 0;
 		final int len = target.length();
 		for(int i = 0; i < len; i ++) {
-			if((c = target.charAt(i)) == '*' || c == '?' || c == '\"' ||
-				c == '<' || c == '>' || c == '|' || c == ';' || c == ':' ||
-				c == ',' || c == '\\') {
+			if((c = target.charAt(i)) == '*' || c == '?' ||
+				c == '\"' || c == '<' || c == '>' || c == '|' ||
+				c == ';' || c == ':' || c == ',' || c == '\\') {
 				// 禁止文字が含まれる場合はエラー.
 				throw new QuinaException(
 					"An invalid character string is set in the specified URL.");
@@ -70,7 +71,7 @@ public final class FileComponentUtil {
 			}
 		}
 	}
-
+	
 	/**
 	 * URLとコンポーネントURLの差分を取って、ローカルパスを取得.
 	 * @param componentUrl コンポーネントURLを設定します.
@@ -89,7 +90,7 @@ public final class FileComponentUtil {
 				"The end of the component definition URL is not an asterisk: " +
 				componentUrl);
 		}
-		int pos = positionSlash(url, countSlash);
+		int pos = FileComponentUtil.positionSlash(url, countSlash);
 		if(pos == -1) {
 			throw new QuinaException(
 				"The conditions of the component definition URL and " +
@@ -97,7 +98,8 @@ public final class FileComponentUtil {
 				componentUrl + " url: " + url);
 		}
 		final String target = url.substring(pos);
-		checkIllegalUrl(target);
+		FileComponentUtil.checkIllegalUrl(target);
 		return targetDir + target;
 	}
+
 }

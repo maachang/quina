@@ -392,7 +392,7 @@ public abstract class AbstractResponse<T>
 	public T setCacheMode(boolean mode) {
 		lock.writeLock().lock();
 		try {
-			this.cacheMode = !mode;
+			this.cacheMode = mode;
 		} finally {
 			lock.writeLock().unlock();
 		}

@@ -1,6 +1,5 @@
 package quina.jdbc;
 
-import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.http.HttpStatus;
 
@@ -53,13 +52,6 @@ public class QuinaJDBCException extends QuinaException {
 
 	public QuinaJDBCException(String m, Throwable e) {
 		this(_getStatus(e), m, e);
-	}
-
-	private static final int _getStatus(Throwable e) {
-		if(e instanceof CoreException) {
-			return ((CoreException)e).getStatus();
-		}
-		return 500;
 	}
 
 }

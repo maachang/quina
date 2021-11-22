@@ -69,7 +69,7 @@ if [ "${NATIVE_BUILDS}" != "" ]; then
 fi
 
 rm -f ${NATIVE_OUT}
-echo native-image ${OPTIONS}  -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
-native-image ${OPTIONS} -cp jar:${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
+echo native-image ${OPTIONS}  -cp ${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
+native-image ${OPTIONS} -cp ${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}
 
 rm -f ${NATIVE_OUT}.build_artifacts.txt

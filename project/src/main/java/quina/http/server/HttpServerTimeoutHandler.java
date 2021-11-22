@@ -29,7 +29,7 @@ public class HttpServerTimeoutHandler
 		HttpElement em = (HttpElement)element;
 		try {
 			// HttpError408(Request-Timeout)を返却.
-			HttpServerUtil.sendError(408, em);
+			HttpServerCore.sendError(408, em);
 		} catch(Exception e) {}
 	}
 }

@@ -9,7 +9,7 @@ import quina.annotation.quina.QuinaServiceScoped;
 import quina.logger.Log;
 import quina.util.collection.TypesClass;
 
-@QuinaServiceScoped("test")
+//@QuinaServiceScoped("test")
 public class QuinaServiceTest implements QuinaService {
 	@LogDefine
 	private Log log;
