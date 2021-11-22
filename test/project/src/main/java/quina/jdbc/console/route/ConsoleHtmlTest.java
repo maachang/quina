@@ -16,7 +16,7 @@ import quina.jdbc.console.JDBCConsoleService;
  * 
  */
 //以下@Routerにコメントがある時は、ルーター登録されない.
-//@Route("/quina/jdbc/console/public/*")
+//@Route("/quina/jdbc/console/*")
 @FilePath("./console/")
 @ResponseSwitch(cache=Switch.Off)
 public class ConsoleHtmlTest extends FileComponent {

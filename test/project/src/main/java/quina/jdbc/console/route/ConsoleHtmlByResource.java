@@ -13,7 +13,7 @@ import quina.jdbc.console.JDBCConsoleService;
  * ResourceFileComponent経由のアクセスで処理します.
  */
 //以下@Routerにコメントがある時は、ルーター登録されない.
-@Route("/quina/jdbc/console/public/*")
+@Route("/quina/jdbc/console/*")
 @ResourcePackage("quina.jdbc.console.resource")
 public class ConsoleHtmlByResource
 	extends ResourceFileComponent {

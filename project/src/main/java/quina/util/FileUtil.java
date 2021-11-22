@@ -28,7 +28,8 @@ public final class FileUtil {
 	}
 
 	// ファイル時間を取得.
-	private static final long _getFileTime(int type, String name) throws Exception {
+	private static final long _getFileTime(
+		int type, String name) throws Exception {
 		File fp = new File(name);
 		if (fp.exists()) {
 			BasicFileAttributes attrs = Files.readAttributes(
@@ -105,7 +106,8 @@ public final class FileUtil {
 	 */
 	public static final boolean isIO(String name) {
 		File file = new File(name);
-		return (file.exists() && file.canRead() && file.canWrite());
+		return (file.exists() &&
+			file.canRead() && file.canWrite());
 	}
 
 	/**
@@ -116,10 +118,13 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final void mkdirs(String dir) throws Exception {
+	public static final void mkdirs(String dir)
+		throws Exception {
 		File fp = new File(dir);
 		if (!fp.mkdirs()) {
-			throw new IOException("Failed to create directory (" + dir + ").");
+			throw new IOException(
+				"Failed to create directory (" +
+				dir + ").");
 		}
 	}
 
@@ -128,11 +133,13 @@ public final class FileUtil {
 	 *
 	 * @param name
 	 *            対象のファイル名を設定します.
-	 * @return long ファイルの長さが返却されます. [-1L]が返却された場合、ファイルは存在しません.
+	 * @return long ファイルの長さが返却されます.
+	 *              [-1L]が返却された場合ファイルは存在しません.
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final long getFileLength(String name) throws Exception {
+	public static final long getFileLength(String name)
+		throws Exception {
 		File fp = new File(name);
 		return (fp.exists()) ? fp.length() : -1L;
 	}
@@ -146,7 +153,8 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final long birthtime(String name) throws Exception {
+	public static final long birthtime(String name)
+		throws Exception {
 		return _getFileTime(0, name);
 	}
 
@@ -159,7 +167,8 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final long atime(String name) throws Exception {
+	public static final long atime(String name)
+		throws Exception {
 		return _getFileTime(1, name);
 	}
 
@@ -172,7 +181,8 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final long mtime(String name) throws Exception {
+	public static final long mtime(String name)
+		throws Exception {
 		return _getFileTime(2, name);
 	}
 
@@ -185,7 +195,8 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final String getFullPath(String name) throws Exception {
+	public static final String getFullPath(String name)
+		throws Exception {
 		char c;
 		name = new File(name).getCanonicalPath();
 		final int len = name.length();
@@ -244,14 +255,16 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final byte[] getFile(String name) throws Exception {
+	public static final byte[] getFile(String name)
+		throws Exception {
 		int len;
 		InputStream buf = null;
 		ByteArrayOutputStream bo = null;
 		byte[] b = new byte[1024];
 		try {
 			bo = new ByteArrayOutputStream();
-			buf = new BufferedInputStream(new FileInputStream(name));
+			buf = new BufferedInputStream(
+				new FileInputStream(name));
 			while (true) {
 				if ((len = buf.read(b)) <= 0) {
 					if (len <= -1) {
@@ -294,7 +307,8 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final String getFileString(String name, String charset) throws Exception {
+	public static final String getFileString(
+		String name, String charset) throws Exception {
 		int len;
 		char[] tmp = new char[1024];
 		CharArrayWriter ca = null;
@@ -302,7 +316,9 @@ public final class FileUtil {
 		String ret = null;
 		try {
 			ca = new CharArrayWriter();
-			buf = new BufferedReader(new InputStreamReader(new FileInputStream(name), charset));
+			buf = new BufferedReader(
+				new InputStreamReader(
+					new FileInputStream(name), charset));
 			while ((len = buf.read(tmp, 0, 512)) > 0) {
 				ca.write(tmp, 0, len);
 			}
@@ -343,11 +359,14 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final void setFile(boolean newFile, String name, byte[] binary) throws Exception {
+	public static final void setFile(
+		boolean newFile, String name, byte[] binary)
+		throws Exception {
 		if (binary == null) {
 			throw new IOException("There is no binary to output.");
 		}
-		BufferedOutputStream buf = new BufferedOutputStream(new FileOutputStream(name, !newFile));
+		BufferedOutputStream buf = new BufferedOutputStream(
+			new FileOutputStream(name, !newFile));
 		try {
 			buf.write(binary);
 			buf.flush();
@@ -373,17 +392,21 @@ public final class FileUtil {
 	 * @param value
 	 *            出力対象の文字列を設定します.
 	 * @param charset
-	 *            対象のキャラクタセットを設定します. nullの場合は、UTF8が設定されます.
+	 *            対象のキャラクタセットを設定します.
+	 *            nullの場合は、UTF8が設定されます.
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final void setFileString(boolean newFile, String name, String value, String charset)
+	public static final void setFileString(
+		boolean newFile, String name, String value, String charset)
 			throws Exception {
 		if (value == null) {
-			throw new IOException("There is no target string information for output.");
+			throw new IOException(
+				"There is no target string information for output.");
 		}
 		BufferedWriter buf = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(name, !newFile), (charset == null) ? "UTF8" : charset));
+			new OutputStreamWriter(new FileOutputStream(name, !newFile),
+				(charset == null) ? "UTF8" : charset));
 		try {
 			buf.write(value, 0, value.length());
 			buf.flush();
@@ -449,7 +472,8 @@ public final class FileUtil {
 	
 	
 	// ファイル及びディレクトリの削除.
-	private static final void _deleteFileOrDirectory(String name)
+	private static final void _deleteFileOrDirectory(
+		String name)
 		throws Exception {
 		Files.delete(Paths.get(name));
 	}
@@ -463,9 +487,11 @@ public final class FileUtil {
 	 * @exception Exception
 	 *                例外.
 	 */
-	public static final String[] list(String name) throws Exception {
+	public static final String[] list(String name)
+		throws Exception {
 		File fp = new File(name);
-		return (fp.exists()) ? fp.list() : new String[0];
+		return (fp.exists()) ?
+			fp.list() : new String[0];
 	}
 
 	/**
@@ -478,18 +504,22 @@ public final class FileUtil {
 	 * @throws Exception
 	 *             例外.
 	 */
-	public static final void move(String src, String dest) throws Exception {
+	public static final void move(String src, String dest)
+		throws Exception {
 		Files.move(Paths.get(src), Paths.get(dest));
 	}
 
 	// ファイルのコピー.
-	private static final void _copyFile(String src, String dest) throws Exception {
-		Files.copy(Paths.get(src), Paths.get(dest), StandardCopyOption.COPY_ATTRIBUTES,
-				StandardCopyOption.REPLACE_EXISTING);
+	private static final void _copyFile(String src, String dest)
+		throws Exception {
+		Files.copy(Paths.get(src), Paths.get(dest),
+			StandardCopyOption.COPY_ATTRIBUTES,
+			StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	// コピー処理.
-	public static final void _copy(String src, String dest) throws Exception {
+	public static final void _copy(String src, String dest)
+		throws Exception {
 		if (isFile(src)) {
 			_copyFile(src, dest);
 		} else {
@@ -524,7 +554,8 @@ public final class FileUtil {
 	 * @throws Exception
 	 *             例外.
 	 */
-	public static final void copy(String src, String dest) throws Exception {
+	public static final void copy(String src, String dest)
+		throws Exception {
 		_copy(getFullPath(src), getFullPath(dest));
 	}
 
@@ -534,13 +565,16 @@ public final class FileUtil {
 	 * @param dest コピー先のファイル名を設定します.
 	 * @throws Exception
 	 */
-	public static final void rcpy(String src, String dest) throws Exception {
+	public static final void rcpy(String src, String dest)
+		throws Exception {
 		int len;
 		byte[] bin = new byte[4096];
 		OutputStream out = null;
 		InputStream in = null;
 		try {
-			in = Thread.currentThread().getContextClassLoader().getResourceAsStream(src);
+			in = Thread.currentThread()
+				.getContextClassLoader()
+				.getResourceAsStream(src);
 			out = new FileOutputStream(dest);
 			while ((len = in.read(bin)) != -1) {
 				out.write(bin, 0, len);

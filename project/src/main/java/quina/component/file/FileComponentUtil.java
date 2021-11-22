@@ -1,6 +1,7 @@
 package quina.component.file;
 
 import quina.exception.QuinaException;
+import quina.http.HttpException;
 
 /**
  * FileComponentユーティリティ.
@@ -84,21 +85,23 @@ public final class FileComponentUtil {
 		final String componentUrl, final int countSlash, final String url,
 		final String targetDir) {
 		if(componentUrl == null) {
-			throw new QuinaException("Component definition URL is not set.");
+			throw new HttpException("Component definition URL is not set.");
 		} else if(!componentUrl.endsWith("/*")) {
-			throw new QuinaException(
+			throw new HttpException(
 				"The end of the component definition URL is not an asterisk: " +
 				componentUrl);
 		}
 		int pos = FileComponentUtil.positionSlash(url, countSlash);
 		if(pos == -1) {
-			throw new QuinaException(
-				"The conditions of the component definition URL and " +
-				"this URL do not match: " + "componentUrl: " +
-				componentUrl + " url: " + url);
+			// []ファイルが指定されていない場合.
+			throw new HttpException(404);
 		}
-		final String target = url.substring(pos);
+		final String target = url.substring(pos).trim();
 		FileComponentUtil.checkIllegalUrl(target);
+		if(target.isEmpty()) {
+			// [/]ファイルが指定されていない場合
+			throw new HttpException(404);
+		}
 		return targetDir + target;
 	}
 

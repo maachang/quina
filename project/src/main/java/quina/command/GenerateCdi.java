@@ -315,7 +315,7 @@ public class GenerateCdi {
 			}
 			
 			// ClassDirから、対象となるクラスを抽出.
-			GCdiExtraction.extraction(clazzList, params);
+			GCdiExtraction.extraction(clazzList, javaSourceDir, clazzDir, params);
 			clazzList = null;
 			
 			// 出力先のソースコードを全削除.

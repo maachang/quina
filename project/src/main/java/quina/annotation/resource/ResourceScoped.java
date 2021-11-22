@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  * ＠ResourceScoped
  * public class CopyJavaConsoleResource {
  *   // copy file list.
- *   private static final String COPY_LIST = new String[] {
+ *   private static final String[] COPY_LIST = new String[] {
  *     "login.html",
  *     "console.html",
  *     "base.js",
@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  *   };
  *   
  *   // directoryからjavaPackageにコピー.
- *   ＠BuildResponse(
+ *   ＠BuildResource(
  *     src="./console",
  *     srcMode=ResourceMode.Directory,
  *     dest="quina.jdbc.console.resource",
@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  *   }
  * 
  *   // javaPackageからclassPackageにコピー.
- *   ＠BuildResponse(
+ *   ＠BuildResource(
  *     src="quina.jdbc.console.resource",
  *     srcMode=ResourceMode.JavaPackage,
  *     dest="quina.jdbc.console.resource",

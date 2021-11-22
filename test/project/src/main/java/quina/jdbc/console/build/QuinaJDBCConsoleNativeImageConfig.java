@@ -1,4 +1,4 @@
-package quina.jdbc.console.nativeimage;
+package quina.jdbc.console.build;
 
 import quina.annotation.nativeimage.NativeBuildStep;
 import quina.annotation.nativeimage.NativeConfigScoped;

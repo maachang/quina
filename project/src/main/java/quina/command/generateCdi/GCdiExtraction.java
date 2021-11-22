@@ -30,7 +30,8 @@ public class GCdiExtraction {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static final void extraction(
-		List<String> classList, GCdiParams params)
+		List<String> classList, String javaSourceDir, String clazzDir,
+		GCdiParams params)
 		throws Exception {
 		String className;
 		final int len = classList == null ? 0 : classList.size();
@@ -62,6 +63,12 @@ public class GCdiExtraction {
 			if(NativeImages.executeExecuteStep(c, params)) {
 				// 読み込まれたら対象クラス名を出力.
 				System.out.println("  > loadNativeConf    : " + className);
+			}
+			
+			// copyResourceアノテーション定義の場合.
+			if(CopyResource.executeExecuteStep(c, javaSourceDir, clazzDir)) {
+				// 読み込まれたら対象クラス名を出力.
+				System.out.println("  > copyResource      : " + className);
 			}
 			
 			// 利用可能なアノテーションが定義されていない場合.

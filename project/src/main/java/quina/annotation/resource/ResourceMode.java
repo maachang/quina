@@ -30,14 +30,67 @@ public enum ResourceMode {
 	/**
 	 * ディレクトリ.
 	 */
-	Directory,
+	Directory("directory", false, false, false),
 	/**
 	 * Javaパッケージ.
 	 */
-	JavaPackage,
+	JavaPackage("java", true, true, false),
 	/**
 	 * クラスパッケージ.
 	 */
-	ClassPackage
+	ClassPackage("class", true, false, true)
 	;
+	
+	private String name;
+	private boolean packageMode;
+	private boolean javaPackageFlag;
+	private boolean classPackageFlag;
+	
+	/**
+	 * コンストラクタ.
+	 * @param name
+	 * @param packageMode
+	 * @param javaPackageFlag
+	 * @param classPackageFlag
+	 */
+	private ResourceMode(
+		String name, boolean packageMode, boolean javaPackageFlag,
+		boolean classPackageFlag) {
+		this.name = name;
+		this.packageMode = packageMode;
+		this.javaPackageFlag = javaPackageFlag;
+		this.classPackageFlag = classPackageFlag;
+	}
+	
+	/**
+	 * 名前を取得.
+	 * @return
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * パッケージモードの場合.
+	 * @return
+	 */
+	public boolean isPackage() {
+		return packageMode;
+	}
+	
+	/**
+	 * JavaPackageの場合.
+	 * @return
+	 */
+	public boolean isJavaPackage() {
+		return javaPackageFlag;
+	}
+	
+	/**
+	 * ClassPackageの場合.
+	 * @return
+	 */
+	public boolean isClassPackage() {
+		return classPackageFlag;
+	}
 }

@@ -34,7 +34,7 @@ public class ConsoleError
 	@Override
 	public Object call(
 		int state, Request req, SyncResponse res, Throwable e) {
-		return "jdbcConsoleError(" + state + "): " +
+		return "error(" + state + "): " +
 			res.getMessage();
 	}
 }
