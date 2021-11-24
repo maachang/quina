@@ -45,7 +45,7 @@
   <!-- ===================================================================== -->
   <!-- all.                                                                  -->
   <!-- ===================================================================== -->
-  <target name="all" depends="delGCdi, compile, genCdi, nextGenCdiCompile, jar"/>
+  <target name="all" depends="delGCdi, compile, cpRes, genCdi, nextGenCdiCompile, jar"/>
   
   <!-- ===================================================================== -->
   <!-- compile.                                                              -->
@@ -174,5 +174,23 @@
 			<arg value="-d" />
 		</java>
   </target>
+
+  <!-- ===================================================================== -->
+  <!-- execute cpRes.                                                      -->
+  <!-- ===================================================================== -->
+  <target name="cpRes">
+    <java classname="quina.command.CopyResource" fork="true">
+      <classpath refid="path.lib" />
+      <jvmarg value="-Xms128m" />
+      <jvmarg value="-Xmx128m" />
+      <!-- target class path. -->
+			<arg value="-c" />
+			<arg value="${dest.dir}" />
+      <!-- output java source path. -->
+			<arg value="-s" />
+			<arg value="${src.dir}" />
+		</java>
+  </target>
+
 
 </project>

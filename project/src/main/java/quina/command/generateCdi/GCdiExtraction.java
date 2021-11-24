@@ -65,12 +65,6 @@ public class GCdiExtraction {
 				System.out.println("  > loadNativeConf    : " + className);
 			}
 			
-			// copyResourceアノテーション定義の場合.
-			if(CopyResource.executeExecuteStep(c, javaSourceDir, clazzDir)) {
-				// 読み込まれたら対象クラス名を出力.
-				System.out.println("  > copyResource      : " + className);
-			}
-			
 			// 利用可能なアノテーションが定義されていない場合.
 			if(!GCdiConstants.isDefineAnnotation(c) &&
 				!GCdiConstants.isProxyAnnotation(c)) {

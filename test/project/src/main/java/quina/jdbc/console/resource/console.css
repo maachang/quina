@@ -71,7 +71,7 @@ body {
 
 /* base input text placeholder. */
 .base_input_text::placeholder {
-    color: #777;
+    color: #999;
     font-weight:normal;
 }
 
@@ -113,7 +113,7 @@ body {
 
 /* base input text area placeholder. */
 .base_input_text_area::placeholder {
-    color: #5f5f5f;
+    color: #999;
 }
 
 /* focus base input text area. */

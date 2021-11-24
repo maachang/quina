@@ -15,10 +15,11 @@ public class AnnotationResource {
 	/**
 	 * 対象のオブジェクトがResourceScopedが定義されているかチェック.
 	 * @param c 対象のクラスを設定します.
+	 * @param cl 対象のクラスローダを設定します.
 	 * @return ExecuteCopyResource リソースファイルコピー処理が返却されます.
 	 */
 	public static final ExecuteCopyResource resourceScoped(
-		Class<?> c) {
+		Class<?> c, ClassLoader cl) {
 		if(c == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
@@ -27,7 +28,7 @@ public class AnnotationResource {
 				// 空のコンストラクタが設定可能かチェック.
 				c.getDeclaredConstructor().newInstance();
 				// コンストラクタで実行可能なStepメソッドを検出.
-				return getExecuteCopyResource(c);
+				return getExecuteCopyResource(c, cl);
 			} catch(QuinaException qe) {
 				throw qe;
 			} catch(InvocationTargetException ite) {
@@ -42,10 +43,11 @@ public class AnnotationResource {
 	/**
 	 * ExecuteCopyResource定義されメソッドを取得
 	 * @param cs 対象クラスを設定します.
+	 * @param cl 対象のクラスローダを設定します.
 	 * @return ExecuteCopyResource リソースファイルコピー処理が返却されます.
 	 */
 	private static final ExecuteCopyResource getExecuteCopyResource(
-		Class<?> cs) {
+		Class<?> cs, ClassLoader cl) {
 		BuildResource rb;
 		// 対象クラスのメソッド群を取得.
 		final Method[] array = cs.getDeclaredMethods();

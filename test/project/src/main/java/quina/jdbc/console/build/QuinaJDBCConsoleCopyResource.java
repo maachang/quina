@@ -16,7 +16,8 @@ public class QuinaJDBCConsoleCopyResource {
 		"console.html",
 		"base.js",
 		"console.js",
-		"console.css"
+		"console.css",
+		"favicon.ico"
 	};
 
 	/**

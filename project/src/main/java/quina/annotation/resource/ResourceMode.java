@@ -93,4 +93,9 @@ public enum ResourceMode {
 	public boolean isClassPackage() {
 		return classPackageFlag;
 	}
+	
+	@Override
+	public String toString() {
+		return name;
+	}
 }

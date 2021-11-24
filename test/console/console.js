@@ -49,6 +49,7 @@ var newLine = function(count) {
     return ret;
 }
 
+// space.
 var space = function(count) {
     if(isNull(count)) {
         return "&nbsp;"

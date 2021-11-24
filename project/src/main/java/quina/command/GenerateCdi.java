@@ -10,7 +10,6 @@ import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.VERSION;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +25,7 @@ import quina.command.generateCdi.NativeImages;
 import quina.command.generateCdi.ProxyOutputJavaSrc;
 import quina.exception.QuinaException;
 import quina.util.Args;
+import quina.util.FileUtil;
 
 /**
  * CDI関連のリフレクションに対するJavaソースコードを生成.
@@ -104,12 +104,6 @@ public class GenerateCdi {
 		System.out.println("  -d [--delete]");
 		System.out.println("     Delete the file output by this command and exit.");
 		System.out.println();
-	}
-	
-	// フルパス名を取得.
-	private static final String getFullPath(String fileName)
-		throws IOException {
-		return new File(fileName).getCanonicalPath();
 	}
 	
 	// エラーハンドル処理.
@@ -248,22 +242,22 @@ public class GenerateCdi {
 			" version: " + VERSION);
 		System.out.println();
 		System.out.println(" target outputPath    : " +
-			getFullPath(javaSourceDir));
+			FileUtil.getFullPath(javaSourceDir));
 		System.out.println(" target classPath     : " +
-			(clazzDir ==null ? "" : getFullPath(clazzDir)));
+			(clazzDir ==null ? "" : FileUtil.getFullPath(clazzDir)));
 		System.out.print(" target jarPath       : ");
 		if(jarDirArray.length > 0) {
-			System.out.println(getFullPath(jarDirArray[0]));
+			System.out.println(FileUtil.getFullPath(jarDirArray[0]));
 			int len = jarDirArray.length;
 			for(int i = 1; i < len; i ++) {
 				System.out.println("                   : " +
-					getFullPath(jarDirArray[i]));
+					FileUtil.getFullPath(jarDirArray[i]));
 			}
 		} else {
 			System.out.println();
 		}
 		System.out.println(" target outNativeConf : " +
-			getFullPath(nativeImgDir));
+			FileUtil.getFullPath(nativeImgDir));
 		
 		System.out.println();
 		
