@@ -5,7 +5,6 @@ import quina.QuinaService;
 import quina.annotation.log.LogDefine;
 import quina.annotation.quina.ConfigElement;
 import quina.annotation.quina.ConfigName;
-import quina.annotation.quina.QuinaServiceScoped;
 import quina.logger.Log;
 import quina.util.collection.TypesClass;
 

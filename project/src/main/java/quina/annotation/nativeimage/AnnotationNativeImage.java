@@ -44,6 +44,7 @@ public class AnnotationNativeImage {
 					try {
 						// 指定されたクラスがローディングされてる場合.
 						Class.forName(n, true, cl);
+						// ロードされた事を示す.
 						loadFlag = true;
 						break;
 					} catch(Exception e) {

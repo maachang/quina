@@ -32,8 +32,8 @@ public class MariaDbNativeConfig {
 	 */
 	@NativeBuildStep
 	public void InitializeBuildConfig() {
-		InitializeBuildItem.get().addItem(
-			"org.mariadb.jdbc.internal.failover.impl.MastersReplicasListener");
+		//InitializeBuildItem.get().addItem(
+		//	"org.mariadb.jdbc.internal.failover.impl.MastersReplicasListener");
 	}
 
 }

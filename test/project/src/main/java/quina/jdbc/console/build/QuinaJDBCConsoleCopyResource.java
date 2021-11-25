@@ -26,10 +26,11 @@ public class QuinaJDBCConsoleCopyResource {
 	 * @return
 	 */
 	@BuildResource(
-		src="quina.jdbc.console.resource",
-		srcMode=ResourceMode.JavaPackage,
-		dest="quina.jdbc.console.resource",
-		destMode=ResourceMode.ClassPackage)
+		srcMode=ResourceMode.JavaPackage
+		,src="quina.jdbc.console.resource"
+		,destMode=ResourceMode.ClassPackage
+		,dest="quina.jdbc.console.resource"
+	)
 	public String[] copyResource() {
 		return COPY_LIST;
 	}

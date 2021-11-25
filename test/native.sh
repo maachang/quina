@@ -59,13 +59,13 @@ OPTIONS="${OPTIONS} -H:DynamicProxyConfigurationFiles=${NATIVE_IMAGE_CONFIG}/pro
 # Native-Imageでコンパイル時に判別する.
 NATIVE_BUILDS="`cat ${NATIVE_IMAGE_CONFIG}/initializeAtBuildTime.txt`"
 if [ "${NATIVE_BUILDS}" != "" ]; then
-    OPTIONS="${OPTIONS} –initialize-at-build-time=${NATIVE_BUILDS}"
+    OPTIONS="${OPTIONS} --initialize-at-build-time=${NATIVE_BUILDS}"
 fi
 
 # Native-Imageコンパイル後実行時に判別する.
 NATIVE_RUNTIMES="`cat ${NATIVE_IMAGE_CONFIG}/initializeAtRunTime.txt`"
-if [ "${NATIVE_BUILDS}" != "" ]; then
-    OPTIONS="${OPTIONS} –initialize-at-run-time=${NATIVE_RUNTIMES}"
+if [ "${NATIVE_RUNTIMES}" != "" ]; then
+    OPTIONS="${OPTIONS} --initialize-at-run-time=${NATIVE_RUNTIMES}"
 fi
 
 rm -f ${NATIVE_OUT}
