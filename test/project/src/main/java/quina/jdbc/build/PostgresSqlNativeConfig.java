@@ -12,9 +12,8 @@ public class PostgresSqlNativeConfig {
 	
 	/**
 	 * この定義が正常に動作するバージョン.
-	 * 未検証.
 	 */
-	public static final String VERSION = "none";
+	public static final String VERSION = "42.3.1";
 	
 	/**
 	 * リフレクション定義.
@@ -22,6 +21,8 @@ public class PostgresSqlNativeConfig {
 	@NativeBuildStep
 	public void reflectionConfig() {
 		ReflectionItem.get()
-		.addItem("org.postgresql.Driver",true);
+		.addItem("org.postgresql.Driver",true)
+		.addItem("org.postgresql.PGProperty",true, false, true)
+		;
 	}
 }

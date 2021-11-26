@@ -60,10 +60,7 @@ public class MariaDbKind implements QuinaJDBCKind {
 			return false;
 		}
 		// URLの接続先がmariadb接続の場合.
-		return Alphabet.startsWith(url, "jdbc:mariadb:") ||
-			// mariadbのJDBCドライバが読み込み可能で、
-			// URLの接続先がmysqlの場合.
-			(getDriver() != null && Alphabet.startsWith(url, "jdbc:mysql:"));
+		return Alphabet.startsWith(url, "jdbc:mariadb:");
 	}
 
 }

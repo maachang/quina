@@ -2,7 +2,6 @@ package quina.jdbc.build;
 
 import quina.annotation.nativeimage.NativeBuildStep;
 import quina.annotation.nativeimage.NativeConfigScoped;
-import quina.nativeimage.InitializeBuildItem;
 import quina.nativeimage.ReflectionItem;
 
 /**
@@ -13,9 +12,8 @@ public class MariaDbNativeConfig {
 	
 	/**
 	 * この定義が正常に動作するバージョン.
-	 * 未検証.
 	 */
-	public static final String VERSION = "none";
+	public static final String VERSION = "2.7.4";
 	
 	/**
 	 * リフレクション定義.
@@ -24,16 +22,8 @@ public class MariaDbNativeConfig {
 	public void reflectionConfig() {
 		ReflectionItem.get()
 		.addItem("org.mariadb.jdbc.Driver",true)
-		.addItem("org.mariadb.jdbc.util.Options",true);
-	}
-	
-	/**
-	 * ビルド時に初期化実行.
-	 */
-	@NativeBuildStep
-	public void InitializeBuildConfig() {
-		//InitializeBuildItem.get().addItem(
-		//	"org.mariadb.jdbc.internal.failover.impl.MastersReplicasListener");
+		.addItem("org.mariadb.jdbc.util.Options",true, false, true)
+		;
 	}
 
 }

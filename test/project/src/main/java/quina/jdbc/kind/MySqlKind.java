@@ -41,15 +41,24 @@ public class MySqlKind implements QuinaJDBCKind {
 				drivers.set(driver);
 				return driver;
 			} catch(Exception e) {
-				try {
-					// 古いドライバ取得.
-					c = Class.forName("com.mysql.jdbc.Driver");
-					driver = (java.sql.Driver)c.getDeclaredConstructor()
-						.newInstance();
-					drivers.set(driver);
-					return driver;
-				} catch(Exception ee) {
-				}
+			}
+			try {
+				// mariaDB用のJDBC.
+				c = Class.forName("org.mariadb.jdbc.Driver");
+				driver = (java.sql.Driver)c.getDeclaredConstructor()
+					.newInstance();
+				drivers.set(driver);
+				return driver;
+			} catch(Exception ee) {
+			}
+			try {
+				// 古いドライバ取得.
+				c = Class.forName("com.mysql.jdbc.Driver");
+				driver = (java.sql.Driver)c.getDeclaredConstructor()
+					.newInstance();
+				drivers.set(driver);
+				return driver;
+			} catch(Exception ee) {
 			}
 			return null;
 		}
