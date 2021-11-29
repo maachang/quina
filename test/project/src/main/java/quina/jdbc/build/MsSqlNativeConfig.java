@@ -14,9 +14,8 @@ public class MsSqlNativeConfig {
 	
 	/**
 	 * この定義が正常に動作するバージョン.
-	 * 未検証.
 	 */
-	public static final String VERSION = "none";
+	public static final String VERSION = "9.4.0.jre11";
 	
 	/**
 	 * リフレクション定義.
@@ -42,6 +41,8 @@ public class MsSqlNativeConfig {
 	@NativeBuildStep
 	public void InitializeBuildConfig() {
 		InitializeBuildItem.get()
-			.addItem("com.microsoft.sqlserver.jdbc.KerbAuthentication");
+			.addItem("com.microsoft.sqlserver.jdbc.KerbAuthentication")
+			.addItem("com.microsoft.sqlserver.jdbc.Util")
+		;
 	}
 }

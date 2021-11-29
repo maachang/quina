@@ -23,7 +23,7 @@ public class JDBCConsoleService {
 	private static final int LOGIN_KEY_LENGTH = 48;
 	
 	// シグニチャー用拡張キー(quinaConsole).
-	private static final String SignatureSrc = "9u!Na@c0n8O1e";
+	private static final String SIGNATURE_SRC = "9u!Na@c0n8O1e";
 	
 	// Read-Writeロックオブジェクト.
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -115,14 +115,11 @@ public class JDBCConsoleService {
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ+abcdefghijklmnopqrstuvwxyz/0123456789";
 	
 	// 4バイトのLoginKeyCodeを取得
-	private static final byte getLoginKey4byteCode(int value, int no) {
-		switch(no) {
-		case 0: return (byte)STRCODE.charAt((value & 0x003f));
-		case 1: return (byte)STRCODE.charAt((value & 0x003f00) >> 8);
-		case 2: return (byte)STRCODE.charAt((value & 0x003f0000) >> 16);
-		}
-		// case 3:
-		return (byte)STRCODE.charAt((value & 0x3f000000) >> 24);
+	private static final void getLoginKey4byteCode(byte[] b, int off, int value) {
+		b[off] =     (byte)STRCODE.charAt((value & 0x0000003f));
+		b[off + 1] = (byte)STRCODE.charAt((value & 0x00003f00) >> 8);
+		b[off + 2] = (byte)STRCODE.charAt((value & 0x003f0000) >> 16);
+		b[off + 3] = (byte)STRCODE.charAt((value & 0x3f000000) >> 24);
 	}
 	
 	// ランダムオブジェクトを取得.
@@ -145,10 +142,8 @@ public class JDBCConsoleService {
 		for(int i = 0; i < len; i ++) {
 			value = rand.nextInt();
 			// １回の情報をセット.
-			ret[cnt ++] = getLoginKey4byteCode(value, 0);
-			ret[cnt ++] = getLoginKey4byteCode(value, 1);
-			ret[cnt ++] = getLoginKey4byteCode(value, 2);
-			ret[cnt ++] = getLoginKey4byteCode(value, 3);
+			getLoginKey4byteCode(ret, cnt, value);
+			cnt += 4;
 		}
 		return ret;
 	}
@@ -248,8 +243,8 @@ public class JDBCConsoleService {
 		loginTimeoutCheck(timeout);
 		// 指定のシグニチャーをSeabassCipher向けのシグニチャー変換.
 		byte[] binarySignature = SeabassCipher.createSignature(
-			signature, SignatureSrc);
-		// デコード変換.
+			signature, SIGNATURE_SRC);
+		// デコード変換して、キーコードとタイムアウト値を取得.
 		byte[] bin = null;
 		try {
 			bin = SeabassCipher.binaryDecode(
@@ -350,7 +345,7 @@ public class JDBCConsoleService {
 		// 生成して返却.
 		return getAuthLoginToken(
 			rand, now, SeabassCipher.createSignature(
-				signature, SignatureSrc),
+				signature, SIGNATURE_SRC),
 			loginKey);
 	}
 	

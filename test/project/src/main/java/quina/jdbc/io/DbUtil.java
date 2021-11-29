@@ -165,6 +165,8 @@ public final class DbUtil {
 		case Types.CHAR:
 		case Types.VARCHAR:
 		case Types.LONGVARCHAR:
+		case Types.NCHAR:
+		case Types.NVARCHAR:
 		case Types.DATALINK:
 			if (v instanceof String) {
 				pre.setString(no, (String) v);
@@ -237,7 +239,9 @@ public final class DbUtil {
 		if (result.getObject(no) == null) {
 			return null;
 		}
-		Object data = null;
+		//System.out.println(
+		//	"no: " + no + " type: " + type + " result: " + result.getObject(no));
+		Object data = result.getObject(no);
 		switch (type) {
 		case Types.BOOLEAN:
 			data = result.getBoolean(no);
@@ -269,6 +273,8 @@ public final class DbUtil {
 		case Types.CHAR:
 		case Types.VARCHAR:
 		case Types.LONGVARCHAR:
+		case Types.NCHAR:
+		case Types.NVARCHAR:
 			data = result.getString(no);
 			break;
 		case Types.DATE:

@@ -183,5 +183,14 @@ public class H2Kind implements QuinaJDBCKind {
 			}
 		}
 	}
-
+	
+	/**
+	 * URLタイプを取得.
+	 * @return boolean trueの場合 [?, &] 区切りでURL処理します.
+	 *                 falseの場合 [;] 区切りでURL処理します.
+	 */
+	@Override
+	public boolean isUrlType() {
+		return false;
+	}
 }

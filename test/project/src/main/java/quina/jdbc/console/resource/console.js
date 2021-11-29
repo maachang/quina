@@ -49,6 +49,7 @@ var newLine = function(count) {
     return ret;
 }
 
+// space.
 var space = function(count) {
     if(isNull(count)) {
         return "&nbsp;"
@@ -108,8 +109,8 @@ var executeSqlButton = function() {
 
 // Clear resultJSON and generate SQL Text Area. 
 var clearResultJSONAndGenerateSqlTextAreaButton = function() {
-    _g.confirmAndViewSqlTextArea = confirmAndViewSqlTextArea;
-    return createButton("c l e a r", "confirmAndViewSqlTextArea()");
+    _g.clearViewSqlTextArea = clearViewSqlTextArea;
+    return createButton("c l e a r", "clearViewSqlTextArea()");
 }
 
 // logout button.
@@ -148,15 +149,10 @@ var viewSqlTextArea = function() {
     });
 }
 
-// confirm and create view sql area.
-var confirmAndViewSqlTextArea = function() {
-    confirmWindow("Is it okay to clear the processing result contents?",
-        function(yes) {
-            if(yes == true) {
-                viewSqlTextArea()
-                setErrorMessage("");
-            }
-        });
+// clear view sql area.
+var clearViewSqlTextArea = function() {
+    viewSqlTextArea()
+    setErrorMessage("");
 }
 
 // dataSource selectBox widht size;

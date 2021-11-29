@@ -77,4 +77,13 @@ public interface QuinaJDBCKind {
 	default void fix(QuinaJDBCConfig config) {
 		
 	}
+	
+	/**
+	 * URLタイプを取得.
+	 * @return boolean trueの場合 [?, &] 区切りでURL処理します.
+	 *                 falseの場合 [;] 区切りでURL処理します.
+	 */
+	default boolean isUrlType() {
+		return true;
+	}
 }

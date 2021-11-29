@@ -211,6 +211,7 @@ public class QuinaDataSource implements DataSource {
 		QuinaJDBCConfig config, String url, String user, String passwd)
 		throws SQLException {
 		Connection ret;
+		//System.out.println("UrlParams: " + url + config.getUrlParams());
 		Properties p = new java.util.Properties();
 		config.appendProperty(p);
 		if (user == null || user.isEmpty()) {

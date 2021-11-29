@@ -98,7 +98,7 @@ public class QuinaJDBCConfig {
 	 * コンフィグ情報を読み込む.
 	 * @param name 定義名を設定します.
 	 * @param conf 対象のコンフィグ定義を設定します.
-	 * @return QuinaJDBCConfig kin情報が返却されます.
+	 * @return QuinaJDBCConfig オブジェクト情報が返却されます.
 	 */
 	public static final QuinaJDBCConfig create(
 		String name, Map<String,Object> conf) {
@@ -113,7 +113,7 @@ public class QuinaJDBCConfig {
 	 * 直接設定.
 	 * @param name Kind名を設定します.
 	 * @param url 接続URLを設定します.
-	 * @return QuinaJDBCConfig kin情報が返却されます.
+	 * @return QuinaJDBCConfig オブジェクト情報が返却されます.
 	 */
 	public static final QuinaJDBCConfig create(
 		String name, String url) {
@@ -124,7 +124,7 @@ public class QuinaJDBCConfig {
 	 * 直接設定.
 	 * @param name Kind名を設定します.
 	 * @param url 接続URLを設定します.
-	 * @return QuinaJDBCConfig kin情報が返却されます.
+	 * @return QuinaJDBCConfig オブジェクト情報が返却されます.
 	 */
 	public static final QuinaJDBCConfig create(
 		String name, String url, QuinaJDBCKind kind) {
@@ -947,10 +947,12 @@ public class QuinaJDBCConfig {
 	
 	// URL定義のパラメータ定義.
 	private static final boolean checkUrlType(String url) {
-		if(MsSqlKind.value().isUrlByKind(url)
-			|| H2Kind.value().isUrlByKind(url)) {
-			// ; でURLパラメータをセット.
-			return false;
+		QuinaJDBCKind kind;
+		final int len = KIND_LIST.length;
+		for(int i = 0; i < len; i ++) {
+			if((kind = KIND_LIST[i]).isUrlByKind(url)) {
+				return kind.isUrlType();
+			}
 		}
 		return true;
 	}

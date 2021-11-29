@@ -42,10 +42,9 @@ OPTIONS="${OPTIONS} -H:+AddAllCharsets"
 # コンパイルエラー時の例外出力.
 OPTIONS="${OPTIONS} -H:+ReportExceptionStackTraces"
 # ビルド時にエラーを発生させないようにする.
-#OPTIONS="${OPTIONS} -H:+ReportUnsupportedElementsAtRuntime"
+OPTIONS="${OPTIONS} -H:+ReportUnsupportedElementsAtRuntime"
 # 不完全なクラスパスでイメージをビルドできるようにします.
 OPTIONS="${OPTIONS} --allow-incomplete-classpath"
-
 
 # nativeImageConfigディレクトリ.
 NATIVE_IMAGE_CONFIG="./nativeImageConfig"
@@ -67,6 +66,7 @@ NATIVE_RUNTIMES="`cat ${NATIVE_IMAGE_CONFIG}/initializeAtRunTime.txt`"
 if [ "${NATIVE_RUNTIMES}" != "" ]; then
     OPTIONS="${OPTIONS} --initialize-at-run-time=${NATIVE_RUNTIMES}"
 fi
+
 
 rm -f ${NATIVE_OUT}
 echo native-image ${OPTIONS}  -cp ${JAR_FILES} ${MAIN_PACKAGE} ${NATIVE_OUT}

@@ -59,5 +59,17 @@ public class MsSqlKind implements QuinaJDBCKind {
 		if(url == null) {
 			return false;
 		}
-		return Alphabet.startsWith(url, "jdbc:sqlserver:");	}
+		return Alphabet.startsWith(url, "jdbc:sqlserver:");
+	}
+	
+	/**
+	 * URLタイプを取得.
+	 * @return boolean trueの場合 [?, &] 区切りでURL処理します.
+	 *                 falseの場合 [;] 区切りでURL処理します.
+	 */
+	@Override
+	public boolean isUrlType() {
+		return false;
+	}
+
 }

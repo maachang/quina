@@ -18,6 +18,7 @@
         }
     }
     **/
+    /**
     // postgresql
     testdb: {
         url: "jdbc:postgresql://localhost:5432/testdb"
@@ -27,6 +28,19 @@
         //,maxConnection: 30
         //,connectionTimeout: 5000
         ,urlParams: {
+        }
+    }
+    **/
+    // [ms]sql server
+    testdb: {
+        url: "jdbc:sqlserver://localhost"
+        ,poolingSize: 15
+        ,user: sa
+        ,password: p3ps1Cap
+        //,maxConnection: 30
+        //,connectionTimeout: 5000
+        ,urlParams: {
+            databaseName: testdb
         }
     }
     /*
