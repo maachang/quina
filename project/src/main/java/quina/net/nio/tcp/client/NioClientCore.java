@@ -359,7 +359,7 @@ public class NioClientCore extends Thread {
 											continue;
 										}
 										// I/Oタイムアウトを更新.
-										em.setIoTimeout();
+										em.updateTime();
 										// 送信の残り（未送信バイナリ）が存在する場合.
 										sl.evacuate(buf);
 									}
@@ -385,7 +385,7 @@ public class NioClientCore extends Thread {
 										wem.setReceiveData(em, rb);
 										rb = null;
 										// I/Oタイムアウトを更新.
-										em.setIoTimeout();
+										em.updateTime();
 										// ワーカーサービスに登録.
 										workerService.push(wem);
 									}

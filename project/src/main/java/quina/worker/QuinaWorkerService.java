@@ -1,9 +1,11 @@
 package quina.worker;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.QuinaConfig;
 import quina.QuinaService;
+import quina.annotation.cdi.AnnotationCdiConstants;
 import quina.exception.QuinaException;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
@@ -13,13 +15,15 @@ import quina.util.collection.TypesClass;
  * QuinaWorkerサービス.
  */
 public class QuinaWorkerService
-	implements QuinaService {
+	implements QuinaService, QuinaLoopManager {
 	// Quinaワーカーハンドラ.
 	private QuinaWorkerHandler handle;
 	// Quinaワーカー実行用要素群.
 	private ObjectList<QuinaWorkerCallHandler> callHandles;
 	// Quinaワーカーマネージャ.
 	private QuinaWorkerManager manager;
+	// QuinaLoopスレッド.
+	private QuinaLoopThread loopThread = new QuinaLoopThread();
 
 	// コンフィグ定義.
 	private final QuinaConfig config = new QuinaConfig(
@@ -203,6 +207,19 @@ public class QuinaWorkerService
 		return false;
 	}
 	
+	/**
+	 * ループ実行要素の登録.
+	 * @param em ループ実行用の要素を設定します.
+	 */
+	public void regLoopElement(QuinaLoopElement em) {
+		lock.writeLock().lock();
+		try {
+			loopThread.regLoopElement(em);
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
+	
 	@Override
 	public boolean loadConfig(String configDir) {
 		// 既にサービスが開始している場合はエラー.
@@ -243,6 +260,7 @@ public class QuinaWorkerService
 				config.getInt("workerLength"), handle,
 				toArrayCallHandle());
 			this.manager.startThread();
+			this.loopThread.startThread();
 		} catch(QuinaException qe) {
 			stopService();
 			throw qe;
@@ -269,8 +287,18 @@ public class QuinaWorkerService
 	public boolean isStarted() {
 		lock.readLock().lock();
 		try {
-			if(manager != null) {
-				return manager.isStartupThread();
+			if(manager != null && loopThread != null) {
+				if(manager != null) {
+					if(!manager.isStartupThread()) {
+						return false;
+					}
+				}
+				if(loopThread != null) {
+					if(!loopThread.isStartupThread()) {
+						return false;
+					}
+				}
+				return true;
 			}
 			return false;
 		} finally {
@@ -281,14 +309,24 @@ public class QuinaWorkerService
 	@Override
 	public boolean awaitStartup(long timeout) {
 		QuinaWorkerManager m = null;
+		QuinaLoopThread lt;
 		lock.readLock().lock();
 		try {
 			m = manager;
+			lt = loopThread;
 		} finally {
 			lock.readLock().unlock();
 		}
 		if(m != null) {
+			if(lt != null) {
+				if(m.awaitStartup(timeout)) {
+					return lt.awaitStartup(timeout);
+				}
+				return false;
+			}
 			return m.awaitStartup(timeout);
+		} else if(lt != null) {
+			return lt.awaitStartup(timeout);
 		}
 		return true;
 	}
@@ -301,6 +339,9 @@ public class QuinaWorkerService
 			if(manager != null) {
 				manager.stopThread();
 			}
+			if(loopThread != null) {
+				loopThread.stopThread();
+			}
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -312,7 +353,14 @@ public class QuinaWorkerService
 		lock.readLock().lock();
 		try {
 			if(manager != null) {
-				return manager.isExitThread();
+				if(!manager.isExitThread()) {
+					return false;
+				}
+			}
+			if(loopThread != null) {
+				if(!loopThread.isExitThread()) {
+					return false;
+				}
 			}
 			return true;
 		} finally {
@@ -323,14 +371,24 @@ public class QuinaWorkerService
 	@Override
 	public boolean awaitExit(long timeout) {
 		QuinaWorkerManager m = null;
+		QuinaLoopThread lt;
 		lock.readLock().lock();
 		try {
 			m = manager;
+			lt = loopThread;
 		} finally {
 			lock.readLock().unlock();
 		}
+		boolean ret = false;
 		if(m != null) {
-			if(m.awaitExit(timeout)) {
+			if(lt != null) {
+				if(m.awaitExit(timeout)) {
+					ret = lt.awaitExit(timeout);
+				}
+			} else {
+				ret = m.awaitExit(timeout);
+			}
+			if(ret) {
 				lock.writeLock().lock();
 				try {
 					manager = null;
@@ -339,7 +397,17 @@ public class QuinaWorkerService
 				}
 				return true;
 			}
-			return false;
+		} else if(lt != null) {
+			ret = lt.awaitExit(timeout);
+			if(ret) {
+				lock.writeLock().lock();
+				try {
+					manager = null;
+				} finally {
+					lock.writeLock().unlock();
+				}
+				return true;
+			}
 		}
 		return true;
 	}
@@ -365,5 +433,46 @@ public class QuinaWorkerService
 				"The service has not started.");
 		}
 		manager.push(em);
+	}
+	
+	/**
+	 * QuinaLoopScopedアノテーション自動読み込み実行用クラス名.
+	 */
+	public static final String AUTO_READ_QUINA_LOOP_ELEMENT_CLASS = "LoadQuinaLoopElement";
+
+	/**
+	 * QuinaLoopScopedアノテーション自動読み込み実行用メソッド名.
+	 */
+	public static final String AUTO_READ_QUINA_LOOP_ELEMENT_METHOD = "load";
+	
+	/**
+	 * AutoQuinaLoopElement実行.
+	 * @return void このオブジェクトが返却されます.
+	 */
+	public void autoQuinaLoopElement() {
+		java.lang.Class<?> clazz;
+		java.lang.reflect.Method method;
+		try {
+			// AutoRoute実行用のクラスを取得.
+			clazz = Class.forName(
+				AnnotationCdiConstants.CDI_PACKAGE_NAME + "." +
+					AUTO_READ_QUINA_LOOP_ELEMENT_CLASS);
+			// 実行メソッドを取得.
+			method = clazz.getMethod(AUTO_READ_QUINA_LOOP_ELEMENT_METHOD);
+		} catch(Exception e) {
+			// クラスローディングやメソッド読み込みに失敗した場合は処理終了.
+			return;
+		}
+		try {
+			// Methodをstatic実行.
+			method.invoke(null);
+		} catch(InvocationTargetException it) {
+			// メソッド実行でエラーの場合はエラー返却.
+			throw new QuinaException(it.getCause());
+		} catch(Exception e) {
+			// メソッド実行でエラーの場合はエラー返却.
+			throw new QuinaException(e);
+		}
+		return;
 	}
 }

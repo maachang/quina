@@ -26,6 +26,7 @@ import quina.util.Env;
 import quina.util.FileUtil;
 import quina.util.TwoStepsFlag;
 import quina.util.collection.QuinaMap;
+import quina.worker.QuinaLoopManager;
 import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerService;
 
@@ -225,6 +226,9 @@ public final class Quina {
 			// 共通ワーカーハンドラをセット.
 			this.workerService.setHandler(
 				new QuinaContextHandler());
+			
+			// QuinaLoopScopedアノテーションを反映.
+			this.workerService.autoQuinaLoopElement();
 			
 			// ワーカーコールハンドラをセット.
 			int len = QuinaConstants.REG_WORKER_CALL_HANDLES.length;
@@ -556,6 +560,14 @@ public final class Quina {
 	public Router getRouter() {
 		_checkNoneExecuteInit();
 		return router;
+	}
+	
+	/**
+	 * QuinaLoopManagerを取得.
+	 * @return QuinaLoopManager QuinaLoopManagerが返却されます.
+	 */
+	public QuinaLoopManager getQuinaLoopManager() {
+		return workerService;
 	}
 	
 	/**

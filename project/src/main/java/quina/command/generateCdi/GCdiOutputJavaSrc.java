@@ -6,6 +6,7 @@ import static quina.command.generateCdi.GCdiConstants.CDI_HANDLE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
+import static quina.command.generateCdi.GCdiConstants.QUINA_LOOP_SCOPED_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 
 import java.io.BufferedWriter;
@@ -28,6 +29,7 @@ import quina.annotation.proxy.ProxyScopedManager;
 import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
 import quina.util.StringUtil;
+import quina.worker.QuinaWorkerService;
 
 /**
  * Cdiを行うJavaソースコードを出力.
@@ -693,4 +695,82 @@ public class GCdiOutputJavaSrc {
 			}
 		}
 	}
+	
+	
+	/**
+	 * 抽出したQuinaLoopScoped定義されたオブジェクトをJavaファイルに出力.
+	 * @param outSourceDirectory 出力先ディレクトリを設定します.
+	 * @param params GenerateGciパラメータを設定します.
+	 * @throws IOException I/O例外.
+	 * @throws ClassNotFoundException クラス非存在例外.
+	 */
+	public static final void quinaLoopScoped(String outSourceDirectory,
+		GCdiParams params)
+		throws IOException, ClassNotFoundException {
+		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		
+		// ソース出力先ディレクトリを作成.
+		new File(outDir).mkdirs();
+		
+		String outFileName = outDir + "/" + QUINA_LOOP_SCOPED_SOURCE_NAME;
+		BufferedWriter w = null;
+		try {
+			// 出力可能かチェック.
+			isOutClassList(params.hndList, params);
+			// ソースコードを出力.
+			w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFileName)));
+			println(w, 0, "package " + AnnotationCdiConstants.CDI_PACKAGE_NAME + ";");
+			println(w, 0, "");
+			println(w, 0, "import quina.Quina;");
+			println(w, 0, "import quina.worker.QuinaLoopManager;");
+			println(w, 0, "");
+			println(w, 0, "/**");
+			println(w, 0, " * QuinaLoopScoped Annotation Registers the defined service object.");
+			println(w, 0, " */");
+			println(w, 0, "public final class " +
+				QuinaWorkerService.AUTO_READ_QUINA_LOOP_ELEMENT_CLASS + " {");
+			println(w, 1, "private " + 
+				QuinaWorkerService.AUTO_READ_QUINA_LOOP_ELEMENT_CLASS + "() {}");
+			
+			println(w, 1, "");
+			println(w, 1, "/**");
+			println(w, 1, " * QuinaLoopScoped Annotation Registers the define object.");
+			println(w, 1, " *");
+			println(w, 1, " * @exception Exception If the registration fails.");
+			println(w, 1, " */");
+			println(w, 1, "public static final void " +
+				QuinaWorkerService.AUTO_READ_QUINA_LOOP_ELEMENT_METHOD + "() throws Exception {");
+			
+			println(w, 2, "");
+			println(w, 2, "// QuinaLoopManager to be registered.");
+			println(w, 2, "final QuinaLoopManager loopMan = Quina.get().getQuinaLoopManager();");
+			String clazzName;
+			final int len = params.loopList.size();
+			for(int i = 0; i < len; i ++) {
+				clazzName = params.loopList.get(i);
+				// pubilcのクラス定義のみ対象とする.
+				if(isPublicClass(clazzName, params)) {
+					println(w, 2, "");
+					println(w, 2, "// Register the \""+ clazzName + "\"");
+					println(w, 2, "// object in the @QuinaLoopScoped.");
+					println(w, 2, "loopMan.regLoopElement(new " + clazzName + "());");
+				}
+			}
+			
+			println(w, 1, "}");
+			
+			println(w, 0, "}");
+			
+			w.close();
+			w = null;
+			
+		} finally {
+			if(w != null) {
+				try {
+					w.close();
+				} catch(Exception e) {}
+			}
+		}
+	}
+
 }

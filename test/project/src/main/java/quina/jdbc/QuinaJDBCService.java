@@ -39,7 +39,7 @@ public class QuinaJDBCService implements QuinaService {
 		new IndexKeyValueList<String, QuinaDataSource>();
 	
 	// タイムアウトスレッド.
-	private QuinaJDBCTimeoutThread timeoutThread;
+	private QuinaJDBCTimeoutLoopElement timeoutLoopElement;
 	
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
@@ -139,11 +139,11 @@ public class QuinaJDBCService implements QuinaService {
 			// TimeoutThreadを生成して開始して、
 			// 各DataSourceに登録する.
 			if(dataSources.size() > 0) {
-				// TimeoutThreadを生成.
-				timeoutThread = new QuinaJDBCTimeoutThread(
+				// timeoutLoopElementを生成.
+				timeoutLoopElement = new QuinaJDBCTimeoutLoopElement(
 					dataSources, config.getLong("timeout"));
-				// TimeoutThreadを開始.
-				timeoutThread.startThread();
+				// timeoutLoopElementを登録.
+				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 			}
 		} finally {
 			lock.writeLock().unlock();
@@ -153,100 +153,15 @@ public class QuinaJDBCService implements QuinaService {
 	
 	@Override
 	public boolean isStarted() {
-		lock.readLock().lock();
-		try {
-			if(timeoutThread != null) {
-				return timeoutThread.isStartupThread();
-			}
-			return startFlag.get();
-		} finally {
-			lock.readLock().unlock();
-		}
+		return startFlag.get();
 	}
 	
 	@Override
-	public boolean awaitStartup(long timeout) {
-		int len = 0;
-		QuinaJDBCTimeoutThread q = null;
-		lock.readLock().lock();
-		try {
-			len = dataSources.size();
-			q = timeoutThread;
-		} finally {
-			lock.readLock().unlock();
-		}
-		boolean ret = true;
-		// timeoutThreadが存在し
-		// DataSourceが１件以上存在する場合.
-		if(q != null && len > 0) {
-			// TimeoutThradが開始してない場合は
-			// false返却.
-			if(!q.awaitStartup(timeout)) {
-				ret = false;
-			}
-		}
-		return ret;
-	}
-
-	@Override
 	public void stopService() {
-		lock.writeLock().lock();
-		try {
-			// DataSoutceに登録されてる内容を削除.
-			if(dataSources.size() > 0) {
-				// TimeoutThreadを停止処理.
-				if(timeoutThread != null) {
-					timeoutThread.stopThread();
-				}
-				final int len = dataSources.size();
-				for(int i = 0; i < len; i ++) {
-					dataSources.valueAt(i).destroy();
-				}
-			}
-		} finally {
-			lock.writeLock().unlock();
-		}
 		if(startFlag.get()) {
 			log.info("@ stopService " + this.getClass().getName());
 		}
 		startFlag.set(false);
-	}
-
-	@Override
-	public boolean isExit() {
-		lock.readLock().lock();
-		try {
-			if(timeoutThread != null) {
-				return timeoutThread.isStopThread();
-			}
-			return true;
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
-
-	@Override
-	public boolean awaitExit(long timeout) {
-		long len = 0;
-		QuinaJDBCTimeoutThread q = null;
-		lock.readLock().lock();
-		try {
-			len = dataSources.size();
-			q = timeoutThread;
-		} finally {
-			lock.readLock().unlock();
-		}
-		boolean ret = true;
-		// timeoutThreadが存在し
-		// DataSourceが１件以上存在する場合.
-		if(q != null && len > 0) {
-			// TimeoutThradが終了してない場合は
-			// false返却.
-			if(!q.awaitExit(timeout)) {
-				ret = false;
-			}
-		}
-		return ret;
 	}
 
 	@Override

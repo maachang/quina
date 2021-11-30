@@ -31,6 +31,7 @@
         }
     }
     **/
+    /**
     // [ms]sql server
     testdb: {
         url: "jdbc:sqlserver://localhost"
@@ -43,7 +44,7 @@
             databaseName: testdb
         }
     }
-    /*
+    **/
     // H2.
     testdb: {
         // 組み込みモード実行.
@@ -67,5 +68,5 @@
             ,UNDO_LOG: 1            // 0: ロールバックを無効, 1: ロールバック有効.
             ,MODE: MYSQL            // mysqlモード.
         }
-    }*/
+    }
 }

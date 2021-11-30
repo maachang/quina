@@ -3,12 +3,15 @@ package quina.http.session;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
 import quina.exception.QuinaException;
 import quina.util.BooleanUtil;
+import quina.util.DateUtil;
 import quina.util.NumberUtil;
 import quina.util.StringUtil;
 import quina.util.collection.IndexKeyValueList;
+import quina.util.collection.TypesClass;
 
 /**
  * セッションストレージ.
@@ -39,7 +42,8 @@ public class SessionStorage {
 	// 引数チェック.
 	private static final void checkArgs(String key, Object value) {
 		if(key == null || value == null || (key = key.trim()).isEmpty()) {
-			throw new QuinaException("The specified argument is null.");
+			throw new QuinaException(
+				"The specified argument is null.");
 		}
 	}
 	
@@ -119,6 +123,16 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 */
 	public void set(String key, String value) {
+		checkArgs(key, value);
+		storage.put(key, value);
+	}
+	
+	/**
+	 * アイテムをセット
+	 * @param key キー名を設定します.
+	 * @param value セット対象の要素を設定します.
+	 */
+	public void set(String key, Date value) {
 		checkArgs(key, value);
 		storage.put(key, value);
 	}
@@ -212,11 +226,35 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return String 要素が返却されます.
 	 */
-	public String get(String key) {
+	public String getString(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
 		return StringUtil.parseString(storage.get(key));
+	}
+	
+	/**
+	 * アイテムを取得
+	 * @param key キー名を設定します.
+	 * @return Date 要素が返却されます.
+	 */
+	public Date getDate(String key) {
+		if(key == null || (key = key.trim()).isEmpty()) {
+			return null;
+		}
+		return DateUtil.parseDate(storage.get(key));
+	}
+	
+	/**
+	 * 要素のタイプを取得.
+	 * @param key キー名を設定します.
+	 * @return TypesClass 要素のタイプが返却されます.
+	 */
+	public TypesClass getType(String key) {
+		if(key == null || (key = key.trim()).isEmpty()) {
+			return null;
+		}
+		return getTypesClass(storage.get(key));
 	}
 	
 	/**
@@ -263,6 +301,32 @@ public class SessionStorage {
 	 */
 	protected void updateAccessTime() {
 		accessTime = System.currentTimeMillis();
+	}
+	
+	// 指定オブジェクトのタイプクラスを取得.
+	protected TypesClass getTypesClass(Object o) {
+		if(o == null) {
+			return null;
+		} else if(o instanceof Boolean) {
+			return TypesClass.Boolean;
+		} else if(o instanceof Byte) {
+			return TypesClass.Byte;
+		} else if(o instanceof Short) {
+			return TypesClass.Short;
+		} else if(o instanceof Integer) {
+			return TypesClass.Integer;
+		} else if(o instanceof Long) {
+			return TypesClass.Long;
+		} else if(o instanceof Float) {
+			return TypesClass.Float;
+		} else if(o instanceof Double) {
+			return TypesClass.Double;
+		} else if(o instanceof String) {
+			return TypesClass.String;
+		} else if(o instanceof Date) {
+			return TypesClass.Date;
+		}
+		return TypesClass.String;
 	}
 	
 	/**

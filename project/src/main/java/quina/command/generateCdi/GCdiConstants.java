@@ -12,10 +12,12 @@ import quina.annotation.cdi.ServiceScoped;
 import quina.annotation.proxy.AnnotationProxyScopedConstants;
 import quina.annotation.proxy.ProxyScoped;
 import quina.annotation.proxy.ProxyScopedManager;
+import quina.annotation.quina.QuinaLoopScoped;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.annotation.route.AnyRoute;
 import quina.annotation.route.ErrorRoute;
 import quina.annotation.route.Route;
+import quina.worker.QuinaWorkerService;
 
 /**
  * GenerateCdi定義関連.
@@ -84,6 +86,13 @@ public class GCdiConstants {
 		ProxyScopedManager.AUTO_READ_PROXY_SCOPED_CLASS + ".java";
 	
 	/**
+	 * QuinaLoopScoped出力先Javaソースファイル名.
+	 */
+	public static final String QUINA_LOOP_SCOPED_SOURCE_NAME =
+		QuinaWorkerService.AUTO_READ_QUINA_LOOP_ELEMENT_CLASS + ".java";
+
+	
+	/**
 	 * 出力ソースファイル群.
 	 */
 	public static final String[] OUTPUT_SOURCE_ARRAY = new String[] {
@@ -93,6 +102,7 @@ public class GCdiConstants {
 		,QUINA_SERVICE_SOURCE_NAME
 		,CDI_HANDLE_SOURCE_NAME
 		,PROXY_SCOPED_SOURCE_NAME
+		,QUINA_LOOP_SCOPED_SOURCE_NAME
 	};
 	
 	/**
@@ -112,6 +122,7 @@ public class GCdiConstants {
 			|| c.isAnnotationPresent(ErrorRoute.class)
 			|| c.isAnnotationPresent(QuinaServiceScoped.class)
 			|| c.isAnnotationPresent(CdiHandleScoped.class)
+			|| c.isAnnotationPresent(QuinaLoopScoped.class)
 			|| GCdiUtil.isAnnotation(c, ServiceScoped.class)
 			|| GCdiUtil.isAnnotation(c, CdiScoped.class)
 		;

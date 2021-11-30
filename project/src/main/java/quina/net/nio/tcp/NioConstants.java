@@ -62,9 +62,6 @@ public final class NioConstants {
 	 */
 	private static final int TEMP_FILENAME_LENGTH = 20;
 
-	// 無通信が続くタイムアウト値.
-	private static final long DEF_TIMEOUT = 30000L;
-
 	// NioDebugMode.
 	private static final Bool nioDebugMode = new Bool(false);
 
@@ -84,9 +81,6 @@ public final class NioConstants {
 	private static final Number32 tempFileNameLength = new Number32(
 		NioConstants.TEMP_FILENAME_LENGTH);
 	
-	// 無通信が続くタイムアウト値.
-	private static final Number64 timeout = new Number64(DEF_TIMEOUT);
-
 	/**
 	 * NioDebugモードを取得.
 	 * @return boolean trueの場合、デバッグモードです.
@@ -173,15 +167,18 @@ public final class NioConstants {
 		NioConstants.tempFileNameLength.set(tempFileNameLength);
 	}
 	
+	// 無通信が続くタイムアウト値.
+	private static final long DEF_TIMEOUT = 30000L;
+
+	
+	// 無通信が続くタイムアウト値.
+	private static final Number64 timeout = new Number64(DEF_TIMEOUT);
+	
 	/**
 	 * 無通信が続くタイムアウト値を設定.
 	 * @param time 無通信が続くタイムアウト値を設定します.
 	 */
 	public static final void setTimeout(long time) {
-		if(time < 0) {
-			// 0の場合タイムアウトなし.
-			time = 0;
-		}
 		timeout.set(time);
 	}
 	
@@ -191,5 +188,27 @@ public final class NioConstants {
 	 */
 	public static final long getTimeout() {
 		return timeout.get();
+	}
+	
+	// デフォルトのタイムアウト監視に移行するタイム（ミリ秒）.
+	private static final long DEF_DOUBT_TIME = 2500L;
+	
+	// タイムアウト監視に移行するタイム（ミリ秒）.
+	private static final Number64 doubtTime = new Number64(DEF_DOUBT_TIME);
+	
+	/**
+	 * タイムアウト監視に移行するタイム（ミリ秒）を設定.
+	 * @param time タイムアウト監視に移行するタイム（ミリ秒）を設定します.
+	 */
+	public static final void setDoubtTime(long time) {
+		doubtTime.set(time);
+	}
+	
+	/**
+	 * タイムアウト監視に移行するタイム（ミリ秒）を取得.
+	 * @return long タイムアウト監視に移行するタイム（ミリ秒）が返却されます.
+	 */
+	public static final long getDoubtTime() {
+		return doubtTime.get();
 	}
 }

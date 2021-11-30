@@ -41,10 +41,10 @@ public enum TypesClass {
 		"date", false, false, false, false, true,
 		false, false)
 	,List(TypesConstants.TYPENO_LIST,
-		"date", false, false, false, false, false,
+		"list", false, false, false, false, false,
 		true, false)
 	,Map(TypesConstants.TYPENO_MAP,
-		"date", false, false, false, false, false,
+		"map", false, false, false, false, false,
 		false, true)
 	;
 	

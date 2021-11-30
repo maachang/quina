@@ -14,7 +14,6 @@ import quina.jdbc.io.AbstractStatement;
 import quina.jdbc.io.IoStatement;
 import quina.jdbc.io.QueryStatement;
 import quina.jdbc.io.WriteBatchStatement;
-import quina.util.AtomicNumber;
 import quina.util.AtomicNumber64;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
@@ -35,9 +34,6 @@ public abstract class QuinaConnection
 	// 最終プーリング時間.
 	protected final AtomicNumber64 lastPoolingTime =
 		new AtomicNumber64();
-	
-	// タイムアウト識別ID.
-	private final AtomicNumber timeoutId = new AtomicNumber(-1);
 	
 	// プーリング対象のデータソース.
 	private QuinaDataSource dataSource;
@@ -117,7 +113,7 @@ public abstract class QuinaConnection
 		}
 		closeFlag.set(true);
 		lastPoolingTime.set(
-			QuinaJDBCTimeoutThread.DESTROY_TIMEOUT);
+			QuinaJDBCTimeoutLoopElement.DESTROY_TIMEOUT);
 		closeIoStatement();
 		Connection c = connection;
 		connection = null;
@@ -147,7 +143,7 @@ public abstract class QuinaConnection
 		}
 		// タイムアウト監視しない.
 		lastPoolingTime.set(
-			QuinaJDBCTimeoutThread.NONE_TIMEOUT);
+			QuinaJDBCTimeoutLoopElement.NONE_TIMEOUT);
 		// 仮オープン.
 		closeFlag.set(false);
 		// アクセス可能かチェック.
@@ -197,22 +193,6 @@ public abstract class QuinaConnection
 	 */
 	protected long getLastPoolingTime() {
 		return lastPoolingTime.get();
-	}
-	
-	/**
-	 * タイムアウトIDを設定.
-	 * @param id タイムアウトIDを設定します.
-	 */
-	protected void setTimeoutId(int id) {
-		timeoutId.set(id);
-	}
-	
-	/**
-	 * タイムアウトIDを取得.
-	 * @return int タイムアウトIDが返却されます.
-	 */
-	protected int getTimeoutId() {
-		return timeoutId.get();
 	}
 	
 	/**

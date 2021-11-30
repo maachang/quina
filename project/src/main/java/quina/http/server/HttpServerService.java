@@ -3,6 +3,7 @@ package quina.http.server;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.QuinaUtil;
@@ -10,7 +11,6 @@ import quina.exception.QuinaException;
 import quina.http.HttpElement;
 import quina.http.MimeTypes;
 import quina.net.nio.tcp.NioConstants;
-import quina.net.nio.tcp.NioTimeoutThread;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.server.NioServerConstants;
 import quina.net.nio.tcp.server.NioServerCore;
@@ -19,6 +19,7 @@ import quina.util.collection.QuinaMap;
 import quina.util.collection.TypesClass;
 import quina.worker.QuinaWorkerConstants;
 import quina.worker.QuinaWorkerService;
+import quina.worker.timeout.TimeoutLoopElement;
 
 /**
  * HttpServerサービス.
@@ -53,6 +54,8 @@ public class HttpServerService implements QuinaService {
 		,"recvTmpBuffer", TypesClass.Integer, NioConstants.getByteBufferLength()
 		// 受信タイムアウト値.
 		,"timeout", TypesClass.Long, NioConstants.getTimeout()
+		// 受信タイムアウト監視移行時間.
+		,"doubtTime", TypesClass.Long, NioConstants.getDoubtTime()
 		// ４０４エラーのレスポンスタイプ.
 		,"error404RESTful", TypesClass.Boolean, HttpServerConstants.isError404RESTful()
 	);
@@ -60,14 +63,11 @@ public class HttpServerService implements QuinaService {
 	// Nioサーバコア.
 	private NioServerCore core = null;
 	
-	// MimeTypes.
-	private final MimeTypes mimeTypes = MimeTypes.getInstance();
-
 	// QuinaWorkerService.
 	private QuinaWorkerService quinaWorkerService = null;
 	
-	// NioTimeoutThread.
-	private NioTimeoutThread nioTimeoutThread = null;
+	// TimeoutThread.
+	private TimeoutLoopElement timeoutLoopElement = null;
 	
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
@@ -88,7 +88,7 @@ public class HttpServerService implements QuinaService {
 	 * @param element HttpElementを設定.
 	 */
 	protected void pushTimeoutElement(HttpElement element) {
-		nioTimeoutThread.offer(element);
+		timeoutLoopElement.offer(element);
 	}
 
 	@Override
@@ -119,7 +119,7 @@ public class HttpServerService implements QuinaService {
 				configDir, MIME_CONFIG_FILE);
 			// jsonが取得できた場合.
 			if(json != null) {
-				if(mimeTypes.setMimeTypes(json)) {
+				if(MimeTypes.getInstance().setMimeTypes(json)) {
 					ret = true;
 				}
 			}
@@ -167,23 +167,22 @@ public class HttpServerService implements QuinaService {
 				// サーバーコアを設定.
 				this.core = cr;
 				// NioTimeoutThreadを生成.
-				this.nioTimeoutThread = new NioTimeoutThread(
+				this.timeoutLoopElement = new TimeoutLoopElement(
 					config.getLong("timeout"),
+					config.getLong("doubtTime"),
 					new HttpServerTimeoutHandler());
-				// NioTimeoutThread管理用のスレッド開始.
-				nioTimeoutThread.startThread();
+				// nioTimeoutLoopElementをQuinaLoopThreadに登録.
+				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 				// サーバスレッド開始.
 				cr.startThread();
 			} catch(QuinaException qe) {
 				stopService();
-				nioTimeoutThread.stopThread();
 				if(server != null) {
 					try {server.close();} catch(Exception ee) {}
 				}
 				throw qe;
 			} catch(Exception e) {
 				stopService();
-				nioTimeoutThread.stopThread();
 				if(server != null) {
 					try {server.close();} catch(Exception ee) {}
 				}
@@ -198,10 +197,8 @@ public class HttpServerService implements QuinaService {
 	public boolean isStarted() {
 		lock.readLock().lock();
 		try {
-			if(core != null &&
-				nioTimeoutThread != null) {
-				return core.isStartupThread() &&
-					nioTimeoutThread.isStartupThread();
+			if(core != null) {
+				return core.isStartupThread();
 			}
 			return false;
 		} finally {
@@ -212,22 +209,15 @@ public class HttpServerService implements QuinaService {
 	@Override
 	public boolean awaitStartup(long timeout) {
 		NioServerCore c = null;
-		NioTimeoutThread et = null;
 		lock.readLock().lock();
 		try {
 			c = core;
-			et = nioTimeoutThread;
 		} finally {
 			lock.readLock().unlock();
 		}
 		boolean ret = true;
 		if(c != null) {
 			if(!c.awaitStartup(timeout)) {
-				ret = false;
-			}
-		}
-		if(et != null) {
-			if(!et.awaitStartup(timeout)) {
 				ret = false;
 			}
 		}
@@ -242,9 +232,6 @@ public class HttpServerService implements QuinaService {
 			if(core != null) {
 				core.stopThread();
 			}
-			if(nioTimeoutThread != null) {
-				nioTimeoutThread.stopThread();
-			}
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -255,10 +242,8 @@ public class HttpServerService implements QuinaService {
 	public boolean isExit() {
 		lock.readLock().lock();
 		try {
-			if(core != null &&
-				nioTimeoutThread != null) {
-				return core.isStopThread() &&
-					nioTimeoutThread.isStopThread();
+			if(core != null) {
+				return core.isStopThread();
 			}
 			return true;
 		} finally {
@@ -269,24 +254,15 @@ public class HttpServerService implements QuinaService {
 	@Override
 	public boolean awaitExit(long timeout) {
 		NioServerCore c = null;
-		NioTimeoutThread et = null;
 		lock.readLock().lock();
 		try {
 			c = core;
-			et = nioTimeoutThread;
 		} finally {
 			lock.readLock().unlock();
 		}
 		boolean ret = true;
-		if(c != null) {
-			if(!c.awaitExit(timeout)) {
-				ret = false;
-			}
-		}
-		if(et != null) {
-			if(!et.awaitExit(timeout)) {
-				ret = false;
-			}
+		if(c != null && !c.awaitExit(timeout)) {
+			ret = false;
 		}
 		return ret;
 	}
@@ -296,19 +272,6 @@ public class HttpServerService implements QuinaService {
 		lock.readLock().lock();
 		try {
 			return config;
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
-	
-	/**
-	 * MimeTypeを取得.
-	 * @return
-	 */
-	public MimeTypes getMimeTypes() {
-		lock.readLock().lock();
-		try {
-			return mimeTypes;
 		} finally {
 			lock.readLock().unlock();
 		}

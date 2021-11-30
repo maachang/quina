@@ -35,6 +35,28 @@ public class HttpSessionService implements QuinaService {
 	// ランダムオブジェクト(ThreadLocal).
 	private final ThreadLocal<Xor128> randLocal = new ThreadLocal<Xor128>();
 
+	@Override
+	public QuinaConfig getConfig() {
+		return config;
+	}
+
+	@Override
+	public boolean isStartService() {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
+	}
+
+	@Override
+	public void startService() {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+
+	@Override
+	public void stopService() {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
 	
 	
 }

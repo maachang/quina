@@ -11,11 +11,12 @@ import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioAtomicValues.Number32;
 import quina.net.nio.tcp.NioAtomicValues.Number64;
 import quina.util.Flag;
+import quina.worker.timeout.TimeoutElement;
 
 /**
  * Nio要素.
  */
-public class NioElement implements Closeable {
+public class NioElement implements TimeoutElement, Closeable {
 	/**
 	 * 割り当てられてないワーカースレッド.
 	 */
@@ -25,7 +26,7 @@ public class NioElement implements Closeable {
 	protected final Flag connectionFlag = new Flag(false);
 	protected final Number32 ops = new Number32(SelectionKey.OP_READ);
 	protected final Number32 workerNo = new Number32(NON_WORKER_NO);
-	protected final Bool regIoTimeout = new Bool(false);
+	protected final Bool regTimeout = new Bool(false);
 	protected final Number64 ioTime = new Number64(
 		System.currentTimeMillis());
 	protected final Bool sendFlag = new Bool(false);
@@ -247,25 +248,9 @@ public class NioElement implements Closeable {
 	}
 	
 	/**
-	 * IoTimeout監視を登録.
-	 * @return boolean true の場合既に登録されています.
-	 */
-	public boolean regIoTimeout() {
-		return regIoTimeout.setToGetBefore(true);
-	}
-	
-	/**
-	 * IoTimeout監視が登録されてるか取得.
-	 * @return boolean true の場合既に登録されています.
-	 */
-	public boolean isRegIoTimeout() {
-		return regIoTimeout.get();
-	}
-	
-	/**
 	 * I/Oタイムアウト値を設定.
 	 */
-	public void setIoTimeout() {
+	public void updateTime() {
 		ioTime.set(System.currentTimeMillis());
 	}
 	
@@ -273,8 +258,18 @@ public class NioElement implements Closeable {
 	 * I/Oタイムアウト値を取得.
 	 * @return long I/Oタイムアウト値を取得.
 	 */
-	public long getIoTimeout() {
+	@Override
+	public long getTime() {
 		return ioTime.get();
+	}
+	
+	/**
+	 * IoTimeout監視を登録.
+	 * @return boolean true の場合既に登録されています.
+	 */
+	@Override
+	public boolean regTimeout() {
+		return regTimeout.setToGetBefore(true);
 	}
 	
 	/**

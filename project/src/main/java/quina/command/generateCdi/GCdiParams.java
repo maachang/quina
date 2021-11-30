@@ -34,6 +34,9 @@ public class GCdiParams {
 	// ProxyScoped.
 	public final List<String> prxList = new ArrayList<String>();
 	
+	// QuinaLoopScoped.
+	public final List<String> loopList = new ArrayList<String>();
+	
 	// classLoader.
 	public ClassLoader cl;
 	
@@ -75,7 +78,7 @@ public class GCdiParams {
 			&& cdiList.size() == 0 && any == null
 			&& errList.size() == 0 && qsrvList.size() == 0
 			&& hndList.size() == 0 && prxList.size() == 0
-			&& resList.size() == 0
+			&& resList.size() == 0 && loopList.size() == 0
 		;
 	}
 	
@@ -118,6 +121,14 @@ public class GCdiParams {
 	 */
 	public boolean isCdiHandleEmpty() {
 		return hndList.size() == 0;
+	}
+	
+	/**
+	 * QuinaLoop定義が空の場合.
+	 * @return
+	 */
+	public boolean isQuinaLoopEmpty() {
+		return loopList.size() == 0;
 	}
 	
 	/**

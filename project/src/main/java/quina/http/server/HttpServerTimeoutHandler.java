@@ -1,19 +1,56 @@
 package quina.http.server;
 
 import quina.http.HttpElement;
-import quina.net.nio.tcp.NioElement;
-import quina.net.nio.tcp.NioTimeoutHandler;
+import quina.net.nio.tcp.NioUtil;
+import quina.worker.timeout.TimeoutElement;
+import quina.worker.timeout.TimeoutHandler;
 
 /**
  * HttpServerTimeoutHandler.
  */
 public class HttpServerTimeoutHandler
-	implements NioTimeoutHandler {
+	implements TimeoutHandler {
 	
-	// 対象要素はタイムアウト実行が可能かチェック.
+	/**
+	 * タイムアウト要素をクローズ.
+	 * @param element Timeout要素が設定されます.
+	 */
+	@Override
+	public void closeTimeoutElement(TimeoutElement element) {
+		NioUtil.closeNioElement((HttpElement)element);
+	}
+	
+	/**
+	 * タイムアウト要素がクローズ済みかチェック.
+	 * @param element Timeout要素が設定されます.
+	 * @return boolean trueの場合、クローズ済みです.
+	 */
+	@Override
+	public boolean isCloseTimeoutElement(TimeoutElement element) {
+		return !((HttpElement)element).isConnection();
+	}
+	
+	/**
+	 * タイムアウト監視が必要かチェック.
+	 * @param element Timeout要素が設定されます.
+	 * @return boolean trueの場合タイムアウト監視が必要です.
+	 */
+	@Override
+	public boolean isMonitoredTimeout(TimeoutElement element) {
+		// データー送信が完了している場合.
+		return !((HttpElement)element).isSendData();
+	}
+	
+	/**
+	 * タイムアウトを行ってよいかチェック.
+	 * @param element Timeout要素が設定されます.
+	 * @param timeout タイムアウト値が設定されます.
+	 * @return boolean true の場合、タイムアウト処理が
+	 *                 行われます.
+	 */
 	@Override
 	public boolean isExecuteTimeout(
-		NioElement element, long timeout) {
+		TimeoutElement element, long timeout) {
 		// ThreadScopeが０の場合はタイムアウト実行が可能.
 		// 基本的に実行中の場合は、タイムアウト処理としない.
 		if(((HttpElement)element).getThreadScope() <= 0) {
@@ -21,11 +58,15 @@ public class HttpServerTimeoutHandler
 		}
 		return false;
 	}
-
-	// タイムアウト実行を行う.
+	
+	/**
+	 * タイムアウトが発生した場合の実行処理を行います.
+	 * @param element Timeout要素が設定されます.
+	 * @param timeout タイムアウト値が設定されます.
+	 */
 	@Override
 	public void executeTimeout(
-		NioElement element, long timeout) {
+		TimeoutElement element, long timeout) {
 		HttpElement em = (HttpElement)element;
 		try {
 			// HttpError408(Request-Timeout)を返却.

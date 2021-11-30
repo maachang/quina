@@ -8,6 +8,7 @@ import quina.annotation.cdi.CdiHandleScoped;
 import quina.annotation.cdi.CdiScoped;
 import quina.annotation.cdi.ServiceScoped;
 import quina.annotation.proxy.ProxyScoped;
+import quina.annotation.quina.QuinaLoopScoped;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.annotation.route.AnnotationRoute;
 import quina.annotation.route.AnyRoute;
@@ -15,6 +16,7 @@ import quina.annotation.route.ErrorRoute;
 import quina.annotation.route.Route;
 import quina.component.Component;
 import quina.component.error.ErrorComponent;
+import quina.worker.QuinaLoopElement;
 
 /**
  * Cdiオブジェクトを抽出.
@@ -91,7 +93,8 @@ public class GCdiExtraction {
 					continue;
 				}
 				// アノテーションなしのコンポーネントの場合.
-				if(o instanceof Component || o instanceof ErrorComponent) {
+				if(o instanceof Component ||
+					o instanceof ErrorComponent) {
 					// Reflectリストに追加.
 					params.refList.add(className);
 				// アノテーションなしのQuinaServiceの場合.
@@ -100,6 +103,10 @@ public class GCdiExtraction {
 					params.refList.add(className);
 				// アノテーションなしのCdiHandleの場合.
 				} else if(o instanceof CdiHandle) {
+					// Reflectリストに追加.
+					params.refList.add(className);
+				// アノテーションなしのQuinaLoopElement.
+				} else if(o instanceof QuinaLoopElement) {
 					// Reflectリストに追加.
 					params.refList.add(className);
 				}
@@ -203,6 +210,16 @@ public class GCdiExtraction {
 					buf = null;
 					// ErrorRouteリストに登録.
 					params.errList.add(className);
+				}
+				// Reflectリストに追加.
+				params.refList.add(className);
+			// QuinaLoopElementの場合.
+			} else if(o instanceof QuinaLoopElement) {
+				// ＠QuinaLoopScoped付属のQuinaLoopElementを登録.
+				if(c.isAnnotationPresent(QuinaLoopScoped.class)) {
+					System.out.println("  > quinaLoopElement  : " + className);
+					// Loopリストに登録.
+					params.loopList.add(className);
 				}
 				// Reflectリストに追加.
 				params.refList.add(className);

@@ -9,9 +9,9 @@ import quina.worker.QuinaWait;
  * QuinaService用スレッド.
  */
 public abstract class QuinaServiceThread<T>
-	extends Thread {
+	extends Thread implements QuinaThreadStatus {
 	// スレッド停止フラグ.
-	protected volatile boolean stopFlag = true;
+	protected final Flag stopFlag = new Flag(true);
 
 	// スレッド開始完了フラグ.
 	protected final Flag startThreadFlag = new Flag(false);
@@ -37,7 +37,7 @@ public abstract class QuinaServiceThread<T>
 	 * ワーカーを開始する.
 	 */
 	public void startThread() {
-		stopFlag = false;
+		stopFlag.set(false);
 		startThreadFlag.set(false);
 		endThreadFlag.set(false);
 		setDaemon(true);
@@ -48,21 +48,23 @@ public abstract class QuinaServiceThread<T>
 	 * ワーカーを停止する.
 	 */
 	public void stopThread() {
-		stopFlag = true;
+		stopFlag.set(true);;
 	}
 
 	/**
 	 * ワーカーが停止命令が既に出されているかチェック.
 	 * @return
 	 */
+	@Override
 	public boolean isStopThread() {
-		return stopFlag;
+		return stopFlag.get();
 	}
 
 	/**
 	 * ワーカーが開始しているかチェック.
 	 * @return
 	 */
+	@Override
 	public boolean isStartupThread() {
 		return startThreadFlag.get();
 	}
@@ -71,6 +73,7 @@ public abstract class QuinaServiceThread<T>
 	 * ワーカーが終了しているかチェック.
 	 * @return
 	 */
+	@Override
 	public boolean isExitThread() {
 		return endThreadFlag.get();
 	}
@@ -165,13 +168,11 @@ public abstract class QuinaServiceThread<T>
 		boolean endFlag = false;
 		ThreadDeath td = null;
 		startThreadFlag.set(true);
-		while (!endFlag && !stopFlag) {
+		while (!endFlag && !stopFlag.get()) {
 			// スレッド実行.
 			try {
-				// 処理対象の情報を取得.
-				value = poll();
-				// 処理実行.
-				executeCall(value);
+				// 処理対象の情報を取得して処理実行.
+				executeCall(poll());
 			} catch(Throwable t) {
 				// スレッド中止.
 				if (t instanceof InterruptedException) {

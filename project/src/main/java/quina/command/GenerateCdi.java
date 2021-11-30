@@ -6,6 +6,7 @@ import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.COMMAND_NAME;
 import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
+import static quina.command.generateCdi.GCdiConstants.QUINA_LOOP_SCOPED_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 import static quina.command.generateCdi.GCdiConstants.VERSION;
 
@@ -386,6 +387,15 @@ public class GenerateCdi {
 					new File(javaSourceDir).getCanonicalPath() +
 					"/" + CDI_DIRECTORY_NAME + "/" + PROXY_SCOPED_SOURCE_NAME);
 			}
+			
+			// [QuinaLoopScoped]ファイル出力.
+			if(!params.isQuinaLoopEmpty()) {
+				GCdiOutputJavaSrc.quinaLoopScoped(javaSourceDir, params);
+				System.out.println( " quinaLoopScoped      : " +
+					new File(javaSourceDir).getCanonicalPath() +
+					"/" + CDI_DIRECTORY_NAME + "/" + QUINA_LOOP_SCOPED_SOURCE_NAME);
+			}
+			
 			
 			time = System.currentTimeMillis() - time;
 			System.out.println();
