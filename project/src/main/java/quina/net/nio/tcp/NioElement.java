@@ -211,11 +211,10 @@ public class NioElement implements TimeoutElement, Closeable {
 	}
 
 	/**
-	 * 送信データが存在するかチェック.
-	 * @return boolean [true]の場合、送信データが存在します.
+	 * 送信処理が開始された場合.
+	 * @return boolean [true]の場合、送信処理が開始されました.
 	 */
-	public boolean isSendData() {
-		//return sendDataList != null && !sendDataList.isEmpty();
+	public boolean isSend() {
 		return sendFlag.get();
 	}
 

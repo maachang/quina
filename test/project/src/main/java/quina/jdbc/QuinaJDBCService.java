@@ -30,8 +30,8 @@ public class QuinaJDBCService implements QuinaService {
 	
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
-		"pooling",
-		"timeout", TypesClass.Long, QuinaJDBCConstants.DEF_POOLING_TIMEOUT
+		"jdbcPooling"
+		,"timeout", TypesClass.Long, QuinaJDBCConstants.getPoolingTimeout()
 	);
 	
 	// データソース管理.

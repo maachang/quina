@@ -285,7 +285,7 @@ public class NioClientCore extends Thread {
 								continue;
 							}
 							// 送信対象のデータが存在する場合.
-							if(em.isSendData()) {
+							if(em.isSend()) {
 								// 送信開始.
 								em.startWrite();
 							}

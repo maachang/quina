@@ -188,6 +188,4 @@ public class QuinaJDBCConstants {
 	public static final int getConnectionTimeout() {
 		return connectionTimeout.get();
 	}
-
-
 }

@@ -31,17 +31,6 @@ public class HttpServerTimeoutHandler
 	}
 	
 	/**
-	 * タイムアウト監視が必要かチェック.
-	 * @param element Timeout要素が設定されます.
-	 * @return boolean trueの場合タイムアウト監視が必要です.
-	 */
-	@Override
-	public boolean isMonitoredTimeout(TimeoutElement element) {
-		// データー送信が完了している場合.
-		return !((HttpElement)element).isSendData();
-	}
-	
-	/**
 	 * タイムアウトを行ってよいかチェック.
 	 * @param element Timeout要素が設定されます.
 	 * @param timeout タイムアウト値が設定されます.
@@ -51,12 +40,8 @@ public class HttpServerTimeoutHandler
 	@Override
 	public boolean isExecuteTimeout(
 		TimeoutElement element, long timeout) {
-		// ThreadScopeが０の場合はタイムアウト実行が可能.
-		// 基本的に実行中の場合は、タイムアウト処理としない.
-		if(((HttpElement)element).getThreadScope() <= 0) {
-			return true;
-		}
-		return false;
+		// タイムアウト処理を行う.
+		return true;
 	}
 	
 	/**
@@ -72,5 +57,17 @@ public class HttpServerTimeoutHandler
 			// HttpError408(Request-Timeout)を返却.
 			HttpServerCore.sendError(408, em);
 		} catch(Exception e) {}
+	}
+	
+	
+	/**
+	 * タイムアウト監視から除外するかチェック.
+	 * @param element Timeout要素が設定されます.
+	 * @return boolean trueが返却した場合、タイムアウト監視から
+	 *                 外されます.
+	 */
+	@Override
+	public boolean comeOffTimeout(TimeoutElement element) {
+		return false;
 	}
 }

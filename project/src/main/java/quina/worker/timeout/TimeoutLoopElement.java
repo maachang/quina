@@ -98,6 +98,9 @@ public class TimeoutLoopElement
 		}
 	}
 	
+	// この値を下回った場合はタイムアウト監視キューの時間を２で割らない.
+	private static final long MIN_NEXT_TIME = 2500L;
+	
 	/**
 	 * Loop実行.
 	 * @param status QuinaThreadステータスが設定されます.
@@ -114,14 +117,21 @@ public class TimeoutLoopElement
 			check = true;
 		}
 		// Timeout監視キューの実行が可能な場合.
-		if(timeoutQueue.size() > 0 &&
-			System.currentTimeMillis() > nextTime) {
-			// Timeout監視キューの実行処理.
-			nextTime = executeTimeoutQueue(status);
-			// 次に実行される監視キューの時間を設定.
-			nextTime = (nextTime >> 1L) +
-				System.currentTimeMillis();
-			check = true;
+		if(timeoutQueue.size() > 0) {
+			if(System.currentTimeMillis() > nextTime) {
+				// Timeout監視キューの実行処理.
+				nextTime = executeTimeoutQueue(status);
+				// この値を下回った場合はタイムアウト監視キューの
+				// 時間を２で割らない.
+				if(MIN_NEXT_TIME < (nextTime >> 1)) {
+					nextTime = nextTime >> 1L;
+				}
+				// 次に実行される監視キューの時間を設定.
+				nextTime = System.currentTimeMillis() + nextTime;
+				check = true;
+			}
+		} else {
+			nextTime = 0L;
 		}
 		// 何も処理されない場合.
 		if(!check) {
@@ -135,33 +145,36 @@ public class TimeoutLoopElement
 		throws Throwable {
 		final long currentTime = System.currentTimeMillis();
 		// 一覧を取得.
-		TimeoutElement em;
+		TimeoutElement em = null;
 		Iterator<TimeoutElement> it = queue.iterator();
 		while(!status.isStopThread() && it.hasNext()) {
-			em = null;
 			try {
+				em = it.next();
 				// クローズされてる場合.
-				if(handle.isCloseTimeoutElement(em = it.next())) {
+				// もしくはタイムアウト監視から除外の場合.
+				if(handle.isCloseTimeoutElement(em) ||
+					handle.comeOffTimeout(em)) {
 					// 要素監視キューから除外.
 					it.remove();
-					continue;
+					em = null;
 				// タイムアウトの可能性がある要素の場合.
-				} else if(
-					em.getTime() + doubtTime < currentTime) {
-					// 要素監視キューから除外.
-					it.remove();
+				} else if(em.getTime() + doubtTime < currentTime) {
 					// Timeout監視キューにセット.
 					timeoutQueue.offer(em);
-					continue;
+					// 要素監視キューから除外.
+					it.remove();
+					em = null;
 				}
 			} catch(Throwable e) {
-				//e.printStackTrace();
-				// 通信を破棄.
-				handle.closeTimeoutElement(em);
-				try {
-					// Timeout監視キューから除外.
-					it.remove();
-				} catch(Exception ee) {}
+				if(em != null) {
+					// 通信を破棄.
+					handle.closeTimeoutElement(em);
+					em = null;
+					try {
+						// Timeout監視キューから除外.
+						it.remove();
+					} catch(Exception ee) {}
+				}
 				throw e;
 			}
 		}
@@ -179,15 +192,18 @@ public class TimeoutLoopElement
 		long ret = Long.MAX_VALUE;
 		final long currentTime = System.currentTimeMillis();
 		// 一覧を取得.
-		TimeoutElement em;
+		TimeoutElement em = null;
 		Iterator<TimeoutElement> it = timeoutQueue.iterator();
 		while(!status.isStopThread() && it.hasNext()) {
-			em = null;
 			try {
+				em = it.next();
 				// クローズされてる場合.
-				if(handle.isCloseTimeoutElement(em = it.next())) {
+				// もしくはタイムアウト監視から除外の場合.
+				if(handle.isCloseTimeoutElement(em) ||
+					handle.comeOffTimeout(em)) {
 					// Timeout監視キューから除外.
 					it.remove();
+					em = null;
 					continue;
 				}
 				// 現在の要素に対するタイムアウト値を取得.
@@ -195,45 +211,38 @@ public class TimeoutLoopElement
 				// タイムアウトの可能性が無い要素の場合.
 				if(time + doubtTime > currentTime) {
 					// Timeout監視キューから除外.
-					it.remove();
 					queue.offer(em);
+					it.remove();
+					em = null;
 					continue;
 				// タイムアウトの場合.
 				} else if(time + timeout < currentTime) {
-					// タイムアウト監視が不要な場合.
-					if(!handle.isMonitoredTimeout(em)) {
-						// タイムアウトチェックから除外.
+					// タイムアウト実行が可能かチェック.
+					if(handle.isExecuteTimeout(em, timeout)) {
+						// タイムアウト実行処理.
+						handle.executeTimeout(em, timeout);
+						// Timeout監視キューから除外.
 						it.remove();
-						// 要素をクローズ
-						handle.closeTimeoutElement(em);
+						em = null;
 						continue;
-					// タイムアウト監視が必要な場合.
-					} else {
-						// タイムアウト実行が可能かチェック.
-						if(handle.isExecuteTimeout(
-							em, timeout)) {
-							// Timeout監視キューから除外.
-							it.remove();
-							// タイムアウト実行処理.
-							handle.executeTimeout(
-								em, timeout);
-							continue;
-						}
 					}
 				}
-				// タイムアウトしてない条件で一番短い
+				// タイムアウトしてない条件の中で一番短い
 				// タイムアウト値を取得.
 				time = (time + timeout) - currentTime;
 				if(ret > time) {
 					ret = time;
 				}
 			} catch(Throwable e) {
-				// 要素をクローズ
-				handle.closeTimeoutElement(em);
-				try {
-					// Timeout監視キューから除外.
-					it.remove();
-				} catch(Exception ee) {}
+				if(em != null) {
+					// 要素をクローズ
+					handle.closeTimeoutElement(em);
+					em = null;
+					try {
+						// Timeout監視キューから除外.
+						it.remove();
+					} catch(Exception ee) {}
+				}
 				throw e;
 			}
 		}

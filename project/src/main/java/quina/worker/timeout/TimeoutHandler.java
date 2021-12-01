@@ -21,14 +21,6 @@ public interface TimeoutHandler {
 		TimeoutElement element);
 	
 	/**
-	 * タイムアウト監視が必要かチェック.
-	 * @param element Timeout要素が設定されます.
-	 * @return boolean trueの場合タイムアウト監視が必要です.
-	 */
-	public boolean isMonitoredTimeout(
-		TimeoutElement element);
-	
-	/**
 	 * タイムアウトを行ってよいかチェック.
 	 * @param element Timeout要素が設定されます.
 	 * @param timeout タイムアウト値が設定されます.
@@ -46,4 +38,11 @@ public interface TimeoutHandler {
 	public void executeTimeout(
 		TimeoutElement element, long timeout);
 	
+	/**
+	 * タイムアウト監視から除外するかチェック.
+	 * @param element Timeout要素が設定されます.
+	 * @return boolean trueが返却した場合、タイムアウト監視から
+	 *                 外されます.
+	 */
+	public boolean comeOffTimeout(TimeoutElement element);
 }
