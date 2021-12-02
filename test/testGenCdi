@@ -1,3 +1,0 @@
-#!/bin/bash
-
-sh ../genCdi -c ./project/classes/ -s ./project/src/main/java/ -d

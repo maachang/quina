@@ -33,6 +33,12 @@ LIB_DIR=./lib
 # JARライブラリ群.
 JAR_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`:`readJar ${LIB_DIR}`
 
+# maxMemory.
+EXM="6144m"
+
+# ヒープメモリ.
+OPTIONS="${OPTIONS} -J-Xmx${EXM}"
+
 # 詳細表示.
 OPTIONS="${OPTIONS} --verbose"
 # JDKが必要なNative化の場合エラーにする.

@@ -44,5 +44,6 @@ public interface TimeoutHandler {
 	 * @return boolean trueが返却した場合、タイムアウト監視から
 	 *                 外されます.
 	 */
-	public boolean comeOffTimeout(TimeoutElement element);
+	public boolean comeOffTimeout(
+		TimeoutElement element);
 }

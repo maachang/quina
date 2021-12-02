@@ -10,13 +10,8 @@ var MAX_UPLOAD_FILE_SIZE = 0x00100000;
 // tab space.
 var _TABSPACE = '\t';
 
-// register inputTab.
-var regInputTab = function(em) {
-    addEvent(em, "keydown", inputTabElement);
-}
-
 // input tab element.
-var inputTabElement = function(em) {
+var _inputTabElement = function(em) {
     if (em.key === "Tab") {
         em.preventDefault();
         var value = this.value;
@@ -28,6 +23,11 @@ var inputTabElement = function(em) {
         this.value = result;
         this.setSelectionRange(cPos, cPos);
     }
+}
+
+// register inputTab.
+var regInputTab = function(em) {
+    addEvent(em, "keydown", _inputTabElement);
 }
 
 // update work area.
@@ -72,10 +72,51 @@ var createFileUpload = function(id, mime) {
     return ret + "style='display:none'>";
 }
 
+// button action.
+var _buttonAction = [];
+
+// clear button action.
+var _clearButtonAction = function() {
+    _buttonAction = [];
+}
+
+// flushButton.
+var _flushButtonAction = function() {
+    if(_buttonAction.length > 0) {
+        var em;
+        var list = _buttonAction;
+        _clearButtonAction();
+        var len = list.length;
+        for(var i = 0; i < len; i += 2) {
+            em = document.getElementById(list[i]);
+            (function(idEm, clickFunction) {
+                addEvent(idEm, "keydown", function(e) {
+                    // enter.
+                    if(e.keyCode == 13) {
+                        e.preventDefault();
+                        // click button.
+                        clickFunction();
+                    // etc.
+                    } else {
+                        e.preventDefault();
+                    }
+                });
+                addEvent(idEm, "click", function(e) {
+                    e.preventDefault();
+                    // click button.
+                    clickFunction();
+                });                  
+            })(em, list[i + 1]);
+        }
+    }
+}
+
 // create button.
-var createButton = function(view, js) {
-    var btn = "<a href='javascript:void(0);' class='base_button' onclick='javascript:" +
-        js + ";'>" + view + "</a>";
+var createButton = function(view, id, js) {
+    var btn = "<a href='javascript:void(0);' id='" + id +
+        "' class='base_button'>" + view + "</a>";
+    // append button action.
+    _buttonAction.push(id, js);
     return btn;
 }
 
@@ -97,33 +138,33 @@ var createSqlTextArea = function() {
 
 // clear sql text area button.
 var clearSqlTextAreaButton = function() {
-    _g.clearSqlTextArea = clearSqlTextArea;
-    return createButton("c l e a r", "clearSqlTextArea()");
+    return createButton("c l e a r", "clearSqlTextAreaId",
+        _clearSqlTextArea);
 }
 
 // execute button.
 var executeSqlButton = function() {
-    _g.executeSql = executeSql;
-    return createButton("execute", "executeSql()");
+    return createButton("execute", "executeSqlId",
+        _executeSql);
 }
 
 // Clear resultJSON and generate SQL Text Area. 
 var clearResultJSONAndGenerateSqlTextAreaButton = function() {
-    _g.clearViewSqlTextArea = clearViewSqlTextArea;
-    return createButton("c l e a r", "clearViewSqlTextArea()");
+    return createButton("c l e a r", "clearViewSqlTextAreaId",
+        _clearViewSqlTextArea);
 }
 
 // logout button.
 var logoutButton = function() {
-    _g.accessLogoutConsole = accessLogoutConsole;
-    return createButton("logout", "accessLogoutConsole()");
+    return createButton("logout", "accessLogoutConsoleId",
+        _accessLogoutConsole);
 }
 
 // sql file upload button.
 var sqlFileUploadButton = function() {
-    _g.uploadSqlFileButtonToClick = uploadSqlFileButtonToClick;
     return createFileUpload("uploadSqlFile", ".sql,text/x-sql") +
-        createButton("upload", "uploadSqlFileButtonToClick()");
+        createButton("upload", "uploadSqlFileButtonToClickId",
+            _uploadSqlFileButtonToClick);
 }
 
 // create view sql area.
@@ -139,9 +180,11 @@ var viewSqlTextArea = function() {
     );
     // focus sql text area.
     timeLagCall(function() {
+        // flush button action.
+        _flushButtonAction()
         // load sql file.
         var em = document.getElementById("uploadSqlFile");
-        addEvent(em, "change", loadToUploadSqlFile);
+        addEvent(em, "change", _loadToUploadSqlFile);
         // sql text area to valid TAB key.
         em = document.getElementById("sql");
         regInputTab(em);
@@ -150,7 +193,7 @@ var viewSqlTextArea = function() {
 }
 
 // clear view sql area.
-var clearViewSqlTextArea = function() {
+var _clearViewSqlTextArea = function() {
     viewSqlTextArea()
     setErrorMessage("");
 }
@@ -186,7 +229,16 @@ var createDataSourceSelectBox = function(list) {
     } else {
         // focus select dataSource.
         timeLagCall(function() {
-            document.getElementById("selectDataSource").focus();
+            _flushButtonAction();
+            var em = document.getElementById("selectDataSource");
+            addEvent(em, "keydown", function(e) {
+                // tab.
+                if(e.keyCode == 8) {
+                    e.preventDefault();
+                    em.focus();
+                }
+            });
+            em.focus();
         });
     }
 }
@@ -346,10 +398,15 @@ var viewResultJSON = function(resultJSON) {
     // view work area.
     flushWorkArea(html +
         clearResultJSONAndGenerateSqlTextAreaButton());
+    // focus sql text area.
+    timeLagCall(function() {
+        // flush button action.
+        _flushButtonAction();
+    });
 }
 
 // access logout console.
-var accessLogoutConsole = function() {
+var _accessLogoutConsole = function() {
     confirmWindow("Log out of the jdbc console. Is it OK?",
     function(yes) {
         if(yes == true) {
@@ -361,14 +418,14 @@ var accessLogoutConsole = function() {
 }
 
 // click the to upload sql file button.
-var uploadSqlFileButtonToClick = function() {
+var _uploadSqlFileButtonToClick = function() {
     setErrorMessage("");
     var uploadEm = document.getElementById("uploadSqlFile");
     uploadEm.click();
 }
 
 // load sql file.
-var loadToUploadSqlFile = function() {
+var _loadToUploadSqlFile = function() {
     var files = this.files;
     var file = files[0];
     // not file name.
@@ -432,13 +489,14 @@ var getSelectDataSource = function() {
 }
 
 // clear sql text area.
-var clearSqlTextArea = function() {
+var _clearSqlTextArea = function() {
     var tarea = document.getElementById("sql");
     if(isNull(tarea)) {
         return;
     }
     setErrorMessage("");
     if(tarea.value.length != 0) {
+        /**
         confirmWindow("Clears the entered SQL content. Is it OK?",
         function(yes) {
             if(yes == true) {
@@ -447,6 +505,11 @@ var clearSqlTextArea = function() {
             // focus sql text area.
             document.getElementById("sql").focus();
         });
+        **/
+        // clear text area.
+        tarea.value = "";
+        // focus sql text area.
+        document.getElementById("sql").focus();
     } else {
         // focus sql text area.
         document.getElementById("sql").focus();
@@ -501,7 +564,7 @@ var loadDataSourceList = function(count) {
 }
 
 // execute sql.
-var executeSql = function() {
+var _executeSql = function() {
     var header, params;
     setErrorMessage("");
     nowLoading();

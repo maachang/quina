@@ -16,6 +16,7 @@ import quina.util.Flag;
 import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.QuinaMap;
 import quina.util.collection.TypesClass;
+import quina.worker.timeout.TimeoutLoopElement;
 
 /**
  * QuinaJDBCService.
@@ -38,8 +39,8 @@ public class QuinaJDBCService implements QuinaService {
 	private IndexKeyValueList<String, QuinaDataSource> dataSources =
 		new IndexKeyValueList<String, QuinaDataSource>();
 	
-	// タイムアウトスレッド.
-	private QuinaJDBCTimeoutLoopElement timeoutLoopElement;
+	// TimeoutLoopElement.
+	private TimeoutLoopElement timeoutLoopElement = null;
 	
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
@@ -140,8 +141,10 @@ public class QuinaJDBCService implements QuinaService {
 			// 各DataSourceに登録する.
 			if(dataSources.size() > 0) {
 				// timeoutLoopElementを生成.
-				timeoutLoopElement = new QuinaJDBCTimeoutLoopElement(
-					dataSources, config.getLong("timeout"));
+				timeoutLoopElement = new TimeoutLoopElement(
+					config.getLong("timeout"),
+					config.getLong("timeout") / 10L,
+					new QuinaJDBCTimeoutHandler());
 				// timeoutLoopElementを登録.
 				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 			}
@@ -212,5 +215,10 @@ public class QuinaJDBCService implements QuinaService {
 			out.add(dataSources.keyAt(i));
 		}
 		return len;
+	}
+	
+	// タイムアウトLoopElementを取得.
+	protected TimeoutLoopElement getTimeoutLoopElement() {
+		return timeoutLoopElement;
 	}
 }

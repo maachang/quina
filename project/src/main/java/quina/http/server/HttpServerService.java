@@ -66,7 +66,7 @@ public class HttpServerService implements QuinaService {
 	// QuinaWorkerService.
 	private QuinaWorkerService quinaWorkerService = null;
 	
-	// TimeoutThread.
+	// TimeoutLoopElement.
 	private TimeoutLoopElement timeoutLoopElement = null;
 	
 	// サービス開始フラグ.

@@ -103,11 +103,11 @@ public class QuinaJDBCConsoleService
 	}
 	
 	// このサーバのプライベートIPアクセスでのアクセス許可.
-	private static final class PrivateAccessControll
+	private static final class IpPrivateAccessControll
 		implements IpAccessControll {
 		String[] addrList;
 		boolean[] ip172Flags;
-		PrivateAccessControll() {
+		IpPrivateAccessControll() {
 			int p;
 			int len = ThisMachineAddress.size();
 			String ip;
@@ -171,7 +171,7 @@ public class QuinaJDBCConsoleService
 	}
 	
 	// 全てのIPを許可.
-	private static final class globalAccessControll
+	private static final class IpGlobalAccessControll
 		implements IpAccessControll {
 		@Override
 		public boolean isAccess(Request req) {
@@ -188,10 +188,10 @@ public class QuinaJDBCConsoleService
 		boolean globalAddress = config.getBoolean("globalAddress");
 		// フルアクセス許可.
 		if(globalAddress && privateAddress && localHost) {
-			ipAccessControll = new globalAccessControll();
+			ipAccessControll = new IpGlobalAccessControll();
 		// イントラネット内のアクセス許可.
 		} else if(privateAddress && localHost) {
-			ipAccessControll = new PrivateAccessControll();
+			ipAccessControll = new IpPrivateAccessControll();
 		// 127.0.0.1のみアクセス許可
 		} else if(localHost) {
 			ipAccessControll = new IpLocalHostAccessControll();

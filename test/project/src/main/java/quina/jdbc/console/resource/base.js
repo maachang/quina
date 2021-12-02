@@ -49,6 +49,8 @@ var nowLoading = function(rgba) {
         ";position:absolute;width:"+w+"px;height:"+h+"px;" +
         "left:0px;top:0px;background-color:rgba("
             +rgba.r+","+rgba.g+","+rgba.b+","+rgba.a+");' " +
+        // Block physical access.
+        "onkeydown='event.preventDefault()' " +
         "onclick='event.preventDefault()' " +
         "ontouchstart='event.preventDefault()' " +
         "ontouchend='event.preventDefault()' " +
@@ -120,7 +122,7 @@ var addEvent = function(node, name, func) {
     if(node.addEventListener){
         node.addEventListener(name, func, false);
     } else if(node.attachEvent){
-        node.attachEvent("on"+name, func);
+        node.attachEvent("on" + name, func);
     }
 }
 
@@ -214,10 +216,17 @@ var confirmWindow = function(message, call) {
         var em = document.getElementById(ALERT_YES_BUTTON_ID);
         if(!isNull(em)) {
             addEvent(em, "click", yesCall);
+            addEvent(em, "keydown", function(e) {
+                e.preventDefault();
+                yesCall();
+            });
         }
         var em = document.getElementById(ALERT_NO_BUTTON_ID);
         if(!isNull(em)) {
             addEvent(em, "click", noCall);
+            addEvent(em, "keydown", function(e) {
+                e.preventDefault();
+            });
             // default cancel focus.
             em.focus();
         }
@@ -538,6 +547,7 @@ var clearLoginSession = function() {
     localStorage.removeItem("jdbcLoginToken");
 }
 
+_g.ALERT_WINDOW_ID = ALERT_WINDOW_ID;
 _g.isNull = isNull;
 _g.Xor128 = Xor128;
 _g.ajax = ajax;

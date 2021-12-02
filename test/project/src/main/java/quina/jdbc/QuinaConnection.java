@@ -17,15 +17,22 @@ import quina.jdbc.io.WriteBatchStatement;
 import quina.util.AtomicNumber64;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
+import quina.worker.timeout.TimeoutElement;
 
 /**
  * ProxyConnection.
  */
 @ProxyScoped
 public abstract class QuinaConnection
-	implements Connection {
+	implements Connection, TimeoutElement {
 	// 接続確認用SQL.
 	private static final String ECHO_SQL = "select (1);";
+	
+	// 利用中を示すタイムアウト値.
+	protected static final long NONE_TIMEOUT = -1L;
+	
+	// 破棄を示すタイムアウト値.
+	protected static final long DESTROY_TIMEOUT = 0L;
 	
 	// 元のコネクション.
 	@ProxyField
@@ -46,6 +53,9 @@ public abstract class QuinaConnection
 	
 	// クローズフラグ.
 	private final Flag closeFlag = new Flag(true);
+	
+	// タイマー監視登録フラグ.
+	private final Flag regTimeFlag = new Flag(false);
 	
 	// I/Oステートメント管理.
 	private ObjectList<AbstractStatement<?>> ioStatementList = null;
@@ -112,8 +122,7 @@ public abstract class QuinaConnection
 			dataSource.decConnectionCount();
 		}
 		closeFlag.set(true);
-		lastPoolingTime.set(
-			QuinaJDBCTimeoutLoopElement.DESTROY_TIMEOUT);
+		lastPoolingTime.set(DESTROY_TIMEOUT);
 		closeIoStatement();
 		Connection c = connection;
 		connection = null;
@@ -142,10 +151,7 @@ public abstract class QuinaConnection
 			return false;
 		}
 		// タイムアウト監視しない.
-		lastPoolingTime.set(
-			QuinaJDBCTimeoutLoopElement.NONE_TIMEOUT);
-		// 仮オープン.
-		closeFlag.set(false);
+		lastPoolingTime.set(NONE_TIMEOUT);
 		// アクセス可能かチェック.
 		boolean ret = true;
 		Statement stm = null;
@@ -176,7 +182,18 @@ public abstract class QuinaConnection
 				} catch(Exception e) {}
 			}
 		}
-		return ret;
+		// 再オープン成功の場合.
+		if(ret) {
+			// この時点でタイムアウト監視などで
+			// 廃棄された場合.
+			if(destroyFlag.get()) {
+				return false;
+			}
+			// オープン処理.
+			closeFlag.set(false);
+			return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -191,9 +208,28 @@ public abstract class QuinaConnection
 	 * 最後にプーリングした時間を取得.
 	 * @return long 最後にプーリングした時間が返却されます.
 	 */
-	protected long getLastPoolingTime() {
+	@Override
+	public long getTime() {
 		return lastPoolingTime.get();
 	}
+	
+	/**
+	 * タイムアウト監視登録.
+	 * @return boolean trueの場合既に登録してます.
+	 */
+	@Override
+	public boolean regTimeout() {
+		return regTimeFlag.setToGetBefore(true);
+	}
+	
+	/**
+	 * タイムアウト監視登録解除.
+	 * @return boolean trueの場合、登録状態を解除しました.
+	 */
+	protected boolean releaseTimeout() {
+		return regTimeFlag.setToGetBefore(false);
+	}
+
 	
 	/**
 	 * ProxyConnectionのメソッドに対して

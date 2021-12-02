@@ -95,6 +95,8 @@ public class QuinaDataSource implements DataSource {
 		}
 		// プーリングにセット.
 		pooling.offer(conn);
+		// タイムアウト監視セット.
+		service.getTimeoutLoopElement().offer(conn);
 		return true;
 	}
 	
@@ -135,6 +137,11 @@ public class QuinaDataSource implements DataSource {
 	 */
 	public QuinaJDBCConfig getConfig() {
 		return config;
+	}
+	
+	// QuinaJDBCServiceを取得.
+	protected QuinaJDBCService getService() {
+		return service;
 	}
 	
 	/**

@@ -1,5 +1,15 @@
 {
-    /*"auth": {
-        "root": "p3ps1Cap"
-    }*/
+    "auth": {
+        "root": "b0mberMinm!"
+    }
+    // ローカルホストからのアクセスのみ有効.
+    ,"localhostOnly": true
+    // プライベートアドレスからのアクセス許可.
+    ,"privateAddress": true
+    // グローバルネットワークからのアクセス許可.
+    ,"globalAddress": true
+    // ログインタイムアウト(30分).
+    ,"loginTimeout": 1800000
+    // クエリー結果受け取り件数.
+    ,"resultQuerySize": 500
 }
