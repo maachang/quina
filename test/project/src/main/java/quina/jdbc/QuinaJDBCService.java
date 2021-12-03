@@ -126,6 +126,18 @@ public class QuinaJDBCService implements QuinaService {
 	public boolean isStartService() {
 		return startFlag.get();
 	}
+	
+	// 最大タイムアウト監視キュー設定時間.
+	private static final long MAX_DOUBT_TIMEOUT = 1500L;
+	
+	// タイムアウト監視キュー設定時間を取得.
+	private static final long getDoubtTimeout(long timeout) {
+		timeout /= 10L;
+		if(MAX_DOUBT_TIMEOUT < timeout) {
+			return MAX_DOUBT_TIMEOUT;
+		}
+		return timeout;
+	}
 
 	@Override
 	public void startService() {
@@ -143,7 +155,7 @@ public class QuinaJDBCService implements QuinaService {
 				// timeoutLoopElementを生成.
 				timeoutLoopElement = new TimeoutLoopElement(
 					config.getLong("timeout"),
-					config.getLong("timeout") / 10L,
+					getDoubtTimeout(config.getLong("timeout")),
 					new QuinaJDBCTimeoutHandler());
 				// timeoutLoopElementを登録.
 				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);

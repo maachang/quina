@@ -213,6 +213,11 @@ public abstract class QuinaConnection
 		return lastPoolingTime.get();
 	}
 	
+	// タイムアウト監視が登録されているか取得.
+	protected boolean isRegTimeout() {
+		return regTimeFlag.get();
+	}
+	
 	/**
 	 * タイムアウト監視登録.
 	 * @return boolean trueの場合既に登録してます.

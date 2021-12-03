@@ -65,7 +65,6 @@ final class QuinaJDBCTimeoutHandler
 		}
 	}
 	
-	
 	/**
 	 * タイムアウト監視から除外するかチェック.
 	 * @param element Timeout要素が設定されます.

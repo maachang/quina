@@ -32,7 +32,7 @@ var BACK_DIALOG_SHADOW = "box-shadow: 10px 10px 10px rgba(0,0,0,0.75);"
 var timeLagCall = function(call) {
     setTimeout(function() {
         call();
-    }, 100);
+    }, 150);
 }
 
 // Screen display while loading.

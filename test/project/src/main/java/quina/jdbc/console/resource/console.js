@@ -10,13 +10,8 @@ var MAX_UPLOAD_FILE_SIZE = 0x00100000;
 // tab space.
 var _TABSPACE = '\t';
 
-// register inputTab.
-var regInputTab = function(em) {
-    addEvent(em, "keydown", inputTabElement);
-}
-
 // input tab element.
-var inputTabElement = function(em) {
+var _inputTabElement = function(em) {
     if (em.key === "Tab") {
         em.preventDefault();
         var value = this.value;
@@ -28,6 +23,11 @@ var inputTabElement = function(em) {
         this.value = result;
         this.setSelectionRange(cPos, cPos);
     }
+}
+
+// register inputTab.
+var regInputTab = function(em) {
+    addEvent(em, "keydown", _inputTabElement);
 }
 
 // update work area.
@@ -149,8 +149,9 @@ var executeSqlButton = function() {
 }
 
 // Clear resultJSON and generate SQL Text Area. 
-var clearResultJSONAndGenerateSqlTextAreaButton = function() {
-    return createButton("c l e a r", "clearViewSqlTextAreaId",
+var clearResultJSONAndGenerateSqlTextAreaButton = function(no) {
+    no = no | 0;
+    return createButton("c l e a r", "clearViewSqlTextArea" + no + "Id",
         _clearViewSqlTextArea);
 }
 
@@ -354,7 +355,7 @@ var viewResultJSON = function(resultJSON) {
     var width = "60%";
 
     // sql text area button.
-    var html = clearResultJSONAndGenerateSqlTextAreaButton() +
+    var html = clearResultJSONAndGenerateSqlTextAreaButton(0) +
         newLine();
     
     for(var i = 0; i < len; i ++) {
@@ -397,7 +398,7 @@ var viewResultJSON = function(resultJSON) {
     }
     // view work area.
     flushWorkArea(html +
-        clearResultJSONAndGenerateSqlTextAreaButton());
+        clearResultJSONAndGenerateSqlTextAreaButton(1));
     // focus sql text area.
     timeLagCall(function() {
         // flush button action.

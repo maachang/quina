@@ -149,8 +149,9 @@ var executeSqlButton = function() {
 }
 
 // Clear resultJSON and generate SQL Text Area. 
-var clearResultJSONAndGenerateSqlTextAreaButton = function() {
-    return createButton("c l e a r", "clearViewSqlTextAreaId",
+var clearResultJSONAndGenerateSqlTextAreaButton = function(no) {
+    no = no | 0;
+    return createButton("c l e a r", "clearViewSqlTextArea" + no + "Id",
         _clearViewSqlTextArea);
 }
 
@@ -354,7 +355,7 @@ var viewResultJSON = function(resultJSON) {
     var width = "60%";
 
     // sql text area button.
-    var html = clearResultJSONAndGenerateSqlTextAreaButton() +
+    var html = clearResultJSONAndGenerateSqlTextAreaButton(0) +
         newLine();
     
     for(var i = 0; i < len; i ++) {
@@ -397,7 +398,7 @@ var viewResultJSON = function(resultJSON) {
     }
     // view work area.
     flushWorkArea(html +
-        clearResultJSONAndGenerateSqlTextAreaButton());
+        clearResultJSONAndGenerateSqlTextAreaButton(1));
     // focus sql text area.
     timeLagCall(function() {
         // flush button action.

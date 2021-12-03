@@ -82,10 +82,12 @@ public class QuinaDataSource implements DataSource {
 	}
 	
 	// Poolingにセット.
-	protected boolean pushPooling(
-		QuinaConnection conn) {
-		// 既に破棄されてるか、Pooling管理数を超えてる場合.
-		if(destroyFlag.get() ||
+	protected boolean pushPooling(QuinaConnection conn) {
+		// コネクションが存在しないか破棄されてる場合.
+		if(conn == null || conn.isDestroy()) {
+			return false;
+		// Pooling管理数を超えてる場合.
+		} else if(destroyFlag.get() ||
 			config.getPoolingSize() < pooling.size()) {
 			// プーリングせずに廃棄.
 			try {
@@ -137,11 +139,6 @@ public class QuinaDataSource implements DataSource {
 	 */
 	public QuinaJDBCConfig getConfig() {
 		return config;
-	}
-	
-	// QuinaJDBCServiceを取得.
-	protected QuinaJDBCService getService() {
-		return service;
 	}
 	
 	/**
