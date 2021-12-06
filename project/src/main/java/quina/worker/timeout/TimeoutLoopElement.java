@@ -121,9 +121,13 @@ public class TimeoutLoopElement
 			if(System.currentTimeMillis() > nextTime) {
 				// Timeout監視キューの実行処理.
 				nextTime = executeTimeoutQueue(status);
+				// タイムアウトキューの監視時間が一定時間を超える場合.
+				if(TimeoutConstants.MAX_TIMEOUT_QUEUE_TIMEOUT_CHECK < nextTime) {
+					// 監視時間を指定定数に合わせる.
+					nextTime = TimeoutConstants.MAX_TIMEOUT_QUEUE_TIMEOUT_CHECK;
 				// この値を下回った場合はタイムアウト監視キューの
 				// 時間を２で割らない.
-				if(MIN_NEXT_TIME < (nextTime >> 1)) {
+				} else if(MIN_NEXT_TIME < (nextTime >> 1)) {
 					nextTime = nextTime >> 1L;
 				}
 				// 次に実行される監視キューの時間を設定.

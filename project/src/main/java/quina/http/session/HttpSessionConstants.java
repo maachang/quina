@@ -10,6 +10,16 @@ import quina.util.AtomicObject;
 public final class HttpSessionConstants {
 	private HttpSessionConstants() {}
 	
+	// セッションシリアライズヘッダ.
+	// #qinaSSF(#QuinaSessionSerializableFileOut).
+	//
+	protected static final byte[] SESSION_SERIALIZABLE_HEADER = new byte[] {
+		(byte)'#', (byte)0x91, (byte)'n', (byte)0xa5, (byte)0x5f
+	};
+	
+	// ノーマルセッションタイプ名.
+	protected static final String NORMAL_SESSION_TYPE = "quinaSession";
+	
 	// デフォルトタイムアウト.
 	// 30分.
 	private static final long DEF_SESSION_TIMEOUT = 30L * 60L * 1000L;
@@ -45,6 +55,51 @@ public final class HttpSessionConstants {
 	 */
 	public static final long getSessionTimeout() {
 		return sessionTimeout.get();
+	}
+	
+	/**
+	 * デフォルトシグニチャ長.
+	 * 36文字.
+	 */
+	private static final int DEF_SIQNATURE_LENGTH = 36;
+	
+	/**
+	 * 最小シグニチャ長.
+	 * 12文字.
+	 */
+	private static final int MIN_SIQNATURE_LENGTH = 12;
+	
+	/**
+	 * 最大シグニチャ長.
+	 * 196文字.
+	 */
+	private static final int MAX_SIQNATURE_LENGTH = 196;
+	
+	// シグニチャー長.
+	private static final Number32 signatureLength =
+		new Number32(DEF_SIQNATURE_LENGTH);
+	
+	/**
+	 * シグニチャ長を設定.
+	 * @param len シグニチャ長を設定します.
+	 */
+	public static final void setSignatureLength(int len) {
+		// ４の倍数に合わせる.
+		len = ((len >> 2) << 2) | ((len & 0x03) != 0 ? 4 : 0);
+		if(len < MIN_SIQNATURE_LENGTH) {
+			len = MIN_SIQNATURE_LENGTH;
+		} else if(len > MAX_SIQNATURE_LENGTH) {
+			len = MAX_SIQNATURE_LENGTH;
+		}
+		signatureLength.set(len);
+	}
+	
+	/**
+	 * シグニチャ長を取得.
+	 * @return int シグニチャ長が返却されます.
+	 */
+	public static final int getSignatureLength() {
+		return signatureLength.get();
 	}
 	
 	// デフォルトセッションキー長.

@@ -133,6 +133,8 @@ public final class QuinaConfig implements
 							this.value = BLANK_MAP;
 						}
 						break;
+					default:
+						this.value = null;
 					}
 				} catch(Exception e) {
 					this.value = null;
@@ -169,8 +171,9 @@ public final class QuinaConfig implements
 			case List:
 			case Map:
 				return Json.encode(o);
+			default:
+				return o.toString();
 			}
-			return o.toString();
 		}
 	}
 

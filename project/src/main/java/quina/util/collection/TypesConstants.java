@@ -5,6 +5,16 @@ package quina.util.collection;
  */
 public class TypesConstants {
 	/**
+	 * ObjectのTypeNo.
+	 */
+	public static final int TYPENO_OBJECT = -1;
+	
+	/**
+	 * NULLのTypeNo.
+	 */
+	public static final int TYPENO_NULL = 0;
+	
+	/**
 	 * BooleanのTypeNo.
 	 */
 	public static final int TYPENO_BOOLEAN = 1;

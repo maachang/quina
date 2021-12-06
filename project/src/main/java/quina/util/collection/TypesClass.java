@@ -46,6 +46,12 @@ public enum TypesClass {
 	,Map(TypesConstants.TYPENO_MAP,
 		"map", false, false, false, false, false,
 		false, true)
+	,Object(TypesConstants.TYPENO_OBJECT,
+		"object", false, false, false, false, false,
+		false, false)
+	,Null(TypesConstants.TYPENO_NULL,
+		"null", false, false, false, false, false,
+		false, false)
 	;
 	
 	private int typeNo;
@@ -219,6 +225,8 @@ public enum TypesClass {
 				return v;
 			}
 			return null;
+		case TypesConstants.TYPENO_OBJECT:
+			return v;
 		default: return StringUtil.parseString(v);
 		}
 	}
@@ -283,6 +291,7 @@ public enum TypesClass {
 	 */
 	public static final TypesClass getByTypeNo(int no) {
 		switch(no) {
+		case TypesConstants.TYPENO_NULL: return Null;
 		case TypesConstants.TYPENO_BOOLEAN: return Boolean;
 		case TypesConstants.TYPENO_BYTE: return Byte;
 		case TypesConstants.TYPENO_SHORT: return Short;
@@ -294,6 +303,7 @@ public enum TypesClass {
 		case TypesConstants.TYPENO_DATE: return Date;
 		case TypesConstants.TYPENO_LIST: return List;
 		case TypesConstants.TYPENO_MAP: return Map;
+		case TypesConstants.TYPENO_OBJECT: return Object;
 		}
 		// 検出出来ない場合.
 		return null;
