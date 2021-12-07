@@ -1,9 +1,13 @@
-package quina.http.session;
+package quina.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import quina.exception.QuinaException;
 import quina.util.BinaryIO;
@@ -11,29 +15,28 @@ import quina.util.BooleanUtil;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
 import quina.util.StringUtil;
-import quina.util.collection.IndexKeyValueLockList;
 import quina.util.collection.TypesClass;
 import quina.util.collection.TypesConstants;
 
 /**
- * セッションストレージ情報.
+ * メモリストレージ情報.
  */
-public class SessionStorage {
+public class MemoryStorage implements Storage {
 	
 	// ストレージ管理.
-	protected IndexKeyValueLockList
-		<String, Object> storage;
+	protected Map<String, Object> keyValue =
+		new ConcurrentHashMap<String, Object>();
 	
 	/**
 	 * コンストラクタ.
 	 */
-	public SessionStorage() {}
+	public MemoryStorage() {}
 	
 	/**
 	 * クリアー.
 	 */
 	public void clear() {
-		storage = null;
+		keyValue.clear();
 	}
 	
 	// 引数チェック.
@@ -45,24 +48,16 @@ public class SessionStorage {
 		}
 	}
 	
-	// storage情報を取得.
-	protected IndexKeyValueLockList<String, Object> storage() {
-		if(storage == null) {
-			storage = new IndexKeyValueLockList
-				<String, Object>();
-		}
-		return storage;
-	}
-	
 	/**
-	 * 指定キー名に対して新しいSessionStorageを生成します.
+	 * 指定キー名に対して新しいStorageを生成します.
 	 * @param key キー名を設定します.
 	 * @return Storage 新しく生成されたStorageが返却されます.
 	 */
-	public SessionStorage makeStorage(String key) {
-		SessionStorage value = new SessionStorage();
+	@Override
+	public Storage makeStorage(String key) {
+		Storage value = new MemoryStorage();
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return value;
 	}
 	
@@ -72,9 +67,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Boolean value) {
+	@Override
+	public Storage set(String key, Boolean value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -84,9 +80,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Byte value) {
+	@Override
+	public Storage set(String key, Byte value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -96,9 +93,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Short value) {
+	@Override
+	public Storage set(String key, Short value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -108,9 +106,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Integer value) {
+	@Override
+	public Storage set(String key, Integer value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -120,9 +119,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Long value) {
+	@Override
+	public Storage set(String key, Long value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -132,9 +132,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Float value) {
+	@Override
+	public Storage set(String key, Float value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -144,9 +145,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Double value) {
+	@Override
+	public Storage set(String key, Double value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -156,9 +158,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, String value) {
+	@Override
+	public Storage set(String key, String value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -168,9 +171,10 @@ public class SessionStorage {
 	 * @param value セット対象の要素を設定します.
 	 * @return Storage Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage set(String key, Date value) {
+	@Override
+	public Storage set(String key, Date value) {
 		checkArgs(key, value);
-		storage().put(key, value);
+		keyValue.put(key, value);
 		return this;
 	}
 	
@@ -179,14 +183,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Boolean 要素が返却されます.
 	 */
+	@Override
 	public Boolean getBoolean(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return BooleanUtil.parseBoolean(storage.get(key));
-		}
-		return null;
+		return BooleanUtil.parseBoolean(keyValue.get(key));
 	}
 	
 	/**
@@ -194,14 +196,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Byte 要素が返却されます.
 	 */
+	@Override
 	public Byte getByte(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return NumberUtil.parseByte(storage.get(key));
-		}
-		return null;
+		return NumberUtil.parseByte(keyValue.get(key));
 	}
 	
 	/**
@@ -209,14 +209,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Short 要素が返却されます.
 	 */
+	@Override
 	public Short getShort(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return NumberUtil.parseShort(storage.get(key));
-		}
-		return null;
+		return NumberUtil.parseShort(keyValue.get(key));
 	}
 	
 	/**
@@ -224,14 +222,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Integer 要素が返却されます.
 	 */
+	@Override
 	public Integer getInteger(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return NumberUtil.parseInt(storage.get(key));
-		}
-		return null;
+		return NumberUtil.parseInt(keyValue.get(key));
 	}
 	
 	/**
@@ -239,14 +235,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Long 要素が返却されます.
 	 */
+	@Override
 	public Long getLong(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return NumberUtil.parseLong(storage.get(key));
-		}
-		return null;
+		return NumberUtil.parseLong(keyValue.get(key));
 	}
 	
 	/**
@@ -254,14 +248,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Float 要素が返却されます.
 	 */
+	@Override
 	public Float getFloat(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return NumberUtil.parseFloat(storage.get(key));
-		}
-		return null;
+		return NumberUtil.parseFloat(keyValue.get(key));
 	}
 	
 	/**
@@ -269,14 +261,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return Double 要素が返却されます.
 	 */
+	@Override
 	public Double getDouble(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return NumberUtil.parseDouble(storage.get(key));
-		}
-		return null;
+		return NumberUtil.parseDouble(keyValue.get(key));
 	}
 
 	/**
@@ -284,14 +274,12 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return String 要素が返却されます.
 	 */
+	@Override
 	public String getString(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return StringUtil.parseString(storage.get(key));
-		}
-		return null;
+		return StringUtil.parseString(keyValue.get(key));
 	}
 	
 	/**
@@ -303,26 +291,22 @@ public class SessionStorage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return DateUtil.parseDate(storage.get(key));
-		}
-		return null;
+		return DateUtil.parseDate(keyValue.get(key));
 	}
 	
 	/**
-	 * SessionStorageオブジェクトを取得.
+	 * Storageオブジェクトを取得.
 	 * @param key キー名を設定します.
 	 * @return Storageオブジェクトが返却されます.
 	 */
-	public SessionStorage getStorage(String key) {
+	@Override
+	public Storage getStorage(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			Object ret = storage.get(key);
-			if(ret != null && ret instanceof SessionStorage) {
-				return (SessionStorage)ret;
-			}
+		Object ret = keyValue.get(key);
+		if(ret != null && ret instanceof Storage) {
+			return (Storage)ret;
 		}
 		return null;
 	}
@@ -331,16 +315,14 @@ public class SessionStorage {
 	 * 要素のタイプを取得.
 	 * @param key キー名を設定します.
 	 * @return TypesClass 要素のタイプが返却されます.
-	 *                    TypesClass.Objectの場合SessionStorageです.
+	 *                    TypesClass.Objectの場合Storageです.
 	 */
+	@Override
 	public TypesClass getType(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		if(storage != null) {
-			return getTypesClass(storage.get(key));
-		}
-		return null;
+		return getTypesClass(keyValue.get(key));
 	}
 	
 	/**
@@ -348,38 +330,33 @@ public class SessionStorage {
 	 * @param key キー名を設定します.
 	 * @return boolean trueの場合、存在します.
 	 */
+	@Override
 	public boolean contains(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return false;
 		}
-		if(storage != null) {
-			return storage.containsKey(key);
-		}
-		return false;
+		return keyValue.containsKey(key);
 	}
 	
 	/**
 	 * 指定要素を削除.
 	 * @param key キー名を設定します.
 	 */
+	@Override
 	public void remove(String key) {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return;
 		}
-		if(storage != null) {
-			storage.remove(key);
-		}
+		keyValue.remove(key);
 	}
 	
 	/**
 	 * 要素数を取得.
 	 * @return
 	 */
+	@Override
 	public int size() {
-		if(storage != null) {
-			return storage.size();
-		}
-		return 0;
+		return keyValue.size();
 	}
 	
 	// 指定オブジェクトのタイプクラスを取得.
@@ -405,7 +382,7 @@ public class SessionStorage {
 			return TypesClass.String;
 		} else if(o instanceof Date) {
 			return TypesClass.Date;
-		} else if(o instanceof SessionStorage) {
+		} else if(o instanceof Storage) {
 			return TypesClass.Object;
 		}
 		return TypesClass.String;
@@ -416,12 +393,12 @@ public class SessionStorage {
 	 * @param in 読み込み元のInputStreamを設定します.
 	 * @throws IOException I/O例外.
 	 */
-	protected void load(InputStream in)
+	public void load(InputStream in)
 		throws IOException {
 		String key;
 		Object value;
 		TypesClass cls;
-		SessionStorage st;
+		MemoryStorage st;
 		final byte[] tmp = BinaryIO.createTmp();
 		// storageLength.
 		final int len = BinaryIO.readSavingInt(in, tmp);
@@ -463,7 +440,7 @@ public class SessionStorage {
 					value = BinaryIO.readString(in, tmp);
 					break;
 				case Object:
-					st = new SessionStorage();
+					st = new MemoryStorage();
 					st.load(in);
 					value = st;
 					break;
@@ -472,7 +449,7 @@ public class SessionStorage {
 					value = BinaryIO.readString(in, tmp);
 					break;
 			}
-			storage().put(key, value);
+			keyValue.put(key, value);
 			key = null; value = null;
 		}
 	}
@@ -482,20 +459,22 @@ public class SessionStorage {
 	 * @param out 保存先のOutputStreamを設定します.
 	 * @throws IOException I/O例外.
 	 */
-	protected void save(OutputStream out)
+	public void save(OutputStream out)
 		throws IOException {
-		String key;
 		Object value;
 		TypesClass cls;
 		final byte[] tmp = BinaryIO.createTmp();
-		final int len = size();
+		Entry<String, Object> e;
+		Iterator<Entry<String, Object>> it =
+			keyValue.entrySet().iterator();
 		// storageLength.
-		BinaryIO.writeSavingBinary(out, tmp, len);
-		for(int i = 0; i < len; i ++) {
-			key = storage.keyAt(i);
-			value = storage.valueAt(i);
+		BinaryIO.writeSavingBinary(out, tmp, size());
+		while(it.hasNext()) {
+			e = it.next();
+			value = e.getValue();
 			// key.
-			BinaryIO.writeString(out, tmp, key);
+			BinaryIO.writeString(out, tmp, e.getKey());
+			e = null;
 			// valueがnull.
 			if(value == null) {
 				BinaryIO.writeInt1(out, tmp,
@@ -547,7 +526,7 @@ public class SessionStorage {
 				break;
 			case Object:
 				BinaryIO.writeInt1(out, tmp, cls.getTypeNo());
-				((SessionStorage)value).save(out);
+				((MemoryStorage)value).save(out);
 				break;
 			default:
 				// Stirng.

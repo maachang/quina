@@ -4,7 +4,6 @@ import quina.annotation.Switch;
 import quina.annotation.cdi.Inject;
 import quina.annotation.component.ResponseSwitch;
 import quina.annotation.route.FilePath;
-import quina.annotation.route.Route;
 import quina.component.file.FileComponent;
 import quina.http.Request;
 import quina.http.Response;
