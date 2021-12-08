@@ -1,4 +1,4 @@
-package quina.util;
+package quina.json;
 
 /**
  * インデント処理.

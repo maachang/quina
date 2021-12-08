@@ -176,7 +176,8 @@ public final class Json {
 		} else if (target instanceof Number) {
 			buf.append(conv.numberToString((Number)target));
 		} else if (target instanceof String) {
-			buf.append(conv.stringToString((String)target));
+			buf.append(conv.stringToString(
+				Indent.upIndentDoubleCote((String)target)));
 		} else if (target instanceof java.util.Date) {
 			buf.append(conv.dateToString((java.util.Date)target));
 		} else if (target instanceof Boolean) {
@@ -194,7 +195,8 @@ public final class Json {
 				encodeJsonArray(buf, base, target);
 			}
 		} else {
-			buf.append(conv.stringToString(target.toString()));
+			buf.append(conv.stringToString(
+				Indent.upIndentDoubleCote(target.toString())));
 		}
 	}
 

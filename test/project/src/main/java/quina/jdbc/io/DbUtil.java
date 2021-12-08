@@ -3,8 +3,10 @@ package quina.jdbc.io;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -297,10 +299,12 @@ public final class DbUtil {
 		case Types.DATALINK:
 			data = result.getString(no);
 			break;
-		case Types.STRUCT:// 未サポート.
-		case Types.CLOB:// 未サポート.
-		case Types.NCLOB:// 未サポート.
+		case Types.CLOB:
+		case Types.NCLOB:
+			data = result.getClob(no);
+			break;
 		case Types.REF:// 未サポート.
+		case Types.STRUCT:// 未サポート.
 			break;
 		}
 		// blob.
@@ -308,7 +312,8 @@ public final class DbUtil {
 			InputStream b = null;
 			ByteArrayOutputStream bo = null;
 			try {
-				b = new BufferedInputStream(((Blob) data).getBinaryStream());
+				b = new BufferedInputStream(((Blob)data).getBinaryStream());
+				data = null;
 				bo = new ByteArrayOutputStream();
 				byte[] bin = new byte[4096];
 				int len;
@@ -334,6 +339,29 @@ public final class DbUtil {
 				if(bo != null) {
 					try {
 						bo.close();
+					} catch(Exception e) {}
+				}
+			}
+		// clob.
+		} else if(data instanceof Clob) {
+			Reader r = null;
+			try {
+				r = ((Clob)data).getCharacterStream();
+				char[] cBuf = new char[1024];
+				data = null;
+				StringBuilder buf = new StringBuilder();
+				int len;
+				while((len = r.read(cBuf, 0, 1024)) != -1) {
+					buf.append(cBuf, 0, len);
+				}
+				cBuf = null;
+				r.close();
+				r = null;
+				data = buf.toString();
+			} finally {
+				if(r != null) {
+					try {
+						r.close();
 					} catch(Exception e) {}
 				}
 			}
