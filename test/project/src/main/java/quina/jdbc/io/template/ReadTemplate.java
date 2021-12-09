@@ -73,7 +73,7 @@ public interface ReadTemplate<T>
 		String tableName, PrimaryKey primaryKey, QueryColumns columns,
 		Object... values) {
 		QueryResultRow ret = null;
-		if(columns == null || columns.size() == 0) {
+		if(columns == null || columns.isEmpty()) {
 			selectSQL(tableName);
 		} else {
 			selectSQL(tableName, columns.get());

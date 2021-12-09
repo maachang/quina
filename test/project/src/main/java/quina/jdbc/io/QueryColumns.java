@@ -1,11 +1,19 @@
 package quina.jdbc.io;
 
-import quina.exception.QuinaException;
-
 /**
  * QueryColumns群.
+ * select a, b, c from xxx;
+ * このようなSQLを生成する場合、
+ * 
+ * ReadTemplate.selectSQL("xxx",
+ *   QueryColumns.of("a", "b", "c").get());
+ * 
+ * とした形でQueryColumnsを利用します.
  */
 public class QueryColumns {
+	// 空の文字配列.
+	private static final String[] BLANK_STRING_ARRAY = new String[0];
+	
 	// カラム群.
 	private final String[] keys;
 	
@@ -20,7 +28,7 @@ public class QueryColumns {
 	 */
 	public QueryColumns(String... keys) {
 		if(keys == null || keys.length == 0) {
-			throw new QuinaException("Primary Key is not set.");
+			keys = BLANK_STRING_ARRAY;
 		}
 		this.keys = keys;
 	}
@@ -56,5 +64,13 @@ public class QueryColumns {
 	 */
 	public int size() {
 		return keys.length;
+	}
+	
+	/**
+	 * この情報が空か取得.
+	 * @return boolean trueの場合、空です.
+	 */
+	public boolean isEmpty() {
+		return keys.length == 0;
 	}
 }

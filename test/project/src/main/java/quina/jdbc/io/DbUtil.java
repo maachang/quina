@@ -571,6 +571,9 @@ public final class DbUtil {
 		return clearAndSetAll(params, values);
 	}
 	
+	// Select * from xxxx的な感じの全カラム取得.
+	private static final String[] ALL_COLUMNS = new String[] {"*"};
+	
 	/**
 	 * Select用のSQL文を作成.
 	 * @param out SQL出力先のStringBuiderを設定します.
@@ -582,7 +585,7 @@ public final class DbUtil {
 		if(table == null || (table = table.trim()).isEmpty()) {
 			throw new QuinaException("The table name is not set.");
 		} else if(columns == null || columns.length == 0) {
-			columns = new String[] {"*"};
+			columns = ALL_COLUMNS;
 		}
 		final int len = columns.length;
 		out.append("select ");

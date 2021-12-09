@@ -116,6 +116,15 @@ public abstract class AbstractStatement<T>
 	}
 	
 	/**
+	 * コネクションオブジェクトを取得.
+	 * @return
+	 */
+	public QuinaConnection getConnection() {
+		checkClose();
+		return conn;
+	}
+	
+	/**
 	 * コミット処理.
 	 * @return T このオブジェクトが返却されます.
 	 */

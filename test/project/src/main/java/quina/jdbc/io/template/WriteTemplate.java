@@ -298,6 +298,25 @@ public interface WriteTemplate<T>
 	 * この処理の場合sql()呼び出しはせず以下のように実装します.
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
+	 * stmt.insertRow("testTable",
+	 *     "id", 100, "age", 25, "name", "hoge")
+	 *     .commit();
+	 * 
+	 * これにより"testTable"に対してid=100, age=25, name=hoge
+	 * 内容がInsertされます.
+	 * @param tableName テーブル名を設定します.
+	 * @return T このオブジェクトが返却されます.
+	 */
+	default T insertRow(
+		String tableName, Object... values) {
+		return insertRow(null, tableName, values);
+	}
+	
+	/**
+	 * 新規データを挿入.
+	 * この処理の場合sql()呼び出しはせず以下のように実装します.
+	 * 
+	 * IoStatement stmt = conn.ioStatement();
 	 * stmt.insertRow(null, "testTable",
 	 *     "id", 100, "age", 25, "name", "hoge")
 	 *     .commit();
