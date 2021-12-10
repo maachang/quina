@@ -15,13 +15,6 @@ public interface Storage {
 	public void clear();
 	
 	/**
-	 * 指定キー名に対して新しいStorageを生成します.
-	 * @param key キー名を設定します.
-	 * @return Storage 新しく生成されたStorageが返却されます.
-	 */
-	public Storage makeStorage(String key);
-	
-	/**
 	 * アイテムをセット
 	 * @param key キー名を設定します.
 	 * @param value セット対象の要素を設定します.
@@ -155,13 +148,6 @@ public interface Storage {
 	 * @return Date 要素が返却されます.
 	 */
 	public Date getDate(String key);
-	
-	/**
-	 * Storageオブジェクトを取得.
-	 * @param key キー名を設定します.
-	 * @return Storageオブジェクトが返却されます.
-	 */
-	public Storage getStorage(String key);
 	
 	/**
 	 * 要素のタイプを取得.

@@ -21,9 +21,6 @@ public class JDBCStorageConstants {
 		.append(" (")
 		// man_id
 		.append("id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY")
-		// storage内のstorage定義の場合0.
-		// rootStorageの場合は1
-		.append(", root_storage SMALLINT NOT NULL")
 		// storageName.
 		.append(", name VARCHAR(96) NOT NULL")
 		// storage更新時間.
@@ -34,7 +31,7 @@ public class JDBCStorageConstants {
 	// Storage管理(name)ユニークインデックス生成SQL.
 	protected static final String MANAGE_CREATE_NAME_INDEX_SQL =
 		new StringBuilder("CREATE UNIQUE INDEX IF NOT EXISTS ")
-		.append(MANAGE_TABLE_NAME).append("_ID_NAME_IDX")
+		.append(MANAGE_TABLE_NAME).append("_NAME_IDX")
 		.append(" ON ").append(MANAGE_TABLE_NAME)
 		.append(" (name)")
 		.toString();
@@ -54,7 +51,7 @@ public class JDBCStorageConstants {
 		// セットされる.
 		.append(", val_type INT NOT NULL")
 		// 要素内容
-		// (Object型が無いので、val_type定義値を元にStringで内容を解釈する).
+		// (val_type定義値を元にStringで内容を解釈する).
 		.append(", val TEXT")
 		.append(")")
 		.toString();

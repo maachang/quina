@@ -20,7 +20,7 @@ public class TestDbJsonGetInsert implements RESTfulGetSync {
 		try(QuinaConnection conn = ds.getConnection()) {
 			io = conn.ioStatement();
 			// １行データを注入・更新.
-			io.upsertRow("TestTable", "id", params)
+			io.upsert("TestTable", "id", params)
 				.commit();
 			return JsonMap.of("state", "success");
 		} catch(Exception e) {

@@ -73,4 +73,17 @@ public class QueryColumns {
 	public boolean isEmpty() {
 		return keys.length == 0;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		int len = keys.length;
+		for(int i = 0; i < len; i ++) {
+			if(i != 0) {
+				buf.append(", ");
+			}
+			buf.append(keys[i]);
+		}
+		return buf.toString();
+	}
 }

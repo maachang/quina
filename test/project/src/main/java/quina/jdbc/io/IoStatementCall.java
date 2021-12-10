@@ -2,10 +2,6 @@ package quina.jdbc.io;
 
 import java.sql.SQLException;
 
-import quina.exception.QuinaException;
-import quina.jdbc.QuinaConnection;
-import quina.jdbc.QuinaDataSource;
-
 /**
  * Read/Write用ステートメントコール.
  */

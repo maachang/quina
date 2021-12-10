@@ -4,6 +4,7 @@ import java.util.Date;
 
 import quina.jdbc.QuinaDataSource;
 import quina.storage.Storage;
+import quina.util.AtomicNumber64;
 import quina.util.collection.TypesClass;
 
 /**
@@ -20,171 +21,47 @@ public class JDBCStorage implements Storage {
 	// ストレージマネージャ名.
 	private String managerName;
 	
-	// コンストラクタ.
-	private JDBCStorage() {
-		
-	}
+	// 更新時間.
+	private final AtomicNumber64 updateTime;
 	
 	/**
 	 * コンストラクタ.
-	 * @param ds
-	 * @param manId
-	 * @param manName
+	 * @param ds QuinaDataSourceを設定します.
+	 * @param manId 管理IDを設定します.
+	 * @param manName 管理名を設定します.
+	 * @param time 前回の更新時間を設定します.
 	 */
-	public JDBCStorage(QuinaDataSource ds, long manId, String manName) {
+	public JDBCStorage(
+		QuinaDataSource ds, long manId, String manName, long time) {
 		this.dataSource = ds;
 		this.managerId = manId;
 		this.managerName = manName;
+		this.updateTime = new AtomicNumber64(time);
 	}
-
-	@Override
-	public void clear() {
-		// TODO 自動生成されたメソッド・スタブ
-		
+	
+	/**
+	 * 感理IDを取得.
+	 * @return long 感理IDが返却されます.
+	 */
+	protected long getManagerId() {
+		return managerId;
 	}
-
-	@Override
-	public Storage makeStorage(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
+	
+	/**
+	 * 感理名を取得.
+	 * @return String 感理名が返却されます.
+	 */
+	protected String getManagerName() {
+		return managerName;
 	}
-
-	@Override
-	public Storage set(String key, Boolean value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
+	
+	protected void setUpdateTime(long time) {
+		updateTime.set(time);
 	}
-
-	@Override
-	public Storage set(String key, Byte value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
+	
+	protected long getUpdateTime() {
+		return updateTime.get();
 	}
-
-	@Override
-	public Storage set(String key, Short value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage set(String key, Integer value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage set(String key, Long value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage set(String key, Float value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage set(String key, Double value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage set(String key, String value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage set(String key, Date value) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Boolean getBoolean(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Byte getByte(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Short getShort(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Integer getInteger(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Long getLong(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Float getFloat(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Double getDouble(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public String getString(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Date getDate(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public Storage getStorage(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public TypesClass getType(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
-	}
-
-	@Override
-	public boolean contains(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		return false;
-	}
-
-	@Override
-	public void remove(String key) {
-		// TODO 自動生成されたメソッド・スタブ
-		
-	}
-
-	@Override
-	public int size() {
-		// TODO 自動生成されたメソッド・スタブ
-		return 0;
-	}
-
+	
+	
 }

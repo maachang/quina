@@ -679,7 +679,8 @@ public final class DbUtil {
 			if(i != 0) {
 				buf.append(" and ");
 			}
-			buf.append(" where ").append(primaryKey.getKey(i)).append("=?");
+			buf.append(" where ")
+				.append(primaryKey.getKey(i)).append("=?");
 			params.add(values.get(primaryKey.getKey(i)));
 		}
 	}
@@ -704,11 +705,45 @@ public final class DbUtil {
 			if(i != 0) {
 				buf.append(" and ");
 			}
-			buf.append(" where ").append(primaryKey.getKey(i)).append("=?");
+			buf.append(" where ")
+				.append(primaryKey.getKey(i)).append("=?");
 			params.add(values[i]);
 		}
 	}
-
+	
+	/**
+	 * values = key, value, key, value... に対して
+	 * PrimaryKeyで定義されてる内容を取得.
+	 * @param primaryKey PrimaryKeyを設定します.
+	 * @param values key, value, key, value... 条件を設定します.
+	 * @return Object[] PrimaryKeyの内容が返却されます.
+	 */
+	public static final Object[] getPrimaryKey(
+		PrimaryKey primaryKey, Object... values) {
+		int i, j;
+		int cnt = 0;
+		final int len = primaryKey.size();
+		final int vLen = values.length;
+		final Object[] ret = new Object[len];
+		final String[] keys = new String[len];
+		System.arraycopy(primaryKey.getKeys(), 0, keys, 0, len);
+		for(i = 0; i < vLen; i += 2) {
+			for(j = 0; j < len; j ++) {
+				if(keys[j] != null && keys[j].equals(values[i])) {
+					ret[j] = values[i + 1];
+					keys[j] = null;
+					cnt ++;
+					break;
+				}
+			}
+			if(cnt >= len) {
+				return ret;
+			}
+		}
+		throw new QuinaException(
+			"There is no condition for Primary Key: " +
+			primaryKey);
+	}
 	
 	/**
 	 * 指定primaryKeyに対する行情報が存在するかチェック.
@@ -721,6 +756,30 @@ public final class DbUtil {
 	public static final boolean isPrimaryKeyByRow(
 		BaseTemplate<?> wt, String table,
 		PrimaryKey primaryKey, Map<String, Object> values) {
+		return isPrimaryKeyByRow(
+			wt, true, table, primaryKey, values);
+	}
+	
+	/**
+	 * 指定primaryKeyに対する行情報が存在するかチェック.
+	 * @param wt WriteTemplateを設定します.
+	 * @param table テーブル名を設定します.
+	 * @param primaryKey PrimaryKeyを設定します.
+	 * @param values KeyValue群を設定します.
+	 * @return boolean trueの場合、情報は存在します.
+	 */
+	public static final boolean isPrimaryKeyByRow(
+		BaseTemplate<?> wt, String table,
+		PrimaryKey primaryKey, Object... values) {
+		return isPrimaryKeyByRow(
+			wt, false, table, primaryKey, values);
+	}
+	
+	// 指定primaryKeyに対する行情報が存在するかチェック.
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static final boolean isPrimaryKeyByRow(
+		BaseTemplate<?> wt, boolean valuesMode,
+		String table, PrimaryKey primaryKey, Object values) {
 		try {
 			StringBuilder buf = wt.clearSql();
 			buf.append("select ");
@@ -737,7 +796,14 @@ public final class DbUtil {
 			ObjectList<Object> params = new ObjectList<Object>();
 			wt.setParams(params);
 			// primaryKeyに対するwhere文を生成.
-			wherePrimaryKeys(buf, params, primaryKey, values);
+			if(valuesMode) {
+				// values = Map.
+				wherePrimaryKeys(buf, params, primaryKey, (Map)values);
+			} else {
+				// values = Object[].
+				wherePrimaryKeys(buf, params, primaryKey,
+					DbUtil.getPrimaryKey(primaryKey, (Object[])values));
+			}
 			// 実行処理.
 			QueryResult res = executeQuery(wt);
 			// 存在するかチェック.

@@ -193,7 +193,7 @@ public interface WriteTemplate<T>
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
 	 * stmt.params("id", 100, "age", 25, "name", "hoge")
-	 *     .insertRow("testTable")
+	 *     .insert("testTable")
 	 *     .commit();
 	 * 
 	 * これにより"testTable"に対してid=100, age=25, name=hoge
@@ -201,8 +201,8 @@ public interface WriteTemplate<T>
 	 * @param tableName テーブル名を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T insertRow(String tableName) {
-		return insertRow(null, tableName);
+	default T insert(String tableName) {
+		return insert(null, tableName);
 	}
 	
 	/**
@@ -211,7 +211,7 @@ public interface WriteTemplate<T>
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
 	 * stmt.params("id", 100, "age", 25, "name", "hoge")
-	 *     .insertRow(null, "testTable")
+	 *     .insert(null, "testTable")
 	 *     .commit();
 	 * 
 	 * これにより"testTable"に対してid=100, age=25, name=hoge
@@ -220,7 +220,7 @@ public interface WriteTemplate<T>
 	 * @param tableName テーブル名を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T insertRow(
+	default T insert(
 		QueryResult[] out, String tableName) {
 		try {
 			StringBuilder sqlBuf = clearSql();
@@ -243,7 +243,7 @@ public interface WriteTemplate<T>
 	 * keyValues.put("age", 25);
 	 * keyValues.put("name", "hoge");
 	 * IoStatement stmt = conn.ioStatement();
-	 * stmt.insertRow("testTable", keyValues)
+	 * stmt.insert("testTable", keyValues)
 	 *     .commit();
 	 * 
 	 * これにより"testTable"に対してid=100, age=25, name=hoge
@@ -253,9 +253,9 @@ public interface WriteTemplate<T>
 	 *               Mapを設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T insertRow(
+	default T insert(
 		String tableName, Map<String, Object> values) {
-		return insertRow(null, tableName, values);
+		return insert(null, tableName, values);
 	}
 
 	
@@ -268,7 +268,7 @@ public interface WriteTemplate<T>
 	 * keyValues.put("age", 25);
 	 * keyValues.put("name", "hoge");
 	 * IoStatement stmt = conn.ioStatement();
-	 * stmt.insertRow(null, "testTable", keyValues)
+	 * stmt.insert(null, "testTable", keyValues)
 	 *     .commit();
 	 * 
 	 * これにより"testTable"に対してid=100, age=25, name=hoge
@@ -279,7 +279,7 @@ public interface WriteTemplate<T>
 	 *               Mapを設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T insertRow(QueryResult[] out, String tableName,
+	default T insert(QueryResult[] out, String tableName,
 		Map<String, Object> values) {
 		try {
 			StringBuilder sqlBuf = clearSql();
@@ -298,7 +298,7 @@ public interface WriteTemplate<T>
 	 * この処理の場合sql()呼び出しはせず以下のように実装します.
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
-	 * stmt.insertRow("testTable",
+	 * stmt.insert("testTable",
 	 *     "id", 100, "age", 25, "name", "hoge")
 	 *     .commit();
 	 * 
@@ -307,9 +307,9 @@ public interface WriteTemplate<T>
 	 * @param tableName テーブル名を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T insertRow(
+	default T insert(
 		String tableName, Object... values) {
-		return insertRow(null, tableName, values);
+		return insert(null, tableName, values);
 	}
 	
 	/**
@@ -317,7 +317,7 @@ public interface WriteTemplate<T>
 	 * この処理の場合sql()呼び出しはせず以下のように実装します.
 	 * 
 	 * IoStatement stmt = conn.ioStatement();
-	 * stmt.insertRow(null, "testTable",
+	 * stmt.insert(null, "testTable",
 	 *     "id", 100, "age", 25, "name", "hoge")
 	 *     .commit();
 	 * 
@@ -327,7 +327,7 @@ public interface WriteTemplate<T>
 	 * @param tableName テーブル名を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T insertRow(
+	default T insert(
 		QueryResult[] out, String tableName, Object... values) {
 		try {
 			StringBuilder sqlBuf = clearSql();
@@ -349,7 +349,7 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T updateRow(String tableName, PrimaryKey primaryKey,
+	default T update(String tableName, PrimaryKey primaryKey,
 		Map<String, Object> values) {
 		// 更新処理.
 		updateSQL(tableName, values);
@@ -368,10 +368,17 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T updateRow(
-		String tableName, PrimaryKey primaryKey, Object... values) {
-		return updateRow(tableName, primaryKey,
-			new IndexMap<String, Object>(values));
+	default T update(String tableName, PrimaryKey primaryKey,
+		Object... values) {
+		// 更新処理.
+		updateSQL(tableName, values);
+		// primaryKeyに対するwhere文を生成.
+		DbUtil.wherePrimaryKeys(
+			getSql(), getParams(), primaryKey,
+			DbUtil.getPrimaryKey(primaryKey, values));
+		// 実行処理.
+		executeUpdate();
+		return (T)this;
 	}
 	
 	/**
@@ -381,9 +388,9 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T updateRow(String tableName, String primaryKey,
+	default T update(String tableName, String primaryKey,
 		Map<String, Object> values) {
-		return updateRow(tableName, new PrimaryKey(primaryKey), values);
+		return update(tableName, new PrimaryKey(primaryKey), values);
 	}
 	
 	/**
@@ -393,9 +400,9 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T updateRow(
-		String tableName, String primaryKey, Object... values) {
-		return updateRow(tableName, new PrimaryKey(primaryKey), values);
+	default T update(String tableName, String primaryKey,
+		Object... values) {
+		return update(tableName, new PrimaryKey(primaryKey), values);
 	}
 	
 	/**
@@ -405,8 +412,8 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T updateRow(String tableName, Map<String, Object> values) {
-		return updateRow(tableName, new PrimaryKey("id"), values);
+	default T update(String tableName, Map<String, Object> values) {
+		return update(tableName, new PrimaryKey("id"), values);
 	}
 	
 	/**
@@ -416,9 +423,8 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T updateRow(
-		String tableName, Object... values) {
-		return updateRow(tableName, new PrimaryKey("id"), values);
+	default T update(String tableName, Object... values) {
+		return update(tableName, new PrimaryKey("id"), values);
 	}
 	
 	/**
@@ -429,16 +435,16 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T upsertRow(String tableName, PrimaryKey primaryKey,
+	default T upsert(String tableName, PrimaryKey primaryKey,
 		Map<String, Object> values) {
 		// 指定PrimaryKeyの内容が存在するかチェック.
 		if(DbUtil.isPrimaryKeyByRow(
 			this, tableName, primaryKey, values)) {
 			// Update.
-			updateRow(tableName, primaryKey, values);
+			update(tableName, primaryKey, values);
 		} else {
 			// 注入.
-			insertRow(tableName, values);
+			insert(tableName, values);
 		}
 		return (T)this;
 	}
@@ -451,10 +457,18 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T upsertRow(
+	default T upsert(
 		String tableName, PrimaryKey primaryKey, Object... values) {
-		return upsertRow(tableName, primaryKey,
-			new IndexMap<String, Object>(values));
+		// 指定PrimaryKeyの内容が存在するかチェック.
+		if(DbUtil.isPrimaryKeyByRow(
+			this, tableName, primaryKey, values)) {
+			// Update.
+			update(tableName, primaryKey, values);
+		} else {
+			// 注入.
+			insert(tableName, values);
+		}
+		return (T)this;
 	}
 	
 	/**
@@ -465,9 +479,9 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T upsertRow(String tableName, String primaryKey,
+	default T upsert(String tableName, String primaryKey,
 		Map<String, Object> values) {
-		return upsertRow(tableName, new PrimaryKey(primaryKey), values);
+		return upsert(tableName, new PrimaryKey(primaryKey), values);
 	}
 	
 	/**
@@ -478,9 +492,9 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T upsertRow(
+	default T upsert(
 		String tableName, String primaryKey, Object... values) {
-		return upsertRow(tableName, new PrimaryKey(primaryKey), values);
+		return upsert(tableName, new PrimaryKey(primaryKey), values);
 	}
 	
 	/**
@@ -491,8 +505,8 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T upsertRow(String tableName, Map<String, Object> values) {
-		return upsertRow(tableName, new PrimaryKey("id"), values);
+	default T upsert(String tableName, Map<String, Object> values) {
+		return upsert(tableName, new PrimaryKey("id"), values);
 	}
 	
 	/**
@@ -503,19 +517,19 @@ public interface WriteTemplate<T>
 	 * @param values Insert or UpdateするKeyValue条件を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T upsertRow(
+	default T upsert(
 		String tableName, Object... values) {
-		return upsertRow(tableName, new PrimaryKey("id"), values);
+		return upsert(tableName, new PrimaryKey("id"), values);
 	}
 	
 	/**
-	 * PrimaryKeyを設定して１行情報を削除.
+	 * PrimaryKeyを設定して削除.
 	 * @param tableName テーブル名を設定します.
 	 * @param primaryKey プライマリキー群を設定します.
 	 * @param values プライマリキーのvalue群を設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T deleteRow(
+	default T delete(
 		String tableName, PrimaryKey primaryKey, Object... values) {
 		deleteSQL(tableName);
 		setParams(new ObjectList<Object>());
@@ -525,25 +539,25 @@ public interface WriteTemplate<T>
 	}
 	
 	/**
-	 * PrimaryKeyを設定して１行情報を削除.
+	 * PrimaryKeyを設定して削除.
 	 * @param tableName テーブル名を設定します.
 	 * @param primaryKey プライマリキーを設定します.
 	 * @param value プライマリキーのvalueを設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T deleteRow(
+	default T delete(
 		String tableName, String primaryKey, Object value) {
-		return deleteRow(tableName, new PrimaryKey(primaryKey), value);
+		return delete(tableName, new PrimaryKey(primaryKey), value);
 	}
 	
 	/**
-	 * PrimaryKeyを設定して１行情報を削除.
+	 * PrimaryKeyを設定して削除.
 	 * PrimaryKeyを"id"として設定します.
 	 * @param tableName テーブル名を設定します.
 	 * @param value プライマリキーのvalueを設定します.
 	 * @return T このオブジェクトが返却されます.
 	 */
-	default T deleteRow(String tableName, Object value) {
-		return deleteRow(tableName, new PrimaryKey("id"), value);
+	default T delete(String tableName, Object value) {
+		return delete(tableName, new PrimaryKey("id"), value);
 	}
 }

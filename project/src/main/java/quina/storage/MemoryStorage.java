@@ -49,19 +49,6 @@ public class MemoryStorage implements Storage {
 	}
 	
 	/**
-	 * 指定キー名に対して新しいStorageを生成します.
-	 * @param key キー名を設定します.
-	 * @return Storage 新しく生成されたStorageが返却されます.
-	 */
-	@Override
-	public Storage makeStorage(String key) {
-		Storage value = new MemoryStorage();
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return value;
-	}
-	
-	/**
 	 * アイテムをセット
 	 * @param key キー名を設定します.
 	 * @param value セット対象の要素を設定します.
@@ -295,23 +282,6 @@ public class MemoryStorage implements Storage {
 	}
 	
 	/**
-	 * Storageオブジェクトを取得.
-	 * @param key キー名を設定します.
-	 * @return Storageオブジェクトが返却されます.
-	 */
-	@Override
-	public Storage getStorage(String key) {
-		if(key == null || (key = key.trim()).isEmpty()) {
-			return null;
-		}
-		Object ret = keyValue.get(key);
-		if(ret != null && ret instanceof Storage) {
-			return (Storage)ret;
-		}
-		return null;
-	}
-	
-	/**
 	 * 要素のタイプを取得.
 	 * @param key キー名を設定します.
 	 * @return TypesClass 要素のタイプが返却されます.
@@ -382,8 +352,6 @@ public class MemoryStorage implements Storage {
 			return TypesClass.String;
 		} else if(o instanceof Date) {
 			return TypesClass.Date;
-		} else if(o instanceof Storage) {
-			return TypesClass.Object;
 		}
 		return TypesClass.String;
 	}
@@ -398,7 +366,6 @@ public class MemoryStorage implements Storage {
 		String key;
 		Object value;
 		TypesClass cls;
-		MemoryStorage st;
 		final byte[] tmp = BinaryIO.createTmp();
 		// storageLength.
 		final int len = BinaryIO.readSavingInt(in, tmp);
@@ -438,11 +405,6 @@ public class MemoryStorage implements Storage {
 					break;
 				case String:
 					value = BinaryIO.readString(in, tmp);
-					break;
-				case Object:
-					st = new MemoryStorage();
-					st.load(in);
-					value = st;
 					break;
 				default :
 					// string.
@@ -523,10 +485,6 @@ public class MemoryStorage implements Storage {
 			case String:
 				BinaryIO.writeInt1(out, tmp, cls.getTypeNo());
 				BinaryIO.writeString(out, tmp, (String)value);
-				break;
-			case Object:
-				BinaryIO.writeInt1(out, tmp, cls.getTypeNo());
-				((MemoryStorage)value).save(out);
 				break;
 			default:
 				// Stirng.
