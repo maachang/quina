@@ -5,6 +5,10 @@ package quina.jdbc.storage;
  */
 public class JDBCStorageConstants {
 	
+	// 一定期間を超えた場合のアクセス更新時間.
+	// ５秒.
+	protected static final long FIXED_INTERVAL_TIME = 5000L;
+	
 	// Storageテーブル基本名.
 	protected static final String BASE_TABLE_NAME = "QUINA_JDBC_STORAGE";
 
@@ -71,7 +75,4 @@ public class JDBCStorageConstants {
 		.append(" ON ").append(ELEMENT_TABLE_NAME)
 		.append(" (man_id, key_name)")
 		.toString();
-	
-	
-	
 }

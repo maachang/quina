@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import quina.exception.QuinaException;
 import quina.util.BinaryIO;
@@ -15,6 +12,7 @@ import quina.util.BooleanUtil;
 import quina.util.DateUtil;
 import quina.util.NumberUtil;
 import quina.util.StringUtil;
+import quina.util.collection.IndexKeyValueList;
 import quina.util.collection.TypesClass;
 import quina.util.collection.TypesConstants;
 
@@ -23,29 +21,102 @@ import quina.util.collection.TypesConstants;
  */
 public class MemoryStorage implements Storage {
 	
+	// マネージャオブジェクト.
+	protected MemoryStorageManager manager;
+	
+	// このオブジェクトの管理名.
+	protected String managerName;
+	
 	// ストレージ管理.
-	protected Map<String, Object> keyValue =
-		new ConcurrentHashMap<String, Object>();
+	protected IndexKeyValueList<String, Object> keyValue =
+		new IndexKeyValueList<String, Object>();
+	
+	// 更新時間.
+	protected long accessTime;
+	
+	// Read/Writeロック.
+	protected final ReadWriteLock lock;
 	
 	/**
 	 * コンストラクタ.
+	 * @param man 対象のManagerオブジェクトを設定します.
+	 * @param name 対象の管理名を設定します.
 	 */
-	public MemoryStorage() {}
+	public MemoryStorage(
+		MemoryStorageManager man, String name) {
+		this.manager = man;
+		this.managerName = name;
+		this.lock = man.lock;
+		this.accessTime = System.currentTimeMillis();
+	}
+	
+	/**
+	 * 最終アクセス時間を更新.
+	 * @param time 更新時間を設定します.
+	 */
+	protected void setUpdateTime(long time) {
+		lock.writeLock().lock();
+		try {
+			accessTime = time;
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
+	
+	/**
+	 * 最終アクセス時間を取得.
+	 * @return long 最終アクセス時間が返却されます.
+	 */
+	@Override
+	public long getUpdateTime() {
+		lock.readLock().lock();
+		try {
+			return accessTime;
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
 	
 	/**
 	 * クリアー.
 	 */
+	@Override
 	public void clear() {
-		keyValue.clear();
+		lock.writeLock().lock();
+		try {
+			keyValue.clear();
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	// 引数チェック.
-	private static final void checkArgs(String key, Object value) {
+	private static final String checkArgs(
+		String key, Object value) {
 		if(key == null || value == null ||
 			(key = key.trim()).isEmpty()) {
 			throw new QuinaException(
 				"The specified argument is null.");
 		}
+		return key;
+	}
+	
+	// storageの存在確認.
+	protected void checkStorage() {
+		// storageが存在する場合に要素追加.
+		if(!manager.isStorage(managerName)) {
+			// 存在しない場合は410エラー.
+			// 410:ファイルが削除されたため、ほぼ永久的にWebページが
+			//     存在しない.
+			throw new QuinaException(410,
+				"Storage with the specified name \"" + managerName +
+				"\" has already been deleted.");
+		}
+	}
+	
+	// アクセス時間を更新.
+	protected final void updateTime() {
+		accessTime = System.currentTimeMillis();
 	}
 	
 	/**
@@ -56,9 +127,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Boolean value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -69,9 +147,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Byte value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -82,9 +167,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Short value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -95,9 +187,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Integer value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -108,9 +207,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Long value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -121,9 +227,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Float value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -134,9 +247,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Double value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -147,9 +267,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, String value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -160,9 +287,16 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public Storage set(String key, Date value) {
-		checkArgs(key, value);
-		keyValue.put(key, value);
-		return this;
+		lock.writeLock().lock();
+		try {
+			key = checkArgs(key, value);
+			checkStorage();
+			keyValue.put(key, value);
+			updateTime();
+			return this;
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -175,7 +309,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return BooleanUtil.parseBoolean(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return BooleanUtil.parseBoolean(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -188,7 +329,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return NumberUtil.parseByte(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return NumberUtil.parseByte(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -201,7 +349,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return NumberUtil.parseShort(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return NumberUtil.parseShort(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -214,7 +369,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return NumberUtil.parseInt(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return NumberUtil.parseInt(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -227,7 +389,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return NumberUtil.parseLong(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return NumberUtil.parseLong(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -240,7 +409,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return NumberUtil.parseFloat(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return NumberUtil.parseFloat(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -253,7 +429,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return NumberUtil.parseDouble(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return NumberUtil.parseDouble(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 
 	/**
@@ -266,7 +449,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return StringUtil.parseString(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return StringUtil.parseString(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -278,7 +468,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return DateUtil.parseDate(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return DateUtil.parseDate(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -292,7 +489,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return null;
 		}
-		return getTypesClass(keyValue.get(key));
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return getTypesClass(keyValue.get(key));
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -305,7 +509,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return false;
 		}
-		return keyValue.containsKey(key);
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return keyValue.containsKey(key);
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	/**
@@ -317,7 +528,14 @@ public class MemoryStorage implements Storage {
 		if(key == null || (key = key.trim()).isEmpty()) {
 			return;
 		}
-		keyValue.remove(key);
+		lock.writeLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			keyValue.remove(key);
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 	
 	/**
@@ -326,7 +544,14 @@ public class MemoryStorage implements Storage {
 	 */
 	@Override
 	public int size() {
-		return keyValue.size();
+		lock.readLock().lock();
+		try {
+			checkStorage();
+			updateTime();
+			return keyValue.size();
+		} finally {
+			lock.readLock().unlock();
+		}
 	}
 	
 	// 指定オブジェクトのタイプクラスを取得.
@@ -361,12 +586,14 @@ public class MemoryStorage implements Storage {
 	 * @param in 読み込み元のInputStreamを設定します.
 	 * @throws IOException I/O例外.
 	 */
-	public void load(InputStream in)
+	protected void load(InputStream in)
 		throws IOException {
 		String key;
 		Object value;
 		TypesClass cls;
 		final byte[] tmp = BinaryIO.createTmp();
+		// 更新時間.
+		accessTime = BinaryIO.readLong(in, tmp);
 		// storageLength.
 		final int len = BinaryIO.readSavingInt(in, tmp);
 		for(int i = 0; i < len; i ++) {
@@ -421,22 +648,22 @@ public class MemoryStorage implements Storage {
 	 * @param out 保存先のOutputStreamを設定します.
 	 * @throws IOException I/O例外.
 	 */
-	public void save(OutputStream out)
+	protected void save(OutputStream out)
 		throws IOException {
-		Object value;
 		TypesClass cls;
 		final byte[] tmp = BinaryIO.createTmp();
-		Entry<String, Object> e;
-		Iterator<Entry<String, Object>> it =
-			keyValue.entrySet().iterator();
+		// 更新時間.
+		BinaryIO.writeLong(out, tmp, accessTime);
 		// storageLength.
-		BinaryIO.writeSavingBinary(out, tmp, size());
-		while(it.hasNext()) {
-			e = it.next();
-			value = e.getValue();
+		final int len = keyValue.size();
+		BinaryIO.writeSavingBinary(out, tmp, len);
+		String key;
+		Object value;
+		for(int i = 0; i < len; i ++) {
+			key = keyValue.keyAt(i);
+			value = keyValue.valueAt(i);
 			// key.
-			BinaryIO.writeString(out, tmp, e.getKey());
-			e = null;
+			BinaryIO.writeString(out, tmp, key);
 			// valueがnull.
 			if(value == null) {
 				BinaryIO.writeInt1(out, tmp,

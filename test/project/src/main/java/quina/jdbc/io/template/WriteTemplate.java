@@ -3,10 +3,9 @@ package quina.jdbc.io.template;
 import java.util.Map;
 
 import quina.exception.QuinaException;
-import quina.jdbc.io.QueryResult;
 import quina.jdbc.io.DbUtil;
 import quina.jdbc.io.PrimaryKey;
-import quina.util.collection.IndexMap;
+import quina.jdbc.io.QueryResult;
 import quina.util.collection.ObjectList;
 
 /**

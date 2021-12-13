@@ -10,6 +10,12 @@ import quina.util.collection.TypesClass;
 public interface Storage {
 	
 	/**
+	 * 最終アクセス時間を取得.
+	 * @return long 最終アクセス時間が返却されます.
+	 */
+	public long getUpdateTime();
+	
+	/**
 	 * クリアー.
 	 */
 	public void clear();
