@@ -284,11 +284,4 @@ public class TimeoutLoopElement
 			} catch(Exception e) {}
 		}
 	}
-	
-	// 一定期間待機.
-	private static final void sleep() {
-		try {
-			Thread.sleep(5L);
-		} catch(Exception e) {}
-	}
 }

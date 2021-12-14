@@ -153,6 +153,22 @@ public class MemoryStorageManager
 	}
 	
 	/**
+	 * 項番を指定してキー名を取得.
+	 * @param no 対象の項番を設定します.
+	 * @return String キー名が返却されます.
+	 */
+	protected String keyAt(int no) {
+		lock.readLock().lock();
+		try {
+			return manager.keyAt(no);
+		} catch(Exception e) {
+			return null;
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
+	
+	/**
 	 * 現在のMemoryStorageを永続化.
 	 * @param out 対象のOutputStreamを設定します.
 	 */

@@ -35,4 +35,11 @@ public interface QuinaLoopElement {
 	default void cleanUpCall() {
 		
 	}
+	
+	// 一定期間待機.
+	default void sleep() {
+		try {
+			Thread.sleep(5L);
+		} catch(Exception e) {}
+	}
 }
