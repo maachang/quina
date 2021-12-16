@@ -1,6 +1,7 @@
 package quina.worker;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.QuinaConfig;
@@ -54,11 +55,11 @@ public class QuinaWorkerService
 	 */
 	public QuinaWorkerService setHandler(
 		QuinaWorkerHandler handle) {
-		lock.writeLock().lock();
+		wlock();
 		try {
 			this.handle = handle;
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		return this;
 	}
@@ -69,11 +70,11 @@ public class QuinaWorkerService
 	 *                            返却されます.
 	 */
 	public QuinaWorkerHandler getHandler() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			return handle;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 	
@@ -82,11 +83,11 @@ public class QuinaWorkerService
 	 * @return boolean trueの場合設定されています.
 	 */
 	public boolean isHandler() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			return handle != null;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 	
@@ -104,7 +105,7 @@ public class QuinaWorkerService
 				"The target call for the target handle " +
 					handle.getClass().getName() + " is null.");
 		}
-		lock.writeLock().lock();
+		wlock();
 		try {
 			if(callHandles == null) {
 				callHandles =
@@ -112,7 +113,7 @@ public class QuinaWorkerService
 			}
 			callHandles.add(handle);
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		return this;
 	}
@@ -122,12 +123,12 @@ public class QuinaWorkerService
 	 * @return int 登録されている数が返却されます.
 	 */
 	public int getCallHandleSize() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			return callHandles == null ?
 				0 : callHandles.size();
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 	
@@ -138,7 +139,7 @@ public class QuinaWorkerService
 	 *                                返却されます.
 	 */
 	public QuinaWorkerCallHandler getCallHandle(int no) {
-		lock.readLock().lock();
+		rlock();
 		try {
 			if(callHandles == null || no < 0 ||
 				no > callHandles.size()) {
@@ -146,7 +147,7 @@ public class QuinaWorkerService
 			}
 			return callHandles.get(no);
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 	
@@ -159,7 +160,7 @@ public class QuinaWorkerService
 	 */
 	public QuinaWorkerCallHandler getCallHandleByTargetId(
 		int id) {
-		lock.readLock().lock();
+		rlock();
 		try {
 			final int len = callHandles == null ?
 				0 : callHandles.size();
@@ -169,7 +170,7 @@ public class QuinaWorkerService
 				}
 			}
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		return null;
 	}
@@ -189,7 +190,7 @@ public class QuinaWorkerService
 				"The target element for the target handle " +
 					handle.getClass().getName() + " is null.");
 		}
-		lock.readLock().lock();
+		rlock();
 		try {
 			if(callHandles == null) {
 				return false;
@@ -202,7 +203,7 @@ public class QuinaWorkerService
 				}
 			}
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		return false;
 	}
@@ -212,26 +213,23 @@ public class QuinaWorkerService
 	 * @param em ループ実行用の要素を設定します.
 	 */
 	public void regLoopElement(QuinaLoopElement em) {
-		lock.writeLock().lock();
+		wlock();
 		try {
 			loopThread.regLoopElement(em);
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 	}
 	
 	@Override
 	public boolean loadConfig(String configDir) {
 		// 既にサービスが開始している場合はエラー.
-		if(startFlag.get()) {
-			throw new QuinaException(
-				"The service has already started.");
-		}
-		lock.writeLock().lock();
+		checkService(true);
+		wlock();
 		try {
 			return config.loadConfig(configDir);
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 	}
 	
@@ -253,7 +251,7 @@ public class QuinaWorkerService
 				this.getClass().getName() +
 				" service has already started.");
 		}
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// マネージャを生成して開始処理.
 			this.manager = new QuinaWorkerManager(
@@ -268,7 +266,7 @@ public class QuinaWorkerService
 			stopService();
 			throw new QuinaException(e);
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 	}
 
@@ -284,8 +282,13 @@ public class QuinaWorkerService
 	}
 	
 	@Override
+	public ReadWriteLock getLock() {
+		return lock;
+	}
+	
+	@Override
 	public boolean isStarted() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			if(manager != null && loopThread != null) {
 				if(manager != null) {
@@ -302,7 +305,7 @@ public class QuinaWorkerService
 			}
 			return false;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 
@@ -310,12 +313,12 @@ public class QuinaWorkerService
 	public boolean awaitStartup(long timeout) {
 		QuinaWorkerManager m = null;
 		QuinaLoopThread lt;
-		lock.readLock().lock();
+		rlock();
 		try {
 			m = manager;
 			lt = loopThread;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		if(m != null) {
 			if(lt != null) {
@@ -333,7 +336,7 @@ public class QuinaWorkerService
 
 	@Override
 	public void stopService() {
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// 停止処理.
 			if(manager != null) {
@@ -343,14 +346,14 @@ public class QuinaWorkerService
 				loopThread.stopThread();
 			}
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		startFlag.set(false);
 	}
 
 	@Override
 	public boolean isExit() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			if(manager != null) {
 				if(!manager.isExitThread()) {
@@ -364,7 +367,7 @@ public class QuinaWorkerService
 			}
 			return true;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 
@@ -372,12 +375,12 @@ public class QuinaWorkerService
 	public boolean awaitExit(long timeout) {
 		QuinaWorkerManager m = null;
 		QuinaLoopThread lt;
-		lock.readLock().lock();
+		rlock();
 		try {
 			m = manager;
 			lt = loopThread;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		boolean ret = false;
 		if(m != null) {
@@ -389,22 +392,22 @@ public class QuinaWorkerService
 				ret = m.awaitExit(timeout);
 			}
 			if(ret) {
-				lock.writeLock().lock();
+				wlock();
 				try {
 					manager = null;
 				} finally {
-					lock.writeLock().unlock();
+					wulock();
 				}
 				return true;
 			}
 		} else if(lt != null) {
 			ret = lt.awaitExit(timeout);
 			if(ret) {
-				lock.writeLock().lock();
+				wlock();
 				try {
 					manager = null;
 				} finally {
-					lock.writeLock().unlock();
+					wulock();
 				}
 				return true;
 			}
@@ -414,11 +417,11 @@ public class QuinaWorkerService
 
 	@Override
 	public QuinaConfig getConfig() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			return config;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 	

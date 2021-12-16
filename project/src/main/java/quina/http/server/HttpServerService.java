@@ -1,6 +1,7 @@
 package quina.http.server;
 
 import java.nio.channels.ServerSocketChannel;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
@@ -73,7 +74,8 @@ public class HttpServerService implements QuinaService {
 	private final Flag startFlag = new Flag(false);
 	
 	// Read-Writeロックオブジェクト.
-	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+	private final ReentrantReadWriteLock lock =
+		new ReentrantReadWriteLock();
 
 	/**
 	 * コンストラクタ.
@@ -90,14 +92,16 @@ public class HttpServerService implements QuinaService {
 	protected void pushTimeoutElement(HttpElement element) {
 		timeoutLoopElement.offer(element);
 	}
+	
+	@Override
+	public ReadWriteLock getLock() {
+		return lock;
+	}
 
 	@Override
 	public boolean loadConfig(String configDir) {
 		// サービスが開始している場合はエラー.
-		if(startFlag.get()) {
-			throw new QuinaException(
-				"The service has already started.");
-		}
+		checkService(true);
 		// HttpServerWorkerCallHandlerを取得.
 		HttpServerWorkerCallHandler hnd =
 			(HttpServerWorkerCallHandler)quinaWorkerService
@@ -110,7 +114,7 @@ public class HttpServerService implements QuinaService {
 				"QuinaWorkerService.");
 		}
 		boolean ret = false;
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// コンフィグ情報を読み込む.
 			ret = config.loadConfig(configDir);
@@ -127,7 +131,7 @@ public class HttpServerService implements QuinaService {
 			// 登録する.
 			hnd.setTmpBinaryLength(config.getInt("recvTmpBuffer"));
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		return ret;
 	}
@@ -144,7 +148,7 @@ public class HttpServerService implements QuinaService {
 			throw new QuinaException(this.getClass().getName() +
 				" service has already started.");
 		}
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// QuinaWorkerServiceが開始していない場合はエラー.
 			if(!quinaWorkerService.isStarted()) {
@@ -189,31 +193,31 @@ public class HttpServerService implements QuinaService {
 				throw new QuinaException(e);
 			}
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 	}
 
 	@Override
 	public boolean isStarted() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			if(core != null) {
 				return core.isStartupThread();
 			}
 			return false;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 
 	@Override
 	public boolean awaitStartup(long timeout) {
 		NioServerCore c = null;
-		lock.readLock().lock();
+		rlock();
 		try {
 			c = core;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		boolean ret = true;
 		if(c != null) {
@@ -226,39 +230,39 @@ public class HttpServerService implements QuinaService {
 
 	@Override
 	public void stopService() {
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// 停止処理.
 			if(core != null) {
 				core.stopThread();
 			}
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		startFlag.set(false);
 	}
 
 	@Override
 	public boolean isExit() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			if(core != null) {
 				return core.isStopThread();
 			}
 			return true;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 
 	@Override
 	public boolean awaitExit(long timeout) {
 		NioServerCore c = null;
-		lock.readLock().lock();
+		rlock();
 		try {
 			c = core;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		boolean ret = true;
 		if(c != null && !c.awaitExit(timeout)) {
@@ -269,11 +273,11 @@ public class HttpServerService implements QuinaService {
 
 	@Override
 	public QuinaConfig getConfig() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			return config;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 }

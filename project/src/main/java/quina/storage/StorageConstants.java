@@ -6,6 +6,13 @@ import quina.util.AtomicNumber64;
  * Storage定義.
  */
 public class StorageConstants {
+	
+	/**
+	 * コンフィグ名.
+	 */
+	public static final String CONFIG_NAME = "storage";
+	
+	
 	// デフォルトタイムアウト.
 	// 30分.
 	private static final long DEF_TIMEOUT = 30L * 60L * 1000L;
@@ -26,13 +33,14 @@ public class StorageConstants {
 	 * タイムアウト値を設定.
 	 * @param time タイムアウト値を設定します.
 	 */
-	public static final void setSessionTimeout(long time) {
+	public static final void setTimeout(long time) {
 		timeout.set(getTimeout(time));
 	}
 	
 	/**
 	 * タイムアウト値を取得.
 	 * @param timeout タイムアウト値を設定します.
+	 * @return long 整形された内容が返却されます.
 	 */
 	public static final long getTimeout(long time) {
 		if(time < MIN_TIMEOUT) {
@@ -45,9 +53,57 @@ public class StorageConstants {
 
 	/**
 	 * タイムアウト値を取得.
-	 * @return long セッションタイムアウト値が返却されます.
+	 * @return long タイムアウト値が返却されます.
 	 */
 	public static final long getTimeout() {
 		return timeout.get();
 	}
+	
+	// デフォルトタイムアウトチェックタイミング.
+	// 15秒.
+	private static final long DEF_CHECK_TIMING = 15000L;
+	
+	// 最小タイムアウトチェックタイミング.
+	// 5秒.
+	private static final long MIN_CHECK_TIMING = 5000L;
+
+	// 最大タイムアウトチェックタイミング.
+	// 60秒.
+	private static final long MAX_CHECK_TIMING = 60000L;
+	
+	// チェックタイミング.
+	private static final AtomicNumber64 checkTiming =
+		new AtomicNumber64(DEF_CHECK_TIMING);
+
+	/**
+	 * チェックタイミング値を設定.
+	 * @param time チェックタイミング値を設定します.
+	 */
+	public static final void setCheckTiming(long time) {
+		checkTiming.set(getCheckTiming(time));
+	}
+	
+	/**
+	 * チェックタイミング値を取得.
+	 * @param timeout チェックタイミング値を設定します.
+	 * @return long 整形された内容が返却されます.
+	 */
+	public static final long getCheckTiming(long time) {
+		if(time < MIN_CHECK_TIMING) {
+			time = MIN_CHECK_TIMING;
+		} else if(time > MAX_CHECK_TIMING) {
+			time = MAX_CHECK_TIMING;
+		}
+		return time;
+	}
+
+	/**
+	 * チェックタイミング値を取得.
+	 * @return long チェックタイミング値が返却されます.
+	 */
+	public static final long getCheckTiming() {
+		return timeout.get();
+	}
+	
+
 }

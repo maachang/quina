@@ -33,11 +33,11 @@ public class MemoryStorageLoopElement
 	protected MemoryStorageLoopElement(
 		long timeout, long checkTiming,
 		MemoryStorageManager manager) {
-		this.timeout = timeout;
-		this.checkTiming = checkTiming;
+		this.timeout = StorageConstants.getTimeout(timeout);
+		this.checkTiming = StorageConstants.getCheckTiming(checkTiming);
 		this.manager = manager;
 		this.beforeTimeout =
-			System.currentTimeMillis() + checkTiming;
+			System.currentTimeMillis() + this.checkTiming;
 	}
 	
 	@Override

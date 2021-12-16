@@ -1,6 +1,8 @@
 package quina.jdbc.console;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
 import quina.QuinaConfig;
@@ -53,6 +55,10 @@ public class QuinaJDBCConsoleService
 	
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
+	
+	// Read-Writeロックオブジェクト.
+	private final ReentrantReadWriteLock lock =
+		new ReentrantReadWriteLock();
 	
 	/**
 	 * コンストラクタ.
@@ -209,6 +215,11 @@ public class QuinaJDBCConsoleService
 	 */
 	public IpAccessControll getIpAccessControll() {
 		return ipAccessControll;
+	}
+	
+	@Override
+	public ReadWriteLock getLock() {
+		return lock;
 	}
 	
 	@Override

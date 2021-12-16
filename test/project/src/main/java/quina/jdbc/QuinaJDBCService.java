@@ -2,6 +2,7 @@ package quina.jdbc;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
@@ -46,7 +47,8 @@ public class QuinaJDBCService implements QuinaService {
 	private final Flag startFlag = new Flag(false);
 	
 	// Read-Writeロックオブジェクト.
-	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+	private final ReentrantReadWriteLock lock =
+		new ReentrantReadWriteLock();
 	
 	/**
 	 * コンストラクタ.
@@ -74,15 +76,17 @@ public class QuinaJDBCService implements QuinaService {
 	}
 	
 	@Override
+	public ReadWriteLock getLock() {
+		return lock;
+	}
+	
+	@Override
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean loadConfig(String configDir) {
 		// 既に開始してる場合はエラー.
-		if(startFlag.get()) {
-			throw new QuinaException(
-				"The service has already started.");
-		}
+		checkService(true);
 		boolean ret = false;
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// コンフィグ読み込み.
 			final QuinaMap<String, Object> json = QuinaUtil.loadJson(
@@ -117,7 +121,7 @@ public class QuinaJDBCService implements QuinaService {
 				}
 			}
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		return ret;
 	}
@@ -146,7 +150,7 @@ public class QuinaJDBCService implements QuinaService {
 			throw new QuinaException(this.getClass().getName() +
 				" service has already started.");
 		}
-		lock.writeLock().lock();
+		wlock();
 		try {
 			// DataSourceの登録が存在する場合のみ
 			// TimeoutThreadを生成して開始して、
@@ -161,7 +165,7 @@ public class QuinaJDBCService implements QuinaService {
 				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 			}
 		} finally {
-			lock.writeLock().unlock();
+			wulock();
 		}
 		log.info("@ startService " + this.getClass().getName());
 	}
@@ -181,11 +185,11 @@ public class QuinaJDBCService implements QuinaService {
 
 	@Override
 	public QuinaConfig getConfig() {
-		lock.readLock().lock();
+		rlock();
 		try {
 			return config;
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 	}
 
@@ -201,11 +205,11 @@ public class QuinaJDBCService implements QuinaService {
 				"The service has not started.");
 		}
 		QuinaDataSource ret = null;
-		lock.readLock().lock();
+		rlock();
 		try {
 			ret = dataSources.get(name);
 		} finally {
-			lock.readLock().unlock();
+			rulock();
 		}
 		// 存在しない場合は例外.
 		if(ret == null) {
