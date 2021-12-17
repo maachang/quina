@@ -338,6 +338,10 @@ public class QuinaWorkerService
 	public void stopService() {
 		wlock();
 		try {
+			// 開始していない or 既に停止してる場合
+			if(!startFlag.get()) {
+				return;
+			}
 			// 停止処理.
 			if(manager != null) {
 				manager.stopThread();
@@ -345,10 +349,11 @@ public class QuinaWorkerService
 			if(loopThread != null) {
 				loopThread.stopThread();
 			}
+			// サービス停止.
+			startFlag.set(false);
 		} finally {
 			wulock();
 		}
-		startFlag.set(false);
 	}
 
 	@Override

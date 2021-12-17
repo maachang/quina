@@ -115,6 +115,25 @@ public interface QuinaService {
 	 * @return boolean [true]の場合、正しくサービスの起動完了が確認されました.
 	 */
 	default boolean awaitStartup(long timeout) {
+		// 無限に待つ場合.
+		if(timeout <= 0L) {
+			while(!isStarted()) {
+				try {
+					Thread.sleep(50L);
+				} catch(Exception e) {}
+			}
+		// タイムアウト指定で待つ場合.
+		} else {
+			final long tm = System.currentTimeMillis() + timeout;
+			while(!isStarted()) {
+				if(tm < System.currentTimeMillis()) {
+					return false;
+				}
+				try {
+					Thread.sleep(50L);
+				} catch(Exception e) {}
+			}
+		}
 		return true;
 	}
 
@@ -150,6 +169,25 @@ public interface QuinaService {
 	 *                 完了しました.
 	 */
 	default boolean awaitExit(long timeout) {
+		// 無限に待つ場合.
+		if(timeout <= 0L) {
+			while(!isExit()) {
+				try {
+					Thread.sleep(50L);
+				} catch(Exception e) {}
+			}
+		// タイムアウト指定で待つ場合.
+		} else {
+			final long tm = System.currentTimeMillis() + timeout;
+			while(!isExit()) {
+				if(tm < System.currentTimeMillis()) {
+					return false;
+				}
+				try {
+					Thread.sleep(50L);
+				} catch(Exception e) {}
+			}
+		}
 		return true;
 	}
 	

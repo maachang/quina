@@ -175,7 +175,7 @@ public class HttpServerService implements QuinaService {
 					config.getLong("timeout"),
 					config.getLong("doubtTime"),
 					new HttpServerTimeoutHandler());
-				// nioTimeoutLoopElementをQuinaLoopThreadに登録.
+				// timeoutLoopElementをQuinaLoopThreadに登録.
 				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 				// サーバスレッド開始.
 				cr.startThread();
@@ -232,14 +232,19 @@ public class HttpServerService implements QuinaService {
 	public void stopService() {
 		wlock();
 		try {
+			// 開始していない or 既に停止してる場合
+			if(!startFlag.get()) {
+				return;
+			}
 			// 停止処理.
 			if(core != null) {
 				core.stopThread();
 			}
+			// サービス停止.
+			startFlag.set(false);
 		} finally {
 			wulock();
 		}
-		startFlag.set(false);
 	}
 
 	@Override

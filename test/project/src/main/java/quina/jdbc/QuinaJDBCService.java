@@ -177,10 +177,15 @@ public class QuinaJDBCService implements QuinaService {
 	
 	@Override
 	public void stopService() {
-		if(startFlag.get()) {
-			log.info("@ stopService " + this.getClass().getName());
+		wlock();
+		try {
+			if(startFlag.get()) {
+				log.info("@ stopService " + this.getClass().getName());
+			}
+			startFlag.set(false);
+		} finally {
+			wulock();
 		}
-		startFlag.set(false);
 	}
 
 	@Override
