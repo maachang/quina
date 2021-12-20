@@ -1,9 +1,9 @@
 package quina.net.nio.tcp;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
-import quina.net.nio.tcp.NioAtomicValues.Number32;
-import quina.net.nio.tcp.NioAtomicValues.Number64;
-import quina.net.nio.tcp.NioAtomicValues.Value;
+import quina.util.AtomicNumber;
+import quina.util.AtomicNumber64;
+import quina.util.AtomicObject;
+import quina.util.Flag;
 
 /**
  * Nio定義.
@@ -63,22 +63,22 @@ public final class NioConstants {
 	private static final int TEMP_FILENAME_LENGTH = 20;
 
 	// NioDebugMode.
-	private static final Bool nioDebugMode = new Bool(false);
+	private static final Flag nioDebugMode = new Flag(false);
 
 	// NioBufferサイズ.
-	private static final Number32 nioBufferSize = new Number32(
+	private static final AtomicNumber nioBufferSize = new AtomicNumber(
 		DEF_BUFFER_SIZE);
 
 	// ByteBufferサイズ.
-	private static final Number32 byteBufferLength = new Number32(
+	private static final AtomicNumber byteBufferLength = new AtomicNumber(
 		DEF_BYTE_BUFFER_LENGTH);
 
 	// TCPボディーファイル格納先フォルダ.
-	private static final Value<String> tcpBodyFileDir = new Value<String>(
+	private static final AtomicObject<String> tcpBodyFileDir = new AtomicObject<String>(
 		NioConstants.TCP_BODY_FILE_DIR);
 
 	// テンポラリファイル文字数.
-	private static final Number32 tempFileNameLength = new Number32(
+	private static final AtomicNumber tempFileNameLength = new AtomicNumber(
 		NioConstants.TEMP_FILENAME_LENGTH);
 	
 	/**
@@ -172,7 +172,7 @@ public final class NioConstants {
 
 	
 	// 無通信が続くタイムアウト値.
-	private static final Number64 timeout = new Number64(DEF_TIMEOUT);
+	private static final AtomicNumber64 timeout = new AtomicNumber64(DEF_TIMEOUT);
 	
 	/**
 	 * 無通信が続くタイムアウト値を設定.
@@ -194,7 +194,7 @@ public final class NioConstants {
 	private static final long DEF_DOUBT_TIME = 2500L;
 	
 	// タイムアウト監視に移行するタイム（ミリ秒）.
-	private static final Number64 doubtTime = new Number64(DEF_DOUBT_TIME);
+	private static final AtomicNumber64 doubtTime = new AtomicNumber64(DEF_DOUBT_TIME);
 	
 	/**
 	 * タイムアウト監視に移行するタイム（ミリ秒）を設定.

@@ -22,4 +22,7 @@ public final class QuinaConstants {
 			new HttpServerWorkerCallHandler(),
 			new PromiseWorkerCallHandler()
 	};
+	
+	// 一定期間待機時間.
+	protected static final long SLEEP = 50L;
 }

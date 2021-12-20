@@ -12,9 +12,9 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioException;
 import quina.net.nio.tcp.SslCacerts;
+import quina.util.Flag;
 
 /**
  * NioClientSocket生成.
@@ -24,7 +24,7 @@ public final class NioClientSocket {
 	}
 
 	private static final Object sync = new Object();
-	private static Bool sslFactoryFlag = new Bool(false);
+	private static Flag sslFactoryFlag = new Flag(false);
 	private static SocketFactory sslFactory = null;
 
 	/** SSLSocketFactory作成. **/

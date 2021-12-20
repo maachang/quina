@@ -32,8 +32,8 @@ public class MemoryStorageService
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
 		StorageConstants.CONFIG_NAME
-		,"timeout", TypesClass.Long, StorageConstants.getTimeout()
-		,"timing", TypesClass.Long, StorageConstants.getCheckTiming()
+		,StorageConstants.TIMEOUT, TypesClass.Long, StorageConstants.getTimeout()
+		,StorageConstants.TIMING, TypesClass.Long, StorageConstants.getCheckTiming()
 		,"saveFile", TypesClass.String, SAVE_FILE_NAME
 	);
 	
@@ -83,16 +83,13 @@ public class MemoryStorageService
 	 */
 	@Override
 	public void startService() {
-		// 一度起動している場合はエラー.
-		if(startFlag.setToGetBefore(true)) {
-			throw new QuinaException(this.getClass().getName() +
-				" service has already started.");
-		}
 		InputStream in = null;
 		MemoryStorageManager man;
 		MemoryStorageLoopElement em;
 		wlock();
 		try {
+			// 一度起動している場合はエラー.
+			checkService(true);
 			// 前回保存されたStorage保存先ファイルが存在する場合.
 			if(FileUtil.isFile(config.getString("saveFile"))) {
 				// InputStreamを取得.
@@ -108,13 +105,15 @@ public class MemoryStorageService
 			}
 			// Storageタイムアウト監視Loop要素を生成.
 			em = new MemoryStorageLoopElement(
-				config.getLong("timeout")
-				,config.getLong("timing")
+				config.getLong(StorageConstants.TIMEOUT)
+				,config.getLong(StorageConstants.TIMING)
 				,man);
 			// timeoutLoopElementをQuinaLoopThreadに登録.
 			Quina.get().getQuinaLoopManager().regLoopElement(em);
 			// スタートアップ完了.
 			this.manager = man;
+			// サービス開始.
+			startFlag.set(true);
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {
@@ -143,11 +142,12 @@ public class MemoryStorageService
 			}
 			// MemoryStorage内容の保存先を生成.
 			out = new BufferedOutputStream(
-				new FileOutputStream(config.getString("saveFile")));
+				new FileOutputStream(
+					config.getString("saveFile")));
 			// 保存処理.
 			manager.save(out);
-			// クローズ.
 			out.flush();
+			// クローズ.
 			out.close();
 			out = null;
 			// サービス停止.

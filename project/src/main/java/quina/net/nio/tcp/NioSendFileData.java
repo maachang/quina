@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.util.AtomicNumber;
 
 /**
  * Nio送信ファイルデータ.
@@ -22,7 +22,7 @@ public class NioSendFileData extends AbstractNioSendData {
 	private String fileName;
 
 	/** オブジェクトコピーカウント. **/
-	private Number32 copyCount;
+	private AtomicNumber copyCount;
 
 	/**
 	 * コンストラクタ.
@@ -96,7 +96,7 @@ public class NioSendFileData extends AbstractNioSendData {
 	 * @param fileName 対象のファイル名を設定します.
 	 * @exception IOException I/O例外.
 	 */
-	private NioSendFileData(long length, String fileName, Number32 copyCount)
+	private NioSendFileData(long length, String fileName, AtomicNumber copyCount)
 		throws IOException {
 		this.fileName = fileName;
 		this.length = length;
@@ -130,7 +130,7 @@ public class NioSendFileData extends AbstractNioSendData {
 		this.position = 0L;
 		this.closeFlag = false;
 		this.channel = openChannel(fpath);
-		this.copyCount = endToDeleteFlag ? new Number32(1) : null;
+		this.copyCount = endToDeleteFlag ? new AtomicNumber(1) : null;
 	}
 
 	/** チャネルをオープンして読み込み可能にする. **/

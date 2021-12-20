@@ -1,34 +1,34 @@
 package quina;
 
-import java.util.concurrent.locks.ReadWriteLock;
-
 import quina.exception.QuinaException;
 
 /**
  * QuinaService.
  */
-public interface QuinaService {
+public interface QuinaService
+	extends RwLockAtualization {
 	
 	/**
 	 * サービスの状態チェック.
 	 * @param mode [true]を指定した場合、開始中の場合、
 	 *             エラーが発生します.
-	 *             [false]を指定した場合、停止中の場合、
+	 *             [false]を指定した場合、開始してない場合、
 	 *             エラーが発生します.
 	 */
 	default void checkService(boolean mode) {
 		// 指定したフラグ条件と開始フラグが一致した場合.
 		if(isStartService() == mode) {
-			// 開始の場合のエラー.
+			// 開始中の場合エラー.
 			if(mode) {
 				throw new QuinaException(
 					this.getClass().getName() +
 					" service has already started.");
+			// 開始していない場合エラー.
+			} else {
+				throw new QuinaException(
+					this.getClass().getName() +
+					" service is already stopped.");
 			}
-			// 開始してない場合のエラー.
-			throw new QuinaException(
-				this.getClass().getName() +
-				" service is already stopped.");
 		}
 	}
 	
@@ -38,10 +38,10 @@ public interface QuinaService {
 	 * @return boolean trueの場合読み込みに成功しました.
 	 */
 	default boolean loadConfig(String configDir) {
-		// サービスが開始している場合はエラー.
-		checkService(true);
 		wlock();
 		try {
+			// サービスが開始している場合はエラー.
+			checkService(true);
 			// コンフィグ情報を取得.
 			final QuinaConfig conf = getConfig();
 			if(conf == null) {
@@ -118,9 +118,7 @@ public interface QuinaService {
 		// 無限に待つ場合.
 		if(timeout <= 0L) {
 			while(!isStarted()) {
-				try {
-					Thread.sleep(50L);
-				} catch(Exception e) {}
+				QuinaUtil.sleep();
 			}
 		// タイムアウト指定で待つ場合.
 		} else {
@@ -129,9 +127,7 @@ public interface QuinaService {
 				if(tm < System.currentTimeMillis()) {
 					return false;
 				}
-				try {
-					Thread.sleep(50L);
-				} catch(Exception e) {}
+				QuinaUtil.sleep();
 			}
 		}
 		return true;
@@ -172,9 +168,7 @@ public interface QuinaService {
 		// 無限に待つ場合.
 		if(timeout <= 0L) {
 			while(!isExit()) {
-				try {
-					Thread.sleep(50L);
-				} catch(Exception e) {}
+				QuinaUtil.sleep();
 			}
 		// タイムアウト指定で待つ場合.
 		} else {
@@ -183,61 +177,9 @@ public interface QuinaService {
 				if(tm < System.currentTimeMillis()) {
 					return false;
 				}
-				try {
-					Thread.sleep(50L);
-				} catch(Exception e) {}
+				QuinaUtil.sleep();
 			}
 		}
 		return true;
-	}
-	
-	/**
-	 * Read/WriteLockを取得.
-	 * @return ReadWriteLock Read/WriteLockを取得します.
-	 */
-	public ReadWriteLock getLock();
-	
-	/**
-	 * 読み込みロック.
-	 */
-	default void rlock() {
-		final ReadWriteLock rw = getLock();
-		if(rw == null) {
-			// 何もしない.
-		}
-		rw.readLock().lock();
-	}
-	
-	/**
-	 * 読み込みアンロック.
-	 */
-	default void rulock() {
-		final ReadWriteLock rw = getLock();
-		if(rw == null) {
-			// 何もしない.
-		}
-		rw.readLock().unlock();
-	}
-	
-	/**
-	 * 書き込みロック.
-	 */
-	default void wlock() {
-		final ReadWriteLock rw = getLock();
-		if(rw == null) {
-			// 何もしない.
-		}
-		rw.writeLock().lock();
-	}
-	
-	/**
-	 * 書き込みアンロック.
-	 */
-	default void wulock() {
-		final ReadWriteLock rw = getLock();
-		if(rw == null) {
-			// 何もしない.
-		}
-		rw.writeLock().unlock();
 	}
 }

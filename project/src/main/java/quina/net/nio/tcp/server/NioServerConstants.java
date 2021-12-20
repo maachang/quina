@@ -1,7 +1,7 @@
 package quina.net.nio.tcp.server;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
-import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.util.AtomicNumber;
+import quina.util.Flag;
 
 /**
  * Nioサーバ定義.
@@ -35,19 +35,22 @@ public class NioServerConstants {
 	private static final int BACKLOG = Integer.MAX_VALUE;
 
 	// TCPサーバ用送信バッファ.
-	private static final Number32 sendBuf = new Number32(NioServerConstants.SEND_BUFFER);
+	private static final AtomicNumber sendBuf =
+		new AtomicNumber(NioServerConstants.SEND_BUFFER);
 
 	// TCPサーバ用受信バッファ.
-	private static final Number32 recvBuf = new Number32(NioServerConstants.RECV_BUFFER);
+	private static final AtomicNumber recvBuf =
+		new AtomicNumber(NioServerConstants.RECV_BUFFER);
 
 	// TCPサーバ用keepAlive.
-	private static final Bool keepAlive = new Bool(NioServerConstants.KEEP_ALIVE);
+	private static final Flag keepAlive = new Flag(NioServerConstants.KEEP_ALIVE);
 
 	// TCPサーバ用NoDeley.
-	private static final Bool tcpNoDeley = new Bool(NioServerConstants.TCP_NODELEY);
+	private static final Flag tcpNoDeley = new Flag(NioServerConstants.TCP_NODELEY);
 
 	// TCPサーバ同時接続数.
-	private static final Number32 backlog = new Number32(NioServerConstants.BACKLOG);
+	private static final AtomicNumber backlog =
+		new AtomicNumber(NioServerConstants.BACKLOG);
 
 	/**
 	 * TCPサーバ用送信バッファ.

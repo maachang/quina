@@ -6,12 +6,12 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
+import quina.util.Flag;
 
 public final class NioSelector {
 	private Selector selector = null;
 	private Set<SelectionKey> selecterSet = null;
-	private final Bool wakeupFlag = new Bool(false);
+	private final Flag wakeupFlag = new Flag(false);
 
 	/**
 	 * コンストラクタ.

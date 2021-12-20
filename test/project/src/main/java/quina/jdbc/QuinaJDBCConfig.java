@@ -29,6 +29,8 @@ import quina.util.collection.IndexMap;
 public class QuinaJDBCConfig {
 	// kind定義.
 	private QuinaJDBCKind kind = null;
+	// デフォルトのデーターソース.
+	private boolean defaultDataSource = false;
 	// 定義名.
 	private String name = null;
 	// 接続先URL
@@ -780,6 +782,17 @@ public class QuinaJDBCConfig {
 		return this;
 	}
 	
+	// このDataSource定義がデフォルトのデーターソースか設定.
+	protected QuinaJDBCConfig setDefaultDataSource(boolean flg) {
+		this.defaultDataSource = flg;
+		return this;
+	}
+	
+	// デフォルトのデーターソースであるか取得.
+	protected boolean isDefaultDataSource() {
+		return defaultDataSource;
+	}
+	
 	// Mapから設定処理.
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private QuinaJDBCConfig setting(Map<String, Object> conf) {
@@ -844,6 +857,15 @@ public class QuinaJDBCConfig {
 			BooleanUtil.parseBoolean(conf.get("urlType")),
 			conf.get("urlParams"));
 		this.setNotSemicolon();
+		
+		Object def = null;
+		if((def = conf.get("default")) != null ||
+			(def = conf.get("def")) != null) {
+			if(BooleanUtil.isBool(def)) {
+				this.setDefaultDataSource(
+					BooleanUtil.parseBoolean(def));
+			}
+		}
 		return this;
 	}
 	

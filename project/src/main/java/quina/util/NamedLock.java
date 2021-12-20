@@ -1,7 +1,10 @@
 package quina.util;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
- * 指定名に対するロックオブジェクトを取得.
+ * 名前に対するロックオブジェクトを取得.
  */
 public class NamedLock {
 	/**
@@ -9,17 +12,25 @@ public class NamedLock {
 	 */
 	private static final int DEFAULT_LOCK_LENGTH = 256;
 
+	/**
+	 * 最小ロック管理オブジェクト数.
+	 */
+	private static final int MIN_LOCK_LENGTH = 32;
+	
+	/**
+	 * 最大ロック管理オブジェクト数.
+	 */
 	private static final int MAX_LOCK_LENGTH = 65536;
 
 	/**
 	 * ロック管理オブジェクト.
 	 */
-	private final Object[] syncArray;
+	private final Lock[] syncArray;
 
 	/**
 	 * null文字ロックオブジェクト.
 	 */
-	private final Object nullSync = new Object();
+	private final Lock nullSync = new ReentrantLock();
 
 	/**
 	 * ロック管理マスク値.
@@ -42,13 +53,15 @@ public class NamedLock {
 		if(size <= 0) {
 			size = DEFAULT_LOCK_LENGTH;
 		}
-		size = BinaryUtil.bitMask(size);
-		if(size > MAX_LOCK_LENGTH) {
+		if(size < MIN_LOCK_LENGTH) {
+			size = MIN_LOCK_LENGTH;
+		} else if(size > MAX_LOCK_LENGTH) {
 			size = MAX_LOCK_LENGTH;
 		}
-		final Object[] o = new Object[size];
+		size = BinaryUtil.bitMask(size);
+		final Lock[] o = new Lock[size];
 		for(int i = 0; i < size; i ++) {
-			o[i] = new Object();
+			o[i] = new ReentrantLock();
 		}
 		this.syncArray = o;
 		this.mask = size - 1;
@@ -57,12 +70,13 @@ public class NamedLock {
 	/**
 	 * 名前を指定してロックオブジェクトを取得.
 	 * @param name 名前を設定します.
-	 * @return Object ロック用のオブジェクトが返却されます.
+	 * @return Lock ロック用のオブジェクトが返却されます.
 	 */
-	public Object get(String name) {
+	public Lock get(String name) {
 		if(name == null) {
 			return nullSync;
 		}
+		// 文字列のHashコードでロックオブジェクトを取得.
 		return syncArray[name.hashCode() & mask];
 	}
 }

@@ -7,7 +7,7 @@ import quina.worker.QuinaLoopElement;
  * MemoryStorageManagerのタイムアウト監視する
  * LoopElement.
  */
-public class MemoryStorageLoopElement
+final class MemoryStorageLoopElement
 	implements QuinaLoopElement {
 	
 	// タイムアウト時間.

@@ -8,7 +8,7 @@ import quina.worker.timeout.TimeoutHandler;
 /**
  * HttpServerTimeoutHandler.
  */
-public class HttpServerTimeoutHandler
+final class HttpServerTimeoutHandler
 	implements TimeoutHandler {
 	
 	/**

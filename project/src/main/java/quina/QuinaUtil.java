@@ -27,6 +27,11 @@ public final class QuinaUtil {
 			Thread.sleep(time);
 		} catch(Exception e) {}
 	}
+	
+	// 一定期間待機処理.
+	protected static final void sleep() {
+		sleep(QuinaConstants.SLEEP);
+	}
 
 	/**
 	 * スペースをセット.

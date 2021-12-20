@@ -22,9 +22,12 @@ import quina.util.collection.TypesClass;
 /**
  * QuinaJDBCConsoleService.
  */
-@QuinaServiceScoped("jdbcConsole")
+@QuinaServiceScoped(QuinaJDBCConsoleService.SERVICE_AND_CONFIG_NAME)
 public class QuinaJDBCConsoleService
 	implements QuinaService {
+	
+	// サービス/コンフィグ名.
+	protected static final String SERVICE_AND_CONFIG_NAME = "jdbcConsole";
 	
 	@LogDefine
 	private Log log;
@@ -32,10 +35,9 @@ public class QuinaJDBCConsoleService
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
 		// jdbcConsole.jsonで定義.
-		"jdbcConsole"
+		SERVICE_AND_CONFIG_NAME
 		// コンソールログインユーザー名.
-		,"auth", TypesClass.Map, new IndexMap<String, Object>(
-			"root", "")
+		,"auth", TypesClass.Map, new IndexMap<String, Object>("root", "")
 		// ローカルホストからのアクセスのみ有効.
 		,"localhostOnly", TypesClass.Boolean, true
 		// プライベートアドレスからのアクセス許可.
@@ -74,7 +76,7 @@ public class QuinaJDBCConsoleService
 	 */
 	public static final QuinaJDBCConsoleService getService() {
 		return (QuinaJDBCConsoleService)
-			Quina.get().getQuinaServiceManager().get("jdbcConsole");
+			Quina.get().getQuinaServiceManager().get(SERVICE_AND_CONFIG_NAME);
 	}
 	
 	// Ipアクセス制限.

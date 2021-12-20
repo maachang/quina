@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.util.AtomicNumber;
 
 /**
  * Nioテンポラリ送信ファイルデータ.
@@ -46,7 +46,7 @@ public class NioSendTempFileData extends AbstractNioSendData {
 	private FileChannel channel = null;
 
 	/** オブジェクトコピーカウント. **/
-	protected Number32 copyCount = new Number32(1);
+	protected AtomicNumber copyCount = new AtomicNumber(1);
 
 	/**
 	 * コンストラクタ.
@@ -144,12 +144,12 @@ public class NioSendTempFileData extends AbstractNioSendData {
 	 * @param length 対象のデータ長を設定します.
 	 * @exception IOException I/O例外.
 	 */
-	private NioSendTempFileData(Number32 copyCount, String directoryName,
+	private NioSendTempFileData(AtomicNumber copyCount, String directoryName,
 		String fileName, long length)
 		throws IOException {
 		String fpath = directoryName + fileName + NAME_EXTENSION;
 		FileChannel ch = openChannel(fpath);
-		this.copyCount = copyCount == null ? new Number32(1) : copyCount;
+		this.copyCount = copyCount == null ? new AtomicNumber(1) : copyCount;
 		this.directoryName = directoryName;
 		this.fileName = fileName;
 		this.fullPath = fpath;

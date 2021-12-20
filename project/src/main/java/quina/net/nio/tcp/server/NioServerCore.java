@@ -7,13 +7,13 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioConstants;
 import quina.net.nio.tcp.NioElement;
 import quina.net.nio.tcp.NioSelector;
 import quina.net.nio.tcp.NioSendLess;
 import quina.net.nio.tcp.NioUtil;
 import quina.net.nio.tcp.NioWorkerCall;
+import quina.util.Flag;
 import quina.worker.QuinaWorkerService;
 
 /**
@@ -38,10 +38,10 @@ public class NioServerCore extends Thread {
 	private volatile boolean stopFlag = true;
 
 	// スレッド開始完了フラグ.
-	private final Bool startupFlag = new Bool(false);
+	private final Flag startupFlag = new Flag(false);
 
 	// スレッド終了完了フラグ.
-	private final Bool exitFlag = new Bool(false);
+	private final Flag exitFlag = new Flag(false);
 
 	// QuinaWorkerService.
 	private QuinaWorkerService workerService;

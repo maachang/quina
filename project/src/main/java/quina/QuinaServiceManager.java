@@ -119,11 +119,11 @@ public final class QuinaServiceManager {
 	 * @return QuinaService 前回登録されていたサービスが返却されます.
 	 */
 	public QuinaService put(QuinaService service) {
-		if(fixFlag.get()) {
-			throw new QuinaException("Already completed.");
-		} else if(service == null) {
+		if(service == null) {
 			throw new QuinaException(
 				"The Quina Service to be registered is null.");
+		} else if(fixFlag.get()) {
+			throw new QuinaException("Already completed.");
 		}
 		final String name = AnnotationQuina.
 			loadQuinaServiceScoped(service);

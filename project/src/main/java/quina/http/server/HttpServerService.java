@@ -100,22 +100,22 @@ public class HttpServerService implements QuinaService {
 
 	@Override
 	public boolean loadConfig(String configDir) {
-		// サービスが開始している場合はエラー.
-		checkService(true);
-		// HttpServerWorkerCallHandlerを取得.
-		HttpServerWorkerCallHandler hnd =
-			(HttpServerWorkerCallHandler)quinaWorkerService
-				.getCallHandleByTargetId(
-					QuinaWorkerConstants.HTTP_SERVER_WORKER_CALL_ID);
-		// 対象ハンドルが存在しない場合.
-		if(hnd == null) {
-			throw new QuinaException(
-				"HttpServerWorkerCallHandler is not set in " +
-				"QuinaWorkerService.");
-		}
-		boolean ret = false;
 		wlock();
 		try {
+			// サービスが開始している場合はエラー.
+			checkService(true);
+			// HttpServerWorkerCallHandlerを取得.
+			HttpServerWorkerCallHandler hnd =
+				(HttpServerWorkerCallHandler)quinaWorkerService
+					.getCallHandleByTargetId(
+						QuinaWorkerConstants.HTTP_SERVER_WORKER_CALL_ID);
+			// 対象ハンドルが存在しない場合.
+			if(hnd == null) {
+				throw new QuinaException(
+					"HttpServerWorkerCallHandler is not set in " +
+					"QuinaWorkerService.");
+			}
+			boolean ret = false;
 			// コンフィグ情報を読み込む.
 			ret = config.loadConfig(configDir);
 			// mimeTypeのコンフィグ読み込み.
@@ -130,10 +130,10 @@ public class HttpServerService implements QuinaService {
 			// 対象ハンドルにコンフィグのテンポラリバイナリサイズを
 			// 登録する.
 			hnd.setTmpBinaryLength(config.getInt("recvTmpBuffer"));
+			return ret;
 		} finally {
 			wulock();
 		}
-		return ret;
 	}
 	
 	@Override
@@ -143,13 +143,10 @@ public class HttpServerService implements QuinaService {
 
 	@Override
 	public void startService() {
-		// 一度起動している場合はエラー.
-		if(startFlag.setToGetBefore(true)) {
-			throw new QuinaException(this.getClass().getName() +
-				" service has already started.");
-		}
 		wlock();
 		try {
+			// サービスが開始している場合はエラー.
+			checkService(true);
 			// QuinaWorkerServiceが開始していない場合はエラー.
 			if(!quinaWorkerService.isStarted()) {
 				throw new QuinaException("HttpWorkerService is not started.");
@@ -179,6 +176,8 @@ public class HttpServerService implements QuinaService {
 				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 				// サーバスレッド開始.
 				cr.startThread();
+				// サービス開始.
+				startFlag.set(true);
 			} catch(QuinaException qe) {
 				stopService();
 				if(server != null) {

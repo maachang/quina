@@ -22,13 +22,14 @@ import quina.worker.timeout.TimeoutLoopElement;
 /**
  * QuinaJDBCService.
  */
-@QuinaServiceScoped("jdbc")
+@QuinaServiceScoped(QuinaJDBCService.SERVICE_AND_CONFIG_NAME)
 public class QuinaJDBCService implements QuinaService {
+	// サービス/コンフィグ名.
+	protected static final String SERVICE_AND_CONFIG_NAME = "jdbc";
+	
+	// ログ情報.
 	@LogDefine
 	private Log log;
-	
-	// コンフィグ名.
-	private static final String CONFIG_NAME = "jdbc";
 	
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
@@ -36,9 +37,11 @@ public class QuinaJDBCService implements QuinaService {
 		,"timeout", TypesClass.Long, QuinaJDBCConstants.getPoolingTimeout()
 	);
 	
+	// デフォルトのデータソース.
+	private QuinaDataSource defaultDataSource = null;
+	
 	// データソース管理.
-	private IndexKeyValueList<String, QuinaDataSource> dataSources =
-		new IndexKeyValueList<String, QuinaDataSource>();
+	private IndexKeyValueList<String, QuinaDataSource> dataSources = null;
 	
 	// TimeoutLoopElement.
 	private TimeoutLoopElement timeoutLoopElement = null;
@@ -62,8 +65,8 @@ public class QuinaJDBCService implements QuinaService {
 	 * @return QuinaJDBCService QuinaJDBCServiceが返却されます.
 	 */
 	public static final QuinaJDBCService getService() {
-		return (QuinaJDBCService)
-			Quina.get().getQuinaServiceManager().get("jdbc");
+		return (QuinaJDBCService)Quina.get().getQuinaServiceManager()
+			.get(SERVICE_AND_CONFIG_NAME);
 	}
 	
 	/**
@@ -71,7 +74,8 @@ public class QuinaJDBCService implements QuinaService {
 	 * @param name 対象のデータソース名を設定します.
 	 * @return QuinaDataSource 対象のQuinaDataSourceが返却されます.
 	 */
-	public static final QuinaDataSource dataSource(String name) {
+	public static final QuinaDataSource dataSource(
+		String name) {
 		return getService().getDataSource(name);
 	}
 	
@@ -84,14 +88,16 @@ public class QuinaJDBCService implements QuinaService {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean loadConfig(String configDir) {
 		// 既に開始してる場合はエラー.
-		checkService(true);
 		boolean ret = false;
 		wlock();
 		try {
+			// 既にサービスが開始している場合はエラー.
+			checkService(true);
 			// コンフィグ読み込み.
 			final QuinaMap<String, Object> json = QuinaUtil.loadJson(
-				configDir, CONFIG_NAME);
+				configDir, SERVICE_AND_CONFIG_NAME);
 			if(json == null) {
+				// コンフィグ情報が存在しない.
 				return true;
 			}
 			// pooling定義.
@@ -102,24 +108,60 @@ public class QuinaJDBCService implements QuinaService {
 			}
 			
 			// kind定義.
+			QuinaDataSource ds;
+			QuinaDataSource topDs = null;
+			QuinaDataSource defDs = null;
+			IndexKeyValueList man = null;
 			final int len = json.size();
-			for(int i = 0; i < len; i ++) {
-				// pooling定義以外はkind定義として読み込む.
-				if(poolingConfigName.equals(json.keyAt(i))) {
-					continue;
+			if(len > 0) {
+				man = new IndexKeyValueList<String, QuinaDataSource>();
+				for(int i = 0; i < len; i ++) {
+					// pooling定義以外はkind定義として読み込む.
+					if(poolingConfigName.equals(json.keyAt(i))) {
+						continue;
+					}
+					// value定義がkind定義の場合.
+					// dataSourceを生成してセット.
+					o = json.valueAt(i);
+					if(o != null && o instanceof Map) {
+						// コンフィグを読み込み.
+						QuinaJDBCConfig conf = QuinaJDBCConfig.create(
+							json.keyAt(i), (Map)o);
+						// コンフィグをFix.
+						conf.fix();
+						// データソースを生成.
+						ds = new QuinaDataSource(
+							i, conf.getName(), this, conf);
+						// 一番最初に定義されてるDataSourceを取得.
+						if(topDs == null) {
+							topDs = ds;
+						}
+						// 対象のデーターソースがデフォルトデーターソースの場合.
+						if(ds.isDefault()) {
+							// デフォルトデーターソースが既に定義されている場合.
+							if(defDs != null) {
+								// エラー
+								throw new QuinaException(
+									"Multiple default data sources are defined.");
+							}
+							// デフォルトデーターソースとして登録.
+							defDs = ds;
+						}
+						// データーソースを登録.
+						man.put(conf.getName(), ds);
+						ret = true;
+					}
 				}
-				// value定義がkind定義の場合.
-				// dataSourceを生成してセット.
-				o = json.valueAt(i);
-				if(o != null && o instanceof Map) {
-					QuinaJDBCConfig conf = QuinaJDBCConfig.create(
-						json.keyAt(i), (Map)o);
-					conf.fix();
-					dataSources.put(conf.getName(),
-						new QuinaDataSource(this, conf));
-					ret = true;
+				// デフォルトのデーターソースが定義されていない場合.
+				if(defDs == null) {
+					// 一番最初に定義されたものをデフォルトのデーターソース
+					// として定義.
+					defDs = topDs;
 				}
 			}
+			// 登録.
+			this.defaultDataSource = defDs;
+			this.dataSources = man;
 		} finally {
 			wulock();
 		}
@@ -145,17 +187,14 @@ public class QuinaJDBCService implements QuinaService {
 
 	@Override
 	public void startService() {
-		// 一度起動している場合はエラー.
-		if(startFlag.setToGetBefore(true)) {
-			throw new QuinaException(this.getClass().getName() +
-				" service has already started.");
-		}
 		wlock();
 		try {
+			// 既にサービスが開始している場合はエラー.
+			checkService(true);
 			// DataSourceの登録が存在する場合のみ
 			// TimeoutThreadを生成して開始して、
 			// 各DataSourceに登録する.
-			if(dataSources.size() > 0) {
+			if(dataSources != null && dataSources.size() > 0) {
 				// timeoutLoopElementを生成.
 				timeoutLoopElement = new TimeoutLoopElement(
 					config.getLong("timeout"),
@@ -164,15 +203,12 @@ public class QuinaJDBCService implements QuinaService {
 				// timeoutLoopElementを登録.
 				Quina.get().getQuinaLoopManager().regLoopElement(timeoutLoopElement);
 			}
+			// サービス開始.
+			startFlag.set(true);
 		} finally {
 			wulock();
 		}
 		log.info("@ startService " + this.getClass().getName());
-	}
-	
-	@Override
-	public boolean isStarted() {
-		return startFlag.get();
 	}
 	
 	@Override
@@ -197,6 +233,14 @@ public class QuinaJDBCService implements QuinaService {
 			rulock();
 		}
 	}
+	
+	/**
+	 * デフォルトのDataSourceを取得.
+	 * @return QuinaDataSource QuinaDataSourcが返却されます.
+	 */
+	public QuinaDataSource getDataSource() {
+		return getDataSource(null);
+	}
 
 	/**
 	 * 指定名のDataSourceを取得.
@@ -204,15 +248,21 @@ public class QuinaJDBCService implements QuinaService {
 	 * @return QuinaDataSource QuinaDataSourcが返却されます.
 	 */
 	public QuinaDataSource getDataSource(String name) {
-		// サービスが開始してない場合はエラー.
-		if(!startFlag.get()) {
-			throw new QuinaException(
-				"The service has not started.");
-		}
 		QuinaDataSource ret = null;
 		rlock();
 		try {
-			ret = dataSources.get(name);
+			// サービスが開始してない場合はエラー.
+			checkService(false);
+			// 対象名が設定されてない場合.
+			if(name == null || (name = name.trim()).isEmpty()) {
+				// デフォルトのデーターソース返却.
+				ret = defaultDataSource;
+			// 対象名が設定されている場合.
+			} else {
+				// データソースを取得.
+				ret = dataSources == null ?
+					null : dataSources.get(name);
+			}
 		} finally {
 			rulock();
 		}
@@ -231,15 +281,26 @@ public class QuinaJDBCService implements QuinaService {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public int getDataSouceNames(List out) {
-		final int len = dataSources.size();
-		for(int i = 0; i < len; i ++) {
-			out.add(dataSources.keyAt(i));
+		rlock();
+		try {
+			final int len = dataSources == null ?
+				0 : dataSources.size();
+			for(int i = 0; i < len; i ++) {
+				out.add(dataSources.keyAt(i));
+			}
+			return len;
+		} finally {
+			rulock();
 		}
-		return len;
 	}
 	
 	// タイムアウトLoopElementを取得.
 	protected TimeoutLoopElement getTimeoutLoopElement() {
-		return timeoutLoopElement;
+		rlock();
+		try {
+			return timeoutLoopElement;
+		} finally {
+			rulock();
+		}
 	}
 }

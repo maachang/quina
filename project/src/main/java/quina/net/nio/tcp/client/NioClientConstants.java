@@ -2,10 +2,10 @@ package quina.net.nio.tcp.client;
 
 import java.net.InetAddress;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
-import quina.net.nio.tcp.NioAtomicValues.Number32;
-import quina.net.nio.tcp.NioAtomicValues.Number64;
-import quina.net.nio.tcp.NioAtomicValues.Value;
+import quina.util.AtomicNumber;
+import quina.util.AtomicNumber64;
+import quina.util.AtomicObject;
+import quina.util.Flag;
 
 public class NioClientConstants {
 	private NioClientConstants() {}
@@ -51,28 +51,29 @@ public class NioClientConstants {
 	private static final int MAX_RETRY = 16;
 
 	// TCPクライアント用送信バッファ.
-	private static final Number32 sendBuf = new Number32(NioClientConstants.SEND_BUFFER);
+	private static final AtomicNumber sendBuf = new AtomicNumber(NioClientConstants.SEND_BUFFER);
 
 	// TCPクライアント用受信バッファ.
-	private static final Number32 recvBuf = new Number32(NioClientConstants.RECV_BUFFER);
+	private static final AtomicNumber recvBuf = new AtomicNumber(NioClientConstants.RECV_BUFFER);
 
 	// TCPクライアント用keepAlive.
-	private static final Bool keepAlive = new Bool(NioClientConstants.KEEP_ALIVE);
+	private static final Flag keepAlive = new Flag(NioClientConstants.KEEP_ALIVE);
 
 	// TCPクライアント用NoDeley.
-	private static final Bool tcpNoDeley = new Bool(NioClientConstants.TCP_NODELEY);
+	private static final Flag tcpNoDeley = new Flag(NioClientConstants.TCP_NODELEY);
 
 	// TCPクライアント用バインドアドレス.
-	private static final Value<InetAddress> bindAddress = new Value<InetAddress>(BIND_ADDRESS);
+	private static final AtomicObject<InetAddress> bindAddress =
+		new AtomicObject<InetAddress>(BIND_ADDRESS);
 
 	// TCPクライアント用バインドポート.
-	private static final Number32 bindPort = new Number32(BIND_PORT);
+	private static final AtomicNumber bindPort = new AtomicNumber(BIND_PORT);
 
 	// 受信タイムアウト(同期モードのみ).
-	private static final Number64 timeout = new Number64(TIMEOUT);
+	private static final AtomicNumber64 timeout = new AtomicNumber64(TIMEOUT);
 
 	// リトライ許容回数.
-	private static final Number32 maxRetry = new Number32(MAX_RETRY);
+	private static final AtomicNumber maxRetry = new AtomicNumber(MAX_RETRY);
 
 	/**
 	 * TCPクライアント用送信バッファ.

@@ -8,6 +8,11 @@ import quina.util.AtomicNumber64;
 public class StorageConstants {
 	
 	/**
+	 * サービス名.
+	 */
+	public static final String SERVICE_NAME = "storage";
+	
+	/**
 	 * コンフィグ名.
 	 */
 	public static final String CONFIG_NAME = "storage";
@@ -28,7 +33,12 @@ public class StorageConstants {
 	// タイムアウト.
 	private static final AtomicNumber64 timeout =
 		new AtomicNumber64(DEF_TIMEOUT);
-
+	
+	/**
+	 * タイムアウトコンフィグ定義名.
+	 */
+	public static final String TIMEOUT = "timeout";
+	
 	/**
 	 * タイムアウト値を設定.
 	 * @param time タイムアウト値を設定します.
@@ -74,6 +84,11 @@ public class StorageConstants {
 	// チェックタイミング.
 	private static final AtomicNumber64 checkTiming =
 		new AtomicNumber64(DEF_CHECK_TIMING);
+	
+	/**
+	 * チェックタイミングコンフィグ定義名.
+	 */
+	public static final String TIMING = "timing";
 
 	/**
 	 * チェックタイミング値を設定.
@@ -104,6 +119,4 @@ public class StorageConstants {
 	public static final long getCheckTiming() {
 		return timeout.get();
 	}
-	
-
 }

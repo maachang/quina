@@ -1,7 +1,7 @@
 package quina.http.server;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
-import quina.net.nio.tcp.NioAtomicValues.Number32;
+import quina.util.AtomicNumber;
+import quina.util.Flag;
 
 /**
  * HttpServer用定義.
@@ -25,20 +25,20 @@ public class HttpServerConstants {
 	private static final boolean DEF_ERROR404_RESTFUL = true;
 
 	// HttpResponseのNoCacheのモード.
-	private static final Bool noCacheMode = new Bool(DEF_NO_CACHE_MODE);
+	private static final Flag noCacheMode = new Flag(DEF_NO_CACHE_MODE);
 
 	// GZIP圧縮モード.
-	private static final Bool gzipMode = new Bool(DEF_GZIP_MODE);
+	private static final Flag gzipMode = new Flag(DEF_GZIP_MODE);
 
 	// [Browser]でのCrossDomain対応のモード.
-	private static final Bool crossDomainMode = new Bool(DEF_CROSS_DOMAIN_MODE);
+	private static final Flag crossDomainMode = new Flag(DEF_CROSS_DOMAIN_MODE);
 	
 	// error404でのRESTful返却のモード.
-	private static final Bool error404RESTful = new Bool(DEF_ERROR404_RESTFUL);
+	private static final Flag error404RESTful = new Flag(DEF_ERROR404_RESTFUL);
 
 	// サーバーソケットのバインドポート番号.
-	private static final Number32 bindServerSocketPort =
-		new Number32(DEF_BIND_SERVER_SOCKET_PORT);
+	private static final AtomicNumber bindServerSocketPort =
+		new AtomicNumber(DEF_BIND_SERVER_SOCKET_PORT);
 
 	/**
 	 * デフォルトの条件でHttpレスポンスでキャッシュなしの定義をするか取得.

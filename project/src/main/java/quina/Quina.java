@@ -779,19 +779,28 @@ public final class Quina {
 	 */
 	public Quina stop() {
 		_checkNoneExecuteInit();
-		// 基本サービスを停止.
-		// 最初にサーバ停止で、次にワーカー停止.
+		// Httpサーバーサービスを停止.
 		httpServerService.stopService();
 		httpServerService.awaitExit();
+		// 登録されたサービスを後ろから停止.
+		QuinaService qs = null;
+		final int len = quinaServiceManager.size();
+		for(int i = len - 1; i >= 0; i --) {
+			qs = null;
+			// エラーが発生しても続行させる.
+			try {
+				qs = quinaServiceManager.get(i);
+				qs.stopService();
+				qs.awaitExit();
+			} catch(Exception e) {
+				LogFactory.getInstance().get().error(
+					"## error stop service: " +
+					quinaServiceManager.nameAt(i), e);
+			}
+		}
+		// ワーカー停止.
 		workerService.stopService();
 		workerService.awaitExit();
-		// 登録されたサービスを後ろから停止.
-		QuinaService qs;
-		final int len = quinaServiceManager.size();
-		for(int i = len - 1; i >= 0; i ++) {
-			(qs = quinaServiceManager.get(i)).stopService();
-			qs.awaitExit();
-		}
 		// ログの停止.
 		LogFactory.getInstance().stopLogWriteWorker();
 		return this;
@@ -811,9 +820,10 @@ public final class Quina {
 			}
 		}
 		// 基本サービスの停止チェック.
-		return workerService.isExit() &&
+		boolean ret = workerService.isExit() &&
 			httpServerService.isExit() &&
 			LogFactory.getInstance().isExitLogWriteWorker();
+		return ret;
 	}
 
 	/**
@@ -828,10 +838,10 @@ public final class Quina {
 			shutdownManager.startShutdown();
 			LogFactory.getInstance().get()
 				.info("### start ShutdownManager");
-		}
-		// すべてのサービスが終了するまで待機.
-		while(!isExit()) {
-			QuinaUtil.sleep(50L);
+			// すべてのサービスが終了するまで待機.
+			while(!isExit()) {
+				QuinaUtil.sleep();
+			}
 		}
 		return this;
 	}
@@ -887,7 +897,13 @@ public final class Quina {
 			// Quinaの停止を実施.
 			LogFactory.getInstance().get()
 				.info("* * A shutdown hook has been detected * *");
-			Quina.get().stop();
+			final Quina q = Quina.get();
+			// サービス停止.
+			q.stop();
+			// すべてのサービスが終了するまで待機.
+			while(!q.isExit()) {
+				QuinaUtil.sleep();
+			}
 		}
 	}
 }

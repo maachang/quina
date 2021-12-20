@@ -1,8 +1,8 @@
 package quina.http;
 
 import quina.QuinaConstants;
-import quina.net.nio.tcp.NioAtomicValues.Number32;
 import quina.net.nio.tcp.NioConstants;
+import quina.util.AtomicNumber;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
 import quina.util.Flag;
@@ -53,8 +53,8 @@ public class HttpConstants {
 	private static final int DEF_SEND_CHUNKED_BUFFER_LENGTH = NioConstants.getBufferSize();
 
 	// チャング送信での１つの塊のバッファサイズ.
-	private static final Number32 sendChunkedBufferLength =
-		new Number32(DEF_SEND_CHUNKED_BUFFER_LENGTH);
+	private static final AtomicNumber sendChunkedBufferLength =
+		new AtomicNumber(DEF_SEND_CHUNKED_BUFFER_LENGTH);
 
 	/**
 	 * サーバー名を設定.

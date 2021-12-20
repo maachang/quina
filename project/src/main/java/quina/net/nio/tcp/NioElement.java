@@ -7,9 +7,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
-import quina.net.nio.tcp.NioAtomicValues.Number32;
-import quina.net.nio.tcp.NioAtomicValues.Number64;
+import quina.util.AtomicNumber;
+import quina.util.AtomicNumber64;
 import quina.util.Flag;
 import quina.worker.timeout.TimeoutElement;
 
@@ -24,12 +23,12 @@ public class NioElement implements TimeoutElement, Closeable {
 	
 	// コネクションフラグ.
 	protected final Flag connectionFlag = new Flag(false);
-	protected final Number32 ops = new Number32(SelectionKey.OP_READ);
-	protected final Number32 workerNo = new Number32(NON_WORKER_NO);
-	protected final Bool regTimeout = new Bool(false);
-	protected final Number64 ioTime = new Number64(
+	protected final AtomicNumber ops = new AtomicNumber(SelectionKey.OP_READ);
+	protected final AtomicNumber workerNo = new AtomicNumber(NON_WORKER_NO);
+	protected final Flag regTimeout = new Flag(false);
+	protected final AtomicNumber64 ioTime = new AtomicNumber64(
 		System.currentTimeMillis());
-	protected final Bool sendFlag = new Bool(false);
+	protected final Flag sendFlag = new Flag(false);
 	protected NioSelector selector;
 	protected SelectionKey key;
 	protected InetSocketAddress access;

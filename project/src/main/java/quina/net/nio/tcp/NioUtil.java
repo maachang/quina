@@ -11,9 +11,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.client.NioClientConstants;
 import quina.net.nio.tcp.server.NioServerConstants;
+import quina.util.Flag;
 
 public final class NioUtil {
 	/**
@@ -341,7 +341,7 @@ public final class NioUtil {
 	 * @param flg 判別するフラグオブジェクトを設定します.
 	 * @return boolean [false]の場合、タイムアウトが発生しました.
 	 */
-	public static final boolean await(long timeout, Bool flg) {
+	public static final boolean await(long timeout, Flag flg) {
 		if(!flg.get()) {
 			long first = -1L;
 			if(timeout > 0L) {

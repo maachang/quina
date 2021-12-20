@@ -258,7 +258,7 @@ final class LogWriteWorker extends Thread {
 		new ConcurrentLinkedQueue<LogWorkerElement>() ;
 	
 	// スレッド停止フラグ.
-	private volatile boolean stopFlag = true;
+	private final Bool stopFlag = new Bool(true);
 
 	// スレッド開始完了フラグ.
 	private final Bool startThreadFlag = new Bool(false);
@@ -284,7 +284,7 @@ final class LogWriteWorker extends Thread {
 	 * ワーカーを開始する.
 	 */
 	public void startThread() {
-		stopFlag = false;
+		stopFlag.set(false);
 		startThreadFlag.set(false);
 		endThreadFlag.set(false);
 		setDaemon(true);
@@ -295,7 +295,7 @@ final class LogWriteWorker extends Thread {
 	 * ワーカーを停止する.
 	 */
 	public void stopThread() {
-		stopFlag = true;
+		stopFlag.set(true);
 	}
 
 	/**
@@ -303,7 +303,7 @@ final class LogWriteWorker extends Thread {
 	 * @return
 	 */
 	public boolean isStopThread() {
-		return stopFlag;
+		return stopFlag.get();
 	}
 
 	/**
@@ -350,9 +350,9 @@ final class LogWriteWorker extends Thread {
 
 		// スレッド開始完了.
 		startThreadFlag.set(true);
-		while (!endFlag && !stopFlag) {
+		while (!endFlag && !stopFlag.get()) {
 			try {
-				while (!endFlag && !stopFlag) {
+				while (!endFlag && !stopFlag.get()) {
 					// 実行ワーカー要素を取得.
 					if ((em = queue.poll()) == null) {
 						// Flush処理.

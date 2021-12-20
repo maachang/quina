@@ -20,6 +20,12 @@ import quina.util.Flag;
  */
 public class QuinaDataSource implements DataSource {
 	
+	/** 登録番号. **/
+	private int regNo;
+	
+	/** 登録名. **/
+	private String regName;
+	
 	/** プーリングデータ格納用. **/
 	private final Queue<QuinaConnection> pooling =
 		new ConcurrentLinkedQueue<QuinaConnection>();
@@ -38,11 +44,15 @@ public class QuinaDataSource implements DataSource {
 	
 	/**
 	 * コンストラクタ.
+	 * @param regNo 登録番号を設定します.
+	 * @param regName 登録名を設定します.
 	 * @param service QuinaJDBCServiceを設定します.
 	 * @param config QuinaJDBCDefineを設定します.
 	 */
-	protected QuinaDataSource(
+	protected QuinaDataSource(int regNo, String regName,
 		QuinaJDBCService service, QuinaJDBCConfig config) {
+		this.regNo = regNo;
+		this.regName = regName;
 		this.service = service;
 		this.config = config;
 	}
@@ -100,6 +110,30 @@ public class QuinaDataSource implements DataSource {
 		// タイムアウト監視セット.
 		service.getTimeoutLoopElement().offer(conn);
 		return true;
+	}
+	
+	/**
+	 * 登録番号を取得
+	 * @return int 登録番号が返却されます.
+	 */
+	public int getNo() {
+		return regNo;
+	}
+	
+	/**
+	 * 登録名を取得
+	 * @return 登録名が返却されます.
+	 */
+	public String getName() {
+		return regName;
+	}
+	
+	/**
+	 * デフォルトのデータソースか取得.
+	 * @return boolean trueの場合デフォルトのデータソースです.
+	 */
+	public boolean isDefault() {
+		return config.isDefaultDataSource();
 	}
 	
 	/**

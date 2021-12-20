@@ -7,8 +7,8 @@ import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.util.AtomicNumber;
+import quina.util.Flag;
 
 /**
  * Atomicにデータ受信を行うためのNio受信用バッファ.
@@ -22,10 +22,10 @@ public class NioAsyncBuffer {
 	private byte[] topBuffer = null;
 
 	// OutputStream利用時のクローズ処理呼び出しフラグ.
-	private final Bool isCloseOutputStream = new Bool(false);
+	private final Flag isCloseOutputStream = new Flag(false);
 
 	// クローズ処理実行フラグ.
-	private final Bool closeFlag = new Bool(false);
+	private final Flag closeFlag = new Flag(false);
 
 	/**
 	 * クローズ処理.

@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
@@ -185,6 +186,8 @@ public final class EtagManager {
 		final String meta = createEtagMetaFileName(path);
 		// コンテンツのファイルサイズ.
 		final long fileLength;
+		// ロックオブジェクト.
+		Lock lock;
 		try {
 			// コンテンツのファイルサイズを取得.
 			fileLength = FileUtil.getFileLength(path);
@@ -194,8 +197,11 @@ public final class EtagManager {
 				// ファイルが存在しない場合はメタファイルも削除する.
 				if(FileUtil.isFile(meta)) {
 					// パス名単位でロックする.
-					synchronized(sync.get(path)) {
+					(lock = sync.get(path)).lock();
+					try {
 						FileUtil.removeFile(meta);
+					} finally {
+						lock.unlock();
 					}
 				}
 				return null;
@@ -208,29 +214,30 @@ public final class EtagManager {
 		}
 
 		// パス名単位でロックする.
-		synchronized(sync.get(path)) {
-			try {
-				EtagElement em = null;
-				// メタファイルからEtagElementを取得.
-				if((em = loadEtagElement(path, meta)) != null) {
-					return em;
-				}
-				// メタファイルが存在しないか古い場合は新たにメタファイルを再作成する.
-				// コンテンツのの更新時間を取得.
-				final long lastTime = FileUtil.mtime(path);
-				// コンテンツからCRCコードを取得.
-				final long code = getContentByCrc64(path, fileLength);
-				// Etagを生成して保存.
-				final byte[] etagBin = createEtagCode(fileLength, code);
-				saveEtagElement(meta, lastTime, etagBin);
-				// EtagElementを生成.
-				return new EtagElement(convertEtag(etagBin, 0), lastTime);
-			} catch(Exception ex) {
-				if(ex instanceof CoreException) {
-					throw (CoreException)ex;
-				}
-				throw new QuinaException(ex);
+		(lock = sync.get(path)).lock();
+		try {
+			EtagElement em = null;
+			// メタファイルからEtagElementを取得.
+			if((em = loadEtagElement(path, meta)) != null) {
+				return em;
 			}
+			// メタファイルが存在しないか古い場合は新たにメタファイルを再作成する.
+			// コンテンツのの更新時間を取得.
+			final long lastTime = FileUtil.mtime(path);
+			// コンテンツからCRCコードを取得.
+			final long code = getContentByCrc64(path, fileLength);
+			// Etagを生成して保存.
+			final byte[] etagBin = createEtagCode(fileLength, code);
+			saveEtagElement(meta, lastTime, etagBin);
+			// EtagElementを生成.
+			return new EtagElement(convertEtag(etagBin, 0), lastTime);
+		} catch(Exception ex) {
+			if(ex instanceof CoreException) {
+				throw (CoreException)ex;
+			}
+			throw new QuinaException(ex);
+		} finally {
+			lock.unlock();
 		}
 	}
 

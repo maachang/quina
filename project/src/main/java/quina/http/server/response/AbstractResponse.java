@@ -18,8 +18,8 @@ import quina.http.Response;
 import quina.http.server.CreateResponseHeader;
 import quina.http.server.HttpServerConstants;
 import quina.http.server.furnishing.BaseSendResponse;
-import quina.net.nio.tcp.NioAtomicValues.Bool;
 import quina.net.nio.tcp.NioSendData;
+import quina.util.Flag;
 
 /**
  * 基本レスポンス定義.
@@ -46,9 +46,9 @@ public abstract class AbstractResponse<T>
 	/** クロスドメインモード. **/
 	protected boolean corsMode = HttpServerConstants.isCrossDomainMode();
 	/** 送信済みフラグ. **/
-	protected Bool sendFlag = new Bool(false);
+	protected Flag sendFlag = new Flag(false);
 	/** SendData処理フラグ. **/
-	protected Bool execSendDataFlag = new Bool(false);
+	protected Flag execSendDataFlag = new Flag(false);
 	/** 元のコンポーネントタイプ **/
 	protected ComponentType srcComponentType = null;
 	/** Read-Writeロックオブジェクト. **/

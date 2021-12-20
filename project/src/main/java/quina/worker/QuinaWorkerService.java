@@ -223,10 +223,10 @@ public class QuinaWorkerService
 	
 	@Override
 	public boolean loadConfig(String configDir) {
-		// 既にサービスが開始している場合はエラー.
-		checkService(true);
 		wlock();
 		try {
+			// 既にサービスが開始している場合はエラー.
+			checkService(true);
 			return config.loadConfig(configDir);
 		} finally {
 			wulock();
@@ -240,25 +240,23 @@ public class QuinaWorkerService
 	
 	@Override
 	public void startService() {
-		// ワーカーハンドラが設定されていない場合.
-		if(!isHandler()) {
-			throw new QuinaException(
-				"QuinaWorkerHandle is not set.");
-		}
-		// 既に開始してる場合はエラー.
-		if(startFlag.setToGetBefore(true)) {
-			throw new QuinaException(
-				this.getClass().getName() +
-				" service has already started.");
-		}
 		wlock();
 		try {
+			// ワーカーハンドラが設定されていない場合.
+			if(!isHandler()) {
+				throw new QuinaException(
+					"QuinaWorkerHandle is not set.");
+			}
+			// 既にサービスが開始している場合はエラー.
+			checkService(true);
 			// マネージャを生成して開始処理.
 			this.manager = new QuinaWorkerManager(
 				config.getInt("workerLength"), handle,
 				toArrayCallHandle());
 			this.manager.startThread();
 			this.loopThread.startThread();
+			// サービス開始.
+			startFlag.set(true);
 		} catch(QuinaException qe) {
 			stopService();
 			throw qe;
@@ -342,14 +340,15 @@ public class QuinaWorkerService
 			if(!startFlag.get()) {
 				return;
 			}
-			// 停止処理.
+			// マネージャ停止処理.
 			if(manager != null) {
 				manager.stopThread();
 			}
+			// ループ監視停止処理.
 			if(loopThread != null) {
 				loopThread.stopThread();
 			}
-			// サービス停止.
+			// サービス停止完了.
 			startFlag.set(false);
 		} finally {
 			wulock();
@@ -387,35 +386,16 @@ public class QuinaWorkerService
 		} finally {
 			rulock();
 		}
-		boolean ret = false;
 		if(m != null) {
 			if(lt != null) {
 				if(m.awaitExit(timeout)) {
-					ret = lt.awaitExit(timeout);
+					return lt.awaitExit(timeout);
 				}
-			} else {
-				ret = m.awaitExit(timeout);
+				return false;
 			}
-			if(ret) {
-				wlock();
-				try {
-					manager = null;
-				} finally {
-					wulock();
-				}
-				return true;
-			}
+			return m.awaitExit(timeout);
 		} else if(lt != null) {
-			ret = lt.awaitExit(timeout);
-			if(ret) {
-				wlock();
-				try {
-					manager = null;
-				} finally {
-					wulock();
-				}
-				return true;
-			}
+			return lt.awaitExit(timeout);
 		}
 		return true;
 	}
@@ -440,7 +420,16 @@ public class QuinaWorkerService
 			throw new QuinaException(
 				"The service has not started.");
 		}
-		manager.push(em);
+		rlock();
+		try {
+			if(manager == null) {
+				throw new QuinaException(
+					"The service has not started.");
+			}
+			manager.push(em);
+		} finally {
+			rulock();
+		}
 	}
 	
 	/**
