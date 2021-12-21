@@ -13,6 +13,7 @@ import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.exception.QuinaException;
+import quina.logger.LogFactory;
 import quina.util.FileUtil;
 import quina.util.Flag;
 import quina.util.collection.TypesClass;
@@ -110,6 +111,8 @@ public class MemoryStorageService
 				,man);
 			// timeoutLoopElementをQuinaLoopThreadに登録.
 			Quina.get().getQuinaLoopManager().regLoopElement(em);
+			LogFactory.getInstance().get()
+				.info("@ startService " + this.getClass().getName());
 			// スタートアップ完了.
 			this.manager = man;
 			// サービス開始.
@@ -152,6 +155,8 @@ public class MemoryStorageService
 			out = null;
 			// サービス停止.
 			startFlag.set(false);
+			LogFactory.getInstance().get()
+				.info("@ stopService " + this.getClass().getName());
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {

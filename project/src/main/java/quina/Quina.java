@@ -39,7 +39,7 @@ public final class Quina {
 	private static final Quina SNGL = new Quina();
 
 	// 基本的なQuinaShutdownToken.
-	private static final String DEFAULT_TOKEN = "@aniuq";
+	private static final String DEFAULT_SHUTDOWN_TOKEN = "@aniuq";
 	
 	// 初期化実行フラグ.
 	private final TwoStepsFlag initFlag = new TwoStepsFlag();
@@ -210,7 +210,8 @@ public final class Quina {
 			}
 			
 			// シャットダウンデフォルトトークンを設定.
-			ShutdownConstants.setDefaultToken(DEFAULT_TOKEN);
+			ShutdownConstants.setDefaultToken(
+				DEFAULT_SHUTDOWN_TOKEN);
 			
 			// ルーターオブジェクト生成.
 			this.router = new Router();
@@ -799,10 +800,20 @@ public final class Quina {
 			}
 		}
 		// ワーカー停止.
-		workerService.stopService();
-		workerService.awaitExit();
+		try {
+			workerService.stopService();
+			workerService.awaitExit();
+		} catch(Exception e) {
+			LogFactory.getInstance().get().error(
+				"## error stop service: workerService", e);
+		}
 		// ログの停止.
-		LogFactory.getInstance().stopLogWriteWorker();
+		try {
+			LogFactory.getInstance().stopLogWriteWorker();
+		} catch(Exception e) {
+			LogFactory.getInstance().get().error(
+				"## error stop service: Log", e);
+		}
 		return this;
 	}
 

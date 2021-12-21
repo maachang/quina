@@ -30,10 +30,37 @@ import java.lang.annotation.Target;
  * 
  * <例>
  * 
- * ＠QuinaServiceScoped("hoge")
+ * ＠QuinaServiceScoped(name="hoge")
  * public class HogeQuinaService implements QuinaService {
  *   ........
  * }
+ * 
+ * あと例えばStorageサービスに対して、１つはメモリでStorage保持を
+ * する場合と、もう１つはRDBMSで保持するサービスがあるとします。
+ * この場合は以下のように定義する事で、プログラム実行時に選択されて
+ * 実行することが出来ます.
+ * 
+ * <例>
+ * 
+ * ＠QuinaServiceScoped(name="storage", define="memory")
+ * public class MemoryStorageService implements QuinaService {
+ *   ........
+ * }
+ * 
+ * ＠QuinaServiceScoped(name="storage", define="jdbc")
+ * public class JDBCStorageService implements QuinaService {
+ *   ........
+ * }
+ * 
+ * ＠QuinaServiceSelect(name="storage", define="jdbc")
+ * public class QuinaMain {
+ *   public static void main(String[] args) {
+ *     Quina.init(QuinaMain.class, args);
+ *     Quina.get().startAwait();
+ *   }
+ * }
+ * 
+ * これでstorageサービスに対してJDBCStorageServiceが選択されます.
  * 
  * またこのアノテーションは、QuinaServiceを継承してない場合は
  * 登録が無視されます.
@@ -42,8 +69,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface QuinaServiceScoped {
 	/**
-	 * 登録するQuinaService名.
+	 * 登録するサービス名.
 	 */
-	public String value();
+	public String name();
+	
+	/**
+	 * サービス定義名.
+	 * "" の場合は定義なし.
+	 */
+	public String define() default "";
 }
 

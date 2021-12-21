@@ -55,10 +55,10 @@ public class AnnotationQuina {
 	/**
 	 * Annotationに定義されてるQuinaServiceScopedのサービス名を取得.
 	 * @param o QuinaServiceを設定します.
-	 * @return String サービス名が返却されます.
+	 * @return String[] [0]サービス名と[1]定義名が返却されます.
 	 *                nullの場合、QuinaServiceScopedが設定されていません.
 	 */
-	public static final String loadQuinaServiceScoped(Object o) {
+	public static final String[] loadQuinaServiceScoped(Object o) {
 		if(o == null) {
 			throw new QuinaException("The specified argument is Null.");
 		} else if(!(o instanceof QuinaService)) {
@@ -70,7 +70,12 @@ public class AnnotationQuina {
 		if(service == null) {
 			return null;
 		}
-		return service.value();
+		String name = service.name();
+		String define = service.define().trim();
+		if(define.isEmpty()) {
+			define = null;
+		}
+		return new String[] {name, define};
 	}
 	
 	/**

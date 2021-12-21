@@ -22,7 +22,7 @@ import quina.util.collection.TypesClass;
 /**
  * QuinaJDBCConsoleService.
  */
-@QuinaServiceScoped(QuinaJDBCConsoleService.SERVICE_AND_CONFIG_NAME)
+@QuinaServiceScoped(name=QuinaJDBCConsoleService.SERVICE_AND_CONFIG_NAME)
 public class QuinaJDBCConsoleService
 	implements QuinaService {
 	

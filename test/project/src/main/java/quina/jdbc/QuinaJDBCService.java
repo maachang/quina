@@ -22,7 +22,7 @@ import quina.worker.timeout.TimeoutLoopElement;
 /**
  * QuinaJDBCService.
  */
-@QuinaServiceScoped(QuinaJDBCService.SERVICE_AND_CONFIG_NAME)
+@QuinaServiceScoped(name=QuinaJDBCService.SERVICE_AND_CONFIG_NAME)
 public class QuinaJDBCService implements QuinaService {
 	// サービス/コンフィグ名.
 	protected static final String SERVICE_AND_CONFIG_NAME = "jdbc";
@@ -215,10 +215,9 @@ public class QuinaJDBCService implements QuinaService {
 	public void stopService() {
 		wlock();
 		try {
-			if(startFlag.get()) {
+			if(startFlag.setToGetBefore(false)) {
 				log.info("@ stopService " + this.getClass().getName());
 			}
-			startFlag.set(false);
 		} finally {
 			wulock();
 		}
