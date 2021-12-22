@@ -32,6 +32,23 @@ public interface StorageManager {
 	public boolean isStorage(String name);
 	
 	/**
+	 * 存在しない場合はStorageを作成し、存在する場合は
+	 * Storageを取得する.
+	 * @param name Storage名を設定します.
+	 * @return Storage Storageが返却されます.
+	 */
+	default Storage get(String name) {
+		if(isStorage(name)) {
+			try {
+				return createStorage(name);
+			} catch(Exception e) {
+				return getStorage(name);
+			}
+		}
+		return getStorage(name);
+	}
+	
+	/**
 	 * 登録Storage数を取得.
 	 * @return int 登録Storage数が返却されます.
 	 */

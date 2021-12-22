@@ -1,13 +1,15 @@
-package quina.storage;
+package quina.jdbc.storage;
 
 import quina.QuinaThreadStatus;
+import quina.storage.MemoryStorageManager;
+import quina.storage.StorageConstants;
 import quina.worker.QuinaLoopElement;
 
 /**
- * MemoryStorageManagerのタイムアウト監視する
+ * JDBCStorageManagerのタイムアウト監視する
  * LoopElement.
  */
-final class MemoryStorageLoopElement
+final class JDBCStorageLoopElement
 	implements QuinaLoopElement {
 	
 	// タイムアウト時間.
@@ -17,7 +19,7 @@ final class MemoryStorageLoopElement
 	protected long checkTiming;
 	
 	// MemoryStorageマネージャ.
-	protected MemoryStorageManager manager;
+	protected JDBCStorageManager manager;
 	
 	// 前回確認したタイムアウト値.
 	protected long beforeTimeout;
@@ -28,11 +30,11 @@ final class MemoryStorageLoopElement
 	 *                設定します.
 	 * @param checkTiming LoopElementを実行するタイミングを
 	 *                    設定します.
-	 * @param manager MemoryStorageマネージャを設定します.
+	 * @param manager JDBCStorageマネージャを設定します.
 	 */
-	protected MemoryStorageLoopElement(
+	protected JDBCStorageLoopElement(
 		long timeout, long checkTiming,
-		MemoryStorageManager manager) {
+		JDBCStorageManager manager) {
 		this.timeout = StorageConstants.getTimeout(timeout);
 		this.checkTiming = StorageConstants.getCheckTiming(checkTiming);
 		this.manager = manager;
@@ -60,24 +62,6 @@ final class MemoryStorageLoopElement
 	 * @param time 現在の時間が設定されます.
 	 */
 	protected void executeTimeout(long nowTime) {
-		// タイムアウトチェックを行う.
-		String key;
-		MemoryStorage ms;
-		final int len = manager.size();
-		for(int i = len - 1; i >= 0; i --) {
-			// キー名を取得.
-			if((key = manager.keyAt(i)) == null) {
-				continue;
-			}
-			// Storageを取得.
-			ms = (MemoryStorage)manager.getStorage(key);
-			if(ms == null) {
-				continue;
-			}
-			// タイムアウトの場合は削除.
-			if(ms.getUpdateTime() + timeout < nowTime) {
-				manager.removeStorage(key);
-			}
-		}
+		
 	}
 }

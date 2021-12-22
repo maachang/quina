@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
 import quina.QuinaConfig;
-import quina.QuinaService;
+import quina.QuinaServiceManager;
 import quina.exception.QuinaException;
 import quina.logger.LogFactory;
 import quina.util.FileUtil;
@@ -22,7 +22,10 @@ import quina.util.collection.TypesClass;
  * MemoryStorageサービス.
  */
 public class MemoryStorageService
-	implements QuinaService {
+	implements StorageQuinaService {
+	
+	// Storage定義名.
+	protected static final String STRAGE_DEFINE = "memory";
 	
 	// デフォルトのStorage保存先ファイル名.
 	private static final String SAVE_FILE_NAME = "./.qmss";
@@ -169,5 +172,23 @@ public class MemoryStorageService
 			}
 			wulock();
 		}
+	}
+	
+	/**
+	 * StorageManagerを取得.
+	 * @return StorageManagerが返却されます.
+	 */
+	@Override
+	public StorageManager getStorageManager() {
+		return manager;
+	}
+	
+	/**
+	 * このサービスを登録.
+	 * @param man QuinaServiceManagerを設定します.
+	 */
+	public static final void regService(QuinaServiceManager man) {
+		MemoryStorageService service = new MemoryStorageService();
+		man.put(StorageConstants.SERVICE_NAME, STRAGE_DEFINE, service);
 	}
 }

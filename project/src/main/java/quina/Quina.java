@@ -20,6 +20,7 @@ import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
 import quina.shutdown.ShutdownManagerInfo;
+import quina.storage.MemoryStorageService;
 import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
@@ -171,8 +172,13 @@ public final class Quina {
 			cdiRefrectManager.autoCdiReflect();
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
+			
+			// Storageサービスを登録.
+			MemoryStorageService.regService(quinaServiceManager);
 			// AutoQuinaService読み込みを実行.
 			quinaServiceManager.autoQuinaService();
+			// QuinaServiceSelectionを反映.
+			quinaServiceManager.regQuinaServiceSelection(mainClass);
 			
 			// CdiAnnotationScopedアノテーションを反映.
 			cdiHandleManager.autoCdiHandleManager();
@@ -704,6 +710,8 @@ public final class Quina {
 			workerService.awaitStartup();
 			httpServerService.startService();
 			httpServerService.awaitStartup();
+			// 確定しなかったサービス定義を削除.
+			quinaServiceManager.clearDefine();
 			return this;
 		} catch(QuinaException qe) {
 			try {

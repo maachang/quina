@@ -28,6 +28,14 @@ public class JDBCStorageManager
 		this.dataSource = ds;
 	}
 	
+	/**
+	 * QuinaDataSourceを取得.
+	 * @return QuinaDataSource QuinaDataSourceが返却されます.
+	 */
+	protected QuinaDataSource getQuinaDataSource() {
+		return dataSource;
+	}
+	
 	// 名前チェック.
 	private String checkName(String name) {
 		if(name == null || (name = name.trim()).isEmpty()) {

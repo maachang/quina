@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaService;
+import quina.QuinaServiceManager;
 import quina.annotation.AnnotationUtil;
 import quina.annotation.Switch;
 import quina.annotation.cdi.CdiHandleScoped;
@@ -12,6 +13,7 @@ import quina.annotation.cdi.CdiReflectElement;
 import quina.annotation.cdi.CdiScoped;
 import quina.annotation.quina.AppendMimeType.AppendMimeTypeArray;
 import quina.annotation.quina.ConfigElement.ConfigElementArray;
+import quina.annotation.quina.QuinaServiceSelection.QuinaServiceSelectionArray;
 import quina.annotation.quina.SystemProperty.SystemPropertyArray;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
@@ -77,6 +79,50 @@ public class AnnotationQuina {
 		}
 		return new String[] {name, define};
 	}
+	
+	/**
+	 * Annotationで定義されてるQuinaServiceSelectionを読み込んで
+	 * QuinaService定義された内容を登録します.
+	 * @param c 対象のクラスを設定します.
+	 * @return boolean 正しく読み込まれた場合 true が返却されます.
+	 */
+	public static final boolean regQuinaServiceSelection(
+		QuinaServiceManager man, Class<?> c) {
+		if(c == null) {
+			throw new QuinaException("The specified argument is Null.");
+		}
+		QuinaServiceSelection[] list = null;
+		// 対象コンポーネントからQuinaServiceSelectionArray
+		// アノテーション定義を取得.
+		QuinaServiceSelectionArray array = c.getAnnotation(
+			QuinaServiceSelectionArray.class);
+		// 存在しない場合.
+		if(array == null) {
+			// 単体で取得.
+			QuinaServiceSelection p = c.getAnnotation(
+				QuinaServiceSelection.class);
+			if(p != null) {
+				list = new QuinaServiceSelection[] {p};
+			}
+		} else {
+			// 複数のQuinaServiceSelectionアノテーション定義を取得.
+			list = array.value();
+		}
+		// 存在しない場合.
+		if(list == null || list.length == 0) {
+			return false;
+		}
+		// QuinaServiceManagerで定義登録されている内容を
+		// サービス登録.
+		int len = list.length;
+		for(int i = 0; i < len; i ++) {
+			// サービス登録.
+			man.putDefineToService(
+				list[i].name(), list[i].define());
+		}
+		return len > 0;
+	}
+
 	
 	/**
 	 * AnnotationにCdiScopedが定義されてるか取得.

@@ -26,6 +26,10 @@ public final class QuinaServiceManager {
 	private final ObjectList<QuinaServiceEntry> list =
 		new ObjectList<QuinaServiceEntry>();
 	
+	// サービス定義リスト.
+	private final ObjectList<QuinaServiceEntry> defineList =
+		new ObjectList<QuinaServiceEntry>();
+	
 	// Fixフラグ.
 	private final Flag fixFlag = new Flag(false);
 
@@ -35,7 +39,7 @@ public final class QuinaServiceManager {
 	public QuinaServiceManager() {}
 
 	// 既に登録されてる名前の登録番号を検索.
-	private static final int search(
+	private static final int searchService(
 		ObjectList<QuinaServiceEntry> list, String name) {
 		final int len = list.size();
 		for(int i = 0; i < len; i ++) {
@@ -46,38 +50,20 @@ public final class QuinaServiceManager {
 		return -1;
 	}
 	
-	// サービス定義名が一致するEntryを取得.
-	private static final QuinaServiceEntry search(
-		QuinaServiceEntry top, String define) {
-		QuinaServiceEntry e = top;
-		while(e != null) {
-			// 一致する内容を返却.
-			if(define.equals(e.getDefine())) {
-				return e;
+	// 既に登録されてる名前と定義名の登録番号を検索.
+	private static final int searchDefine(
+		ObjectList<QuinaServiceEntry> list, String name,
+		String define) {
+		final int len = list.size();
+		for(int i = 0; i < len; i ++) {
+			if(name.equals(list.get(i).getName()) &&
+				define.equals(list.get(i).getDefine())) {
+				return i;
 			}
-			e = e.getNext();
 		}
-		return null;
+		return -1;
 	}
-	
-	// サービス定義名が一致するEntryを取得して削除.
-	private static final QuinaServiceEntry searchByDelete(
-		QuinaServiceEntry top, String define) {
-		QuinaServiceEntry e = top;
-		QuinaServiceEntry bef = null;
-		while(e != null) {
-			// 一致する内容を削除して返却.
-			if(define.equals(e.getDefine())) {
-				if(bef == null) {
-					
-				}
-				return e;
-			}
-			bef = e;
-			e = e.getNext();
-		}
-		return null;
-	}
+
 	
 	/**
 	 * 登録を完了させる.
@@ -94,14 +80,19 @@ public final class QuinaServiceManager {
 		return fixFlag.get();
 	}
 	
+	// fixされてる場合はエラー.
+	protected void checkFix() {
+		if(fixFlag.get()) {
+			throw new QuinaException("Already completed.");
+		}
+	}
+	
 	/**
 	 * AutoQuinaService実行.
 	 * @return QuinaServiceManager このオブジェクトが返却されます.
 	 */
 	public final QuinaServiceManager autoQuinaService() {
-		if(fixFlag.get()) {
-			throw new QuinaException("Already completed.");
-		}
+		checkFix();
 		java.lang.Class<?> clazz;
 		java.lang.reflect.Method method;
 		try {
@@ -128,24 +119,17 @@ public final class QuinaServiceManager {
 		return this;
 	}
 	
-	// QuinaServiceにコンフィグ内容をセット.
-	private static final void _quinaServiceByAppendConfig(
-		QuinaService sv) {
-		Quina quina = Quina.get();
-		String dir = quina.getConfigDirectory();
-		// コンフィグディレクトリが設定されていない場合
-		if(dir == null || dir.isEmpty()) {
-			// 処理しない.
-			return;
-		}
-		// 初期化済みの場合のみ設定する.
-		// また１度もloadConfig処理が呼ばれてない場合.
-		if(quina.isInit() && !sv.isLoadConfig()) {
-			// コンフィグ情報をロードする.
-			sv.loadConfig(dir);
-		}
+	/**
+	 * QuinaServiceSelection登録処理.
+	 * @param c 対象のメインクラスを設定します.
+	 * @return QuinaServiceManager このオブジェクトが返却されます.
+	 */
+	public final QuinaServiceManager regQuinaServiceSelection(Class<?> c) {
+		// QuinaServiceSelection登録処理.
+		AnnotationQuina.regQuinaServiceSelection(this, c);
+		return this;
 	}
-
+	
 	/**
 	 * データセット.
 	 * @param service 登録サービスを設定します.
@@ -155,9 +139,8 @@ public final class QuinaServiceManager {
 		if(service == null) {
 			throw new QuinaException(
 				"The Quina Service to be registered is null.");
-		} else if(fixFlag.get()) {
-			throw new QuinaException("Already completed.");
 		}
+		checkFix();
 		final String[] nameDefine = AnnotationQuina.
 			loadQuinaServiceScoped(service);
 		if(nameDefine == null) {
@@ -172,6 +155,17 @@ public final class QuinaServiceManager {
 	/**
 	 * データセット.
 	 * @param name サービス登録名を設定します.
+	 * @param service 登録サービスを設定します.
+	 * @return QuinaService 前回登録されていたサービスが返却されます.
+	 */
+	public QuinaService put(
+		String name, QuinaService service) {
+		return put(name, null, service);
+	}
+	
+	/**
+	 * データセット.
+	 * @param name サービス登録名を設定します.
 	 * @param define サービス定義名を設定します.
 	 *               nullの場合サービス定義名は存在しません.
 	 * @param service 登録サービスを設定します.
@@ -179,9 +173,7 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService put(
 		String name, String define, QuinaService service) {
-		if(fixFlag.get()) {
-			throw new QuinaException("Already completed.");
-		} else if(name == null || service == null) {
+		if(name == null || service == null) {
 			if(name == null) {
 				throw new QuinaException(
 					"The designated registration name is null.");
@@ -189,37 +181,24 @@ public final class QuinaServiceManager {
 			throw new QuinaException(
 				"The Quina Service to be registered is null.");
 		}
+		checkFix();
 		// 定義名が設定されている場合.
 		if(define != null && !(define = define.trim()).isEmpty()) {
-			// 登録済みの番号を検索.
-			final int p = search(list, name);
+			// 定義登録済みの番号を検索.
+			final int p = searchDefine(defineList, name, define);
 			if(p == -1) {
-				// 存在しない場合.
-				list.add(new QuinaServiceEntry(
+				// 存在しない場合登録.
+				defineList.add(new QuinaServiceEntry(
 					name, define, service));
 				return null;
 			}
-			// 存在する場合、既に定義名で登録済みの
-			// サービスを検索.
-			QuinaServiceEntry top = list.get(p);
-			QuinaServiceEntry e = search(top, define);
-			if(e != null) {
-				// 存在する場合は上書き.
-				return e.setService(service);
-			}
-			// 存在しない場合は、新規作成.
-			e = new QuinaServiceEntry(
-				name, define, service);
-			QuinaServiceEntry nxt = top.getNext();
-			// セット.
-			top.putNext(e);
-			e.putNext(nxt);
-			return null;
+			// 一番最後に再設定して返却.
+			QuinaServiceEntry e = defineList.remove(p);
+			defineList.add(e);
+			return e.setService(service);
 		}
-		// コンフィグ読み込み.
-		_quinaServiceByAppendConfig(service);
-		// 登録済みの番号を検索.
-		final int p = search(list, name);
+		// サービス登録済みの番号を検索.
+		final int p = searchService(list, name);
 		if(p == -1) {
 			// 存在しない場合.
 			list.add(new QuinaServiceEntry(
@@ -239,7 +218,7 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService get(String name) {
 		if(name != null) {
-			final int p = search(list, name);
+			final int p = searchService(list, name);
 			if(p != -1) {
 				return list.get(p).getService();
 			}
@@ -254,7 +233,7 @@ public final class QuinaServiceManager {
 	 */
 	public int getNo(String name) {
 		if(name != null) {
-			final int p = search(list, name);
+			final int p = searchService(list, name);
 			if(p != -1) {
 				return p;
 			}
@@ -292,11 +271,9 @@ public final class QuinaServiceManager {
 	 * @return QuinaService 削除されたサービスが返却されます.
 	 */
 	public QuinaService remove(String name) {
-		if(fixFlag.get()) {
-			throw new QuinaException("Already completed.");
-		}
+		checkFix();
 		if(name != null) {
-			final int p = search(list, name);
+			final int p = searchService(list, name);
 			if(p != -1) {
 				return list.remove(p).getService();
 			}
@@ -311,16 +288,56 @@ public final class QuinaServiceManager {
 	public int size() {
 		return list.size();
 	}
+	
+	/**
+	 * 定義登録されているサービスを実行サービスとして登録.
+	 * @param name サービス名を設定します.
+	 * @param define 定義名を設定します.
+	 */
+	public void putDefineToService(String name, String define) {
+		checkFix();
+		if(name == null) {
+			throw new QuinaException(
+				"The designated registration name is null.");
+		} else if(define == null ||
+			(define = define.trim()).isEmpty()) {
+			throw new QuinaException(
+				"The designated registration define is null or empty.");
+		}
+		// 既に同一のサービス名が登録されている場合.
+		if(searchService(list, name) != -1) {
+			throw new QuinaException(
+				"The service with the specified name \"" +
+				name + "\" already exists. ");
+		}
+		// サービスに登録する定義サービスを取得.
+		int no = searchDefine(defineList, name, define);
+		if(no == -1) {
+			// 存在しない場合エラー.
+			throw new QuinaException(
+				"The definition name \"" + define +
+				"\" does not exist for the specified service name \"" +
+				name + "\". ");
+		}
+		final QuinaServiceEntry e = defineList.remove(no);
+		// サービスに登録.
+		list.add(e);
+	}
+	
+	/**
+	 * サービス定義リストをクリア.
+	 */
+	protected void clearDefine() {
+		defineList.clear();
+	}
 
 	/**
 	 * 1つのQuinaService要素.
 	 */
 	private static final class QuinaServiceEntry {
-		private boolean regFlag;
 		private String name;
 		private String define;
 		private QuinaService service;
-		private QuinaServiceEntry next;
 
 		/**
 		 * コンストラクタ.
@@ -333,9 +350,6 @@ public final class QuinaServiceManager {
 			this.name = name;
 			this.define = define;
 			this.service = service;
-			this.next = null;
-			// サービス定義名が存在しない場合はサービス登録対象.
-			this.regFlag = define == null;
 		}
 
 		/**
@@ -367,26 +381,6 @@ public final class QuinaServiceManager {
 			QuinaService ret = service;
 			service = newService;
 			return ret;
-		}
-		
-		// サービス登録対象のサービスの場合 trueをセット.
-		protected void setRegService(boolean flg) {
-			regFlag = flg;
-		}
-		
-		// サービス登録対象のサービスの場合 true返却.
-		protected boolean isRegService() {
-			return regFlag;
-		}
-		
-		// このEntryの下にEntryをセット.
-		protected void putNext(QuinaServiceEntry entry) {
-			this.next = entry;
-		}
-		
-		// このEntryの下のEntryを取得.
-		protected QuinaServiceEntry getNext() {
-			return this.next;
 		}
 	}
 }
