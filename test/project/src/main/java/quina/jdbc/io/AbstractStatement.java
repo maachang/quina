@@ -3,6 +3,7 @@ package quina.jdbc.io;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 
 import quina.exception.QuinaException;
 import quina.jdbc.QuinaConnection;
@@ -172,6 +173,44 @@ public abstract class AbstractStatement<T>
 	}
 	
 	/**
+	 * パラメーターを設定.
+	 * @param args 対象のパラメータを設定します.
+	 * @return T このオブジェクトが返却されます.
+	 */
+	public T params(ObjectList<?> args) {
+		checkClose();
+		if(args != null && args.size() > 0) {
+			if(params == null) {
+				params = new ObjectList<Object>();
+			}
+			final int len = args.size();
+			for(int i = 0; i < len; i ++) {
+				params.add(args.get(i));
+			}
+		}
+		return (T)this;
+	}
+	
+	/**
+	 * パラメーターを設定.
+	 * @param args 対象のパラメータを設定します.
+	 * @return T このオブジェクトが返却されます.
+	 */
+	public T params(List<?> args) {
+		checkClose();
+		if(args != null && args.size() > 0) {
+			if(params == null) {
+				params = new ObjectList<Object>();
+			}
+			final int len = args.size();
+			for(int i = 0; i < len; i ++) {
+				params.add(args.get(i));
+			}
+		}
+		return (T)this;
+	}
+	
+	/**
 	 * 実行用のパラメーターをクリア.
 	 * @return T このオブジェクトが返却されます.
 	 */
@@ -179,7 +218,6 @@ public abstract class AbstractStatement<T>
 		params = null;
 		return (T)this;
 	}
-
 	
 	/**
 	 * 実行パラメータを取得.

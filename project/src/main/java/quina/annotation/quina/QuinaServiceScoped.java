@@ -62,12 +62,25 @@ import java.lang.annotation.Target;
  * 
  * これでstorageサービスに対してJDBCStorageServiceが選択されます.
  * 
+ * あと、サービス登録IDを設定する事でその値が低い順にサービスが
+ * 起動します.
+ * 
+ * ＠QuinaServiceScoped(id=100, name="jdbc")
+ * ＠QuinaServiceScoped(id=101, name="storage")
+ * 
+ * この場合name=jdbcの後にname=storageのサービスが実行される.
+ * 
  * またこのアノテーションは、QuinaServiceを継承してない場合は
  * 登録が無視されます.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface QuinaServiceScoped {
+	/**
+	 * サービス登録ID.
+	 */
+	public long id() default Long.MAX_VALUE;
+	
 	/**
 	 * 登録するサービス名.
 	 */

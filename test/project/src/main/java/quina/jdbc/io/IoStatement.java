@@ -81,6 +81,7 @@ public class IoStatement
 			conn.close();
 			conn = null;
 			
+			// 取得結果を返却.
 			return ret;
 		} catch(QuinaException qe) {
 			try {

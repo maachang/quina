@@ -1,8 +1,10 @@
 package quina.jdbc.storage;
 
 import quina.QuinaThreadStatus;
-import quina.storage.MemoryStorageManager;
+import quina.jdbc.io.IoStatement;
+import quina.jdbc.io.QueryResult;
 import quina.storage.StorageConstants;
+import quina.util.collection.ObjectList;
 import quina.worker.QuinaLoopElement;
 
 /**
@@ -62,6 +64,39 @@ final class JDBCStorageLoopElement
 	 * @param time 現在の時間が設定されます.
 	 */
 	protected void executeTimeout(long nowTime) {
-		
+		IoStatement.execute(manager.getQuinaDataSource(), (ios) -> {
+			// この時間以下の場合タイムアウトなミリ秒を取得.
+			long nowTimeout = nowTime - timeout;
+			// Storage管理テーブルから、タイムアウトされたIDの一覧を取得.
+			QueryResult res = ios.selectSQL(
+				JDBCStorageConstants.MANAGE_TABLE_NAME, "id")
+				.sql("where update_time < ?")
+				.params(nowTimeout)
+				.executeQuery();
+			// ID一覧を取得.
+			final ObjectList<Long> list = new ObjectList<Long>();
+			while(res.hasNext()) {
+				list.add(res.next().getLong("id"));
+			}
+			// タイムアウト結果が１件も無い場合.
+			if(list.size() == 0) {
+				// 処理しない.
+				return null;
+			}
+			// 存在する場合はそれぞれを削除処理.
+			// タイムアウト対象の要素テーブル群を削除.
+			ios.deleteSQL(JDBCStorageConstants.ELEMENT_TABLE_NAME)
+				.sql("where man_id in(")
+				.paramsSQL(list.size())
+				.sql(")")
+				.params(list);
+			// タイムアウト対象の管理テーブルを削除.
+			ios.deleteSQL(JDBCStorageConstants.MANAGE_TABLE_NAME)
+				.sql("where id in(")
+				.paramsSQL(list.size())
+				.sql(")")
+				.params(list);
+			return null;
+		});
 	}
 }

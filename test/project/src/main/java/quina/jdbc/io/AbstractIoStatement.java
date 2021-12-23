@@ -60,6 +60,44 @@ public abstract class AbstractIoStatement<T>
 	}
 	
 	/**
+	 * SQL文にPreparedStatementのパラメータ定義を設定.
+	 * たとえば、以下のようなSQL文を作成したい場合に、
+	 * 以下のように定義します.
+	 * 
+	 * <実行したいSQL文>
+	 * select * from TestTable where id in(100, 200, 300);
+	 * 
+	 * <IoStatement実行>
+	 * int[] params = new int[] {100, 200, 300};
+	 * ios.sql("select * from TestTable")
+	 *   .sql("where id in(")
+	 *   .paramsSQL(params.length)
+	 *   .sql(")")
+	 *   .params(params);
+	 *   
+	 * <作成されるPreparedStatement用のSQL>
+	 * select * from TestTable where id in( ?, ?, ? )
+	 * 
+	 * @param paramSize パラメータ数を設定します.
+	 * @return T このオブジェクトが返却されます.
+	 */
+	public T paramsSQL(int paramSize) {
+		checkClose();
+		if(sqlBuf == null) {
+			sqlBuf = new StringBuilder();
+		} else if(sqlBuf.length() != 0) {
+			sqlBuf.append(" ");
+		}
+		for(int i = 0; i < paramSize; i ++) {
+			if(i != 0) {
+				sqlBuf.append(", ");
+			}
+			sqlBuf.append("?");
+		}
+		return (T)this;
+	}
+	
+	/**
 	 * 実行可能チェック.
 	 */
 	@Override

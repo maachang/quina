@@ -1,6 +1,7 @@
 package quina;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 import quina.annotation.cdi.AnnotationCdiConstants;
 import quina.annotation.quina.AnnotationQuina;
@@ -10,6 +11,58 @@ import quina.util.collection.ObjectList;
 
 /**
  * QuinaService管理オブジェクト.
+ * 
+ * 管理方法は２種類.
+ * 
+ * 1)１つは対象のQuinaServiceに対して、サービス名を設定して登録.
+ * 
+ * 2)もう１つは対象のQuinaServiceに対して、サービス名とサービス定義
+ * 名を設定して登録.
+ * 
+ * 違いは、サービス名だけを定義したものは、それ自体がサービスとして
+ * 登録されQuina実行時に組み込まれます.
+ * 
+ * 一方のサービス名とサービス定義名を定義したサービス登録は、実際には
+ * Quina実行時に組み込まれるサービスとして、登録されません.
+ * 
+ * サービス定義名の存在定義として、同一サービス名で複数のサービスを
+ * 定義し、それをQuinaのMain実行時にサービス定義名を指定して、その
+ * サービスを利用するためのものです.
+ * 
+ * 例としてStorageと言うサービスに対してMemoryStorageとJDBCStorage
+ * をそれぞれ"memory"と"jdbc"で登録します.
+ * 
+ * <例>
+ * 
+ * ＠QuinaServiceScoped(name="storage", define="memory")
+ * public class MemoryStorageService implements QuinaService {
+ *   ........
+ * }
+ * 
+ * ＠QuinaServiceScoped(name="storage", define="jdbc")
+ * public class JDBCStorageService implements QuinaService {
+ *   ........
+ * }
+ * 
+ * これを、QuinaMain実行時に以下のように定義することで"jdbc"が
+ * 利用可能となり、JDBCStorageServiceがQuinaのサービスとして
+ * 読み込まれます.
+ * 
+ * <例>
+ * 
+ * ＠QuinaServiceSelection(name="storage", define="jdbc")
+ * public class QuinaMain {
+ *   public static void main(String[] args) {
+ *     Quina.init(QuinaMain.class, args);
+ *     Quina.get().startAwait();
+ *   }
+ * }
+ * 
+ * このサービス定義名が存在する理由として、アノテーションで
+ * 各種サービス登録がされるのですが、それに対してこの定義がない
+ * 場合、利用したいサービスの選択が出来なくなります.
+ * 
+ * そのため、このサービス定義が必要となります.
  */
 public final class QuinaServiceManager {
 	/**
@@ -21,6 +74,9 @@ public final class QuinaServiceManager {
 	 * QuinaServiceScopedアノテーション自動読み込み実行用メソッド名.
 	 */
 	public static final String AUTO_READ_QUINA_SERVICE_METHOD = "load";
+	
+	// 指定なしのサービス登録ID
+	private static final long NONE_SERVICE_ID = Long.MAX_VALUE;
 	
 	// サービス管理リスト.
 	private final ObjectList<QuinaServiceEntry> list =
@@ -141,15 +197,16 @@ public final class QuinaServiceManager {
 				"The Quina Service to be registered is null.");
 		}
 		checkFix();
-		final String[] nameDefine = AnnotationQuina.
+		final Object[] svcDef = AnnotationQuina.
 			loadQuinaServiceScoped(service);
-		if(nameDefine == null) {
+		if(svcDef == null) {
 			throw new QuinaException(
 				"QuinaServiceScoped annotation is not defined for the " +
 				"specified QuinaService.");
 		}
 		// 登録処理.
-		return put(nameDefine[0], nameDefine[1], service);
+		return put((long)svcDef[0], (String)svcDef[1],
+			(String)svcDef[2], service);
 	}
 	
 	/**
@@ -160,11 +217,13 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService put(
 		String name, QuinaService service) {
-		return put(name, null, service);
+		return put(NONE_SERVICE_ID, name, null, service);
 	}
 	
 	/**
 	 * データセット.
+	 * @param id 登録IDを設定します.
+	 *           この値が小さいほど先にサービスが実行されます.
 	 * @param name サービス登録名を設定します.
 	 * @param define サービス定義名を設定します.
 	 *               nullの場合サービス定義名は存在しません.
@@ -172,7 +231,7 @@ public final class QuinaServiceManager {
 	 * @return QuinaService 前回登録されていたサービスが返却されます.
 	 */
 	public QuinaService put(
-		String name, String define, QuinaService service) {
+		long id, String name, String define, QuinaService service) {
 		if(name == null || service == null) {
 			if(name == null) {
 				throw new QuinaException(
@@ -189,26 +248,24 @@ public final class QuinaServiceManager {
 			if(p == -1) {
 				// 存在しない場合登録.
 				defineList.add(new QuinaServiceEntry(
-					name, define, service));
+					id, name, define, service));
 				return null;
 			}
-			// 一番最後に再設定して返却.
-			QuinaServiceEntry e = defineList.remove(p);
-			defineList.add(e);
-			return e.setService(service);
+			// 再設定して返却.
+			QuinaServiceEntry e = defineList.get(p);
+			return e.setService(id, service);
 		}
 		// サービス登録済みの番号を検索.
 		final int p = searchService(list, name);
 		if(p == -1) {
 			// 存在しない場合.
 			list.add(new QuinaServiceEntry(
-				name, null, service));
+				id, name, null, service));
 			return null;
 		}
-		// 一番最後に再設定して返却.
-		QuinaServiceEntry e = list.remove(p);
-		list.add(e);
-		return e.setService(service);
+		// 再設定して返却.
+		QuinaServiceEntry e = list.get(p);
+		return e.setService(id, service);
 	}
 
 	/**
@@ -266,22 +323,6 @@ public final class QuinaServiceManager {
 	}
 
 	/**
-	 * 登録名を指定して削除.
-	 * @param name 削除対象の登録名を設定します.
-	 * @return QuinaService 削除されたサービスが返却されます.
-	 */
-	public QuinaService remove(String name) {
-		checkFix();
-		if(name != null) {
-			final int p = searchService(list, name);
-			if(p != -1) {
-				return list.remove(p).getService();
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * 登録数を取得.
 	 * @return int サービスの登録数が返却されます.
 	 */
@@ -292,7 +333,7 @@ public final class QuinaServiceManager {
 	/**
 	 * 定義登録されているサービスを実行サービスとして登録.
 	 * @param name サービス名を設定します.
-	 * @param define 定義名を設定します.
+	 * @param define サービス定義名を設定します.
 	 */
 	public void putDefineToService(String name, String define) {
 		checkFix();
@@ -330,28 +371,46 @@ public final class QuinaServiceManager {
 	protected void clearDefine() {
 		defineList.clear();
 	}
+	
+	// 登録時間(Nano時間)でソート処理.
+	protected void sort() {
+		Arrays.sort(list.rawArray(), 0, list.size());
+	}
 
 	/**
 	 * 1つのQuinaService要素.
 	 */
-	private static final class QuinaServiceEntry {
+	protected static final class QuinaServiceEntry
+		implements Comparable<QuinaServiceEntry> {
+		private long id;
 		private String name;
 		private String define;
 		private QuinaService service;
 
 		/**
 		 * コンストラクタ.
+		 * @param id 登録IDを設定します.
 		 * @param name サービス登録名を設定します.
 		 * @param define サービス定義名を設定します.
 		 * @param service 登録サービスを設定します.
 		 */
 		protected QuinaServiceEntry(
-			String name, String define, QuinaService service) {
+			long id, String name, String define,
+			QuinaService service) {
+			this.id = id;
 			this.name = name;
 			this.define = define;
 			this.service = service;
 		}
-
+		
+		/**
+		 * 登録IDを取得.
+		 * @return long 登録IDが返却されます.
+		 */
+		public long getId() {
+			return id;
+		}
+		
 		/**
 		 * サービス登録名を取得.
 		 * @return String サービス登録名が返却されます.
@@ -375,12 +434,24 @@ public final class QuinaServiceManager {
 		public QuinaService getService() {
 			return service;
 		}
-
+		
 		// QuinaServiceを設定.
-		protected QuinaService setService(QuinaService newService) {
-			QuinaService ret = service;
-			service = newService;
+		protected QuinaService setService(long id, QuinaService newService) {
+			QuinaService ret = this.service;
+			this.id = id;
+			this.service = newService;
 			return ret;
+		}
+		
+		@Override
+		public int compareTo(QuinaServiceEntry o) {
+			// IDでソート.
+			if(id > o.id) {
+				return 1;
+			} else if(id < o.id) {
+				return -1;
+			}
+			return 0;
 		}
 	}
 }

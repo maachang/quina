@@ -699,6 +699,8 @@ public final class Quina {
 			quinaServiceManager.fix();
 			// 登録されたQuinaServiceを起動.
 			QuinaService qs;
+			// 登録順(NanoTime)にソート処理.
+			quinaServiceManager.sort();
 			final int len = quinaServiceManager.size();
 			for(int i = 0; i < len; i ++) {
 				(qs = quinaServiceManager.get(i)).startService();
