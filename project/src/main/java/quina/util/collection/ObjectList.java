@@ -143,10 +143,11 @@ public final class ObjectList<T> implements ReadList<T> {
 		}
 		T ret = null;
 		if (length == 1) {
-			length = 0;
 			ret = (T) list[0];
+			length = 0;
 			list[0] = null;
 		} else {
+			ret = (T) list[no];
 			// 厳密な削除.
 			length -- ;
 			for(int i = no ; i < length ; i ++) {

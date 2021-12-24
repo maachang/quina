@@ -406,7 +406,6 @@ public final class Quina {
 	private final void _updateAnnotationQuinaService() {
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {
-			System.out.println("len: " + len + " i: " + i);
 			// アノテーションを注入.
 			cdiHandleManager.inject(
 				quinaServiceManager.get(i));

@@ -347,7 +347,6 @@ public final class QuinaServiceManager {
 	public QuinaService get(int no) {
 		if(no >= 0 && no < list.size()) {
 			QuinaServiceEntry e = list.get(no);
-			System.out.println("no: " + no + " " + e);
 			return list.get(no).getService();
 		}
 		return null;
@@ -435,7 +434,6 @@ public final class QuinaServiceManager {
 			this.name = name;
 			this.define = define;
 			this.service = service;
-			System.out.println("name: " + name + " service: " + service);
 		}
 		
 		/**
@@ -475,7 +473,6 @@ public final class QuinaServiceManager {
 			QuinaService ret = this.service;
 			this.id = id;
 			this.service = newService;
-			System.out.println("name: " + name + " service: " + newService);
 			return ret;
 		}
 		
