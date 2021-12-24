@@ -21,6 +21,7 @@ import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManager;
 import quina.shutdown.ShutdownManagerInfo;
 import quina.storage.MemoryStorageService;
+import quina.storage.StorageConstants;
 import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
@@ -118,6 +119,22 @@ public final class Quina {
 				"been executed.");
 		}
 	}
+	
+	/**
+	 * サービス定義サービスを登録.
+	 * @param man QuinaServiceManagerを設定します.
+	 */
+	private static final void _regQuinaDefineService(
+		QuinaServiceManager man) {
+		
+		// MemoryStorageサービス定義.
+		MemoryStorageService service = new MemoryStorageService();
+		man.put(StorageConstants.SERVICE_NAME,
+			MemoryStorageService.SERVICE_DEFINE, service);
+		
+		
+	}
+
 
 	/**
 	 * Quina初期設定.
@@ -173,8 +190,8 @@ public final class Quina {
 			// AutoCdiService読み込みを実行.
 			cdiManager.autoCdiService();
 			
-			// Storageサービスを登録.
-			MemoryStorageService.regService(quinaServiceManager);
+			// Quinaサービス定義サービスを登録.
+			_regQuinaDefineService(quinaServiceManager);
 			// AutoQuinaService読み込みを実行.
 			quinaServiceManager.autoQuinaService();
 			// QuinaServiceSelectionを反映.
@@ -389,6 +406,7 @@ public final class Quina {
 	private final void _updateAnnotationQuinaService() {
 		final int len = quinaServiceManager.size();
 		for(int i = 0; i < len; i ++) {
+			System.out.println("len: " + len + " i: " + i);
 			// アノテーションを注入.
 			cdiHandleManager.inject(
 				quinaServiceManager.get(i));
@@ -699,21 +717,29 @@ public final class Quina {
 			quinaServiceManager.fix();
 			// 登録されたQuinaServiceを起動.
 			QuinaService qs;
-			// 登録順(NanoTime)にソート処理.
+			// 登録ID順にソート処理.
 			quinaServiceManager.sort();
+			// オリジナルで登録されたサービスの実行.
 			final int len = quinaServiceManager.size();
 			for(int i = 0; i < len; i ++) {
-				(qs = quinaServiceManager.get(i)).startService();
+				qs = quinaServiceManager.get(i);
+				// サービス開始.
+				qs.startService();
+				// 開始が完了するまで待機.
 				qs.awaitStartup();
+				qs = null;
 			}
-			// 基本サービスを起動.
-			// ワーカー起動で、最後にサーバー起動.
-			workerService.startService();
-			workerService.awaitStartup();
-			httpServerService.startService();
-			httpServerService.awaitStartup();
 			// 確定しなかったサービス定義を削除.
 			quinaServiceManager.clearDefine();
+			// 基本サービスを起動.
+			// ワーカー起動.
+			workerService.startService();
+			// 開始が完了するまで待機.
+			workerService.awaitStartup();
+			// HTTPサーバー起動.
+			httpServerService.startService();
+			// 開始が完了するまで待機.
+			httpServerService.awaitStartup();
 			return this;
 		} catch(QuinaException qe) {
 			try {
@@ -791,8 +817,21 @@ public final class Quina {
 	public Quina stop() {
 		_checkNoneExecuteInit();
 		// Httpサーバーサービスを停止.
-		httpServerService.stopService();
-		httpServerService.awaitExit();
+		try {
+			httpServerService.stopService();
+			httpServerService.awaitExit();
+		} catch(Exception e) {
+			LogFactory.getInstance().get().error(
+				"## error stop service: httpServerService", e);
+		}
+		// ワーカー停止.
+		try {
+			workerService.stopService();
+			workerService.awaitExit();
+		} catch(Exception e) {
+			LogFactory.getInstance().get().error(
+				"## error stop service: workerService", e);
+		}
 		// 登録されたサービスを後ろから停止.
 		QuinaService qs = null;
 		final int len = quinaServiceManager.size();
@@ -808,14 +847,6 @@ public final class Quina {
 					"## error stop service: " +
 					quinaServiceManager.nameAt(i), e);
 			}
-		}
-		// ワーカー停止.
-		try {
-			workerService.stopService();
-			workerService.awaitExit();
-		} catch(Exception e) {
-			LogFactory.getInstance().get().error(
-				"## error stop service: workerService", e);
 		}
 		// ログの停止.
 		try {

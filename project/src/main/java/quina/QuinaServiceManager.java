@@ -63,6 +63,9 @@ import quina.util.collection.ObjectList;
  * 場合、利用したいサービスの選択が出来なくなります.
  * 
  * そのため、このサービス定義が必要となります.
+ * 
+ * あとサービスの実行順に関してはサービス登録IDを指定することで
+ * 対応が出来て、値が低いほど先に実行されます.
  */
 public final class QuinaServiceManager {
 	/**
@@ -74,9 +77,6 @@ public final class QuinaServiceManager {
 	 * QuinaServiceScopedアノテーション自動読み込み実行用メソッド名.
 	 */
 	public static final String AUTO_READ_QUINA_SERVICE_METHOD = "load";
-	
-	// 指定なしのサービス登録ID
-	private static final long NONE_SERVICE_ID = Long.MAX_VALUE;
 	
 	// サービス管理リスト.
 	private final ObjectList<QuinaServiceEntry> list =
@@ -180,7 +180,8 @@ public final class QuinaServiceManager {
 	 * @param c 対象のメインクラスを設定します.
 	 * @return QuinaServiceManager このオブジェクトが返却されます.
 	 */
-	public final QuinaServiceManager regQuinaServiceSelection(Class<?> c) {
+	public final QuinaServiceManager regQuinaServiceSelection(
+		Class<?> c) {
 		// QuinaServiceSelection登録処理.
 		AnnotationQuina.regQuinaServiceSelection(this, c);
 		return this;
@@ -201,8 +202,8 @@ public final class QuinaServiceManager {
 			loadQuinaServiceScoped(service);
 		if(svcDef == null) {
 			throw new QuinaException(
-				"QuinaServiceScoped annotation is not defined for the " +
-				"specified QuinaService.");
+				"QuinaServiceScoped annotation is not defined " +
+				"for the specified QuinaService.");
 		}
 		// 登録処理.
 		return put((long)svcDef[0], (String)svcDef[1],
@@ -217,8 +218,37 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService put(
 		String name, QuinaService service) {
-		return put(NONE_SERVICE_ID, name, null, service);
+		return put(QuinaConstants.NONE_SERVICE_ID,
+			name, null, service);
 	}
+	
+	/**
+	 * データセット.
+	 * @param name サービス登録名を設定します.
+	 * @param define サービス定義名を設定します.
+	 *               nullの場合サービス定義名は存在しません.
+	 * @param service 登録サービスを設定します.
+	 * @return QuinaService 前回登録されていたサービスが返却されます.
+	 */
+	public QuinaService put(
+		String name, String define, QuinaService service) {
+		return put(QuinaConstants.NONE_SERVICE_ID,
+			name, define, service);
+	}
+	
+	/**
+	 * データセット.
+	 * @param id 登録IDを設定します.
+	 *           この値が小さいほど先にサービスが実行されます.
+	 * @param name サービス登録名を設定します.
+	 * @param service 登録サービスを設定します.
+	 * @return QuinaService 前回登録されていたサービスが返却されます.
+	 */
+	public QuinaService put(
+		long id, String name, QuinaService service) {
+		return put(id, name, null, service);
+	}
+
 	
 	/**
 	 * データセット.
@@ -232,11 +262,10 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService put(
 		long id, String name, String define, QuinaService service) {
-		if(name == null || service == null) {
-			if(name == null) {
-				throw new QuinaException(
-					"The designated registration name is null.");
-			}
+		if(name == null) {
+			throw new QuinaException(
+				"The designated registration name is null.");
+		} else if(service == null) {
 			throw new QuinaException(
 				"The Quina Service to be registered is null.");
 		}
@@ -317,6 +346,8 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService get(int no) {
 		if(no >= 0 && no < list.size()) {
+			QuinaServiceEntry e = list.get(no);
+			System.out.println("no: " + no + " " + e);
 			return list.get(no).getService();
 		}
 		return null;
@@ -372,8 +403,11 @@ public final class QuinaServiceManager {
 		defineList.clear();
 	}
 	
-	// 登録時間(Nano時間)でソート処理.
+	// サービス登録IDでソート処理.
 	protected void sort() {
+		if(!fixFlag.get()) {
+			throw new QuinaException("Already not completed.");
+		}
 		Arrays.sort(list.rawArray(), 0, list.size());
 	}
 
@@ -401,6 +435,7 @@ public final class QuinaServiceManager {
 			this.name = name;
 			this.define = define;
 			this.service = service;
+			System.out.println("name: " + name + " service: " + service);
 		}
 		
 		/**
@@ -440,12 +475,14 @@ public final class QuinaServiceManager {
 			QuinaService ret = this.service;
 			this.id = id;
 			this.service = newService;
+			System.out.println("name: " + name + " service: " + newService);
 			return ret;
 		}
 		
 		@Override
 		public int compareTo(QuinaServiceEntry o) {
-			// IDでソート.
+			// サービス登録IDが低い項番順に並べ替えて
+			// サービス実行を行う.
 			if(id > o.id) {
 				return 1;
 			} else if(id < o.id) {

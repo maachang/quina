@@ -25,4 +25,7 @@ public final class QuinaConstants {
 	
 	// 一定期間待機時間.
 	protected static final long SLEEP = 50L;
+	
+	/** 指定なしのサービス登録ID **/
+	public static final long NONE_SERVICE_ID = Long.MAX_VALUE;
 }

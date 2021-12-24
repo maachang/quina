@@ -1,43 +1,39 @@
-package quina.storage;
+package quina.jdbc.storage;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
 import quina.QuinaConfig;
+import quina.annotation.quina.QuinaServiceScoped;
 import quina.exception.QuinaException;
 import quina.logger.LogFactory;
-import quina.util.FileUtil;
+import quina.storage.StorageConstants;
+import quina.storage.StorageManager;
+import quina.storage.StorageQuinaService;
 import quina.util.Flag;
 import quina.util.collection.TypesClass;
 
 /**
- * MemoryStorageサービス.
+ * JDBCStorageService.
  */
-public class MemoryStorageService
+@QuinaServiceScoped(name=StorageConstants.SERVICE_NAME,
+	define=JDBCStorageService.SERVICE_DEFINE)
+public class JDBCStorageService
 	implements StorageQuinaService {
 	
-	/** Storage定義名. **/
-	public static final String SERVICE_DEFINE = "memory";
+	// サービス定義名.
+	protected static final String SERVICE_DEFINE = "jdbc";
 	
-	// デフォルトのStorage保存先ファイル名.
-	private static final String SAVE_FILE_NAME = "./.qmss";
-	
-	// MemoryStorageマネージャー.
-	private MemoryStorageManager manager;
+	// JDBCStorageマネージャー.
+	private JDBCStorageManager manager;
 	
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
 		StorageConstants.CONFIG_NAME
 		,StorageConstants.TIMEOUT, TypesClass.Long, StorageConstants.getTimeout()
 		,StorageConstants.TIMING, TypesClass.Long, StorageConstants.getCheckTiming()
-		,"saveFile", TypesClass.String, SAVE_FILE_NAME
+		,"dataSource", TypesClass.String, null
 	);
 	
 	// 開始サービスフラグ.
@@ -50,7 +46,7 @@ public class MemoryStorageService
 	/**
 	 * コンストラクタ.
 	 */
-	public MemoryStorageService() {}
+	public JDBCStorageService() {}
 	
 	/**
 	 * Read/WriteLockを取得.
@@ -86,28 +82,17 @@ public class MemoryStorageService
 	 */
 	@Override
 	public void startService() {
-		InputStream in = null;
-		MemoryStorageManager man;
-		MemoryStorageLoopElement em;
+		JDBCStorageLoopElement em = null;
+		JDBCStorageManager man = null;
 		wlock();
 		try {
 			// 一度起動している場合はエラー.
 			checkService(true);
-			// 前回保存されたStorage保存先ファイルが存在する場合.
-			if(FileUtil.isFile(config.getString("saveFile"))) {
-				// InputStreamを取得.
-				in = new BufferedInputStream(
-					new FileInputStream(config.getString("saveFile")));
-				// Storageの読み込み.
-				man = new MemoryStorageManager(in);
-				in.close();
-				in = null;
-			} else {
-				// 空のStorageを生成.
-				man = new MemoryStorageManager();
-			}
+			// JDBCStorageManagerを生成.
+			man = new JDBCStorageManager(
+				config.getString("dataSource"));
 			// Storageタイムアウト監視Loop要素を生成.
-			em = new MemoryStorageLoopElement(
+			em = new JDBCStorageLoopElement(
 				config.getLong(StorageConstants.TIMEOUT)
 				,config.getLong(StorageConstants.TIMING)
 				,man);
@@ -123,13 +108,6 @@ public class MemoryStorageService
 			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
-		} finally {
-			wulock();
-			if(in != null) {
-				try {
-					in.close();
-				} catch(Exception ee) {}
-			}
 		}
 	}
 	
@@ -138,24 +116,13 @@ public class MemoryStorageService
 	 */
 	@Override
 	public void stopService() {
-		OutputStream out = null;
 		wlock();
 		try {
 			// 開始していない or 既に停止してる場合
 			if(!startFlag.get()) {
 				return;
 			}
-			// MemoryStorage内容の保存先を生成.
-			out = new BufferedOutputStream(
-				new FileOutputStream(
-					config.getString("saveFile")));
-			// 保存処理.
-			manager.save(out);
-			out.flush();
-			// クローズ.
-			out.close();
-			out = null;
-			// マネージャ破棄.
+			// マネージャを破棄.
 			manager.destroy();
 			// サービス停止.
 			startFlag.set(false);
@@ -165,13 +132,6 @@ public class MemoryStorageService
 			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
-		} finally {
-			if(out != null) {
-				try {
-					out.close();
-				} catch(Exception e) {}
-			}
-			wulock();
 		}
 	}
 	

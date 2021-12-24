@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.exception.QuinaException;
 import quina.util.BinaryIO;
+import quina.util.Flag;
 import quina.util.collection.IndexKeyValueList;
 
 /**
@@ -26,6 +27,9 @@ public class MemoryStorageManager
 	
 	// Read-Writeロックオブジェクト.
 	protected final ReadWriteLock lock = new ReentrantReadWriteLock();
+	
+	// 破棄フラグ.
+	protected final Flag destroyFlag = new Flag(false);
 	
 	/**
 	 * コンストラクタ.
@@ -81,6 +85,14 @@ public class MemoryStorageManager
 		}
 	}
 	
+	/**
+	 * オブジェクトを破棄.
+	 */
+	protected void destroy() {
+		// 破棄フラグをON.
+		destroyFlag.set(true);
+	}
+	
 	// 名前チェック.
 	protected String checkName(String name) {
 		if(name == null || (name = name.trim()).isEmpty()) {
@@ -92,6 +104,10 @@ public class MemoryStorageManager
 	
 	@Override
 	public Storage createStorage(String name) {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return null;
+		}
 		name = checkName(name);
 		lock.writeLock().lock();
 		try {
@@ -111,6 +127,10 @@ public class MemoryStorageManager
 
 	@Override
 	public void removeStorage(String name) {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return;
+		}
 		name = checkName(name);
 		lock.writeLock().lock();
 		try {
@@ -122,6 +142,10 @@ public class MemoryStorageManager
 
 	@Override
 	public Storage getStorage(String name) {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return null;
+		}
 		name = checkName(name);
 		lock.readLock().lock();
 		try {
@@ -133,6 +157,10 @@ public class MemoryStorageManager
 
 	@Override
 	public boolean isStorage(String name) {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return false;
+		}
 		name = checkName(name);
 		lock.readLock().lock();
 		try {
@@ -144,6 +172,10 @@ public class MemoryStorageManager
 
 	@Override
 	public int size() {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return 0;
+		}
 		lock.readLock().lock();
 		try {
 			return manager.size();
@@ -158,6 +190,10 @@ public class MemoryStorageManager
 	 * @return String キー名が返却されます.
 	 */
 	protected String keyAt(int no) {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return null;
+		}
 		lock.readLock().lock();
 		try {
 			return manager.keyAt(no);
@@ -173,6 +209,10 @@ public class MemoryStorageManager
 	 * @param out 対象のOutputStreamを設定します.
 	 */
 	public void save(OutputStream out) {
+		// 破棄済みの場合は処理しない.
+		if(destroyFlag.get()) {
+			return;
+		}
 		lock.readLock().lock();
 		try {
 			final byte[] tmp = BinaryIO.createTmp();

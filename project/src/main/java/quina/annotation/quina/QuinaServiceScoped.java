@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import quina.QuinaConstants;
+
 
 /**
  * QuinaServiceに関するScopedアノテーション.
@@ -79,7 +81,7 @@ public @interface QuinaServiceScoped {
 	/**
 	 * サービス登録ID.
 	 */
-	public long id() default Long.MAX_VALUE;
+	public long id() default QuinaConstants.NONE_SERVICE_ID;
 	
 	/**
 	 * 登録するサービス名.

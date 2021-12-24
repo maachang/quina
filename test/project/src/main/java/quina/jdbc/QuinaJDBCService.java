@@ -293,6 +293,23 @@ public class QuinaJDBCService implements QuinaService {
 		}
 	}
 	
+	/**
+	 * デフォルトのデータソース名を取得.
+	 * @return String デフォルトのデータソース名が返却されます.
+	 */
+	public String getDefaultDataSourceName() {
+		rlock();
+		try {
+			if(defaultDataSource == null) {
+				throw new QuinaException(
+					"There is no default data source name.");
+			}
+			return defaultDataSource.getName();
+		} finally {
+			rulock();
+		}
+	}
+	
 	// タイムアウトLoopElementを取得.
 	protected TimeoutLoopElement getTimeoutLoopElement() {
 		rlock();
