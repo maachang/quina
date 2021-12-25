@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
 import quina.QuinaConfig;
+import quina.QuinaUtil;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.exception.QuinaException;
 import quina.logger.LogFactory;
@@ -98,8 +99,8 @@ public class JDBCStorageService
 				,man);
 			// timeoutLoopElementをQuinaLoopThreadに登録.
 			Quina.get().getQuinaLoopManager().regLoopElement(em);
-			LogFactory.getInstance().get()
-				.info("@ startService " + this.getClass().getName());
+			// 開始ログ出力.
+			QuinaUtil.startServiceLog(this);
 			// スタートアップ完了.
 			this.manager = man;
 			// サービス開始.
@@ -108,6 +109,8 @@ public class JDBCStorageService
 			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
+		} finally {
+			wulock();
 		}
 	}
 	
@@ -126,12 +129,14 @@ public class JDBCStorageService
 			manager.destroy();
 			// サービス停止.
 			startFlag.set(false);
-			LogFactory.getInstance().get()
-				.info("@ stopService " + this.getClass().getName());
+			// 停止ログ出力.
+			QuinaUtil.stopServiceLog(this);
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
+		} finally {
+			wulock();
 		}
 	}
 	

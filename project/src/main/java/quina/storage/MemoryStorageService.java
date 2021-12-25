@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.Quina;
 import quina.QuinaConfig;
+import quina.QuinaUtil;
 import quina.exception.QuinaException;
 import quina.logger.LogFactory;
 import quina.util.FileUtil;
@@ -113,8 +114,8 @@ public class MemoryStorageService
 				,man);
 			// timeoutLoopElementをQuinaLoopThreadに登録.
 			Quina.get().getQuinaLoopManager().regLoopElement(em);
-			LogFactory.getInstance().get()
-				.info("@ startService " + this.getClass().getName());
+			// 開始ログ出力.
+			QuinaUtil.startServiceLog(this);
 			// スタートアップ完了.
 			this.manager = man;
 			// サービス開始.
@@ -159,8 +160,8 @@ public class MemoryStorageService
 			manager.destroy();
 			// サービス停止.
 			startFlag.set(false);
-			LogFactory.getInstance().get()
-				.info("@ stopService " + this.getClass().getName());
+			// 停止ログ出力.
+			QuinaUtil.stopServiceLog(this);
 		} catch(QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {

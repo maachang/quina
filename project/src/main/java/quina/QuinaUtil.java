@@ -1,7 +1,10 @@
 package quina;
 
+import quina.QuinaServiceManager.QuinaServiceEntry;
 import quina.exception.QuinaException;
 import quina.json.Json;
+import quina.logger.Log;
+import quina.logger.LogFactory;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
@@ -220,5 +223,52 @@ public final class QuinaUtil {
 			}
 		}
 		return dir;
+	}
+	
+	/**
+	 * 開始サービスログを出力.
+	 * @param service 対象サービスを設定します.
+	 */
+	public static final void startServiceLog(QuinaService service) {
+		Log log = LogFactory.getInstance().get();
+		if(!log.isInfoEnabled()) {
+			return;
+		}
+		QuinaServiceManager man = Quina.get().getQuinaServiceManager();
+		QuinaServiceEntry e = man.searchEntry(service);
+		if(e != null) {
+			outServiceDetailLog(log, "@ startService", e);
+		}
+	}
+	
+	/**
+	 * 終了サービスログを出力.
+	 * @param service 対象サービスを設定します.
+	 */
+	public static final void stopServiceLog(QuinaService service) {
+		Log log = LogFactory.getInstance().get();
+		if(!log.isInfoEnabled()) {
+			return;
+		}
+		QuinaServiceManager man = Quina.get().getQuinaServiceManager();
+		QuinaServiceEntry e = man.searchEntry(service);
+		if(e != null) {
+			outServiceDetailLog(log, "@ stopService", e);
+		}
+	}
+	
+	// サービスログ詳細を出力.
+	private static final void outServiceDetailLog(
+		Log log, String head, QuinaServiceEntry e) {
+		StringBuilder buf = new StringBuilder(head).append("(");
+		if(e.getId() != Long.MAX_VALUE) {
+			buf.append("id: ").append(e.getId()).append(" ");
+		}
+		buf.append("name: ").append(e.getName());
+		if(e.getDefine() != null) {
+			buf.append(" define: ").append(e.getDefine());
+		}
+		buf.append(") ").append(e.getService().getClass().getName());
+		log.info(buf.toString());
 	}
 }

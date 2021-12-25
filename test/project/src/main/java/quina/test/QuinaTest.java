@@ -13,7 +13,7 @@ import quina.logger.Log;
 @CdiScoped
 @LogConfig(directory="./logDir")
 @LogConfig(name="greeting", directory="./logDir")
-@QuinaServiceSelection(name="storage", define="memory")
+@QuinaServiceSelection(name="storage", define="jdbc")
 public class QuinaTest {
 	@LogDefine
 	private static Log log;

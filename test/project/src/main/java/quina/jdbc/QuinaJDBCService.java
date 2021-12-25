@@ -208,7 +208,8 @@ public class QuinaJDBCService implements QuinaService {
 		} finally {
 			wulock();
 		}
-		log.info("@ startService " + this.getClass().getName());
+		// 開始ログ出力.
+		QuinaUtil.startServiceLog(this);
 	}
 	
 	@Override
@@ -216,7 +217,8 @@ public class QuinaJDBCService implements QuinaService {
 		wlock();
 		try {
 			if(startFlag.setToGetBefore(false)) {
-				log.info("@ stopService " + this.getClass().getName());
+				// 停止ログ出力.
+				QuinaUtil.stopServiceLog(this);
 			}
 		} finally {
 			wulock();

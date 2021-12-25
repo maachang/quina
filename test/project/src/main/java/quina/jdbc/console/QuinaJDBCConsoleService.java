@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaService;
+import quina.QuinaUtil;
 import quina.annotation.log.LogDefine;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.http.Request;
@@ -237,14 +238,16 @@ public class QuinaJDBCConsoleService
 	@Override
 	public void startService() {
 		if(!startFlag.setToGetBefore(true)) {
-			log.info("@ startService " + this.getClass().getName());
+			// 開始ログ出力.
+			QuinaUtil.startServiceLog(this);
 		}
 	}
 
 	@Override
 	public void stopService() {
 		if(startFlag.setToGetBefore(false)) {
-			log.info("@ stopService " + this.getClass().getName());
+			// 停止ログ出力.
+			QuinaUtil.stopServiceLog(this);
 		}
 	}
 }

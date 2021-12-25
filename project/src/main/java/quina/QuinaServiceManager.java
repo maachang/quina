@@ -346,7 +346,6 @@ public final class QuinaServiceManager {
 	 */
 	public QuinaService get(int no) {
 		if(no >= 0 && no < list.size()) {
-			QuinaServiceEntry e = list.get(no);
 			return list.get(no).getService();
 		}
 		return null;
@@ -408,6 +407,19 @@ public final class QuinaServiceManager {
 			throw new QuinaException("Already not completed.");
 		}
 		Arrays.sort(list.rawArray(), 0, list.size());
+	}
+	
+	// QuinaServiceのEntryを取得.
+	protected QuinaServiceEntry searchEntry(QuinaService service) {
+		QuinaServiceEntry e;
+		final int len = list.size();
+		for(int i = 0; i < len; i ++) {
+			e = list.get(i);
+			if(e != null && service.equals(e.getService())) {
+				return e;
+			}
+		}
+		return null;
 	}
 
 	/**
