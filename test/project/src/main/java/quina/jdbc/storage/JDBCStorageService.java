@@ -66,7 +66,12 @@ public class JDBCStorageService
 	 */
 	@Override
 	public QuinaConfig getConfig() {
-		return config;
+		rlock();
+		try {
+			return config;
+		} finally {
+			rulock();
+		}
 	}
 	
 	/**
@@ -146,6 +151,11 @@ public class JDBCStorageService
 	 */
 	@Override
 	public StorageManager getStorageManager() {
-		return manager;
+		rlock();
+		try {
+			return manager;
+		} finally {
+			rulock();
+		}
 	}
 }
