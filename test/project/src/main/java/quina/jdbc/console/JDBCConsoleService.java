@@ -355,7 +355,7 @@ public class JDBCConsoleService {
 	 */
 	public void checkAccessControll(Request req) {
 		boolean result = QuinaJDBCConsoleService
-			.getService().getIpAccessControll().isAccess(req);
+			.getService().getAccessControll().isAccess(req);
 		if(!result) {
 			throw new HttpException(403, "Access is not allowed.");
 		}
