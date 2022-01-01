@@ -13,7 +13,6 @@ import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaUtil;
 import quina.exception.QuinaException;
-import quina.logger.LogFactory;
 import quina.util.FileUtil;
 import quina.util.Flag;
 import quina.util.collection.TypesClass;
