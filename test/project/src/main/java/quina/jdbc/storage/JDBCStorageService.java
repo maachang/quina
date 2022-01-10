@@ -8,7 +8,6 @@ import quina.QuinaConfig;
 import quina.QuinaUtil;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.exception.QuinaException;
-import quina.logger.LogFactory;
 import quina.storage.StorageConstants;
 import quina.storage.StorageManager;
 import quina.storage.StorageQuinaService;

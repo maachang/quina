@@ -489,15 +489,14 @@ public class AnnotationQuina {
 	
 	// QuinaConfigに外部ファイルをローディング.
 	private static final void loadConfigFile(QuinaConfig conf) {
-		Quina quina = Quina.get();
-		String dir = quina.getConfigDirectory();
+		String dir = Quina.configDirectory();
 		// コンフィグディレクトリが設定されていない場合
 		if(dir == null || dir.isEmpty()) {
 			// 処理しない.
 			return;
 		}
 		// 初期化済みの場合のみ設定する.
-		if(quina.isInit()) {
+		if(Quina.isInit()) {
 			conf.loadConfig(dir);
 		}
 	}

@@ -76,12 +76,18 @@ public class HttpServerService implements QuinaService {
 	// Read-Writeロックオブジェクト.
 	private final ReentrantReadWriteLock lock =
 		new ReentrantReadWriteLock();
-
+	
 	/**
 	 * コンストラクタ.
+	 */
+	public HttpServerService() {
+	}
+	
+	/**
+	 * 初期化処理.
 	 * @param QuinaWorkerService QuinaWorkerServiceを設定します.
 	 */
-	public HttpServerService(QuinaWorkerService quinaWorkerService) {
+	public void init(QuinaWorkerService quinaWorkerService) {
 		this.quinaWorkerService = quinaWorkerService;
 	}
 	

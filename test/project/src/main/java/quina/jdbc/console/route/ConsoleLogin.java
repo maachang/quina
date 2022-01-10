@@ -13,6 +13,10 @@ import quina.jdbc.console.QuinaJDBCConsoleConstants;
 import quina.json.JsonMap;
 import quina.validate.VType;
 
+/**
+ * コンソールログイン処理.
+ */
+
 // ユーザ名Validate.
 @Validate(name="user",
 	type=VType.String,
@@ -29,12 +33,7 @@ import quina.validate.VType;
 	conditions="null",
 	message=ConsoleLogin.ERROR_MESSAGE)
 
-// Route.
 @Route("/quina/jdbc/console/{user}/{password}/login")
-
-/**
- * コンソールログイン処理.
- */
 public class ConsoleLogin implements RESTfulGetSync {
 	// エラーメッセージ.
 	protected static final String ERROR_MESSAGE =

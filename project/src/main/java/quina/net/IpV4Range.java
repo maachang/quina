@@ -51,9 +51,11 @@ public class IpV4Range {
 	
 	// 最小評価IPアドレス.
 	private long min = 0;
+	
 	// 最大評価IPアドレス.
 	private long max = 0;
-	// マスク値.
+	
+	// IPマスク値.
 	private int mask = 0;
 	
 	// ドメイン名.
@@ -84,8 +86,8 @@ public class IpV4Range {
 		long[] a = analysisIpMask(addr);
 		if(a != null) {
 			this.mask = (int)a[1];
-			this.min = toStart(a[0], this.mask);
-			this.max = toEnd(a[0], this.mask);
+			this.min = toStartMaskLongIp(a[0], this.mask);
+			this.max = toEndMaskLongIp(a[0], this.mask);
 		} else {
 			this.domain = addr;
 		}
@@ -107,14 +109,14 @@ public class IpV4Range {
 	 */
 	public IpV4Range(String addr, int mask) {
 		checkMask(mask);
-		Long a = ipAnalysis(addr);
+		Long a = convertLongIp(addr);
 		if(a == null) {
 			throw new QuinaException(
 				"Not an IPV4 address.");
 		}
 		this.mask = mask;
-		this.min = toStart(a, this.mask);
-		this.max = toEnd(a, this.mask);
+		this.min = toStartMaskLongIp(a, this.mask);
+		this.max = toEndMaskLongIp(a, this.mask);
 	}
 	
 	/**
@@ -125,8 +127,8 @@ public class IpV4Range {
 	public IpV4Range(int ip, int mask) {
 		checkMask(mask);
 		this.mask = mask;
-		this.min = toStart((long)ip, this.mask);
-		this.max = toEnd((long)ip, this.mask);
+		this.min = toStartMaskLongIp((long)ip, this.mask);
+		this.max = toEndMaskLongIp((long)ip, this.mask);
 	}
 	
 	/**
@@ -137,8 +139,8 @@ public class IpV4Range {
 	public IpV4Range(long ip, int mask) {
 		checkMask(mask);
 		this.mask = mask;
-		this.min = toStart(ip, this.mask);
-		this.max = toEnd(ip, this.mask);
+		this.min = toStartMaskLongIp(ip, this.mask);
+		this.max = toEndMaskLongIp(ip, this.mask);
 	}
 	
 	/**
@@ -148,10 +150,10 @@ public class IpV4Range {
 	 */
 	public IpV4Range(byte[] ip, int mask) {
 		checkMask(mask);
-		long a = ipAnalysis(ip);
+		long a = convertLongIp(ip);
 		this.mask = mask;
-		this.min = toStart(a, this.mask);
-		this.max = toEnd(a, this.mask);
+		this.min = toStartMaskLongIp(a, this.mask);
+		this.max = toEndMaskLongIp(a, this.mask);
 	}
 	
 	// IP範囲設定条件で生成.
@@ -163,27 +165,27 @@ public class IpV4Range {
 		try {
 			Long m, x;
 			if(start instanceof InetAddress) {
-				m = ipAnalysis(((InetAddress)start)
+				m = convertLongIp(((InetAddress)start)
 					.getAddress());
 			} else if(start instanceof Number) {
 				m = ((Number)start).longValue();
 			} else {
-				m = ipAnalysis("" + start);
+				m = convertLongIp("" + start);
 				if(m == null) {
-					m = ipAnalysis(
+					m = convertLongIp(
 						InetAddress.getByName("" + start)
 							.getAddress());
 				}
 			}
 			if(end instanceof InetAddress) {
-				x = ipAnalysis(((InetAddress)end)
+				x = convertLongIp(((InetAddress)end)
 					.getAddress());
 			} else if(end instanceof Number) {
 				x = ((Number)end).longValue();
 			} else {
-				x = ipAnalysis("" + end);
+				x = convertLongIp("" + end);
 				if(x == null) {
-					x = ipAnalysis(
+					x = convertLongIp(
 						InetAddress.getByName("" + end)
 							.getAddress());
 				}
@@ -213,7 +215,7 @@ public class IpV4Range {
 		// nnn.nnn.nnn.nnn/nn であるかチェック.
 		int p = addr.indexOf("/");
 		if(p == -1) {
-			Long a = ipAnalysis(addr);
+			Long a = convertLongIp(addr);
 			if(a == null) {
 				// domainの可能性.
 				return null;
@@ -232,7 +234,7 @@ public class IpV4Range {
 		int maskNumber = NumberUtil.parseInt(mask);
 		checkMask(maskNumber);
 		return new long[] {
-			ipAnalysis(addr.substring(0, p)),
+			convertLongIp(addr.substring(0, p)),
 			(long)maskNumber
 		};
 	}
@@ -245,16 +247,39 @@ public class IpV4Range {
 		}
 	}
 	
-	// 文字列からIP変換.
-	private static final Long ipAnalysis(String addr) {
+	
+	// 開始アドレスを取得.
+	private static final long toStartMaskLongIp(long addr, int mask) {
+		return (long)(addr & (long)MASK_LIST[mask - 8]);
+	}
+	
+	// 終了アドレスを取得.
+	private static final long toEndMaskLongIp(long addr, int mask) {
+		final long maskCode = MASK_LIST[mask - 8];
+		return ((addr & maskCode) | ~maskCode)
+				& 0x00000000ffffffffL;
+	}
+	
+	/**
+	 * 文字列からLongIP変換.
+	 * @param addr IPV4のアドレス(xxx.xxx.xxx.xxx)か
+	 *             ドメイン名を設定します.
+	 * @return Long LongIpが返却されます.
+	 */
+	protected static final Long convertLongIp(String addr) {
 		if(addr == null || addr.length() == 0) {
-			throw new QuinaException(
-				"The IPV4 character string is not set.");
+			return null;
 		}
-		String[] ip = addr.split(Pattern.quote("."));
+		final String[] ip = addr.split(Pattern.quote("."));
 		if(ip.length != 4) {
 			// ドメインの可能性.
-			return null;
+			try {
+				// InetAddressで取得.
+				return convertLongIp(InetAddress.getByName(addr));
+			} catch(Exception e) {
+				// エラーの場合はnull返却.
+				return null;
+			}
 		}
 		try {
 			int a = NumberUtil.parseInt(ip[0]);
@@ -265,51 +290,63 @@ public class IpV4Range {
 				(b & 0xffffff00) != 0 ||
 				(c & 0xffffff00) != 0 ||
 				(d & 0xffffff00) != 0) {
-				throw new QuinaException(
-					"Not an IPV4 address.");
+				// 255の範囲内で無い数字の場合はnull返却.
+				return null;
 			}
 			// IPアドレス情報をLongで返却.
 			return (long)((long)a << 24L) |
-					((long)b << 16L) |
-					((long)c << 8L) |
-					((long)d << 0L);
-		} catch(QuinaException re) {
-			throw re;
+				((long)b << 16L) |
+				((long)c << 8L) |
+				((long)d << 0L);
 		} catch(Exception e) {
-			// 変換失敗の場合は、ドメインの可能性あり.
+			// ドメインの可能性.
+			try {
+				// InetAddressで取得.
+				return convertLongIp(InetAddress.getByName(addr));
+			} catch(Exception ee) {
+				// エラーの場合はnull返却.
+				return null;
+			}
+		}
+	}
+	
+	/**
+	 * 文字列からLongIP変換.
+	 * @param addr InetAddressを設定します.
+	 * @return Long LongIpが返却されます.
+	 */
+	protected static final Long convertLongIp(InetAddress addr) {
+		if(addr == null) {
 			return null;
 		}
+		// HostAddressでLongIp変換.
+		return convertLongIp(addr.getHostAddress());
 	}
 	
-	// byte[4]からIP変換.
-	// 192.168.0.1 の場合
-	// [0] = 192, [1] = 168, [2] = 0, [3] = 1
-	// となる.
-	private static final long ipAnalysis(byte[] addr) {
+	/**
+	 * binaryからLongIp変換
+	 * @param addr byte[4]からlongのIP変換.
+	 *             192.168.0.1 の場合
+	 *             [0] = 192, [1] = 168, [2] = 0, [3] = 1
+	 *             となります.
+	 * @return Long LongIpが返却されます.
+	 */
+	protected static final Long convertLongIp(byte[] addr) {
 		if(addr == null || addr.length != 4) {
-			throw new QuinaException(
-				"Not an IPV4 address.");
+			return null;
 		}
 		return (((long)addr[0] & 0x0ffL) << 24L)|
-				(((long)addr[1] & 0x0ffL) << 16L) |
-				(((long)addr[2] & 0x0ffL) << 8L) |
-				(((long)addr[3] & 0x0ffL) << 0L);
+			(((long)addr[1] & 0x0ffL) << 16L) |
+			(((long)addr[2] & 0x0ffL) << 8L) |
+			(((long)addr[3] & 0x0ffL) << 0L);
 	}
 	
-	// 開始アドレスを取得.
-	private static final long toStart(long addr, int mask) {
-		return (long)(addr & (long)MASK_LIST[mask - 8]);
-	}
-	
-	// 終了アドレスを取得.
-	private static final long toEnd(long addr, int mask) {
-		final long maskCode = MASK_LIST[mask - 8];
-		return ((addr & maskCode) | ~maskCode)
-				& 0x00000000ffffffffL;
-	}
-	
-	// long値のIPアドレスを文字列変換.
-	private static final String ipString(long addr) {
+	/**
+	 * LongIpを文字列変換.
+	 * @param addr LongIpを設定します.
+	 * @return String IPV4形式の文字列が返却されます.
+	 */
+	protected static final String longIpToString(long addr) {
 		return new StringBuilder()
 			.append((addr & 0x0ff000000L) >> 24L)
 			.append(".")
@@ -322,6 +359,55 @@ public class IpV4Range {
 	}
 	
 	/**
+	 * ドメインチェック.
+	 * @param addr IPV4のアドレス(xxx.xxx.xxx.xxx)か
+	 *             ドメイン名を設定します.
+	 * @return Boolean ドメインチェックが行われた場合は
+	 *                 true か false が返却されます.
+	 *                 それ以外は null が返却されます.
+	 */
+	protected Boolean isEqDomain(String addr) {
+		if(domain != null) {
+			try {
+				return InetAddress.getByName(domain)
+					.equals(InetAddress.getByName(addr));
+			} catch(Exception e) {
+				return false;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * ドメインチェック.
+	 * @param addr InetAddressを設定します.
+	 * @return Boolean ドメインチェックが行われた場合は
+	 *                 true か false が返却されます.
+	 *                 それ以外は null が返却されます.
+	 */
+	protected Boolean isEqDomain(InetAddress addr) {
+		if(domain != null) {
+			try {
+				return InetAddress.getByName(domain)
+					.equals(addr);
+			} catch(Exception e) {
+				return false;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * IPアドレスの範囲内かチェック.
+	 * @param addr LongIpを設定します.
+	 * @return trueの場合範囲内です.
+	 */
+	protected boolean isRange(Long addr) {
+		return addr != null &&
+			addr >= min && addr <= max;
+	}
+	
+	/**
 	 * IPアドレスをチェック.
 	 * @param addr IPアドレス及びドメイン名を設定します.
 	 * @return boolean [true]の場合、このIPアドレスの範囲内です.
@@ -330,42 +416,25 @@ public class IpV4Range {
 		if(addr == null || addr.isEmpty()) {
 			return false;
 		}
-		// ポート番号などが設定されている場合は除外.
-		int p = addr.indexOf(":");
-		if(p != -1) {
-			addr = addr.substring(0, p);
+		// ドメインで判別.
+		final Boolean retDmn = isEqDomain(addr);
+		if(retDmn != null) {
+			// 判別出来た場合.
+			return retDmn;
 		}
-		Long a = ipAnalysis(addr);
-		// addrがIPアドレスでない場合.
+		// LongIpで処理.
+		final Long a = convertLongIp(addr);
+		// LongIp変換出来ない場合.
 		if(a == null) {
-			// ドメイン判別の場合.
-			if(domain != null) {
-				try {
-					return InetAddress.getByName(domain)
-						.equals(InetAddress.getByName(addr));
-				} catch(Exception e) {
-					return false;
-				}
-			}
-			// IP範囲で定義されている場合.
-			// 一旦ドメイン名をIP変換してチェック.
+			// InetAddressで再度チェック.
 			try {
-				a = ipAnalysis(
-					InetAddress.getByName(addr).getAddress());
-				return a >= min && a <= max;
-			} catch(Exception e) {}
-			return false;
-		// IP指定だが、ドメイン判別の場合.
-		} else if(domain != null) {
-			try {
-				return InetAddress.getByName(domain)
-					.equals(InetAddress.getByName(addr));
+				return isRange(InetAddress.getByName(addr));
 			} catch(Exception e) {
 				return false;
 			}
 		}
 		// IP範囲で定義されている場合.
-		return a >= min && a <= max;
+		return isRange(a);
 	}
 	
 	/**
@@ -374,18 +443,18 @@ public class IpV4Range {
 	 * @return boolean [true]の場合、このIPアドレスの範囲内です.
 	 */
 	public boolean isRange(InetAddress addr) {
+		// 指定アドレスがnullの場合.
 		if(addr == null) {
 			return false;
-		} else if(domain != null) {
-			try {
-				return InetAddress.getByName(domain)
-					.equals(addr);
-			} catch(Exception e) {
-				return false;
-			}
 		}
-		Long a = ipAnalysis(addr.getAddress());
-		return a >= min && a <= max;
+		// ドメインで判別.
+		Boolean retDmn = isEqDomain(addr);
+		if(retDmn != null) {
+			// 判別出来た場合.
+			return retDmn;
+		}
+		// IPアドレスの範囲内かチェック.
+		return isRange(convertLongIp(addr.getAddress()));
 	}
 	
 	/**
@@ -405,36 +474,36 @@ public class IpV4Range {
 		return domain == null && mask != -1;
 	}
 	
-	// ipRangeでのヘッダ番号を取得.
+	/**
+	 * ipRangeでのヘッダ番号を取得.
+	 * @return Integer たとえば 10.0.0.1 の場合 10 が
+	 *                 返却されます.
+	 */
 	protected Integer getHead() {
 		if(!isIpMask()) {
 			return null;
 		}
-		return (int)(((min & 0x00ff000000L) >> 24L) &
+		return getHead(min);
+	}
+	
+	/**
+	 * LongIpヘッダ番号を取得.
+	 * @param longIp LongIpを設定します.
+	 * @return Integer たとえば LongIpの元のIPV4アドレスが10.0.0.1
+	 *                 の場合 10 が返却されます.
+	 */
+	protected static Integer getHead(long longIp) {
+		return (int)(((longIp & 0x00ff000000L) >> 24L) &
 			0x0ffL);
 	}
 	
-	@Override
-	public String toString() {
-		if(domain != null) {
-			return domain;
-		} else if(mask == -1) {
-			return new StringBuilder()
-					.append(ipString(min))
-					.append("-")
-					.append(ipString(max))
-					.toString();
-		}
-		return new StringBuilder()
-				.append(ipString(min))
-				.append("/").append(mask)
-				.toString();
-	}
 	
 	@Override
 	public boolean equals(Object n) {
 		if(n == null || !(n instanceof IpV4Range)) {
 			return false;
+		} else if(n == this) {
+			return true;
 		}
 		IpV4Range r = (IpV4Range)n;
 		if(domain == null) {
@@ -450,5 +519,22 @@ public class IpV4Range {
 			} catch(Exception e) {}
 		}
 		return false;
+	}
+	
+	@Override
+	public String toString() {
+		if(domain != null) {
+			return domain;
+		} else if(mask == -1) {
+			return new StringBuilder()
+				.append(longIpToString(min))
+				.append(" - ")
+				.append(longIpToString(max))
+				.toString();
+		}
+		return new StringBuilder()
+			.append(longIpToString(min))
+			.append("/").append(mask)
+			.toString();
 	}
 }

@@ -11,13 +11,16 @@ import quina.exception.QuinaException;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
+import quina.http.HttpEmptySendResponse;
 import quina.http.HttpStatus;
 import quina.http.Method;
 import quina.http.Params;
 import quina.http.Request;
 import quina.http.Response;
+import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.AnyResponseImpl;
 import quina.http.server.response.RESTfulResponseImpl;
+import quina.http.server.response.ResponseUtil;
 import quina.http.server.response.SyncResponseImpl;
 import quina.logger.Log;
 import quina.logger.LogFactory;
@@ -73,7 +76,7 @@ public final class HttpServerCore {
 			// urlを[/]でパース.
 			urls = ComponentManager.getUrls(url);
 			// URLに対するコンテンツ取得.
-			comp = Quina.router().get(url, urls, req.getMethod());
+			comp = Quina.get().getRouter().get(url, urls, req.getMethod());
 			url = null;
 			// コンポーネントが取得できない場合.
 			if(comp == null) {
@@ -148,7 +151,29 @@ public final class HttpServerCore {
 			}
 			// コンポーネント実行.
 			comp.call(req, res);
-		} catch(Exception e) {
+		} catch(HttpEmptySendResponse her) {
+			// NioElementが閉じられてる場合は処理しない.
+			if(!req.isConnection()) {
+				return;
+			}
+			// HTTPレスポンスステータスが定義されている場合.
+			if(her.getStatus() != 0) {
+				// 空のレスポンス返却用例外に
+				// 有効なHTTPステータスやメッセージが
+				// 設定されている場合.
+				res.setStatus(her.getStatus());
+				res.setMessage(her.getMessage());
+			}
+			// 空のBodyレスポンスを返却.
+			try {
+				ResponseUtil.send((AbstractResponse<?>)res);
+			} catch(Throwable t) {
+				try {
+					em.close();
+				} catch(Exception e) {}
+			}
+				
+		} catch(Throwable e) {
 			// ワーニング以上のログ通知が認められてる場合.
 			if(LOG.isWarnEnabled()) {
 				int status = -1;
@@ -187,14 +212,14 @@ public final class HttpServerCore {
 			// エラー返却.
 			try {
 				HttpServerCore.sendError(req, res, e);
-			} catch(Exception ee) {
+			} catch(Throwable t) {
 				// エラー返却失敗の場合は警告ーログを出力.
 				if(LOG.isWarnEnabled()) {
-					LOG.warn("Failed to send the error.", ee);
+					LOG.warn("Failed to send the error.", t);
 				}
 				try {
 					em.close();
-				} catch(Exception eee) {}
+				} catch(Exception ee) {}
 			}
 		}
 	}
@@ -338,7 +363,7 @@ public final class HttpServerCore {
 		}
 		// エラーコンポーネントを取得.
 		ErrorComponent component =
-			Quina.router().getError(res.getStatusNo(), req.getUrl());
+			Quina.get().getRouter().getError(res.getStatusNo(), req.getUrl());
 		// エラー実行.
 		if(e == null) {
 			// ステータスが４００未満の場合.

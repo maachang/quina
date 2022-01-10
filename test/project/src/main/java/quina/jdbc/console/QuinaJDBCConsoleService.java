@@ -7,14 +7,12 @@ import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.QuinaUtil;
-import quina.annotation.log.LogDefine;
 import quina.annotation.quina.QuinaServiceScoped;
 import quina.http.controll.AccessControll;
 import quina.http.controll.AnyAccessControll;
-import quina.http.controll.IpLocalHostAccessControll;
-import quina.http.controll.IpPrivateAccessControll;
 import quina.http.controll.NoneAccessControll;
-import quina.logger.Log;
+import quina.http.controll.ipv4.IpLocalHostAccessControll;
+import quina.http.controll.ipv4.IpPrivateAccessControll;
 import quina.util.Flag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
@@ -28,9 +26,6 @@ public class QuinaJDBCConsoleService
 	
 	// サービス/コンフィグ名.
 	protected static final String SERVICE_AND_CONFIG_NAME = "jdbcConsole";
-	
-	@LogDefine
-	private Log log;
 	
 	// QuinaConfig.
 	private QuinaConfig config = new QuinaConfig(
@@ -90,16 +85,16 @@ public class QuinaJDBCConsoleService
 			boolean globalAddress = config.getBoolean("globalAddress");
 			// フルアクセス許可.
 			if(globalAddress && privateAddress && localHost) {
-				ipAccessControll = new AnyAccessControll();
+				ipAccessControll = AnyAccessControll.getInstance();
 			// イントラネット内のアクセス許可.
 			} else if(privateAddress && localHost) {
-				ipAccessControll = new IpPrivateAccessControll();
+				ipAccessControll = IpPrivateAccessControll.getInstance();
 			// 127.0.0.1のみアクセス許可
 			} else if(localHost) {
-				ipAccessControll = new IpLocalHostAccessControll();
+				ipAccessControll = IpLocalHostAccessControll.getInstance();
 			// アクセス不可.
 			} else {
-				ipAccessControll = new NoneAccessControll();
+				ipAccessControll = NoneAccessControll.getInstance();
 			}
 			return ret;
 		} finally {

@@ -105,7 +105,7 @@ var _flushButtonAction = function() {
                     e.preventDefault();
                     // click button.
                     clickFunction();
-                });                  
+                });
             })(em, list[i + 1]);
         }
     }
