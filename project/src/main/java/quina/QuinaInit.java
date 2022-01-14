@@ -4,9 +4,11 @@ import quina.annotation.cdi.CdiHandleManager;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.log.AnnotationLog;
 import quina.annotation.quina.AnnotationQuina;
+import quina.component.ExecuteComponent;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
+import quina.json.Json;
 import quina.logger.LogFactory;
 import quina.net.nio.tcp.NioUtil;
 import quina.shutdown.ShutdownConstants;
@@ -38,7 +40,7 @@ final class QuinaInit {
 	 * @param mainObject Quinaメインオブジェクトを設定します.
 	 * @param args Quinaメインオブジェクトの実行メソッド第一引数を設定します.
 	 */
-	public final void initialize(Class<?> mainClass, Object mainObject,
+	public void initialize(Class<?> mainClass, Object mainObject,
 		String[] args) {
 		// 既に実行済みの場合エラー.
 		quinaMembers.checkExecuteInit();
@@ -140,7 +142,7 @@ final class QuinaInit {
 	/**
 	 * Cdiサービス(ServiceScoped)群に対してAnnotation関連を反映.
 	 */
-	public final void updateAnnotationByCdiService() {
+	public void updateAnnotationByCdiService() {
 		final CdiHandleManager chman = quinaMembers.cdiHandleManager;
 		final CdiServiceManager cman = quinaMembers.cdiManager;
 		final int len = cman.size();
@@ -153,7 +155,7 @@ final class QuinaInit {
 	/**
 	 * QuinaService(QuinaServiceScoped)群に対してAnnotation関連を反映.
 	 */
-	public final void updateAnnotationByQuinaService() {
+	public void updateAnnotationByQuinaService() {
 		final CdiHandleManager chman = quinaMembers.cdiHandleManager;
 		final QuinaServiceManager qsman = quinaMembers.quinaServiceManager;
 		final int len = qsman.size();
@@ -166,7 +168,7 @@ final class QuinaInit {
 	/**
 	 * Quinaメインオブジェクト/クラスに対してCdiScopedアノテーションを反映.
 	 */
-	public final void updateAnnotationByMain() {
+	public void updateAnnotationByMain() {
 		final Object mainObject = quinaMembers.mainObject;
 		final Class<?> mainClass = quinaMembers.mainClass;
 		final CdiHandleManager chman = quinaMembers.cdiHandleManager;
@@ -183,7 +185,7 @@ final class QuinaInit {
 	}
 	
 	// コンフィグ情報を読み込んで反映します.
-	public final void loadConfig() {
+	public void loadConfig() {
 		final String confDir = quinaMembers.getConfigDirectory();
 		// 指定コンフィグディレクトリが存在しない場合.
 		if(confDir == null || confDir.isEmpty()) {
@@ -208,7 +210,7 @@ final class QuinaInit {
 	}
 
 	// ログのコンフィグ定義.
-	public final boolean loadLogConfig() {
+	public boolean loadLogConfig() {
 		final String confDir = quinaMembers.getConfigDirectory();
 		// コンフィグディレクトリが存在しない場合.
 		if(confDir == null || confDir.isEmpty()) {
@@ -231,7 +233,7 @@ final class QuinaInit {
 	}
 	
 	// LogConfigアノテーションからログ定義を読み込む.
-	public final boolean loadLogConfigByAnnotation() {
+	public boolean loadLogConfigByAnnotation() {
 		final Class<?> mainClass = quinaMembers.getMainClass();
 		// LogFactoryが既にコンフィグ設定されている場合.
 		if(LogFactory.getInstance().isFixConfig()) {
@@ -245,7 +247,7 @@ final class QuinaInit {
 	}
 
 	// シャットダウンマネージャのコンフィグ条件を設定.
-	public final boolean loadShutdownManagerConfig() {
+	public boolean loadShutdownManagerConfig() {
 		final String confDir = quinaMembers.getConfigDirectory();
 		// コンフィグディレクトリが存在しない場合.
 		if(confDir == null || confDir.isEmpty()) {
@@ -269,7 +271,7 @@ final class QuinaInit {
 	}
 
 	// Etagマネージャのコンフィグ条件を設定.
-	public final boolean loadEtagManagerConfig() {
+	public boolean loadEtagManagerConfig() {
 		final String confDir = quinaMembers.getConfigDirectory();
 		// コンフィグディレクトリが存在しない場合.
 		if(confDir == null || confDir.isEmpty()) {
@@ -290,6 +292,40 @@ final class QuinaInit {
 		// etagManagerのコンフィグ条件をセット.
 		info.config(json);
 		return true;
+	}
+	
+	/**
+	 * Quinaに対して登録可能なオブジェクトを設定.
+	 * 
+	 * 設定可能なオブジェクトは以下のオブジェクトです.
+	 * 
+	 * HTTPパラメータ解析用.
+	 *   quina.http.HttpCustomAnalysisParams
+	 * 
+	 * JSON生成・解析用.
+	 *   quina.json.JsonCustomAnalysis
+	 * 
+	 * @param o 登録可能なオブジェクトを設定します.
+	 */
+	public void addQuinaRegsterObject(Object o) {
+		if(o == null) {
+			throw new QuinaException(
+				"The object to be registered has not been set.");
+		} else if(o instanceof quina.http.HttpCustomAnalysisParams) {
+			// HTTPパラメータ解析用.
+			ExecuteComponent.getInstance()
+				.setHttpCustomAnalysisParams(
+					(quina.http.HttpCustomAnalysisParams)o);
+			return;
+		} else if(o instanceof quina.json.JsonCustomAnalysis) {
+			// JSON生成・解析用.
+			Json.setJsonCustomAnalysis(
+				(quina.json.JsonCustomAnalysis)o);
+			return;
+		}
+		throw new QuinaException(
+			"Objects to be registered are not subject to registration: " +
+				o.getClass().getName());
 	}
 	
 }

@@ -1,64 +1,67 @@
-package quina.command.generateCdi;
+package quina.compile.tool;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * GenerateCdiパラメータ.
+ * QuinaCompileTool用パラメータ.
  */
-public class GCdiParams {
+public class QuinaCTParams {
 	// verbose..
 	public boolean verbose = false;
 	
-	// Route.
+	// Route用クラス名リスト.
 	public final List<String> routeList = new ArrayList<String>();
 	
-	// RouteAny.
+	// RouteAny用クラス名.
 	public String any = null;
 	
-	// RouteError.
+	// RouteError用クラス名リスト.
 	public final List<String> errList = new ArrayList<String>();
 	
-	// CdiService.
+	// CdiService用クラス名リスト.
 	public final List<String> cdiList = new ArrayList<String>();
 	
-	// CdiReflect.
+	// CdiReflect用クラス名リスト.
 	public final List<String> refList = new ArrayList<String>();
 	
-	// QuinaService.
+	// QuinaService用クラス名リスト.
 	public final List<String> qsrvList = new ArrayList<String>();
 	
-	// CdiHandle.
+	// CdiHandle用クラス名リスト.
 	public final List<String> hndList = new ArrayList<String>();
 	
-	// ProxyScoped.
+	// ProxyScoped用クラス名リスト.
 	public final List<String> prxList = new ArrayList<String>();
 	
-	// QuinaLoopScoped.
+	// QuinaLoopScoped用クラス名リスト.
 	public final List<String> loopList = new ArrayList<String>();
+	
+	// クラス内のresourceファイル群.
+	public final List<String> regResourceList = new ArrayList<String>();
+	
+	// ResourceItem登録判定.
+	// graalvmのnativeImageコンパイルでリソースファイル定義が必要なので
+	// それを利用する場合trueがセットされる.
+	public boolean registerResourceItemFlag;
 	
 	// classLoader.
 	public ClassLoader cl;
-	
-	// resourceファイルが見つかったらResourceItem登録判定.
-	public boolean resourceItemFlag;
-	
-	// resourceファイル.
-	public final List<String> resList = new ArrayList<String>();
 	
 	/**
 	 * コンストラクタ.
 	 * @param clazzDir
 	 * @param verbose
+	 * @param registerResourceItemFlag
 	 * @param jarDirArray
 	 * @throws Exception
 	 */
-	public GCdiParams(String clazzDir, boolean verbose,
-		boolean resourceItemFlag, String... jarDirArray)
+	public QuinaCTParams(String clazzDir, boolean verbose,
+		boolean registerResourceItemFlag, String... jarDirArray)
 		throws Exception {
-		this.cl = GCdiUtil.createClassLoader(clazzDir, jarDirArray);
+		this.cl = QuinaCTUtil.createClassLoader(clazzDir, jarDirArray);
 		this.verbose = verbose;
-		this.resourceItemFlag = resourceItemFlag;
+		this.registerResourceItemFlag = registerResourceItemFlag;
 	}
 	
 	/**
@@ -78,7 +81,7 @@ public class GCdiParams {
 			&& cdiList.size() == 0 && any == null
 			&& errList.size() == 0 && qsrvList.size() == 0
 			&& hndList.size() == 0 && prxList.size() == 0
-			&& resList.size() == 0 && loopList.size() == 0
+			&& regResourceList.size() == 0 && loopList.size() == 0
 		;
 	}
 	
@@ -143,7 +146,7 @@ public class GCdiParams {
 	 * ResourceItem定義が空の場合.
 	 * @return
 	 */
-	public boolean isResourceItemEmpty() {
-		return resList.size() == 0;
+	public boolean isRegResourceItemEmpty() {
+		return regResourceList.size() == 0;
 	}
 }

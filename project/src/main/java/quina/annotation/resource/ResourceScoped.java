@@ -15,6 +15,7 @@ import java.lang.annotation.Target;
  * コンパイルされたClassパッケージ内にコピーすること
  * ができます。
  * 
+ * <pre><code>
  * ＜例＞
  * 
  * ＠ResourceScoped
@@ -48,6 +49,7 @@ import java.lang.annotation.Target;
  *     return COPY_LIST;
  *   }
  * }
+ * </code></pre>
  * 
  * これにより./consoleディレクトリ内のファイルを
  * javaソースのquina.jdbc.console.resourceパッケージに

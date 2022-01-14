@@ -1,13 +1,5 @@
-package quina.command.generateCdi;
+package quina.compile.tool;
 
-import static quina.command.generateCdi.GCdiConstants.AUTO_ROUTE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_DIRECTORY_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_HANDLE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.QUINA_LOOP_SCOPED_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -34,8 +26,8 @@ import quina.worker.QuinaWorkerService;
 /**
  * Cdiを行うJavaソースコードを出力.
  */
-public class GCdiOutputJavaSrc {
-	private GCdiOutputJavaSrc() {}
+public class CdiOutputJavaSrc {
+	private CdiOutputJavaSrc() {}
 	
 	// 出力処理.
 	private static final void println(Writer w, int tab, String s)
@@ -60,18 +52,18 @@ public class GCdiOutputJavaSrc {
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(
-		String clazzName, GCdiParams params)
+		String clazzName, QuinaCTParams params)
 		throws ClassNotFoundException {
-		return isPublicClass(GCdiUtil.getClass(clazzName, params.cl));
+		return isPublicClass(QuinaCTUtil.getClass(clazzName, params.cl));
 
 	}
 	
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(Class<?> c) {
-		if(GCdiConstants.isDefineAnnotation(c) ||
-			GCdiConstants.isProxyAnnotation(c)) {
-			GCdiUtil.checkPublicClass(c);
+		if(QuinaCTConstants.isDefineAnnotation(c) ||
+			QuinaCTConstants.isProxyAnnotation(c)) {
+			QuinaCTUtil.checkPublicClass(c);
 			return true;
 		}
 		return false;
@@ -96,7 +88,7 @@ public class GCdiOutputJavaSrc {
 	
 	// 対象のクラスリストで出力条件が存在するかチェック.
 	private static final boolean isOutClassList(
-		List<String> classlist, GCdiParams params)
+		List<String> classlist, QuinaCTParams params)
 		throws ClassNotFoundException {
 		// publicでないクラスで空のコンストラクタで
 		// ないかチェック.
@@ -122,14 +114,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void routerScoped(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + AUTO_ROUTE_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.AUTO_ROUTE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// 出力可能かチェック.
@@ -190,7 +182,7 @@ public class GCdiOutputJavaSrc {
 			len = params.errList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.errList.get(i);
-				c = GCdiUtil.getClass(clazzName, params);
+				c = QuinaCTUtil.getClass(clazzName, params);
 				// pubilcのクラス定義のみ対象とする.
 				if(isPublicClass(c)) {
 					StringBuilder buf = new StringBuilder();
@@ -239,14 +231,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void serviceScoped(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + CDI_SERVICE_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.CDI_SERVICE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// 出力可能かチェック.
@@ -314,14 +306,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void quinaServiceScoped(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + QUINA_SERVICE_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.QUINA_SERVICE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// 出力可能かチェック.
@@ -389,14 +381,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void cdiReflect(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + CDI_REFLECT_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.CDI_REFLECT_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// エラーチェック.
@@ -405,9 +397,9 @@ public class GCdiOutputJavaSrc {
 			int len = params.refList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.refList.get(i);
-				c = GCdiUtil.getClass(clazzName, params);
+				c = QuinaCTUtil.getClass(clazzName, params);
 				// subClassを含むFieldをすべて取得.
-				final List<Field> list = GCdiUtil.getFields(c);
+				final List<Field> list = QuinaCTUtil.getFields(c);
 				final int lenJ = list.size();
 				if(lenJ == 0) {
 					continue;
@@ -445,9 +437,9 @@ public class GCdiOutputJavaSrc {
 			len = params.refList.size();
 			for(int i = 0; i < len; i ++) {
 				clazzName = params.refList.get(i);
-				c = GCdiUtil.getClass(clazzName, params);
+				c = QuinaCTUtil.getClass(clazzName, params);
 				// subClassを含むFieldをすべて取得.
-				final List<Field> list = GCdiUtil.getFields(c);
+				final List<Field> list = QuinaCTUtil.getFields(c);
 				final int lenJ = list.size();
 				if(lenJ == 0) {
 					continue;
@@ -484,9 +476,9 @@ public class GCdiOutputJavaSrc {
 					// 次の処理を行う.
 					continue;
 				}
-				c = GCdiUtil.getClass(clazzName, params);
+				c = QuinaCTUtil.getClass(clazzName, params);
 				// subClassを含むFieldをすべて取得.
-				final List<Field> list = GCdiUtil.getFields(c);
+				final List<Field> list = QuinaCTUtil.getFields(c);
 				final int lenJ = list.size();
 				if(lenJ == 0) {
 					continue;
@@ -537,14 +529,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void cdiHandle(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + CDI_HANDLE_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.CDI_HANDLE_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// 出力可能かチェック.
@@ -613,14 +605,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void proxyScoped(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + PROXY_SCOPED_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.CDI_PROXY_SCOPED_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// 出力可能かチェック.
@@ -666,12 +658,12 @@ public class GCdiOutputJavaSrc {
 					println(w, 3, "new quina.annotation.proxy.QuinaProxy() {");
 					println(w, 4, "public Class<?> getProxyClass() {");
 					println(w, 5, "return " +
-						GCdiUtil.getAutoProxyClassName(clazzName) + ".class;");
+						QuinaCTUtil.getAutoProxyClassName(clazzName) + ".class;");
 					println(w, 4, "}");
 					println(w, 4, "public Object newInstance(");
 					println(w, 5, "quina.annotation.proxy.ProxySettingArgs args) {");
-					println(w, 5, GCdiUtil.getAutoProxyClassName(clazzName) + " ret = new");
-					println(w, 6, GCdiUtil.getAutoProxyClassName(clazzName) + "();");
+					println(w, 5, QuinaCTUtil.getAutoProxyClassName(clazzName) + " ret = new");
+					println(w, 6, QuinaCTUtil.getAutoProxyClassName(clazzName) + "();");
 					println(w, 5, "ret.__initialSetting(args);");
 					println(w, 5, "return ret;");
 					println(w, 4, "}");
@@ -705,14 +697,14 @@ public class GCdiOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void quinaLoopScoped(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME;
 		
 		// ソース出力先ディレクトリを作成.
 		new File(outDir).mkdirs();
 		
-		String outFileName = outDir + "/" + QUINA_LOOP_SCOPED_SOURCE_NAME;
+		String outFileName = outDir + "/" + QuinaCTConstants.QUINA_LOOP_SCOPED_SOURCE_NAME;
 		BufferedWriter w = null;
 		try {
 			// 出力可能かチェック.

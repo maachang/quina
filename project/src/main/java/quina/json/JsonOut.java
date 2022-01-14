@@ -198,7 +198,7 @@ public class JsonOut {
 
 	// 表示要素を文字列変換.
 	private static final int toValue(int indent, int count, StringBuilder buf, Object m) {
-		final CustomJsonIO conv = Json.getCustomJsonIO();
+		final JsonCustomAnalysis conv = Json.getJsonCustomAnalysis();
 		if(m == null) {
 			buf.append(conv.nullToString());
 		} else if(m instanceof Number || m instanceof Boolean) {

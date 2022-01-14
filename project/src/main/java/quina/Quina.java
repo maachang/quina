@@ -7,7 +7,6 @@ import quina.annotation.proxy.ProxyScopedManager;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.QuinaException;
 import quina.http.HttpContext;
-import quina.http.HttpCustomAnalysisParams;
 import quina.http.controll.ipv4.IpPermissionAccessControllService;
 import quina.http.server.HttpServerContext;
 import quina.shutdown.ShutdownManagerInfo;
@@ -16,7 +15,50 @@ import quina.worker.QuinaLoopManager;
 import quina.worker.QuinaWorkerCall;
 
 /**
- * Quina.
+ * Quinaを起動するためのオブジェクト.<br><br>
+ * 
+ * たとえば以下のように実装することでQuinaの
+ * Webサービスが起動し、待機します.<br>
+ * 
+ * <pre><code>
+ * ＜例＞
+ * 
+ * public void Exsample {
+ *   public static void main(String[] args) {
+ *     Quina.init(Exsample.class, args)
+ *       .startAwait();
+ *   }
+ * }
+ * </code></pre>
+ * 
+ * またQuinaが提供するアノテーション等を利用することで
+ * Quinaに対する基本定義も行えます.<br>
+ * 
+ * <pre><code>
+ * ＠CdiScoped
+ * ＠LogConfig(directory="./logDir")
+ * ＠LogConfig(name="greeting", directory="./logDir")
+ * ＠QuinaServiceSelection(name="storage", define="jdbc")
+ * public class QuinaTest {
+ *   ＠LogDefine
+ *   private static Log log;
+ * 
+ *   // コンストラクタ.
+ *   private QuinaTest() {}
+ * 
+ *   // メイン実行.
+ *   public static final void main(String[] args)
+ *     throws Exception {
+ *     // 初期化処理して開始処理.
+ *     Quina.init(QuinaTest.class, args);
+ * 
+ *     log.info("start Quina Test");
+ * 
+ *     // 開始＋Await.
+ *     Quina.get().startAwait();
+ *   }
+ * }
+ * </code></pre>
  */
 public final class Quina {
 	
@@ -206,20 +248,13 @@ public final class Quina {
 	}
 	
 	/**
-	 * HTTPパラメータ解析をカスタマイズ解析するオブジェクトを設定.
-	 * @return custom カスタムオブジェクトを設定します.
+	 * Quinaに対して登録可能なオブジェクトを設定.
+	 * @param o 登録可能なオブジェクトを設定します.
+	 * @return Quina Quinaオブジェクトが返却されます.
 	 */
-	public void setHttpCustomAnalysisParams(
-		HttpCustomAnalysisParams custom) {
-		quinaMembers.setHttpCustomAnalysisParams(custom);
-	}
-	
-	/**
-	 * HTTPパラメータ解析をカスタマイズ解析するオブジェクトを取得.
-	 * @return HttpCustomAnalysisParams カスタムオブジェクトが返却されます.
-	 */
-	public HttpCustomAnalysisParams getHttpCustomAnalysisParams() {
-		return quinaMembers.getHttpCustomAnalysisParams();
+	public Quina addQuinaRegsterObject(Object o) {
+		quinaInit.addQuinaRegsterObject(o);
+		return this;
 	}
 	
 	/**
@@ -280,7 +315,7 @@ public final class Quina {
 	/**
 	 * ProxyScopedアノテーション定義でのInvocationHandler
 	 * 代替え管理マネージャが返却されます.
-	 * @return
+	 * @return ProxyScopedManager ProxyScopedマネージャーが返却されます.
 	 */
 	public ProxyScopedManager getProxyScopedManager() {
 		return quinaMembers.proxyScopedManager;

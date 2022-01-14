@@ -1,6 +1,4 @@
-package quina.command.generateCdi;
-
-import static quina.command.generateCdi.GCdiConstants.PROXY_DIRECTORY_NAME;
+package quina.compile.tool;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,8 +25,8 @@ import quina.util.StringUtil;
 /**
  * ProxyScoped定義に対する自動ソースコード生成処理.
  */
-public class ProxyOutputJavaSrc {
-	private ProxyOutputJavaSrc() {}
+public class CdiProxyOutputJavaSrc {
+	private CdiProxyOutputJavaSrc() {}
 	
 	/**
 	 * 抽出したRoute定義されたComponentをJavaファイルに出力.
@@ -38,13 +36,13 @@ public class ProxyOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	public static final void proxyScoped(String outSourceDirectory,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws Exception {
 		final List<String> prxList = params.prxList;
 		final int len = prxList == null ? 0 : prxList.size();
 		
 		// 自動生成するProxyオブジェクトのパッケージディレクトリを削除.
-		GCdiRemoveFileOrDir.removeProxyDirectory(outSourceDirectory);
+		CdiRemoveFileOrDir.removeProxyDirectory(outSourceDirectory);
 		
 		// ProxyScopedオブジェクトが存在しない場合.
 		if(len <= 0) {
@@ -73,13 +71,13 @@ public class ProxyOutputJavaSrc {
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
 	private static final void autoProxyClass(String outSourceDirectory,
-		String clazzName,GCdiParams params)
+		String clazzName,QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
-		String outDir = outSourceDirectory + "/" + PROXY_DIRECTORY_NAME;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_PROXY_DIRECTORY_NAME;
 		
 		// publicClassで空のPublicコンストラクタが存在するかチェック.
-		Class<?> clazz = GCdiUtil.getClass(clazzName, params.cl);
-		GCdiUtil.checkPublicClass(clazz);
+		Class<?> clazz = QuinaCTUtil.getClass(clazzName, params.cl);
+		QuinaCTUtil.checkPublicClass(clazz);
 		
 		// このオブジェクトが abstract class 定義であるかチェック.
 		if(!isAbstractClass(clazz)) {
@@ -196,7 +194,7 @@ public class ProxyOutputJavaSrc {
 		// メソッド名定義.
 		print(buf, space).append("@Override\n");
 		print(buf, space)
-			.append(GCdiUtil.getAccessModifier(method))
+			.append(QuinaCTUtil.getAccessModifier(method))
 			.append(" ")
 			.append(StringUtil.getClassName(
 				method.getReturnType()))
@@ -292,7 +290,7 @@ public class ProxyOutputJavaSrc {
 	private static final void createDirectory(String outSourceDirectory)
 		throws Exception {
 		FileUtil.mkdirs(
-			outSourceDirectory + "/" +PROXY_DIRECTORY_NAME);
+			outSourceDirectory + "/" + QuinaCTConstants.CDI_PROXY_DIRECTORY_NAME);
 	}
 	
 	// ProxyScopedの自動作成されるクラス名を取得.
@@ -300,7 +298,7 @@ public class ProxyOutputJavaSrc {
 		String srcClassName) {
 		return new StringBuilder
 			(AnnotationProxyScopedConstants.HEAD_PROXY_CLASS_NAME)
-			.append(GCdiUtil.getClassNameByCutPackageName(srcClassName))
+			.append(QuinaCTUtil.getClassNameByCutPackageName(srcClassName))
 			.toString();
 	}
 	
@@ -328,7 +326,7 @@ public class ProxyOutputJavaSrc {
 	// ProxyFieldアノテーションが設定されてるFieldを取得.
 	private static final Field getProxyField(Class<?> c) {
 		Field field;
-		final List<Field> list = GCdiUtil.getFields(c);
+		final List<Field> list = QuinaCTUtil.getFields(c);
 		Field ret = null;
 		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
@@ -361,7 +359,7 @@ public class ProxyOutputJavaSrc {
 	// ProxyInitialSettingアノテーションが設定されてるMethodを取得.
 	private static final Method getProxyInitialSetting(Class<?> c) {
 		Method method;
-		final List<Method> list = GCdiUtil.getMethods(c);
+		final List<Method> list = QuinaCTUtil.getMethods(c);
 		Method ret = null;
 		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
@@ -394,7 +392,7 @@ public class ProxyOutputJavaSrc {
 	// ProxyInjectMethodアノテーションが設定されてるMethodを取得.
 	private static final Method getProxyInjectMethod(Class<?> c) {
 		Method method;
-		final List<Method> list = GCdiUtil.getMethods(c);
+		final List<Method> list = QuinaCTUtil.getMethods(c);
 		Method ret = null;
 		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {
@@ -427,7 +425,7 @@ public class ProxyOutputJavaSrc {
 	// ProxyInitialSettingアノテーションが設定されてるMethodを取得.
 	private static final int getProxyOverride(List<Method> out, Class<?> c) {
 		Method method;
-		final List<Method> list = GCdiUtil.getMethods(c);
+		final List<Method> list = QuinaCTUtil.getMethods(c);
 		out.clear();
 		final int len = list == null ? 0 : list.size();
 		for(int i = 0; i < len; i ++) {

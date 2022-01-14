@@ -1,41 +1,43 @@
-package quina.command;
-
-import static quina.command.generateCdi.GCdiConstants.AUTO_ROUTE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_DIRECTORY_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_REFLECT_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.CDI_SERVICE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.COMMAND_NAME;
-import static quina.command.generateCdi.GCdiConstants.PROXY_SCOPED_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.QUINA_LOOP_SCOPED_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.QUINA_SERVICE_SOURCE_NAME;
-import static quina.command.generateCdi.GCdiConstants.VERSION;
+package quina.compile.tool;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import quina.annotation.AnnotationUtil;
-import quina.command.generateCdi.GCdiConstants;
-import quina.command.generateCdi.GCdiExtraction;
-import quina.command.generateCdi.GCdiOutputJavaSrc;
-import quina.command.generateCdi.GCdiOutputResourceItem;
-import quina.command.generateCdi.GCdiParams;
-import quina.command.generateCdi.GCdiRemoveFileOrDir;
-import quina.command.generateCdi.GCdiUtil;
-import quina.command.generateCdi.NativeImages;
-import quina.command.generateCdi.ProxyOutputJavaSrc;
 import quina.exception.QuinaException;
 import quina.util.Args;
 import quina.util.FileUtil;
 
 /**
- * CDI関連のリフレクションに対するJavaソースコードを生成.
+ * QuinaCompileTool.
  * 
- * このコマンドは graalvm での native-image で利用できない
- * Reflection 関連に対する、代替え的処理として、Javaの
- * ソースコードを作成し、native-image を作成できるようにします.
+ * Quinaで提供されているAnnotationやGraalvmのNativeImageに
+ * 対するコンパイルツールです.
+ * 
+ * 対象プロジェクトをコンパイルし、その後この処理を実施する
+ * ことで、必要なJavaソースファイルを自動生成し、Graalvmの
+ * NativeImage実行に対するコンフィグ定義も合わせて出力します.
  */
-public class GenerateCdi {
+public class QuinaCT {
+	
+	// コマンドパラメータオブジェクト.
+	protected static final class CmdParams {
+		/** 詳細表示フラグ. **/
+		protected boolean verboseFlag;
+		/** Cdiで出力されるファイル群を全削除して処理終了フラグ. **/
+		protected boolean deleteOutFileOnlyFlag;
+		/** javaソースディレクトリ. **/
+		protected String javaSourceDir;
+		/** classディレクトリ. **/
+		protected String clazzDir;
+		/** jarディレクトリリスト. **/
+		String[] jarDirArray;
+		/** GraalVMのNative-Imageコンフィグ出力先ディレクトリ. **/
+		String nativeImgDir;
+		/** classPath内のリソースファイルをResourceItemに含めるフラグ. **/
+		boolean resourceItemFlag;
+	}
 	
 	/**
 	 * メイン処理.
@@ -43,7 +45,7 @@ public class GenerateCdi {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		GenerateCdi cmd = new GenerateCdi(args);
+		QuinaCT cmd = new QuinaCT(args);
 		try {
 			cmd.executeCmd();
 		} catch(Exception e) {
@@ -59,13 +61,13 @@ public class GenerateCdi {
 	 * コンストラクタ.
 	 * @param args
 	 */
-	protected GenerateCdi(String[] args) {
+	protected QuinaCT(String[] args) {
 		this.args = new Args(args);
 	}
 	
 	// バージョンを表示.
 	protected void outVersion() {
-		System.out.println(VERSION);
+		System.out.println(QuinaCTConstants.VERSION);
 	}
 	
 	//ヘルプ情報を表示.
@@ -76,7 +78,7 @@ public class GenerateCdi {
 		System.out.println("                   from the specified class directory and");
 		System.out.println("                   creates an automatic loading program.");
 		System.out.println();
-		System.out.println("Usage: " + COMMAND_NAME + " [options]");
+		System.out.println("Usage: " + QuinaCTConstants.COMMAND_NAME + " [options]");
 		System.out.println(" where options include:");
 
 		System.out.println("  -v [--version]");
@@ -132,8 +134,8 @@ public class GenerateCdi {
 			return;
 		}
 		
-		// 実行に対する表示処理.
-		executeByStartOutput(cmdParams);
+		// 実行に対するコンソール表示処理.
+		executeByStartOuConsole(cmdParams);
 		
 		// 実行処理.
 		execute(cmdParams);
@@ -164,7 +166,7 @@ public class GenerateCdi {
 		// javaソースディレクトリを整頓.
 		javaSourceDir = AnnotationUtil.slashPath(javaSourceDir);
 		
-		// GCdiで出力されるファイル群を全削除して処理終了するか取得.
+		// Cdiで出力されるファイル群を全削除して処理終了するか取得.
 		boolean deleteOutFileOnlyFlag = args.isValue("-d", "--delete");
 		
 		// classディレクトリを取得.
@@ -229,7 +231,7 @@ public class GenerateCdi {
 		if(nativeImgDir == null ||
 			(nativeImgDir = nativeImgDir.trim()).isEmpty()) {
 			// デフォルト内容をセット.
-			nativeImgDir = GCdiConstants.DEF_NATIVE_CONFIG_DIR;
+			nativeImgDir = QuinaCTConstants.DEF_NATIVE_CONFIG_DIR;
 		}
 		
 		// nativeImgDirディレクトリを整頓.
@@ -243,7 +245,7 @@ public class GenerateCdi {
 		
 		/** 詳細表示フラグ. **/
 		ret.verboseFlag = verboseFlag;
-		/** GCdiで出力されるファイル群を全削除して処理終了フラグ. **/
+		/** Cdiで出力されるファイル群を全削除して処理終了フラグ. **/
 		ret.deleteOutFileOnlyFlag = deleteOutFileOnlyFlag;
 		/** javaソースディレクトリ. **/
 		ret.javaSourceDir = javaSourceDir;
@@ -259,30 +261,12 @@ public class GenerateCdi {
 		return ret;
 	}
 	
-	// コマンドパラメータオブジェクト.
-	protected static final class CmdParams {
-		/** 詳細表示フラグ. **/
-		protected boolean verboseFlag;
-		/** GCdiで出力されるファイル群を全削除して処理終了フラグ. **/
-		protected boolean deleteOutFileOnlyFlag;
-		/** javaソースディレクトリ. **/
-		protected String javaSourceDir;
-		/** classディレクトリ. **/
-		protected String clazzDir;
-		/** jarディレクトリリスト. **/
-		String[] jarDirArray;
-		/** GraalVMのNative-Imageコンフィグ出力先ディレクトリ. **/
-		String nativeImgDir;
-		/** classPath内のリソースファイルをResourceItemに含めるフラグ. **/
-		boolean resourceItemFlag;
-	}
-	
 	// 実行に対する表示処理.
-	protected final void executeByStartOutput(CmdParams cmdPms)
+	protected final void executeByStartOuConsole(CmdParams cmdPms)
 		throws Exception {
 		// 処理開始.
 		System.out.println("start " + this.getClass().getSimpleName() +
-			" version: " + VERSION);
+			" version: " + QuinaCTConstants.VERSION);
 		System.out.println();
 		System.out.println(" target outputPath    : " +
 			FileUtil.getFullPath(cmdPms.javaSourceDir));
@@ -312,10 +296,10 @@ public class GenerateCdi {
 		// 処理開始.
 		long time = System.currentTimeMillis();
 		
-		// GCdiで出力するファイル内容を削除して終了する場合.
+		// Cdiで出力するファイル内容を削除して終了する場合.
 		if(cmdPms.deleteOutFileOnlyFlag) {
 			// ファイルを削除.
-			GCdiRemoveFileOrDir.removeOutGCdi(cmdPms.javaSourceDir, cmdPms.nativeImgDir);
+			CdiRemoveFileOrDir.removeOutCdi(cmdPms.javaSourceDir, cmdPms.nativeImgDir);
 			time = System.currentTimeMillis() - time;
 			System.out.println("The file output by Generate Cdi has been deleted. ");
 			System.out.println();
@@ -326,20 +310,19 @@ public class GenerateCdi {
 			return;
 		}
 		
-		// 通常GCdi処理.
 		try {
 			
 			// jarファイル名群を取得.
 			String[] jarFileArray;
 			if(cmdPms.jarDirArray.length > 0) {
-				jarFileArray = GCdiUtil.findJarFiles(cmdPms.jarDirArray);
+				jarFileArray = QuinaCTUtil.findJarFiles(cmdPms.jarDirArray);
 			} else {
 				jarFileArray = new String[0];
 			}
 			cmdPms.jarDirArray = null;
 			
 			// params.
-			GCdiParams params = new GCdiParams(
+			QuinaCTParams params = new QuinaCTParams(
 				cmdPms.clazzDir, cmdPms.verboseFlag, cmdPms.resourceItemFlag,
 				jarFileArray);
 			
@@ -347,29 +330,29 @@ public class GenerateCdi {
 			List<String> clazzList = new ArrayList<String>();
 			// クラスディレクトリのクラス一覧を取得.
 			if(cmdPms.clazzDir != null) {
-				GCdiUtil.findClassDirByClassNames(clazzList, params, cmdPms.clazzDir);
+				QuinaCTUtil.findClassDirByClassNames(clazzList, params, cmdPms.clazzDir);
 			}
 			// jarファイル群からクラス一覧を取得.
 			if(jarFileArray.length > 0) {
 				int len = jarFileArray.length;
 				for(int i = 0; i < len; i ++) {
-					GCdiUtil.findJarByClassNames(
+					QuinaCTUtil.findJarByClassNames(
 						clazzList, params, jarFileArray[i]);
 				}
 			}
 			
 			// ClassDirから、対象となるクラスを抽出.
-			GCdiExtraction.extraction(clazzList, cmdPms.javaSourceDir, cmdPms.clazzDir, params);
+			QuinaCTExtraction.extraction(clazzList, cmdPms.javaSourceDir, cmdPms.clazzDir, params);
 			clazzList = null;
 			
 			// 出力先のソースコードを全削除.
-			GCdiRemoveFileOrDir.removeOutAutoJavaSource(cmdPms.javaSourceDir);
+			CdiRemoveFileOrDir.removeOutAutoJavaSource(cmdPms.javaSourceDir);
 			
 			// 最初にリソースファイルをResourceItemにセット.
-			GCdiOutputResourceItem.outputResourceItem(params);
+			GraalvmAppendResourceItem.apped(params);
 			
 			// GraalVM用のNativeImageコンフィグ群を出力.
-			NativeImages.outputNativeConfig(cmdPms.nativeImgDir, null);
+			GraalvmOutNativeConfig.output(cmdPms.nativeImgDir, null);
 			
 			// 後処理.
 			resultExit(cmdPms, params, time);
@@ -383,7 +366,7 @@ public class GenerateCdi {
 	}
 	
 	// 後処理.
-	protected void resultExit(CmdParams cmdPms, GCdiParams params, long time)
+	protected void resultExit(CmdParams cmdPms, QuinaCTParams params, long time)
 		throws Exception {
 		// 抽出した内容が存在する場合は、抽出条件をファイルに出力.
 		if(params.isEmpty()) {
@@ -401,62 +384,69 @@ public class GenerateCdi {
 		System.out.println();
 		
 		// ProxyScopedソースコードの自動作成を行う.
-		ProxyOutputJavaSrc.proxyScoped(cmdPms.javaSourceDir, params);
+		CdiProxyOutputJavaSrc.proxyScoped(cmdPms.javaSourceDir, params);
 		
 		// [Router]ファイル出力.
 		if(!params.isRouteEmpty()) {
-			GCdiOutputJavaSrc.routerScoped(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.routerScoped(cmdPms.javaSourceDir, params);
 			System.out.println( " routerScoped         : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + AUTO_ROUTE_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.AUTO_ROUTE_SOURCE_NAME);
 		}
 		
 		// [(CDI)ServiceScoped]ファイル出力.
 		if(!params.isCdiEmpty()) {
-			GCdiOutputJavaSrc.serviceScoped(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.serviceScoped(cmdPms.javaSourceDir, params);
 			System.out.println( " serviceScoped        : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.CDI_SERVICE_SOURCE_NAME);
 		}
 		
 		// [QuinaService]ファイル出力.
 		if(!params.isQuinaServiceEmpty()) {
-			GCdiOutputJavaSrc.quinaServiceScoped(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.quinaServiceScoped(cmdPms.javaSourceDir, params);
 			System.out.println( " quinaServiceScoped   : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + QUINA_SERVICE_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.QUINA_SERVICE_SOURCE_NAME);
 		}
 		
 		// [CdiReflect]ファイル出力.
 		if(!params.isCdiReflectEmpty()) {
-			GCdiOutputJavaSrc.cdiReflect(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.cdiReflect(cmdPms.javaSourceDir, params);
 			System.out.println( " cdiReflect           : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + CDI_REFLECT_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.CDI_REFLECT_SOURCE_NAME);
 		}
 		
 		// [CdiHandle]ファイル出力.
 		if(!params.isCdiHandleEmpty()) {
-			GCdiOutputJavaSrc.cdiHandle(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.cdiHandle(cmdPms.javaSourceDir, params);
 			System.out.println( " cdiHandle            : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + CDI_SERVICE_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.CDI_SERVICE_SOURCE_NAME);
 		}
 		
 		// [ProxyScoped]ファイル出力.
 		if(!params.isProxyScopedEmpty()) {
-			GCdiOutputJavaSrc.proxyScoped(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.proxyScoped(cmdPms.javaSourceDir, params);
 			System.out.println( " proxyScoped          : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + PROXY_SCOPED_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.CDI_PROXY_SCOPED_SOURCE_NAME);
 		}
 		
 		// [QuinaLoopScoped]ファイル出力.
 		if(!params.isQuinaLoopEmpty()) {
-			GCdiOutputJavaSrc.quinaLoopScoped(cmdPms.javaSourceDir, params);
+			CdiOutputJavaSrc.quinaLoopScoped(cmdPms.javaSourceDir, params);
 			System.out.println( " quinaLoopScoped      : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
-				"/" + CDI_DIRECTORY_NAME + "/" + QUINA_LOOP_SCOPED_SOURCE_NAME);
+				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
+					QuinaCTConstants.QUINA_LOOP_SCOPED_SOURCE_NAME);
 		}
 		
 		
@@ -476,11 +466,11 @@ public class GenerateCdi {
 		// エラーが発生した場合は、生成されるGCi情報を破棄する.
 		try {
 			// 
-			GCdiRemoveFileOrDir.removeOutAutoJavaSource(javaSourceDir);
+			CdiRemoveFileOrDir.removeOutAutoJavaSource(javaSourceDir);
 		} catch(Exception e) {}
 		try {
 			// 
-			GCdiRemoveFileOrDir.removeProxyDirectory(javaSourceDir);
+			CdiRemoveFileOrDir.removeProxyDirectory(javaSourceDir);
 		} catch(Exception e) {}
 	}
 }

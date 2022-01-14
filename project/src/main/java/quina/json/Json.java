@@ -26,13 +26,13 @@ public final class Json {
 	private static final int TYPE_MAP = 1;
 
 	// 基本変換クラス.
-	private static final class BaseJsonIO implements CustomJsonIO {
+	private static final class BaseJsonAnalysis implements JsonCustomAnalysis{
 		// ノーマル実装で処理を行う.
 	}
 
 	// 変換クラス.
-	private static final AtomicReference<CustomJsonIO> convertJsonIO =
-		new AtomicReference<CustomJsonIO>(new BaseJsonIO());
+	private static final AtomicReference<JsonCustomAnalysis> convJsonAnalysis =
+		new AtomicReference<JsonCustomAnalysis>(new BaseJsonAnalysis());
 
 	/** コンストラクタ. **/
 	protected Json() {
@@ -40,25 +40,25 @@ public final class Json {
 
 	/**
 	 * カスタムJSON変換クラスを取得.
-	 * @return CustomJsonIO 現在のカスタムJSON変換オブジェクトが返却されます.
+	 * @return JsonCustomAnalysis 現在のカスタムJSON変換オブジェクトが返却されます.
 	 */
-	public static final CustomJsonIO getCustomJsonIO() {
-		return convertJsonIO.get();
+	public static final JsonCustomAnalysis getJsonCustomAnalysis() {
+		return convJsonAnalysis.get();
 	}
 
 	/**
 	 * カスタムJSON変換クラスを登録.
 	 * @param custom 置き換えるカスタムJSON変換オブジェクトを設定します.
- 	 * @return CustomJsonIO 前回登録されてたカスタムJSON変換オブジェクトが返却されます.
+ 	 * @return JsonCustomAnalysis 前回登録されてたカスタムJSON変換オブジェクトが返却されます.
 	 */
-	public static final CustomJsonIO setCustomJsonIO(
-		final CustomJsonIO custom) {
+	public static final JsonCustomAnalysis setJsonCustomAnalysis(
+		final JsonCustomAnalysis custom) {
 		if(custom == null) {
 			return null;
 		}
-		CustomJsonIO old = convertJsonIO.get();
-		while(!convertJsonIO.compareAndSet(old, custom)) {
-			old = convertJsonIO.get();
+		JsonCustomAnalysis old = convJsonAnalysis.get();
+		while(!convJsonAnalysis.compareAndSet(old, custom)) {
+			old = convJsonAnalysis.get();
 		}
 		return old;
 	}
@@ -166,7 +166,7 @@ public final class Json {
 	/** [encodeJSON]jsonコンバート. **/
 	private static final void _encode(
 		final JsonBuilder buf, final Object base, final Object target) {
-		final CustomJsonIO conv = convertJsonIO.get();
+		final JsonCustomAnalysis conv = convJsonAnalysis.get();
 		if (target == null) {
 			buf.append(conv.nullToString());
 		} else if (target instanceof Map) {
@@ -273,7 +273,7 @@ public final class Json {
 			return json;
 		}
 		// JSON変換I/Oを取得.
-		final CustomJsonIO conv = convertJsonIO.get();
+		final JsonCustomAnalysis conv = convJsonAnalysis.get();
 		// 文字列コーテーション区切り.
 		if ((json.startsWith("\"") &&
 				json.endsWith("\""))
@@ -375,7 +375,7 @@ public final class Json {
 		final int len) {
 		String value;
 		StringBuilder before = null;
-		final CustomJsonIO conv = convertJsonIO.get();
+		final JsonCustomAnalysis conv = convJsonAnalysis.get();
 		// List.
 		if (type == TYPE_ARRAY) {
 			final List<Object> ret = new TypesList<Object>();

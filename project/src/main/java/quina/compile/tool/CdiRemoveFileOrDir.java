@@ -1,26 +1,21 @@
-package quina.command.generateCdi;
-
-import static quina.command.generateCdi.GCdiConstants.CDI_DIRECTORY_NAME;
-import static quina.command.generateCdi.GCdiConstants.OUTPUT_SOURCE_ARRAY;
-import static quina.command.generateCdi.GCdiConstants.PROXY_DIRECTORY_NAME;
+package quina.compile.tool;
 
 import java.io.IOException;
 
 import quina.util.FileUtil;
 
 /**
- * GCdiが作成するファイル及びディレクトリを削除する
- * 処理群.
+ * Cdiで作成するファイル及びディレクトリを削除する処理群.
  */
-public final class GCdiRemoveFileOrDir {
-	private GCdiRemoveFileOrDir() {}
+public final class CdiRemoveFileOrDir {
+	private CdiRemoveFileOrDir() {}
 	
 	/**
-	 * GCdiが生成する内容を全削除.
+	 * Cdiが生成する内容を全削除.
 	 * @param outSourceDirectory JavaSource出力先ディレクトリを設定します.
 	 * @param nativeImgDir NativeConfig出力先ディレクトリを設定します.
 	 */
-	public static final void removeOutGCdi(
+	public static final void removeOutCdi(
 		String outSourceDirectory, String nativeImgDir) {
 		removeOutAutoJavaSource(outSourceDirectory);
 		removeProxyDirectory(outSourceDirectory);
@@ -34,8 +29,8 @@ public final class GCdiRemoveFileOrDir {
 	 */
 	public static final void removeOutAutoJavaSource(
 		String outSourceDirectory) {
-		String[] javaSrcs = OUTPUT_SOURCE_ARRAY;
-		String outDir = outSourceDirectory + "/" + CDI_DIRECTORY_NAME + "/";
+		String[] javaSrcs = QuinaCTConstants.OUTPUT_SOURCE_ARRAY;
+		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/";
 		int len = javaSrcs.length;
 		for(int i = 0; i < len; i ++) {
 			try {
@@ -52,7 +47,7 @@ public final class GCdiRemoveFileOrDir {
 		String outSourceDirectory) {
 		try {
 			FileUtil.delete(
-				outSourceDirectory + "/" +PROXY_DIRECTORY_NAME);
+				outSourceDirectory + "/" + QuinaCTConstants.CDI_PROXY_DIRECTORY_NAME);
 		} catch(Exception e) {
 		}
 	}

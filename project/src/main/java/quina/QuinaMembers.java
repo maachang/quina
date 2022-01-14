@@ -5,9 +5,7 @@ import quina.annotation.cdi.CdiReflectManager;
 import quina.annotation.cdi.CdiServiceManager;
 import quina.annotation.proxy.ProxyScopedManager;
 import quina.annotation.quina.AnnotationQuina;
-import quina.component.ExecuteComponent;
 import quina.exception.QuinaException;
-import quina.http.HttpCustomAnalysisParams;
 import quina.http.controll.ipv4.IpPermissionAccessControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
@@ -362,25 +360,6 @@ final class QuinaMembers {
 			this.quinaWorkerService.addCallHandle(
 				QuinaConstants.REG_WORKER_CALL_HANDLES[i]);
 		}
-	}
-	
-	/**
-	 * HTTPパラメータ解析をカスタマイズ解析するオブジェクトを設定.
-	 * @return custom カスタムオブジェクトを設定します.
-	 */
-	public void setHttpCustomAnalysisParams(
-		HttpCustomAnalysisParams custom) {
-		ExecuteComponent.getInstance()
-			.setHttpCustomAnalysisParams(custom);
-	}
-	
-	/**
-	 * HTTPパラメータ解析をカスタマイズ解析するオブジェクトを取得.
-	 * @return HttpCustomAnalysisParams カスタムオブジェクトが返却されます.
-	 */
-	public HttpCustomAnalysisParams getHttpCustomAnalysisParams() {
-		return ExecuteComponent.getInstance()
-			.getHttpCustomAnalysisParams();
 	}
 	
 	/**

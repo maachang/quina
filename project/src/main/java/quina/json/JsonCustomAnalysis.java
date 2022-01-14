@@ -3,7 +3,7 @@ package quina.json;
 /**
  * JSONのI/Oに対するカスタム変換処理を定義します.
  */
-public interface CustomJsonIO {
+public interface JsonCustomAnalysis {
 
 	/**
 	 * null情報をJSON文字列変換.
@@ -48,7 +48,9 @@ public interface CustomJsonIO {
 	 */
 	default String binaryToString(byte[] bin) {
 		// Base64変換.
-		return "\"" + java.util.Base64.getEncoder().encodeToString(bin) + "\"";
+		return "\"" +
+			java.util.Base64.getEncoder().encodeToString(bin) +
+			"\"";
 	}
 
 	/**

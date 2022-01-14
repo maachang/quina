@@ -1,4 +1,4 @@
-package quina.command;
+package quina.compile.tool;
 
 import java.io.File;
 import java.net.URL;
@@ -16,10 +16,10 @@ import quina.util.FileUtil;
 /**
  * ResourceScopedアノテーションが定義された
  * クラス内でBuildResourceアノテーション定義
- * されてる条件に対してリソースファイルを
+ * されてる条件を元にリソースファイルを
  * コピーします.
  */
-public class CopyResource {
+public class QuinaRC {
 	
 	/**
 	 * CopyResourceバージョン.
@@ -29,7 +29,7 @@ public class CopyResource {
 	/**
 	 *  CopyResourceコマンド名.
 	 */
-	public static final String COMMAND_NAME = "cpRes";
+	public static final String COMMAND_NAME = "qrcp";
 	
 	/**
 	 * メイン処理.
@@ -38,7 +38,7 @@ public class CopyResource {
 	 */
 	public static final void main(String[] args)
 		throws Exception {
-		CopyResource cmd = new CopyResource(args);
+		QuinaRC cmd = new QuinaRC(args);
 		try {
 			cmd.execute();
 		} catch(Exception e) {
@@ -54,7 +54,7 @@ public class CopyResource {
 	 * コンストラクタ.
 	 * @param args
 	 */
-	private CopyResource(String[] args) {
+	private QuinaRC(String[] args) {
 		this.args = new Args(args);
 	}
 	
@@ -81,8 +81,6 @@ public class CopyResource {
 		System.out.println("     For the directory, specify the top package name directory.");
 		System.out.println("  -c [--class] {directory}");
 		System.out.println("     Set the directory for the target class files.");
-		System.out.println("     If this definition is not specified, one or more");
-		System.out.println("     -j or --jar definitions are required. ");
 		System.out.println();
 	}
 	

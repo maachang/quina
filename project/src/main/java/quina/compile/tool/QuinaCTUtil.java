@@ -1,4 +1,4 @@
-package quina.command.generateCdi;
+package quina.compile.tool;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -22,8 +22,8 @@ import quina.exception.QuinaException;
 /**
  * GenerateCdiユーティリティ.
  */
-public class GCdiUtil {
-	private GCdiUtil() {}
+public class QuinaCTUtil {
+	private QuinaCTUtil() {}
 	
 	/**
 	 * 指定annotationが対象クラスに一致するか継承している
@@ -114,7 +114,7 @@ public class GCdiUtil {
 	 * @return Class<?> クラスオブジェクトが返却されます.
 	 * @throws ClassNotFoundException クラス読み込み例外.
 	 */
-	public static final Class<?> getClass(String name, GCdiParams params)
+	public static final Class<?> getClass(String name, QuinaCTParams params)
 		throws ClassNotFoundException {
 		return getClass(name, params.cl);
 	}
@@ -234,7 +234,7 @@ public class GCdiUtil {
 	 * @return int 取得したクラス名一覧数が返却されます.
 	 */
 	public static final int findClassDirByClassNames(
-		List<String> out, GCdiParams params, String classDir) {
+		List<String> out, QuinaCTParams params, String classDir) {
 		if(out == null) {
 			throw new QuinaException(
 				"The list object to store the result is not set.");
@@ -247,7 +247,7 @@ public class GCdiUtil {
 	
 	// Classディレクトリからクラス名一覧を取得.
 	private static final void _findClassDirByClassNames(
-		List<String> out, GCdiParams params, int[] count, String packageName,
+		List<String> out, QuinaCTParams params, int[] count, String packageName,
 		String classDir) {
 		String target;
 		File f = new File(classDir);
@@ -266,9 +266,9 @@ public class GCdiUtil {
 				out.add(createClassName(packageName, list[i]));
 				count[0] ++;
 			// リソースファイルの場合.
-			} else if(params.resourceItemFlag &&
-				list[i].endsWith(".properties")) {
-				params.resList.add(
+			} else if(list[i].endsWith(".properties") &&
+				params.registerResourceItemFlag) {
+				params.regResourceList.add(
 					createClassName(packageName, list[i]));
 			}
 		}
@@ -302,13 +302,13 @@ public class GCdiUtil {
 	/**
 	 * 指定jarファイルからクラス名一覧を取得.
 	 * @param out クラス名一覧を格納するリストを設定します.
-	 * @param params 対象のGCdiParamsを設定します.
+	 * @param params 対象のQuinaCTParamsを設定します.
 	 * @param jarFileName jarファイル名を設定します.
 	 * @return int 取得したクラス名一覧数が返却されます.
 	 * @throws Exception 例外.
 	 */
 	public static final int findJarByClassNames(
-		List<String> out, GCdiParams params, String jarFileName)
+		List<String> out, QuinaCTParams params, String jarFileName)
 		throws Exception {
 		if(out == null) {
 			throw new QuinaException(
@@ -336,9 +336,9 @@ public class GCdiUtil {
 					out.add(zipEntryNameByClassName(name));
 					ret ++;
 				// リソースファイルの場合.
-				} else if(params.resourceItemFlag &&
-					name.endsWith(".properties")) {
-					params.resList.add(zipEntryNameByClassName(name));
+				} else if(name.endsWith(".properties") &&
+					params.registerResourceItemFlag) {
+					params.regResourceList.add(zipEntryNameByClassName(name));
 				}
 			}
 			zip.close();
@@ -429,10 +429,10 @@ public class GCdiUtil {
 	 * @throws ClassNotFoundException
 	 */
 	public static final void checkPublicClass(
-		String clazzName, GCdiParams params)
+		String clazzName, QuinaCTParams params)
 		throws ClassNotFoundException {
 		// 対象のクラスをロード.
-		final Class<?> c = GCdiUtil.getClass(clazzName, params.cl);
+		final Class<?> c = QuinaCTUtil.getClass(clazzName, params.cl);
 		checkPublicClass(c);
 	}
 	

@@ -5,13 +5,14 @@ import quina.annotation.resource.ResourceMode;
 import quina.annotation.resource.ResourceScoped;
 
 /**
- * Quina jdbc console コンテンツをclassに
+ * Quina jdbc console コンテンツをclassディレクトリに
  * コピー処理を行う.
  */
 @ResourceScoped
 public class QuinaJDBCConsoleCopyResource {
 	// copy file list.
-	private static final String[] COPY_LIST = new String[] {
+	private static final String[] COPY_LIST =
+		new String[] {
 		"login.html",
 		"console.html",
 		"base.js",

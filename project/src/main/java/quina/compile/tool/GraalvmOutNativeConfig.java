@@ -1,4 +1,4 @@
-package quina.command.generateCdi;
+package quina.compile.tool;
 
 import quina.annotation.nativeimage.AnnotationNativeImage;
 import quina.annotation.nativeimage.ExecuteNativeBuildStep;
@@ -13,10 +13,10 @@ import quina.nativeimage.ResourceItem;
 import quina.util.FileUtil;
 
 /**
- * NativeImage用のコンフィグファイルを生成.
+ * GraalVM用Nativeコンフィグファイルを生成.
  */
-public class NativeImages {
-	private NativeImages() {}
+public class GraalvmOutNativeConfig {
+	private GraalvmOutNativeConfig() {}
 	
 	/**
 	 * NativeConfigScoped定義されていて、クラス指定が
@@ -24,11 +24,11 @@ public class NativeImages {
 	 * ローディングされていて、その中のNativeBuildStep
 	 * アノテーションが定義されてるMethod群を実行します.
 	 * @param c 対象のクラスを設定します.
-	 * @param params GCdiParamsを設定します.
+	 * @param params QuinaCTParamsを設定します.
 	 * @return boolean trueの場合実行出来ました.
 	 */
 	public static final boolean executeExecuteStep(
-		Class<?> c, GCdiParams params) {
+		Class<?> c, QuinaCTParams params) {
 		ExecuteNativeBuildStep step =
 			AnnotationNativeImage.nativeConfigScoped(
 				c, params.cl);
@@ -55,7 +55,7 @@ public class NativeImages {
 	 * @param directory 出力先フォルダを設定します.
 	 * @param charset コンフィグ出力対象の文字コードを設定します.
 	 */
-	public static final void outputNativeConfig(
+	public static final void output(
 		String directory, String charset) {
 		// ディレクトリ名が存在しない.
 		if(directory == null || directory.isEmpty()) {
@@ -68,13 +68,12 @@ public class NativeImages {
 			charset = "UTF8";
 		}
 		// 一旦ディエクトリを削除.
-		GCdiRemoveFileOrDir.removeNativeConfigDirectory(directory);
+		CdiRemoveFileOrDir.removeNativeConfigDirectory(directory);
 		try {
 			// ディレクトリ名が存在しない場合.
 			if(!FileUtil.isDir(directory)) {
 				// ディレクトリを作成.
 				FileUtil.mkdirs(directory);
-			} else {
 			}
 			// NativeImage用のコンフィグ定義を出力.
 			final int len = LIST.length;

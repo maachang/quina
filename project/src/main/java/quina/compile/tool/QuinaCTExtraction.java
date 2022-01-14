@@ -1,4 +1,4 @@
-package quina.command.generateCdi;
+package quina.compile.tool;
 
 import java.util.List;
 
@@ -21,8 +21,8 @@ import quina.worker.QuinaLoopElement;
 /**
  * Cdiオブジェクトを抽出.
  */
-public class GCdiExtraction {
-	private GCdiExtraction() {}
+public class QuinaCTExtraction {
+	private QuinaCTExtraction() {}
 	
 	/**
 	 * Cdiオブジェクトを抽出.
@@ -33,7 +33,7 @@ public class GCdiExtraction {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static final void extraction(
 		List<String> classList, String javaSourceDir, String clazzDir,
-		GCdiParams params)
+		QuinaCTParams params)
 		throws Exception {
 		String className;
 		final int len = classList == null ? 0 : classList.size();
@@ -43,7 +43,7 @@ public class GCdiExtraction {
 			// クラスを取得.
 			final Class c;
 			try {
-				c = GCdiUtil.getClass(className, params);
+				c = QuinaCTUtil.getClass(className, params);
 			} catch(NoClassDefFoundError e) {
 				// 詳細情報を表示する場合.
 				if(params.isVerbose()) {
@@ -62,19 +62,19 @@ public class GCdiExtraction {
 			}
 			
 			// NativeImageコンフィグ用アノテーション定義の場合.
-			if(NativeImages.executeExecuteStep(c, params)) {
+			if(GraalvmOutNativeConfig.executeExecuteStep(c, params)) {
 				// 読み込まれたら対象クラス名を出力.
 				System.out.println("  > loadNativeConf    : " + className);
 			}
 			
 			// 利用可能なアノテーションが定義されていない場合.
-			if(!GCdiConstants.isDefineAnnotation(c) &&
-				!GCdiConstants.isProxyAnnotation(c)) {
+			if(!QuinaCTConstants.isDefineAnnotation(c) &&
+				!QuinaCTConstants.isProxyAnnotation(c)) {
 				
 				// クラスのインスタンスを生成.
 				Object o;
 				try {
-					o = GCdiUtil.newInstance(c);
+					o = QuinaCTUtil.newInstance(c);
 				} catch(java.lang.NoClassDefFoundError e) {
 					if(params.verbose) {
 						System.out.println(
@@ -114,7 +114,7 @@ public class GCdiExtraction {
 			}
 			// CdiScoped定義のクラスの場合.
 			// 継承アノテーションありで検索.
-			if(GCdiUtil.isAnnotation(c, CdiScoped.class)) {
+			if(QuinaCTUtil.isAnnotation(c, CdiScoped.class)) {
 				System.out.println("  > cdiScoped         : " + className);
 				// Reflectリストに追加.
 				params.refList.add(className);
@@ -123,7 +123,7 @@ public class GCdiExtraction {
 			
 			// ServiceScoped定義のCdiServiceの場合.
 			// 継承アノテーションありで検索.
-			if(GCdiUtil.isAnnotation(c, ServiceScoped.class)) {
+			if(QuinaCTUtil.isAnnotation(c, ServiceScoped.class)) {
 				System.out.println("  > cdiService        : " + className);
 				// Cdiリストに追加.
 				params.cdiList.add(className);
@@ -141,7 +141,7 @@ public class GCdiExtraction {
 			}
 			
 			// クラスのインスタンスを生成.
-			final Object o = GCdiUtil.newInstance(c);
+			final Object o = QuinaCTUtil.newInstance(c);
 			
 			// QuinaServiceScoped定義のQuinaServiceの場合.
 			if(o instanceof QuinaService &&

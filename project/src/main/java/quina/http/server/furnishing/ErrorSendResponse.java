@@ -43,6 +43,7 @@ public interface ErrorSendResponse<T>
 	 * @param value エラーデータを設定します.
 	 * @return T オブジェクトが返却されます.
 	 */
+	@SuppressWarnings("resource")
 	default T sendError(int status, Object value) {
 		if(!isCallSendMethod()) {
 			return (T)this;

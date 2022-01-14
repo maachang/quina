@@ -1,4 +1,4 @@
-package quina.command.generateCdi;
+package quina.compile.tool;
 
 import quina.QuinaServiceManager;
 import quina.Router;
@@ -22,8 +22,8 @@ import quina.worker.QuinaWorkerService;
 /**
  * GenerateCdi定義関連.
  */
-public class GCdiConstants {
-	private GCdiConstants() {}
+public class QuinaCTConstants {
+	private QuinaCTConstants() {}
 	
 	/**
 	 * GenerateCdiバージョン.
@@ -33,20 +33,20 @@ public class GCdiConstants {
 	/**
 	 *  GenerateCdiコマンド名.
 	 */
-	public static final String COMMAND_NAME = "genCdi";
+	public static final String COMMAND_NAME = "qct";
 	
 	/**
 	 * Cdi出力先ディレクトリ名.
 	 */
 	public static final String CDI_DIRECTORY_NAME =
-		GCdiUtil.packageNameToDirectory(
+		QuinaCTUtil.packageNameToDirectory(
 			AnnotationCdiConstants.CDI_PACKAGE_NAME);
 	
 	/**
 	 * ProxyScoped出力先ディレクトリ名.
 	 */
-	public static final String PROXY_DIRECTORY_NAME =
-		GCdiUtil.packageNameToDirectory(
+	public static final String CDI_PROXY_DIRECTORY_NAME =
+		QuinaCTUtil.packageNameToDirectory(
 			AnnotationProxyScopedConstants.OUTPUT_AUTO_SOURCE_PROXY_PACKAGE_NAME);
 	
 	/**
@@ -82,7 +82,7 @@ public class GCdiConstants {
 	/**
 	 * ProxyScoped出力先Javaソースファイル名.
 	 */
-	public static final String PROXY_SCOPED_SOURCE_NAME =
+	public static final String CDI_PROXY_SCOPED_SOURCE_NAME =
 		ProxyScopedManager.AUTO_READ_PROXY_SCOPED_CLASS + ".java";
 	
 	/**
@@ -101,7 +101,7 @@ public class GCdiConstants {
 		,CDI_REFLECT_SOURCE_NAME
 		,QUINA_SERVICE_SOURCE_NAME
 		,CDI_HANDLE_SOURCE_NAME
-		,PROXY_SCOPED_SOURCE_NAME
+		,CDI_PROXY_SCOPED_SOURCE_NAME
 		,QUINA_LOOP_SCOPED_SOURCE_NAME
 	};
 	
@@ -123,8 +123,8 @@ public class GCdiConstants {
 			|| c.isAnnotationPresent(QuinaServiceScoped.class)
 			|| c.isAnnotationPresent(CdiHandleScoped.class)
 			|| c.isAnnotationPresent(QuinaLoopScoped.class)
-			|| GCdiUtil.isAnnotation(c, ServiceScoped.class)
-			|| GCdiUtil.isAnnotation(c, CdiScoped.class)
+			|| QuinaCTUtil.isAnnotation(c, ServiceScoped.class)
+			|| QuinaCTUtil.isAnnotation(c, CdiScoped.class)
 		;
 	}
 	
