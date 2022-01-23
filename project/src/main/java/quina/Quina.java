@@ -171,10 +171,12 @@ public final class Quina {
 	 * その場合は以下のような形で実装することで対応
 	 * 出来ます.
 	 * 
+	 * <code><pre>
 	 * final HttpContext ctx = Quina.getContext();
 	 * xxxx.execute(() -> {
 	 *   ctx.anyResponse().send("hoge");
 	 * }
+	 * </pre></code>
 	 * 
 	 * @return HttpContext HttpContextが返却されます.
 	 */

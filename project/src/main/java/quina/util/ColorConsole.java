@@ -7,11 +7,11 @@ import quina.util.collection.IndexKeyValueList;
 /**
  * コンソールカラー文字出力.
  * 
- * 基本的にlinuxやmacのコンソールでしか、動作しない。
+ * 基本的にlinuxやmacやwindowsのコンソールでしか、動作しません.
  * 
- * 使い方は以下の通り。
+ * 使い方は以下の通り.
  * 
- * ColorConsole c = new ColorConsole();
+ * ColorConsole c = ColorConsole.get();
  * c.println("aa<#blue>aa<#red>bbbb<#/red>ccc<#/blue>ddd");
  * 
  * または
@@ -19,20 +19,30 @@ import quina.util.collection.IndexKeyValueList;
  * 
  */
 public class ColorConsole {
-	private static final String black   = "\u001b[00;30m"; // 黒.
-	private static final String red     = "\u001b[00;31m"; // 赤.
-	private static final String green   = "\u001b[00;32m"; // 緑.
-	private static final String yellow  = "\u001b[00;33m"; // 黄色.
-	private static final String blue    = "\u001b[00;34m"; // 青.
-	private static final String magenta = "\u001b[00;35m"; // 紫.
-	private static final String cyan    = "\u001b[00;36m"; // 水色.
-	private static final String white   = "\u001b[00;37m"; // 白.
-	private static final String endCode = "\u001b[00m";    // 元に戻す.
 	
-	// カラー要素.
-	private static final String[] colorValues = new String[] {
-		black, red, green, yellow, blue, magenta, cyan, white
+	// カラー値.
+	private static final String black    = "\u001b[30m"; // 黒.
+	private static final String red      = "\u001b[31m"; // 赤.
+	private static final String green    = "\u001b[32m"; // 緑.
+	private static final String yellow   = "\u001b[33m"; // 黄色.
+	private static final String blue     = "\u001b[34m"; // 青.
+	private static final String magenta  = "\u001b[35m"; // 紫.
+	private static final String cyan     = "\u001b[36m"; // 水色.
+	private static final String white    = "\u001b[37m"; // 白.
+	private static final String endColor = "\u001b[00m"; // 元に戻す.
+	
+	// linux系カラー要素.
+	private static final String[] linuxColorValues = new String[] {
+		black, red, green, yellow,
+		blue, magenta, cyan, white
 	};
+	
+	// windows系カラー要素.
+	private static final String[] windowsColorValues = new String[] {
+		black, red, green, yellow,
+		blue, magenta, cyan, white
+	};
+
 	
 	// カラーテーブル.
 	private static final IndexKeyValueList<String, Integer> colorNames =
@@ -63,11 +73,37 @@ public class ColorConsole {
 		OS_TYPE = type;
 	}
 	
+	// カラー要素を取得.
+	private static final String colorValues(int no) {
+		if(OS_TYPE == IsOs.OS_UNIX ||
+			OS_TYPE == IsOs.OS_MAC_OS_X) {
+			return linuxColorValues[no];
+		} else if(OS_TYPE == IsOs.OS_WINNT){
+			return windowsColorValues[no];
+		}
+		return "";
+	}
+	
+	// カラー要素終端を取得.
+	private static final String endColor() {
+		if(OS_TYPE == IsOs.OS_UNIX ||
+			OS_TYPE == IsOs.OS_MAC_OS_X) {
+			return endColor;
+		} else if(OS_TYPE == IsOs.OS_WINNT){
+			return endColor;
+		}
+		return "";
+	}
+	
 	// カラーコードをセット.
-	private static final String colorString(boolean noColorMode, String s) {
-		final boolean linuxMode = noColorMode && (OS_TYPE == IsOs.OS_UNIX || OS_TYPE == IsOs.OS_MAC_OS_X);
+	private static final String colorString(
+		boolean noColorMode, String s) {
+		final boolean linuxMode = noColorMode &&
+			(OS_TYPE == IsOs.OS_UNIX ||
+			OS_TYPE == IsOs.OS_MAC_OS_X);
 		StringBuilder buf = new StringBuilder();
-		LinkedList<Integer> stack = new LinkedList<Integer>();
+		LinkedList<Integer> stack =
+			new LinkedList<Integer>();
 		
 		int p, b, pp;
 		boolean endFlg = false;
@@ -114,9 +150,9 @@ public class ColorConsole {
 						stack.pop();
 						if(stack.size() == 0) {
 							// ENDコードをセット.
-							buf.append(endCode);
+							buf.append(endColor());
 						} else {
-							buf.append(colorValues[stack.peek()]);
+							buf.append(colorValues(stack.peek()));
 						}
 					}
 				}
@@ -132,23 +168,23 @@ public class ColorConsole {
 					}
 					if(stack.size() == 0) {
 						// ENDコードをセット.
-						buf.append(endCode);
+						buf.append(endColor());
 					} else {
-						buf.append(colorValues[stack.peek()]);
+						buf.append(colorValues(stack.peek()));
 					}
 				}
 			// linuxモードの場合のみ.
 			} else if(linuxMode) {
 				// カラーコードをセット.
 				stack.push(v);
-				buf.append(colorValues[v]);
+				buf.append(colorValues(v));
 			}
 		}
 		// 残りを出力.
 		buf.append(s.substring(b));
 		if(linuxMode && stack.size() > 0) {
 			// ENDコードをセット.
-			buf.append(endCode);
+			buf.append(endColor());
 		}
 		return buf.toString();
 	}

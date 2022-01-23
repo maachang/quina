@@ -22,14 +22,14 @@ public interface UserPasswordAuthControll
 	 * @return String ユーザー名が設定されている
 	 *                パラメータキー名が返却されます.
 	 */
-	public String getUser();
+	public String getUserKeyName();
 	
 	/**
 	 * パスワードが設定されているパラメータキー名を取得.
 	 * @return String パスワードが設定されている
 	 *                パラメータキー名が返却されます.
 	 */
-	public String getPassword();
+	public String getPasswordKeyName();
 	
 	@Override
 	default boolean isAccess(Request req) {
@@ -43,7 +43,7 @@ public interface UserPasswordAuthControll
 	 * @return boolean trueの場合、認証は成功しました.
 	 */
 	default boolean isUserPasswordAuth(Params params) {
-		return isAuth(params.getString(getUser()),
-				params.getString(getPassword()));
+		return isAuth(params.getString(getUserKeyName()),
+				params.getString(getPasswordKeyName()));
 	}
 }

@@ -1,4 +1,4 @@
-package quina.compile.tool;
+package quina.compile.tool.gdi;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,6 +17,9 @@ import quina.annotation.proxy.ProxyField;
 import quina.annotation.proxy.ProxyInitialSetting;
 import quina.annotation.proxy.ProxyInjectMethod;
 import quina.annotation.proxy.ProxyOverride;
+import quina.compile.tool.QuinaCTConstants;
+import quina.compile.tool.QuinaCTParams;
+import quina.compile.tool.QuinaCTUtil;
 import quina.exception.QuinaException;
 import quina.util.FileUtil;
 import quina.util.InstanceOf;

@@ -47,7 +47,7 @@
   <!-- ===================================================================== -->
   <!-- all.                                                                  -->
   <!-- ===================================================================== -->
-  <target name="all" depends="delGCdi, compile, cpRes, genCdi, nextGenCdiCompile, jar"/>
+  <target name="all" depends="delQuinaCT, compile, quinaRCP, quinaCT, nextCompile, jar"/>
   
   <!-- ===================================================================== -->
   <!-- compile.                                                              -->
@@ -70,7 +70,7 @@
   </target>
   
   <!-- next genCdi compile. -->
-  <target name="nextGenCdiCompile">
+  <target name="nextCompile">
     <mkdir dir="${dest.dir}" />
     <javac includeantruntime="false"
            srcdir="${src.dir}"
@@ -140,10 +140,10 @@
   </target>
 
   <!-- ===================================================================== -->
-  <!-- execute genCdi.                                                      -->
+  <!-- execute quinaCT.                                                      -->
   <!-- ===================================================================== -->
-  <target name="genCdi">
-    <java classname="quina.command.GenerateCdi" fork="true">
+  <target name="quinaCT">
+    <java classname="quina.compile.tool.QuinaCT" fork="true">
       <classpath refid="path.lib" />
       <jvmarg value="-Xms128m" />
       <jvmarg value="-Xmx128m" />
@@ -162,10 +162,10 @@
   </target>
 
   <!-- ===================================================================== -->
-  <!-- delete genGCdi.                                                      -->
+  <!-- delete quinaCT.                                                      -->
   <!-- ===================================================================== -->
-  <target name="delGCdi">
-    <java classname="quina.command.GenerateCdi" fork="true">
+  <target name="delQuinaCT">
+    <java classname="quina.compile.tool.QuinaCT" fork="true">
       <classpath refid="path.lib" />
       <jvmarg value="-Xms128m" />
       <jvmarg value="-Xmx128m" />
@@ -178,10 +178,10 @@
   </target>
 
   <!-- ===================================================================== -->
-  <!-- execute cpRes.                                                      -->
+  <!-- execute quinaRCP.                                                      -->
   <!-- ===================================================================== -->
-  <target name="cpRes">
-    <java classname="quina.command.CopyResource" fork="true">
+  <target name="quinaRCP">
+    <java classname="quina.compile.tool.QuinaRCP" fork="true">
       <classpath refid="path.lib" />
       <jvmarg value="-Xms128m" />
       <jvmarg value="-Xmx128m" />

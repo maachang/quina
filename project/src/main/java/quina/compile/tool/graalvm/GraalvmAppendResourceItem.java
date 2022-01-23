@@ -1,7 +1,8 @@
-package quina.compile.tool;
+package quina.compile.tool.graalvm;
 
 import java.util.List;
 
+import quina.compile.tool.QuinaCTParams;
 import quina.nativeimage.ResourceItem;
 
 /**
@@ -17,7 +18,7 @@ public class GraalvmAppendResourceItem {
 	 * @param params QuinaCTParamsを設定します.
 	 * @return int 登録数が返却されます.
 	 */
-	public static final int apped(QuinaCTParams params) {
+	public static final int append(QuinaCTParams params) {
 		if(!params.registerResourceItemFlag) {
 			return 0;
 		}

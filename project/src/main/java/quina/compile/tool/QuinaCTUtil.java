@@ -75,6 +75,27 @@ public class QuinaCTUtil {
 	}
 	
 	/**
+	 * 指定文字列以下の場合スペースをセットして表示をあわせる.
+	 * @param src 表示対象の文字列を設定します.
+	 * @param fooder 文字列のフッダーを設定します.
+	 * @param max 表示対象の最大文字列を設定します.
+	 * @return String 文字列が返却されます.
+	 */
+	public static final String toSpaceString(
+		String src, String fooder, int max) {
+		int len = src.length();
+		if(len > max) {
+			return src + fooder;
+		}
+		final int spaceLen = max - len;
+		final StringBuilder ret = new StringBuilder(src);
+		for(int i = 0; i < spaceLen; i ++) {
+			ret.append(" ");
+		}
+		return ret.append(fooder).toString();
+	}
+	
+	/**
 	 * 指定Classディレクトリとjarクラスを読み込むクラローダーを作成.
 	 * @param classDir クラスディレクトリを設定します.
 	 * @param jarFileNames jarファイル名群を設定します.
@@ -227,9 +248,36 @@ public class QuinaCTUtil {
 	}
 	
 	/**
+	 * クラス群を取得.
+	 * @params 対象のQuinaCompileTool用Paramsを設定します.
+	 * @param classDir クラスディレクトリ名を設定します.
+	 * @param jarFiles jarファイル名群を設定します.
+	 * @return List<String> クラス名一覧を格納するリストを設定します
+	 * @throws Exception 例外.
+	 */
+	public static final List<String> findClassList(
+		QuinaCTParams params, String classDir, String[] jarFiles)
+		throws Exception {
+		// クラス一覧を取得.
+		List<String> ret = new ArrayList<String>();
+		// クラスディレクトリのクラス一覧を取得.
+		if(classDir != null) {
+			QuinaCTUtil.findClassDirByClassNames(ret, params, classDir);
+		}
+		// jarファイル群からクラス一覧を取得.
+		if(jarFiles != null && jarFiles.length > 0) {
+			int len = jarFiles.length;
+			for(int i = 0; i < len; i ++) {
+				QuinaCTUtil.findJarByClassNames(ret, params, jarFiles[i]);
+			}
+		}
+		return ret;
+	}
+	
+	/**
 	 * Classディレクトリからクラス名一覧を取得.
 	 * @param out クラス名一覧を格納するリストを設定します.
-	 * @param params 対象のGCぢParamsを設定します.
+	 * @param params 対象のQuinaCompileTool用Paramsを設定します.
 	 * @param classDir クラスディレクトリ名を設定します.
 	 * @return int 取得したクラス名一覧数が返却されます.
 	 */
@@ -302,7 +350,7 @@ public class QuinaCTUtil {
 	/**
 	 * 指定jarファイルからクラス名一覧を取得.
 	 * @param out クラス名一覧を格納するリストを設定します.
-	 * @param params 対象のQuinaCTParamsを設定します.
+	 * @param params 対象のQuinaCompileTool用Paramsを設定します.
 	 * @param jarFileName jarファイル名を設定します.
 	 * @return int 取得したクラス名一覧数が返却されます.
 	 * @throws Exception 例外.
@@ -520,5 +568,4 @@ public class QuinaCTUtil {
 		}
 		return ret;
 	}
-	
 }

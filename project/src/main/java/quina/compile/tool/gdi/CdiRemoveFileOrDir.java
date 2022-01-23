@@ -1,7 +1,8 @@
-package quina.compile.tool;
+package quina.compile.tool.gdi;
 
 import java.io.IOException;
 
+import quina.compile.tool.QuinaCTConstants;
 import quina.util.FileUtil;
 
 /**

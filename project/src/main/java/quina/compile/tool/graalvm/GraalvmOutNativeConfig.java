@@ -1,7 +1,9 @@
-package quina.compile.tool;
+package quina.compile.tool.graalvm;
 
 import quina.annotation.nativeimage.AnnotationNativeImage;
 import quina.annotation.nativeimage.ExecuteNativeBuildStep;
+import quina.compile.tool.QuinaCTParams;
+import quina.compile.tool.gdi.CdiRemoveFileOrDir;
 import quina.exception.QuinaException;
 import quina.nativeimage.InitializeBuildItem;
 import quina.nativeimage.InitializeRunItem;

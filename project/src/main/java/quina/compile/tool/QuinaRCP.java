@@ -19,7 +19,7 @@ import quina.util.FileUtil;
  * されてる条件を元にリソースファイルを
  * コピーします.
  */
-public class QuinaRC {
+public class QuinaRCP {
 	
 	/**
 	 * CopyResourceバージョン.
@@ -38,7 +38,7 @@ public class QuinaRC {
 	 */
 	public static final void main(String[] args)
 		throws Exception {
-		QuinaRC cmd = new QuinaRC(args);
+		QuinaRCP cmd = new QuinaRCP(args);
 		try {
 			cmd.execute();
 		} catch(Exception e) {
@@ -54,7 +54,7 @@ public class QuinaRC {
 	 * コンストラクタ.
 	 * @param args
 	 */
-	private QuinaRC(String[] args) {
+	private QuinaRCP(String[] args) {
 		this.args = new Args(args);
 	}
 	

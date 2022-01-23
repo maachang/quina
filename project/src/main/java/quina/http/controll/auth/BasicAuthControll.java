@@ -13,6 +13,12 @@ public interface BasicAuthControll
 	extends AuthControll {
 	
 	/**
+	 * デフォルトの認証メッセージ.
+	 */
+	public static final String DEFAULT_AUTH_MESSAGE =
+		"Please set the access authentication conditions.";
+	
+	/**
 	 * Basic認証を行います.
 	 * @param user ユーザー名が設定されます.
 	 * @param password パスワードが設定されます.
@@ -46,7 +52,7 @@ public interface BasicAuthControll
 		// Basic認証用のヘッダ設定.
 		String message = getAuthMessage();
 		if(message == null || message.isEmpty()) {
-			message = "Please set the access authentication conditions.";
+			message = DEFAULT_AUTH_MESSAGE;
 		}
 		// WWW-Authenticate: Basic realm="message", charset="UTF-8"
 		res.getHeader().put("WWW-Authenticate",
