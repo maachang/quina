@@ -35,7 +35,6 @@ public class QuinaCTExtraction {
 		QuinaCTParams params, List<String> classList)
 		throws Exception {
 		Class<?> c;
-		Object o;
 		String cname;
 		final int len = classList == null ?
 			0 : classList.size();
@@ -57,32 +56,26 @@ public class QuinaCTExtraction {
 				continue;
 			}
 			
-			// クラスのインスタンスを生成.
-			if((o = getObject(params, c)) == null) {
-				// 生成失敗の場合.
-				continue;
-			}
-			
 			// 非アノテーションに対するCdi条件の抽出を実施.
-			if(noAnnotationCdi(params, c, o, cname)) {
+			if(noAnnotationCdi(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
 			
 			// アノテーションに対するCdi条件の抽出を実施.
-			if(annotationCdi(params, c, o, cname)) {
+			if(annotationCdi(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
 			
 			// アノテーションコンポーネントクラスの場合.
-			if(annotationComponent(params, c, o, cname)) {
+			if(annotationComponent(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
 			
 			// アノテーションループ要素クラスの場合.
-			if(annotationLoopElement(params, c, o, cname)) {
+			if(annotationLoopElement(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
@@ -136,13 +129,21 @@ public class QuinaCTExtraction {
 	
 	// アノテーションなしのCdi定義.
 	private static final boolean noAnnotationCdi(
-		QuinaCTParams params, Class<?> c, Object o, String cname) {
+		QuinaCTParams params, Class<?> c, String cname) {
 		// 利用可能なアノテーションが定義されている場合.
 		if(QuinaCTConstants.isDefineAnnotation(c) ||
 			QuinaCTConstants.isProxyAnnotation(c)) {
 			// 処理対象としない.
 			return false;
 		}
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
+		
 		// アノテーションなしのコンポーネントの場合.
 		if(o instanceof Component ||
 			o instanceof ErrorComponent) {
@@ -166,7 +167,7 @@ public class QuinaCTExtraction {
 	
 	// アノテーションCDI定義.
 	private static final boolean annotationCdi(
-		QuinaCTParams params, Class<?> c, Object o,String cname)
+		QuinaCTParams params, Class<?> c, String cname)
 		throws Exception {
 		// CdiScoped定義のクラスの場合.
 		// 継承アノテーションありで検索.
@@ -196,6 +197,13 @@ public class QuinaCTExtraction {
 			return true;
 		}
 		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
+		
 		// QuinaServiceScoped定義のQuinaServiceの場合.
 		if(o instanceof QuinaService &&
 			c.isAnnotationPresent(QuinaServiceScoped.class)) {
@@ -223,8 +231,15 @@ public class QuinaCTExtraction {
 	
 	// アノテーションコンポーネント定義.
 	private static final boolean annotationComponent(
-		QuinaCTParams params, Class<?> c, Object o,String cname)
+		QuinaCTParams params, Class<?> c,String cname)
 		throws Exception {
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
 		
 		// 対象がコンポーネントクラスの場合.
 		if(o instanceof Component) {
@@ -286,8 +301,15 @@ public class QuinaCTExtraction {
 	
 	// アノテーションループ要素定義.
 	private static final boolean annotationLoopElement(
-		QuinaCTParams params, Class<?> c, Object o, String cname)
+		QuinaCTParams params, Class<?> c, String cname)
 		throws Exception {
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
 		
 		// QuinaLoopElementの場合.
 		if(o instanceof QuinaLoopElement) {
