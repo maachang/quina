@@ -62,19 +62,19 @@ public class QuinaCTExtraction {
 				continue;
 			}
 			
-			// アノテーションに対するCdi条件の抽出を実施.
+			// Cdi条件アノテーションの抽出を実施.
 			if(annotationCdi(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
 			
-			// アノテーションコンポーネントクラスの場合.
+			// アノテーションコンポーネントクラスの抽出を実施.
 			if(annotationComponent(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
 			
-			// アノテーションループ要素クラスの場合.
+			// アノテーションループ要素クラスの抽出を実施.
 			if(annotationLoopElement(params, c, cname)) {
 				// 対象の場合.
 				continue;
@@ -91,10 +91,9 @@ public class QuinaCTExtraction {
 			// 詳細情報を表示する場合.
 			if(params.isVerbose()) {
 				// 何らかの理由で読み込み失場合.
-				System.out.println();
-				System.out.println("    # loadError       :");
-				System.out.println("        src           : " + name);
-				System.out.println("        error         : " + e);
+				System.out.println("  > [WARNING] " + name);
+				System.out.println("    src               : " + name);
+				System.out.println("    error             : " + e);
 			}
 			// クラス取得に失敗する場合は無視.
 			return null;
@@ -108,6 +107,15 @@ public class QuinaCTExtraction {
 		try {
 			return QuinaCTUtil.newInstance(c);
 		} catch(Throwable e) {
+			// この場合、Class生成は出来るが、一方でオブジェクト化で
+			// 読み込みオブジェクトが足らない場合があって、読み込み失敗
+			// する場合"java.lang.NoSuchMethodException"等があるので、
+			// その場合は読み込みしないようにする.
+			//
+			// この場合、読み込みは失敗するが、アノテーションの定義は
+			// 抽出出来る限り行わなければ「正しい結果」にならない.
+			//
+			// 注意が必要.
 			if(params.isVerbose()) {
 				System.out.println(
 					"  > [WARNING] " + e.getClass().getName() +
@@ -133,7 +141,7 @@ public class QuinaCTExtraction {
 		// 利用可能なアノテーションが定義されている場合.
 		if(QuinaCTConstants.isDefineAnnotation(c) ||
 			QuinaCTConstants.isProxyAnnotation(c)) {
-			// 処理対象としない.
+			// 処理しない.
 			return false;
 		}
 		
@@ -141,7 +149,7 @@ public class QuinaCTExtraction {
 		Object o = null;
 		if((o = getObject(params, c)) == null) {
 			// 生成失敗の場合.
-			return false;
+			return true;
 		}
 		
 		// アノテーションなしのコンポーネントの場合.
