@@ -1,4 +1,4 @@
-package quina.annotation.nativeimage;
+package quina.compile.tool.graalvm.annotation;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

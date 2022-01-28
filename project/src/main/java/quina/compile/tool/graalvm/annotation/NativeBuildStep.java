@@ -1,4 +1,4 @@
-package quina.annotation.nativeimage;
+package quina.compile.tool.graalvm.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

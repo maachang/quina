@@ -170,6 +170,7 @@ public class QuinaCTExtraction {
 			// Reflectリストに追加.
 			params.refList.add(cname);
 		}
+		//処理完了の場合.
 		return true;
 	}
 	

@@ -1,17 +1,17 @@
 package quina.compile.tool.graalvm;
 
-import quina.annotation.nativeimage.AnnotationNativeImage;
-import quina.annotation.nativeimage.ExecuteNativeBuildStep;
 import quina.compile.tool.QuinaCTParams;
 import quina.compile.tool.gdi.CdiRemoveFileOrDir;
+import quina.compile.tool.graalvm.annotation.AnnotationNativeImage;
+import quina.compile.tool.graalvm.annotation.ExecuteNativeBuildStep;
+import quina.compile.tool.graalvm.nativeimage.InitializeBuildItem;
+import quina.compile.tool.graalvm.nativeimage.InitializeRunItem;
+import quina.compile.tool.graalvm.nativeimage.JniItem;
+import quina.compile.tool.graalvm.nativeimage.NativeImageConfig;
+import quina.compile.tool.graalvm.nativeimage.ProxyItem;
+import quina.compile.tool.graalvm.nativeimage.ReflectionItem;
+import quina.compile.tool.graalvm.nativeimage.ResourceItem;
 import quina.exception.QuinaException;
-import quina.nativeimage.InitializeBuildItem;
-import quina.nativeimage.InitializeRunItem;
-import quina.nativeimage.JniItem;
-import quina.nativeimage.NativeImageConfig;
-import quina.nativeimage.ProxyItem;
-import quina.nativeimage.ReflectionItem;
-import quina.nativeimage.ResourceItem;
 import quina.util.FileUtil;
 
 /**

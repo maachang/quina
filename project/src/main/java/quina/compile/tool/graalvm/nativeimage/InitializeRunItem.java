@@ -1,4 +1,4 @@
-package quina.nativeimage;
+package quina.compile.tool.graalvm.nativeimage;
 
 import quina.exception.QuinaException;
 import quina.util.collection.ObjectList;

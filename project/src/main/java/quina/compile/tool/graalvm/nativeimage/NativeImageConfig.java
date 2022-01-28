@@ -1,4 +1,4 @@
-package quina.nativeimage;
+package quina.compile.tool.graalvm.nativeimage;
 
 /**
  * NativeImage用のConfig定義オブジェクト.

@@ -3,7 +3,7 @@ package quina.compile.tool.graalvm;
 import java.util.List;
 
 import quina.compile.tool.QuinaCTParams;
-import quina.nativeimage.ResourceItem;
+import quina.compile.tool.graalvm.nativeimage.ResourceItem;
 
 /**
  * graalvmのNativeImageに認識させるjar内のpropertiesファイル名を
