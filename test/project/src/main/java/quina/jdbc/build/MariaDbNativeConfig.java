@@ -1,8 +1,8 @@
 package quina.jdbc.build;
 
-import quina.compile.tool.graalvm.annotation.NativeBuildStep;
-import quina.compile.tool.graalvm.annotation.NativeConfigScoped;
-import quina.compile.tool.graalvm.nativeimage.ReflectionItem;
+import quina.compile.graalvm.item.ReflectionItem;
+import quina.compile.graalvm.item.annotation.NativeBuildStep;
+import quina.compile.graalvm.item.annotation.NativeConfigScoped;
 
 /**
  * MariaDb用のGraalVM用Native-Imageコンフィグ定義.

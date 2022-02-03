@@ -1,8 +1,8 @@
 package quina.jdbc.console.build;
 
-import quina.compile.tool.graalvm.annotation.NativeBuildStep;
-import quina.compile.tool.graalvm.annotation.NativeConfigScoped;
-import quina.compile.tool.graalvm.nativeimage.ResourceItem;
+import quina.compile.graalvm.item.ResourceItem;
+import quina.compile.graalvm.item.annotation.NativeBuildStep;
+import quina.compile.graalvm.item.annotation.NativeConfigScoped;
 
 /**
  * QuinaJDBCコンソールのリソースに対するNativeImage対応.

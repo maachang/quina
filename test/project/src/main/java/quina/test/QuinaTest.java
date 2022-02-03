@@ -1,11 +1,11 @@
 package quina.test;
 
 import quina.Quina;
-import quina.annotation.cdi.CdiScoped;
-import quina.annotation.log.LogConfig;
-import quina.annotation.log.LogDefine;
-import quina.annotation.quina.QuinaServiceSelection;
+import quina.annotation.QuinaServiceSelection;
+import quina.compile.cdi.annotation.CdiScoped;
 import quina.logger.Log;
+import quina.logger.annotation.LogConfig;
+import quina.logger.annotation.LogDefine;
 
 /**
  * CDIを使ったQuinaテスト.

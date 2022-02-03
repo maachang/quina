@@ -1,6 +1,5 @@
 package quina.test.route;
 
-import quina.annotation.route.Route;
 import quina.component.restful.RESTfulGetSync;
 import quina.http.Params;
 import quina.http.Request;
@@ -10,6 +9,7 @@ import quina.jdbc.QuinaDataSource;
 import quina.jdbc.QuinaJDBCService;
 import quina.jdbc.io.IoStatement;
 import quina.json.JsonMap;
+import quina.route.annotation.Route;
 
 @Route("/json/jdbc/{id}/{name}/{grade}/testTableInsert")
 public class TestDbJsonGetInsert implements RESTfulGetSync {

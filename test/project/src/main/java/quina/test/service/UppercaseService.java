@@ -1,7 +1,7 @@
 package quina.test.service;
 
 import quina.Quina;
-import quina.annotation.cdi.ServiceScoped;
+import quina.compile.cdi.annotation.ServiceScoped;
 
 @ServiceScoped
 public class UppercaseService {

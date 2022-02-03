@@ -3,11 +3,11 @@ package quina.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import quina.annotation.proxy.ProxyField;
-import quina.annotation.proxy.ProxyInitialSetting;
-import quina.annotation.proxy.ProxyInjectMethod;
-import quina.annotation.proxy.ProxyOverride;
-import quina.annotation.proxy.ProxyScoped;
+import quina.compile.cdi.annotation.proxy.ProxyField;
+import quina.compile.cdi.annotation.proxy.ProxyInitialSetting;
+import quina.compile.cdi.annotation.proxy.ProxyInjectMethod;
+import quina.compile.cdi.annotation.proxy.ProxyOverride;
+import quina.compile.cdi.annotation.proxy.ProxyScoped;
 import quina.util.Flag;
 
 /**

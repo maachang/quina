@@ -1,14 +1,15 @@
 package quina;
 
-import quina.annotation.cdi.CdiHandleManager;
-import quina.annotation.cdi.CdiReflectManager;
-import quina.annotation.cdi.CdiServiceManager;
-import quina.annotation.proxy.ProxyScopedManager;
-import quina.annotation.quina.AnnotationQuina;
+import quina.annotation.AnnotationQuina;
+import quina.compile.cdi.annotation.CdiHandleManager;
+import quina.compile.cdi.annotation.CdiReflectManager;
+import quina.compile.cdi.annotation.CdiServiceManager;
+import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.exception.QuinaException;
 import quina.http.controll.ipv4.IpPermissionAccessControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
+import quina.route.Router;
 import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownManager;
 import quina.storage.MemoryStorageService;

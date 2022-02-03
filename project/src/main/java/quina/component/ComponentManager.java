@@ -1,6 +1,6 @@
 package quina.component;
 
-import quina.annotation.component.ResponseInitialSetting;
+import quina.component.annotation.ResponseInitialSetting;
 import quina.component.error.ErrorComponent;
 import quina.component.file.EtagManager;
 import quina.component.file.EtagManagerInfo;

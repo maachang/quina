@@ -3,7 +3,7 @@ package quina.jdbc.console;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.QuinaConfig;
-import quina.annotation.cdi.ServiceScoped;
+import quina.compile.cdi.annotation.ServiceScoped;
 import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.Request;

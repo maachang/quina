@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import quina.QuinaConfig;
 import quina.QuinaService;
-import quina.annotation.cdi.AnnotationCdiConstants;
+import quina.compile.cdi.annotation.AnnotationCdiConstants;
 import quina.exception.QuinaException;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;

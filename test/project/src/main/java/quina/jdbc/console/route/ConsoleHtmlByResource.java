@@ -1,12 +1,12 @@
 package quina.jdbc.console.route;
 
-import quina.annotation.cdi.Inject;
-import quina.annotation.route.ResourcePackage;
-import quina.annotation.route.Route;
+import quina.compile.cdi.annotation.Inject;
 import quina.component.file.ResourceFileComponent;
 import quina.http.Request;
 import quina.http.Response;
 import quina.jdbc.console.JDBCConsoleService;
+import quina.route.annotation.ResourcePackage;
+import quina.route.annotation.Route;
 
 /**
  * qunaJdbc用コンソール用HTMLファイルのI/O用

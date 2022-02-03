@@ -1,8 +1,8 @@
 package quina.jdbc.console.build;
 
-import quina.annotation.resource.BuildResource;
-import quina.annotation.resource.ResourceMode;
-import quina.annotation.resource.ResourceScoped;
+import quina.compile.cdi.annotation.resource.BuildResource;
+import quina.compile.cdi.annotation.resource.ResourceMode;
+import quina.compile.cdi.annotation.resource.ResourceScoped;
 
 /**
  * Quina jdbc console コンテンツをclassディレクトリに

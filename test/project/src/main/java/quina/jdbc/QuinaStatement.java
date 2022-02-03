@@ -2,8 +2,8 @@ package quina.jdbc;
 
 import java.sql.Statement;
 
-import quina.annotation.proxy.ProxyField;
-import quina.annotation.proxy.ProxyScoped;
+import quina.compile.cdi.annotation.proxy.ProxyField;
+import quina.compile.cdi.annotation.proxy.ProxyScoped;
 
 /**
  * QinaProxyStatement.

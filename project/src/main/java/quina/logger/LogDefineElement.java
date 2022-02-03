@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import quina.annotation.log.LogConfig;
+import quina.logger.annotation.LogConfig;
 import quina.util.NumberUtil;
 
 /**

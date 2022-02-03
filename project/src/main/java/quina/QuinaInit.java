@@ -1,15 +1,15 @@
 package quina;
 
-import quina.annotation.cdi.CdiHandleManager;
-import quina.annotation.cdi.CdiServiceManager;
-import quina.annotation.log.AnnotationLog;
-import quina.annotation.quina.AnnotationQuina;
+import quina.annotation.AnnotationQuina;
+import quina.compile.cdi.annotation.CdiHandleManager;
+import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.component.ExecuteComponent;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.CoreException;
 import quina.exception.QuinaException;
 import quina.json.Json;
 import quina.logger.LogFactory;
+import quina.logger.annotation.AnnotationLog;
 import quina.net.nio.tcp.NioUtil;
 import quina.shutdown.ShutdownConstants;
 import quina.shutdown.ShutdownManagerInfo;

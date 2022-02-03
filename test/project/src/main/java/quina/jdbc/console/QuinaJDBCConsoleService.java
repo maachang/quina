@@ -7,7 +7,7 @@ import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.QuinaUtil;
-import quina.annotation.quina.QuinaServiceScoped;
+import quina.annotation.QuinaServiceScoped;
 import quina.http.controll.AccessControll;
 import quina.http.controll.AnyAccessControll;
 import quina.http.controll.NoneAccessControll;

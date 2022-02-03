@@ -143,7 +143,7 @@
   <!-- execute quinaCT.                                                      -->
   <!-- ===================================================================== -->
   <target name="quinaCT">
-    <java classname="quina.compile.tool.QuinaCT" fork="true">
+    <java classname="quina.compile.QuinaCT" fork="true">
       <classpath refid="path.lib" />
       <jvmarg value="-Xms128m" />
       <jvmarg value="-Xmx128m" />
@@ -165,7 +165,7 @@
   <!-- delete quinaCT.                                                      -->
   <!-- ===================================================================== -->
   <target name="delQuinaCT">
-    <java classname="quina.compile.tool.QuinaCT" fork="true">
+    <java classname="quina.compile.QuinaCT" fork="true">
       <classpath refid="path.lib" />
       <jvmarg value="-Xms128m" />
       <jvmarg value="-Xmx128m" />
@@ -181,7 +181,7 @@
   <!-- execute quinaRCP.                                                      -->
   <!-- ===================================================================== -->
   <target name="quinaRCP">
-    <java classname="quina.compile.tool.QuinaRCP" fork="true">
+    <java classname="quina.compile.QuinaRCP" fork="true">
       <classpath refid="path.lib" />
       <jvmarg value="-Xms128m" />
       <jvmarg value="-Xmx128m" />

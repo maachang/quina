@@ -1,6 +1,5 @@
 package quina.component.file;
 
-import quina.annotation.route.AnnotationRoute;
 import quina.exception.QuinaException;
 import quina.http.HttpException;
 import quina.http.MimeTypes;
@@ -8,6 +7,7 @@ import quina.http.Request;
 import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
+import quina.route.annotation.AnnotationRoute;
 import quina.util.Env;
 import quina.util.FileUtil;
 

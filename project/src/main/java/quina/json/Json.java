@@ -114,9 +114,9 @@ public final class Json {
 	 * @return Object 変換されたJSON情報が返されます.
 	 */
 	public static final Object decode(String json) {
-		return decode(false, json);
+		return decode(false, false, json);
 	}
-
+	
 	/**
 	 * JSON形式から、オブジェクト変換.
 	 *
@@ -128,13 +128,29 @@ public final class Json {
 	 */
 	public static final Object decode(
 		boolean cutComment, String json) {
+		return decode(cutComment, false, json);
+	}
+
+	/**
+	 * JSON形式から、オブジェクト変換.
+	 *
+	 * @param cutComment
+	 *            コメントを削除する場合はtrue.
+	 * @param h2Comment
+	 *            trueの場合は -- コメントを有効に設定.
+	 * @param json
+	 *            対象のJSON情報を設定します.
+	 * @return Object 変換されたJSON情報が返されます.
+	 */
+	public static final Object decode(
+		boolean cutComment, boolean h2Comment, String json) {
 		if (json == null) {
 			return null;
 		}
 		// コメント削除条件が設定されている場合.
 		if(cutComment) {
 			// コメントを削除する.
-			json = cutComment(json);
+			json = cutComment(h2Comment, json);
 			if(json == null || json.isEmpty()) {
 				return null;
 			}
@@ -544,7 +560,7 @@ public final class Json {
 	 * @param str コメント除去を行う文字列を設定します.
 	 * @return String 除外された文字列が返却されます.
 	 */
-	public static final String cutComment(String str) {
+	public static final String cutComment(boolean h2, String str) {
 		if (str == null || str.length() <= 0) {
 			return "";
 		}
@@ -603,7 +619,8 @@ public final class Json {
 				}
 			}
 			// コメント(--)
-			else if (c == '-') {
+			// ただしこのコメント許可がある場合のみ.
+			else if (h2 && c == '-') {
 				if (len <= i + 1) {
 					buf.append(c);
 					continue;

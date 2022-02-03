@@ -1,13 +1,13 @@
 package quina.jdbc.console.route;
 
 import quina.annotation.Switch;
-import quina.annotation.cdi.Inject;
-import quina.annotation.component.ResponseSwitch;
-import quina.annotation.route.FilePath;
+import quina.compile.cdi.annotation.Inject;
+import quina.component.annotation.ResponseSwitch;
 import quina.component.file.FileComponent;
 import quina.http.Request;
 import quina.http.Response;
 import quina.jdbc.console.JDBCConsoleService;
+import quina.route.annotation.FilePath;
 
 /**
  * qunaJdbc用コンソール用HTMLファイルのI/O用FileComponent.

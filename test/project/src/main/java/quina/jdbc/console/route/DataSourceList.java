@@ -1,8 +1,6 @@
 package quina.jdbc.console.route;
 
-import quina.annotation.cdi.Inject;
-import quina.annotation.route.Route;
-import quina.annotation.validate.Validate;
+import quina.compile.cdi.annotation.Inject;
 import quina.component.restful.RESTfulGetSync;
 import quina.http.HttpException;
 import quina.http.Params;
@@ -13,7 +11,9 @@ import quina.jdbc.console.JDBCConsoleService;
 import quina.jdbc.console.QuinaJDBCConsoleConstants;
 import quina.json.JsonList;
 import quina.json.JsonMap;
+import quina.route.annotation.Route;
 import quina.validate.VType;
+import quina.validate.annotation.Validate;
 
 // LoginシグニチャーValidate.
 @Validate(name=QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_KEY,

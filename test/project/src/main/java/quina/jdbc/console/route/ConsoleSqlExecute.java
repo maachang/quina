@@ -3,9 +3,7 @@ package quina.jdbc.console.route;
 import java.util.ArrayList;
 import java.util.List;
 
-import quina.annotation.cdi.Inject;
-import quina.annotation.route.Route;
-import quina.annotation.validate.Validate;
+import quina.compile.cdi.annotation.Inject;
 import quina.component.restful.RESTfulPostSync;
 import quina.exception.QuinaException;
 import quina.http.HttpException;
@@ -20,10 +18,12 @@ import quina.jdbc.console.QuinaJDBCConsoleConstants;
 import quina.jdbc.io.IoStatement;
 import quina.json.JsonList;
 import quina.json.JsonMap;
+import quina.route.annotation.Route;
 import quina.util.Alphabet;
 import quina.util.Base64;
 import quina.util.StringUtil;
 import quina.validate.VType;
+import quina.validate.annotation.Validate;
 
 //LoginシグニチャーValidate.
 @Validate(name=QuinaJDBCConsoleConstants.LOGIN_SIGNETUER_KEY,

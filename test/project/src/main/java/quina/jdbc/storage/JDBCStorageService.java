@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import quina.Quina;
 import quina.QuinaConfig;
 import quina.QuinaUtil;
-import quina.annotation.quina.QuinaServiceScoped;
+import quina.annotation.QuinaServiceScoped;
 import quina.exception.QuinaException;
 import quina.storage.StorageConstants;
 import quina.storage.StorageManager;

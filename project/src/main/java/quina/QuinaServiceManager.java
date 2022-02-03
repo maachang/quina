@@ -3,8 +3,8 @@ package quina;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
-import quina.annotation.cdi.AnnotationCdiConstants;
-import quina.annotation.quina.AnnotationQuina;
+import quina.annotation.AnnotationQuina;
+import quina.compile.cdi.annotation.AnnotationCdiConstants;
 import quina.exception.QuinaException;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;

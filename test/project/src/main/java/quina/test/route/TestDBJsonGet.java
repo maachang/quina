@@ -1,6 +1,5 @@
 package quina.test.route;
 
-import quina.annotation.route.Route;
 import quina.component.restful.RESTfulGetSync;
 import quina.exception.QuinaException;
 import quina.http.Params;
@@ -11,6 +10,7 @@ import quina.jdbc.QuinaDataSource;
 import quina.jdbc.QuinaJDBCService;
 import quina.jdbc.io.QueryStatement;
 import quina.json.JsonList;
+import quina.route.annotation.Route;
 
 @Route("/json/jdbc/testTable")
 public class TestDBJsonGet implements RESTfulGetSync {

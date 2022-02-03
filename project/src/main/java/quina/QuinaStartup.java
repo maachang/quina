@@ -5,6 +5,8 @@ import quina.exception.QuinaException;
 import quina.http.controll.ipv4.IpPermissionAccessControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
+import quina.route.Router;
+import quina.route.annotation.AnnotationRoute;
 import quina.shutdown.ShutdownManager;
 import quina.worker.QuinaWorkerService;
 
@@ -57,7 +59,7 @@ final class QuinaStartup {
 		
 		try {
 			// AutoRouter読み込みを実行.
-			router.autoRoute();
+			AnnotationRoute.autoRoute();
 			// Etag管理情報を取得.
 			final EtagManagerInfo etagManagerInfo =
 				router.getEtagManagerInfo();

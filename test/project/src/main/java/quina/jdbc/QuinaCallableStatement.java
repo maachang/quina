@@ -4,9 +4,9 @@ import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import quina.annotation.proxy.ProxyField;
-import quina.annotation.proxy.ProxyOverride;
-import quina.annotation.proxy.ProxyScoped;
+import quina.compile.cdi.annotation.proxy.ProxyField;
+import quina.compile.cdi.annotation.proxy.ProxyOverride;
+import quina.compile.cdi.annotation.proxy.ProxyScoped;
 
 /**
  * QuinaProxyCallableStatement.
