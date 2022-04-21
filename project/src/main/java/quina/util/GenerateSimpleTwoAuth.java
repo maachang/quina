@@ -10,7 +10,7 @@ public final class GenerateSimpleTwoAuth {
 	
 	/**
 	 * 二段階認証用のコード作成.
-	 * @param len コード数(数字桁数)を設定します.
+	 * @param codeLen コード数(数字桁数)を設定します.
 	 * @param updateTime 生成更新されるタイミングを設定します.
 	 *                   設定値は秒で設定します.
 	 * @param user 生成識別となるユーザー名を設定します.
@@ -21,8 +21,8 @@ public final class GenerateSimpleTwoAuth {
 	 *                  [2]は、生成更新タイミングより１つ後のコードです.
 	 */
 	public static final String[] create(
-		int len, int updateTime, String user, String domain) {
-		if(len <= 0) {
+		int codeLen, int updateTime, String user, String domain) {
+		if(codeLen <= 0) {
 			throw new QuinaException(
 				"The number of number frames is 0 or less.");
 		} else if(updateTime <= 0) {
@@ -37,9 +37,9 @@ public final class GenerateSimpleTwoAuth {
 		long now = now(updateTime);
 		long userDomainCode = userDomainByLong(user, domain);
 		return new String[] {
-			createTowAuthCode(len, now - updateTime, userDomainCode)
-			,createTowAuthCode(len, now, userDomainCode)
-			,createTowAuthCode(len, now + updateTime, userDomainCode)
+			createTowAuthCode(codeLen, now - updateTime, userDomainCode)
+			,createTowAuthCode(codeLen, now, userDomainCode)
+			,createTowAuthCode(codeLen, now + updateTime, userDomainCode)
 		};
 	}
 	
@@ -90,7 +90,7 @@ public final class GenerateSimpleTwoAuth {
 	
 	// １つの承認コードを生成.
 	private static final String createTowAuthCode(
-		int len, long time, long code) {
+		int codeLen, long time, long code) {
 		// 奇数の場合は反転.
 		if((time & 0x01) == 1) {
 			time = (~time) & 0x7fffffffffffffffL;
@@ -107,8 +107,18 @@ public final class GenerateSimpleTwoAuth {
 			r.next();
 		}
 		// 指定数の数字文字列を生成.
-		final StringBuilder ret = new StringBuilder(len);
-		for(int i = 0; i < len; i ++) {
+		int n, len;
+		final StringBuilder ret = new StringBuilder(codeLen);
+		if((codeLen & 0x01) != 0) {
+			len = codeLen - 1;
+		} else {
+			len = codeLen;
+		}
+		for(int i = 0; i < len; i +=2) {
+			ret.append((n = r.next() & 0x7fffffff) % 10);
+			ret.append((n / 100) % 10);
+		}
+		if((codeLen & 0x01) != 0) {
 			ret.append((r.next() & 0x7fffffff) % 10);
 		}
 		return ret.toString();
@@ -119,7 +129,7 @@ public final class GenerateSimpleTwoAuth {
 		private int a = 362436069;
 		private int b = 521288629;
 		private int c = 987654321;
-		private int d = 88675123;
+		private int d = 886751230;
 		
 		// コンストラクタ.
 		public TwoAuthEngine(final long ss) {
@@ -155,11 +165,14 @@ public final class GenerateSimpleTwoAuth {
 		}
 	}
 	
+	/*
 	public static final void main(String[] args) {
+		int codeLen = 6;
+		int time = 5;
 		String[] code1 = create(
-			6, 30, "masahito.suzuki@supership.jp", "supership.jp");
+			codeLen, time, "maachang@hogehoge.jp", "hogehoge.jp");
 		String[] code2 = create(
-			6, 30, "maachang@gmail.com", "maachang.com");
+			codeLen, time, "maachang@mogemoge.com", "mogemoge.com");
 		
 		System.out.println("now: " + now(30));
 		
@@ -173,4 +186,5 @@ public final class GenerateSimpleTwoAuth {
 		System.out.println("code2[1]: " + code2[1]);
 		System.out.println("code2[2]: " + code2[2]);
 	}
+	*/
 }
