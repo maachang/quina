@@ -12,7 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -249,22 +248,60 @@ public final class FileUtil {
 	/**
 	 * ファイル内容を取得.
 	 *
-	 * @param name
-	 *            対象のファイル名を設定します.
+	 * @param name 対象のファイル名を設定します.
 	 * @return byte[] バイナリ情報が返却されます.
-	 * @exception Exception
-	 *                例外.
+	 * @exception Exception 例外.
 	 */
 	public static final byte[] getFile(String name)
 		throws Exception {
-		int len;
+		return getBinary(new FileInputStream(name));
+	}
+
+	/**
+	 * ファイル内容を取得.
+	 *
+	 * @param name 対象のファイル名を設定します.
+	 * @return String 文字列情報が返却されます.
+	 * @exception Exception 例外.
+	 */
+	public static final String getFileString(String name)
+		throws Exception {
+		return getFileString(name, "UTF8");
+	}
+	
+	/**
+	 * ファイル内容を取得.
+	 *
+	 * @param name
+	 *            対象のファイル名を設定します.
+	 * @param charset
+	 *            対象のキャラクタセットを設定します.
+	 * @return String 文字列情報が返却されます.
+	 * @exception Exception
+	 *                例外.
+	 */
+	public static final String getFileString(
+		String name, String charset)
+		throws Exception {
+		return getString(new FileInputStream(name), charset);
+	}
+	
+	/**
+	 * InputStream内容を取得.
+	 *
+	 * @param in 対象のInputStreamを設定します.
+	 * @return byte[] バイナリ情報が返却されます.
+	 * @exception Exception 例外.
+	 */
+	public static final byte[] getBinary(InputStream in)
+		throws Exception {
 		InputStream buf = null;
 		ByteArrayOutputStream bo = null;
-		byte[] b = new byte[1024];
 		try {
+			int len;
+			byte[] b = new byte[1024];
 			bo = new ByteArrayOutputStream();
-			buf = new BufferedInputStream(
-				new FileInputStream(name));
+			buf = new BufferedInputStream(in);
 			while (true) {
 				if ((len = buf.read(b)) <= 0) {
 					if (len <= -1) {
@@ -277,10 +314,8 @@ public final class FileUtil {
 			buf.close();
 			buf = null;
 			byte[] ret = bo.toByteArray();
-
 			bo.close();
 			bo = null;
-
 			return ret;
 		} finally {
 			if (buf != null) {
@@ -295,30 +330,31 @@ public final class FileUtil {
 			}
 		}
 	}
-
+	
 	/**
-	 * ファイル内容を取得.
+	 * InputStream内容を取得.
 	 *
-	 * @param name
-	 *            対象のファイル名を設定します.
-	 * @param charset
-	 *            対象のキャラクタセットを設定します.
+	 * @param in 対象のInputStreamを設定します.
+	 * @param charset 対象のキャラクタセットを設定します.
 	 * @return String 文字列情報が返却されます.
-	 * @exception Exception
-	 *                例外.
+	 * @exception Exception 例外.
 	 */
-	public static final String getFileString(
-		String name, String charset) throws Exception {
-		int len;
-		char[] tmp = new char[1024];
+	public static final String getString(
+		InputStream in, String charset)
+		throws Exception {
+		String ret = null;
 		CharArrayWriter ca = null;
 		Reader buf = null;
-		String ret = null;
 		try {
+			if(charset == null || charset.isEmpty()) {
+				charset = "UTF8";
+			}
+			int len;
+			char[] tmp = new char[1024];
 			ca = new CharArrayWriter();
 			buf = new BufferedReader(
 				new InputStreamReader(
-					new FileInputStream(name), charset));
+					in, charset));
 			while ((len = buf.read(tmp, 0, 512)) > 0) {
 				ca.write(tmp, 0, len);
 			}
@@ -342,7 +378,6 @@ public final class FileUtil {
 			}
 			buf = null;
 			ca = null;
-			tmp = null;
 		}
 		return ret;
 	}
@@ -557,43 +592,5 @@ public final class FileUtil {
 	public static final void copy(String src, String dest)
 		throws Exception {
 		_copy(getFullPath(src), getFullPath(dest));
-	}
-
-	/**
-	 * リソースファイルを、対象ファイルにコピーする.
-	 * @param src リソースファイルパスを設定します.
-	 * @param dest コピー先のファイル名を設定します.
-	 * @throws Exception
-	 */
-	public static final void rcpy(String src, String dest)
-		throws Exception {
-		int len;
-		byte[] bin = new byte[4096];
-		OutputStream out = null;
-		InputStream in = null;
-		try {
-			in = Thread.currentThread()
-				.getContextClassLoader()
-				.getResourceAsStream(src);
-			out = new FileOutputStream(dest);
-			while ((len = in.read(bin)) != -1) {
-				out.write(bin, 0, len);
-			}
-			in.close();
-			in = null;
-			out.close();
-			out = null;
-		} finally {
-			if (in != null) {
-				try {
-					in.close();
-				} catch (Exception e) {
-				}
-				try {
-					out.close();
-				} catch (Exception e) {
-				}
-			}
-		}
 	}
 }

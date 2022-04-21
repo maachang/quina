@@ -1,0 +1,45 @@
+<%#
+ ■LoadCdiService.java ファイル作成用のjs用smple.
+   
+   CDI(Contexts and Dependency Injection)に対する
+   @ServiceScoped定義されたオブジェクトのシングルトン
+   オブジェクトを `CdiServiceManager` で管理します.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   あります.
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     // @ServiceScoped定義されたオブジェクト名.
+     package + クラス名,
+     package + クラス名,
+      ・・・・
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.compile.cdi.annotation.CdiServiceManager;
+
+/**
+ * ServiceScoped Annotation Registers the defined service object.
+ */
+public final class LoadCdiService {
+	private LoadCdiService() {}
+	
+	/**
+	 * ServiceScoped Annotation Registers the defined service object.
+	 *
+	 * @exception Exception If the service registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// Get the Service Manager to be registered.
+		final CdiServiceManager cdiManager = Quina.get().getCdiServiceManager();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the "${args[i]}"
+		// object in the @ServiceScoped.
+		cdiManager.put(new ${args[i]}());
+		<%$end%>
+	}
+}

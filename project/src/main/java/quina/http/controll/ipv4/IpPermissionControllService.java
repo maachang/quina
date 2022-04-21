@@ -16,15 +16,15 @@ import quina.util.collection.QuinaMap;
 /**
  * IpV4用のパーミッションアクセスコントロールサービス.
  */
-public class IpPermissionAccessControllService
+public class IpPermissionControllService
 	implements QuinaService {
 	
 	// コンフィグ名.
 	private static final String CONFIG_NAME = "ipPermission";
 	
 	// Ipパーミッションアクセスコントロール管理.
-	private final Map<String, IpPermissionAccessControll> manager =
-		new ConcurrentHashMap<String, IpPermissionAccessControll>();
+	private final Map<String, IpPermissionControll> manager =
+		new ConcurrentHashMap<String, IpPermissionControll>();
 	
 	// ロードコンフィグフラグ.
 	private final Flag loadConfigFlag = new Flag(false);
@@ -37,7 +37,7 @@ public class IpPermissionAccessControllService
 	 * @return IpPermissionAccessControllService
 	 *		IpPermissionAccessControllServiceが返却されます.
 	 */
-	public static final IpPermissionAccessControllService getService() {
+	public static final IpPermissionControllService getService() {
 		return Quina.get().getIpPermissionAccessControllService();
 	}
 	
@@ -47,7 +47,7 @@ public class IpPermissionAccessControllService
 	 * @return IpPermissionAccessControll 登録されてるアクセスコントロールが
 	 *                                    返却されます.
 	 */
-	public IpPermissionAccessControll get(String name) {
+	public IpPermissionControll get(String name) {
 		// サービスが開始していない場合はエラー.
 		checkService(false);
 		return manager.get(name);
@@ -129,7 +129,7 @@ public class IpPermissionAccessControllService
 		
 		String key;
 		List<String> list;
-		IpPermissionAccessControll ipp;
+		IpPermissionControll ipp;
 		boolean ret = false;
 		final int len = json.size();
 		for(int i = 0; i < len; i ++) {
@@ -139,7 +139,7 @@ public class IpPermissionAccessControllService
 			key = json.keyAt(i);
 			list = (List<String>)json.valueAt(i);
 			if(list.size() > 0) {
-				ipp = IpPermissionAccessControll.createDefine(list);
+				ipp = IpPermissionControll.createDefine(list);
 				manager.put(key, ipp);
 				ret = true;
 			}

@@ -2,7 +2,7 @@ package quina;
 
 import quina.component.file.EtagManagerInfo;
 import quina.exception.QuinaException;
-import quina.http.controll.ipv4.IpPermissionAccessControllService;
+import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
 import quina.route.Router;
@@ -53,7 +53,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -122,7 +122,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -192,7 +192,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -228,7 +228,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -275,7 +275,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		

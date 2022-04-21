@@ -11,7 +11,10 @@ import quina.util.collection.IndexKeyValueList;
  * 
  * graalvmのnative-image では フィールド一覧の取得や
  * メソッド一覧の取得や、変数指定でのリフレクション取得
- * は、ワーニングが発生します.
+ * は、ワーニングが発生して、完全なNativeImageが作成
+ * されません.
+ * これらを回避する為のリフレクション代替え処理として
+ * これで情報を管理します.
  * 
  * ＜例＞
  * // OK

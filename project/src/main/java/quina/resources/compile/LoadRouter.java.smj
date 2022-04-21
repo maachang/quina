@@ -1,0 +1,53 @@
+<%#
+ ■LoadRouter.java ファイル作成用のjs用smple.
+   
+   QuinaWebApplicationでの接続Endpointを定義するRouter機能を定義します.
+   また、Routerの定義は基本的にQuinaオブジェクトで管理しているRouterに
+   直接定義しますが、このオブジェクトで管理される内容はRouter系の
+   アノテーション定義によって、自動的に登録される形となります.
+     ○Route Route系オブジェクト.
+     ○ErrorRoute ErrorRoute系エラーオブジェクト.
+     ○FileRoute File系Routeオブジェクト.
+     ○ResourceRoute ResourcePackage系オブジェクト.
+     ○AnyRoute AnyRoute系その他全体オブジェクト.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   あります.
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     {
+       name: 対象のパッケージ名＋クラス名
+       ,method: 対象パッケージ名＋クラス名を管理するメソッド名.
+     }
+     ・・・・
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.route.Router;
+
+/**
+ * Route Annotation Registers the configured Component group as a Router.
+ */
+public final class LoadRouter {
+	private LoadRouter() {}
+	
+	/**
+	 * Route Annotation Performs Router registration processing for the
+	 * set Component group.
+	 *
+	 * @exception Exception When Router registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// Get the Router to be registered.
+		final Router router = Quina.get().getRouter();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the "${args[i].name}"
+		// component in the ${args[i].method}.
+		router.${args[i].method}(new ${args[i].name}());
+		<%$end%>
+	}
+}

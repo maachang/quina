@@ -11,9 +11,9 @@ import quina.net.nio.tcp.NioRecvBody;
 import quina.util.Alphabet;
 
 /**
- * HttpClient処理結果実装.
+ * HttpClient処理結果オブジェクト.
  */
-class HttpResultSync implements HttpResult {
+class HttpResultImpl implements HttpResult {
 	protected Header header = null;
 	protected HttpStatus status = null;
 	protected String message = null;
@@ -26,7 +26,7 @@ class HttpResultSync implements HttpResult {
 	 * @param message
 	 * @param header
 	 */
-	protected HttpResultSync(
+	protected HttpResultImpl(
 		int status, String message, Header header) {
 		this.status = HttpStatus.getHttpStatus(status);
 		this.message = message;

@@ -5,7 +5,8 @@ import java.util.List;
 
 import quina.exception.QuinaException;
 import quina.http.Request;
-import quina.http.controll.AccessControll;
+import quina.http.Response;
+import quina.http.controll.HttpControll;
 import quina.http.server.HttpServerRequest;
 import quina.net.IpPermission;
 import quina.net.IpV4Range;
@@ -14,8 +15,8 @@ import quina.util.collection.ObjectList;
 /**
  * 指定Ipアドレス範囲設定群を許可.
  */
-public class IpPermissionAccessControll
-	implements AccessControll {
+public class IpPermissionControll
+	implements HttpControll {
 	
 	// Ipパーミッション.
 	private IpPermission ipPermission;
@@ -32,7 +33,7 @@ public class IpPermissionAccessControll
 	 * @param args 指定範囲アドレス群を設定します
 	 * @return IpPermissionAccessControll アクセスコントロールが返却されます.
 	 */
-	public static final IpPermissionAccessControll create(
+	public static final IpPermissionControll create(
 		IpV4Range... args) {
 		if(args == null || args.length == 0) {
 			notDefine();
@@ -42,7 +43,7 @@ public class IpPermissionAccessControll
 		for(int i = 0; i < len; i ++) {
 			list.add(args[i]);
 		}
-		return new IpPermissionAccessControll(list);
+		return new IpPermissionControll(list);
 	}
 	
 	/**
@@ -50,7 +51,7 @@ public class IpPermissionAccessControll
 	 * @param args 指定範囲アドレス群を設定します
 	 * @return IpPermissionAccessControll アクセスコントロールが返却されます.
 	 */
-	public static final IpPermissionAccessControll create(
+	public static final IpPermissionControll create(
 		ObjectList<IpV4Range> args) {
 		if(args == null || args.size() == 0) {
 			notDefine();
@@ -60,7 +61,7 @@ public class IpPermissionAccessControll
 		for(int i = 0; i < len; i ++) {
 			list.add(args.get(i));
 		}
-		return new IpPermissionAccessControll(list);
+		return new IpPermissionControll(list);
 	}
 	
 	/**
@@ -68,7 +69,7 @@ public class IpPermissionAccessControll
 	 * @param args 指定範囲アドレス群を設定します
 	 * @return IpPermissionAccessControll アクセスコントロールが返却されます.
 	 */
-	public static final IpPermissionAccessControll create(
+	public static final IpPermissionControll create(
 		List<IpV4Range> args) {
 		if(args == null || args.size() == 0) {
 			notDefine();
@@ -78,7 +79,7 @@ public class IpPermissionAccessControll
 		for(int i = 0; i < len; i ++) {
 			list.add(args.get(i));
 		}
-		return new IpPermissionAccessControll(list);
+		return new IpPermissionControll(list);
 	}
 	
 	/**
@@ -86,7 +87,7 @@ public class IpPermissionAccessControll
 	 * @param args 指定アドレスの文字列群を設定します.
 	 * @return IpPermissionAccessControll アクセスコントロールが返却されます.
 	 */
-	public static final IpPermissionAccessControll createDefine(
+	public static final IpPermissionControll createDefine(
 		String... args) {
 		if(args == null || args.length == 0) {
 			notDefine();
@@ -99,7 +100,7 @@ public class IpPermissionAccessControll
 			list.add(r);
 			r = null;
 		}
-		return new IpPermissionAccessControll(list);
+		return new IpPermissionControll(list);
 	}
 	
 	/**
@@ -107,7 +108,7 @@ public class IpPermissionAccessControll
 	 * @param args 指定アドレスの文字列群を設定します
 	 * @return IpPermissionAccessControll アクセスコントロールが返却されます.
 	 */
-	public static final IpPermissionAccessControll createDefine(
+	public static final IpPermissionControll createDefine(
 		ObjectList<String> args) {
 		if(args == null || args.size() == 0) {
 			notDefine();
@@ -120,7 +121,7 @@ public class IpPermissionAccessControll
 			list.add(r);
 			r = null;
 		}
-		return new IpPermissionAccessControll(list);
+		return new IpPermissionControll(list);
 	}
 	
 	/**
@@ -128,7 +129,7 @@ public class IpPermissionAccessControll
 	 * @param args 指定アドレスの文字列群を設定します
 	 * @return IpPermissionAccessControll アクセスコントロールが返却されます.
 	 */
-	public static final IpPermissionAccessControll createDefine(
+	public static final IpPermissionControll createDefine(
 		List<String> args) {
 		if(args == null || args.size() == 0) {
 			notDefine();
@@ -141,24 +142,24 @@ public class IpPermissionAccessControll
 			list.add(r);
 			r = null;
 		}
-		return new IpPermissionAccessControll(list);
+		return new IpPermissionControll(list);
 	}
 	
 	// コンストラクタ.
-	protected IpPermissionAccessControll() {}
+	protected IpPermissionControll() {}
 	
 	/**
 	 * コンストラクタ.
 	 * @param args IpV4Range群を設定します.
 	 */
-	protected IpPermissionAccessControll(
+	protected IpPermissionControll(
 		ObjectList<IpV4Range> args) {
 		IpPermission pm = new IpPermission(args);
 		this.ipPermission = pm;
 	}
 	
 	@Override
-	public boolean isAccess(Request req) {
+	public boolean isAccess(Request req, Response<?> res) {
 		if(req instanceof HttpServerRequest) {
 			final InetSocketAddress addr = ((HttpServerRequest)req)
 				.getElement().getRemoteAddress();

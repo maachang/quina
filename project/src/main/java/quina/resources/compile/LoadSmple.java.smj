@@ -1,0 +1,49 @@
+<%#
+ ■LoadSmple.java ファイル作成用のjs用smple.
+   
+   Smpleは、テンプレート実行としてJavaプログラムで実行可能に変換した後
+   その実態を実行して処理結果を受け取る必要がありますが、これに対して
+   smpleから展開されたJavaオブジェクトに対して、SmpleFactoryで管理し
+   呼び出し可能にするためのテンプレート定義と利用を行います.
+   
+   また、Java用のSmpleオブジェクトは拡張子が sml でJavaパッケージ
+   リソースで管理し、これらをQuinaCompileで分析されパッケージ
+   quinax.smple以下にSmpleコンパイル結果のJavaプログラムが展開
+   されます.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   あります.
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     Smpleファイル(拡張子sml)のquinax.smple＋smpleファイル名(拡張子除く変換結果)
+     Smpleファイル(拡張子sml)のquinax.smple＋smpleファイル名(拡張子除く変換結果)
+     ・・・・
+   ]
+   
+   また `smpleファイル名(拡張子除く変換結果)` は以下の条件で変換されます.
+     [0-9], [a-z], [A-Z], [_$] 以外の文字は、全て '_' に変換します.
+%>package quinax;
+
+/**
+ * Load the compiled Smple group and make it available.
+ */
+public final class LoadSmple {
+	private LoadSmple() {}
+	
+	/**
+	 * Gets a compiled Smple object with the specified Smple definition name.
+	 *
+	 * @exception Exception When Router registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// Get the Smple Factory.
+		final SmpleFactory factory = quina.smple.SmpleFactory.getInstance();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the target "${args[i]}" Smple object in the Smple factory.
+		factory.register(new ${args[i]}());
+		<%$end%>
+	}
+}

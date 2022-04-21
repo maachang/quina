@@ -4,7 +4,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import quina.http.Request;
-import quina.http.controll.AccessControll;
+import quina.http.Response;
+import quina.http.controll.HttpControll;
 import quina.http.server.HttpServerRequest;
 import quina.net.ThisMachineAddress;
 import quina.util.Flag;
@@ -15,8 +16,8 @@ import quina.util.collection.ObjectList;
  * Ipアドレスが対象のPrivateアドレスを許可.
  *
  */
-public class IpPrivateAccessControll
-	implements AccessControll {
+public class IpPrivateControll
+	implements HttpControll {
 	
 	// アドレスリスト
 	protected String[] addrList;
@@ -30,19 +31,19 @@ public class IpPrivateAccessControll
 	protected Flag initFlag = new Flag(false);
 	
 	// シングルトン.
-	private static final IpPrivateAccessControll SNGL =
-		new IpPrivateAccessControll();
+	private static final IpPrivateControll SNGL =
+		new IpPrivateControll();
 	
 	/**
 	 * オブジェクトを取得.
 	 * @return IpPrivateAccessControll オブジェクトが返却されます.
 	 */
-	public static final IpPrivateAccessControll getInstance() {
+	public static final IpPrivateControll getInstance() {
 		return SNGL;
 	}
 	
 	// コンストラクタ.
-	protected IpPrivateAccessControll() {}
+	protected IpPrivateControll() {}
 	
 	// 初期化処理.
 	protected void init() {
@@ -93,7 +94,7 @@ public class IpPrivateAccessControll
 	}
 	
 	@Override
-	public boolean isAccess(Request req) {
+	public boolean isAccess(Request req, Response<?> res) {
 		if(req instanceof HttpServerRequest) {
 			init();
 			String ip =((HttpServerRequest)req).getElement()

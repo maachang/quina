@@ -1,0 +1,48 @@
+<%#
+ ■LoadQuinaService.java ファイル作成用のjs用smple.
+   
+   QuinaServiceはQuinaWebApplicationServerを起動するときに
+   内部で起動しQuinaが停止したら停止してくれるサービスを指します.
+   
+   通常では
+    > Quina.get().getQuinaServiceManager().put(...)
+   を行う必要があるのですが、この@QuinaServiceScopedアノテーション
+   定義が行われてる場合は自動的にデプロイされますが、これらを
+   native-image前に洗い出す事で、自動デプロイ対応が行われます.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     @QuinaServiceScopedが定義されたPackage名＋クラス名
+     ,@QuinaServiceScopedが定義されたPackage名＋クラス名
+     ・・・・
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.QuinaServiceManager;
+
+/**
+ * QuinaServiceScoped Annotation Registers the defined service object.
+ */
+public final class LoadQuinaService {
+	private LoadQuinaService() {}
+	
+	/**
+	 * QuinaServiceScoped Annotation Registers the defined service object.
+	 *
+	 * @exception Exception If the service registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// Get the Quina Service Manager to be registered.
+		final QuinaServiceManager qsrvManager = Quina.get().getQuinaServiceManager();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the "${args[i]}"
+		// object in the @QuinaServiceScoped.
+		qsrvManager.put(new ${args[i]}());
+		<%$end%>
+	}
+}

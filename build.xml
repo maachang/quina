@@ -13,7 +13,7 @@
   <!-- ===================================================================== -->
   <property name="project.name" value="quina"/>
   <property name="version" value="0.0.1"/>
-  <property name="src.dir" value="project/src/main/java/"/>
+  <property name="src.dir" value="project/src/main/java"/>
   <property name="dest.dir" value="project/classes"/>
   <property name="jar.dir" value="jar" />
   <property name="jar.name" value="${project.name}-${version}.jar"/>
@@ -23,6 +23,11 @@
   <property name="optimize" value="on"/>
   <property name="nowarn" value="on"/>
   <property name="unchecked" value="on"/>
+  
+  <!-- resource property. -->
+  <property name="resources" value="quina/resources"/>
+  <property name="src.resources.dir" value="${src.dir}/${resources}"/>
+  <property name="dest.resources.dir" value="${dest.dir}/${resources}"/>
   
   <!-- ===================================================================== -->
   <!-- include Jar path.                                                     -->
@@ -55,6 +60,7 @@
     >
       <classpath refid="path.lib" />
     </javac>
+    <antcall target="copyResource" />
   </target>
   
   <!-- ===================================================================== -->
@@ -87,6 +93,18 @@
         doctitle="${project.name} - version . ${version}"
         windowtitle="${project.name} - version . ${version}">
     </javadoc>
+  </target>
+
+  <!-- ===================================================================== -->
+  <!-- resource copy.                                                        -->
+  <!-- ===================================================================== -->
+  <target name="copyResource">
+    <delete dir="${dest.resources.dir}" />
+    <mkdir dir="${dest.resources.dir}" />
+    <copy overwrite="yes"
+      todir="${dest.resources.dir}">
+			<fileset dir="${src.resources.dir}"/>
+		</copy>
   </target>
   
   <!-- ===================================================================== -->

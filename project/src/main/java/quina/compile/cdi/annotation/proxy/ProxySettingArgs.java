@@ -7,7 +7,8 @@ package quina.compile.cdi.annotation.proxy;
  * (Object... args)なので、ここに 配列引数を
  * 定義した場合、IllegalArgumentExceptionの例外で
  * ”wrong number of arguments” が出るので、
- * 可変の変数に対しては、このオブジェクトで対応.
+ * 可変の変数に対しては、このオブジェクトを挟む事で
+ * 対応が行えるようになる.
  */
 public class ProxySettingArgs {
 	// 可変パラメータ.

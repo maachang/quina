@@ -242,7 +242,8 @@ public class QuinaCTUtil {
 		String srcClassName) {
 		return new StringBuilder(
 			AnnotationProxyScopedConstants.OUTPUT_AUTO_SOURCE_PROXY_PACKAGE_NAME)
-			.append(".").append(AnnotationProxyScopedConstants.HEAD_PROXY_CLASS_NAME)
+			.append(".")
+			.append(AnnotationProxyScopedConstants.HEAD_PROXY_CLASS_NAME)
 			.append(getClassNameByCutPackageName(srcClassName))
 			.toString();
 	}
@@ -568,4 +569,25 @@ public class QuinaCTUtil {
 		}
 		return ret;
 	}
+	
+	/**
+	 * クラス名からメソッド名変換.
+	 * @param clazz クラス名を設定します.
+	 * @return String メソッド名に変換された名前が返却されます.
+	 */
+	public static final String convertClassByMethodName(String clazz) {
+		char c;
+		final StringBuilder buf = new StringBuilder();
+		final int len = clazz.length();
+		for(int i = 0; i < len; i ++) {
+			if((c = clazz.charAt(i)) == '.' || c == '/') {
+				buf.append("_");
+			} else {
+				buf.append(clazz.charAt(i));
+			}
+		}
+		return buf.toString();
+	}
+	
+
 }

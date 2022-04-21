@@ -55,6 +55,7 @@ public final class Xor128 {
 		int s = (int) (ss & 0x00000000ffffffffL);
 		a = s = 1812433253 * (s ^ (s >> 30)) + 1;
 		b = s = 1812433253 * (s ^ (s >> 30)) + 2;
+		s = ((int)(ss & 0xffffffff00000000L >> 32L) ^ s);
 		c = s = 1812433253 * (s ^ (s >> 30)) + 3;
 		d = s = 1812433253 * (s ^ (s >> 30)) + 4;
 	}

@@ -7,7 +7,7 @@ import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.QuinaException;
 import quina.http.HttpContext;
-import quina.http.controll.ipv4.IpPermissionAccessControllService;
+import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.http.server.HttpServerContext;
 import quina.route.Router;
 import quina.shutdown.ShutdownManagerInfo;
@@ -348,9 +348,9 @@ public final class Quina {
 	 * @return IpPermissionAccessControllService
 	 *     IpV4パーミッションアクセスコントロールサービスが返却されます.
 	 */
-	public IpPermissionAccessControllService
+	public IpPermissionControllService
 		getIpPermissionAccessControllService() {
-		final IpPermissionAccessControllService ret =
+		final IpPermissionControllService ret =
 			quinaMembers.ipPermissionAccessControllService;
 		// コンフィグ読み込みがFixしてない場合はエラー.
 		if(!ret.isLoadConfig()) {

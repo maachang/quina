@@ -6,7 +6,7 @@ import quina.compile.cdi.annotation.CdiReflectManager;
 import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.exception.QuinaException;
-import quina.http.controll.ipv4.IpPermissionAccessControllService;
+import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
 import quina.route.Router;
@@ -56,9 +56,9 @@ final class QuinaMembers {
 		new ShutdownManager();
 
 	// IpV4パーミッションアクセスコントロールサービス.
-	protected final IpPermissionAccessControllService
+	protected final IpPermissionControllService
 		ipPermissionAccessControllService =
-			new IpPermissionAccessControllService();
+			new IpPermissionControllService();
 	
 	// Quinaメインオブジェクトコマンド引数管理.
 	protected Args args;

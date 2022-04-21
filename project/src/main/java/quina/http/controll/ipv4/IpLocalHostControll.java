@@ -3,32 +3,33 @@ package quina.http.controll.ipv4;
 import java.net.InetSocketAddress;
 
 import quina.http.Request;
-import quina.http.controll.AccessControll;
+import quina.http.Response;
+import quina.http.controll.HttpControll;
 import quina.http.server.HttpServerRequest;
 
 /**
  * IPアドレスがLocalHostを許可.
  */
-public class IpLocalHostAccessControll
-	implements AccessControll {
+public class IpLocalHostControll
+	implements HttpControll {
 	
 	// シングルトン.
-	private static final IpLocalHostAccessControll SNGL =
-		new IpLocalHostAccessControll();
+	private static final IpLocalHostControll SNGL =
+		new IpLocalHostControll();
 	
 	/**
 	 * オブジェクトを取得.
 	 * @return IpLocalHostAccessControll オブジェクトが返却されます.
 	 */
-	public static final IpLocalHostAccessControll getInstance() {
+	public static final IpLocalHostControll getInstance() {
 		return SNGL;
 	}
 	
 	// コンストラクタ.
-	protected IpLocalHostAccessControll() {}
+	protected IpLocalHostControll() {}
 	
 	@Override
-	public boolean isAccess(Request req) {
+	public boolean isAccess(Request req, Response<?> res) {
 		if(req instanceof HttpServerRequest) {
 			InetSocketAddress addr =
 				((HttpServerRequest)req).getElement()

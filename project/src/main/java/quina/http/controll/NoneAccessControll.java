@@ -1,13 +1,13 @@
 package quina.http.controll;
 
 import quina.http.Request;
-import quina.http.server.HttpServerRequest;
+import quina.http.Response;
 
 /**
  * すべてのアクセスを不許可.
  */
 public class NoneAccessControll
-	implements AccessControll {
+	implements HttpControll {
 	
 	// シングルトン.
 	private static final NoneAccessControll SNGL =
@@ -25,10 +25,7 @@ public class NoneAccessControll
 	protected NoneAccessControll() {}
 	
 	@Override
-	public boolean isAccess(Request req) {
-		if(req instanceof HttpServerRequest) {
-			return false;
-		}
+	public boolean isAccess(Request req, Response<?> res) {
 		return false;
 	}
 }

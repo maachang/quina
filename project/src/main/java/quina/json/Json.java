@@ -15,7 +15,47 @@ import quina.util.collection.IndexMap;
 import quina.util.collection.TypesList;
 
 /**
- * Json変換処理.
+ * Quina専用JSON.
+ * 
+ * このJSONは通常の「RFC 8259」でのJSONではなく、Java的に利用しやすい
+ * 形式でデコード処理を行います.
+ * 
+ * たとえば通常のJSONだとJSのObject形式だと
+ * 
+ * {"hoge": "moge"}
+ * 
+ * のように定義する必要がありますが、このQuina専用JSONの場合は、
+ * 
+ * {hoge: moge}
+ * 
+ * な感じで、クォーテーションが不要となります.
+ * 
+ * ただ、例外としてたとえば以下のように
+ * 
+ * {hoge: m"o"ge}
+ * 
+ * のような場合は
+ * 
+ * {hoge: "m\"o\"ge"}
+ * 
+ * のように定義する必要があります.
+ * 
+ * あと、それ以外のJSONの区分文字である
+ * 
+ * { } [ ] : ,
+ * 
+ * などの情報を文字列として含みたい場合
+ * 
+ * [java.util.Map<String\, Object> hoge]
+ * 
+ * のように \マークを入れる事で連続文字列
+ * 
+ * ["java.util.Map<String, Object> hoge"]
+ * 
+ * として認識することができます.
+ * 
+ * このように通常のJSONと違い、QuinaJsonは、従来よりJavaに特化した
+ * もうすこし定義しやすい定義となっています.
  */
 @SuppressWarnings("rawtypes")
 public final class Json {
@@ -332,47 +372,42 @@ public final class Json {
 		char c;
 		int cote = -1;
 		int bef = -1;
-		int len = json.length();
-		List<Object> ret = new ArrayList<Object>();
+		boolean yenFlag = false;
+		final int len = json.length();
+		final List<Object> ret = new ArrayList<Object>();
 		// Token解析.
 		for (int i = 0; i < len; i++) {
 			c = json.charAt(i);
 			// コーテーション内.
 			if (cote != -1) {
 				// コーテーションの終端.
-				if (bef != '\\' && cote == c) {
-					ret.add(json.substring(s - 1, i + 1));
+				if (!yenFlag && cote == c) {
+					ret.add(separationBeforeYen(json.substring(s - 1, i + 1)));
 					cote = -1;
 					s = i + 1;
 				}
 			}
 			// コーテーション開始.
-			else if (bef != '\\' && (c == '\'' || c == '\"')) {
+			else if (!yenFlag && isQuotation(c)) {
 				cote = c;
-				if (s != -1 && s != i && bef != ' ' && bef != '　'
-						&& bef != '\t' && bef != '\n' && bef != '\r') {
-					ret.add(json.substring(s, i + 1));
+				if (s != -1 && s != i && !isSpace((char)bef)) {
+					ret.add(separationBeforeYen(json.substring(s, i + 1)));
 				}
 				s = i + 1;
 				bef = -1;
 			}
-			// ワード区切り.
-			else if (c == '[' || c == ']' || c == '{' || c == '}' || c == '('
-					|| c == ')' || c == ':' || c == ';' || c == ','
-					|| (c == '.' && (bef < '0' || bef > '9'))) {
-				if (s != -1 && s != i && bef != ' ' && bef != '　'
-						&& bef != '\t' && bef != '\n' && bef != '\r') {
-					ret.add(json.substring(s, i));
+			// 区切り文字(￥が前にある場合は区切り文字としない).
+			else if (!yenFlag && isSeparation(c)) {
+				if (s != -1 && s != i && !isSpace((char)bef)) {
+					ret.add(separationBeforeYen(json.substring(s, i)));
 				}
 				ret.add(new String(new char[] { c }));
 				s = i + 1;
 			}
 			// 連続空間区切り.
-			else if (c == ' ' || c == '　' || c == '\t' || c == '\n'
-					|| c == '\r') {
-				if (s != -1 && s != i && bef != ' ' && bef != '　'
-						&& bef != '\t' && bef != '\n' && bef != '\r') {
-					ret.add(json.substring(s, i));
+			else if (isSpace(c)) {
+				if (s != -1 && s != i && !isSpace((char)bef)) {
+					ret.add(separationBeforeYen(json.substring(s, i)));
 				}
 				s = -1;
 			}
@@ -381,10 +416,51 @@ public final class Json {
 				s = i;
 			}
 			bef = c;
+			yenFlag = isYen(c);
 		}
 		return ret;
 	}
-
+	
+	// ￥文字の場合.
+	private static final boolean isYen(char c) {
+		return c =='\\';
+	}
+	
+	// スペース系文字の場合.
+	private static final boolean isSpace(char c) {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+	}
+	
+	// クォーテーション文字の場合.
+	private static final boolean isQuotation(char c) {
+		return c == '\'' || c == '\"';
+	}
+	
+	// 区切り文字の場合.
+	// デコード区切り文字は { } [ ] : ,
+	private static final boolean isSeparation(char c) {
+		return 
+			c == '{' || c == '}'
+			|| (c == '[' || c == ']'
+			|| c == ':' || c == ',');
+	}
+	
+	// 区切り文字に対する前に￥がある場合は除外.
+	private static final String separationBeforeYen(String s) {
+		char c;
+		final int len = s.length();
+		final StringBuilder buf = new StringBuilder(s.length());
+		for(int i = 0; i < len; i ++) {
+			if(isYen(c = s.charAt(i))) {
+				if(i + 1 < len && isSeparation(s.charAt(i + 1))) {
+					continue;
+				}
+			}
+			buf.append(c);
+		}
+		return buf.toString();
+	}
+	
 	/** Json-Token解析. **/
 	private static final Object createJsonInfo(
 		final int[] n, final List<Object> token, final int type, final int no,
@@ -556,7 +632,11 @@ public final class Json {
 
 	/**
 	 * コメント除去.
-	 *
+	 * 
+	 * コメント除去は[//] [／＊ ... ＊／(小文字)] とh2=trueの
+	 * 場合において[--]がコメントとして対象となります.
+	 * 
+	 * @param h2 [--]のコメントを含む場合は trueを設定します.
 	 * @param str コメント除去を行う文字列を設定します.
 	 * @return String 除外された文字列が返却されます.
 	 */

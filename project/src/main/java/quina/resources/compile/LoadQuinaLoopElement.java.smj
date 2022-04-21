@@ -1,0 +1,45 @@
+<%#
+ ■LoadQuinaLoopElement.java ファイル作成用のjs用smple.
+   
+   CDI(Contexts and Dependency Injection)に対する
+   @QuinaLoopScoped定義されたオブジェクトのシングルトン
+   オブジェクトを `QuinaLoopManager` で管理します.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   あります.
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     // @QuinaLoopScoped定義されたオブジェクト名.
+     package + クラス名,
+     package + クラス名,
+      ・・・・
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.worker.QuinaLoopManager;
+
+/**
+ * QuinaLoopScoped Annotation Registers the defined service object.
+ */
+public final class LoadQuinaLoopElement {
+	private LoadQuinaLoopElement() {}
+	
+	/**
+	 * QuinaLoopScoped Annotation Registers the define object.
+	 *
+	 * @exception Exception If the registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// QuinaLoopManager to be registered.
+		final QuinaLoopManager loopMan = Quina.get().getQuinaLoopManager();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the "${args[i]}"
+		// object in the @QuinaLoopScoped.
+		loopMan.regLoopElement(new ${args[i]}());
+		<%$end%>
+	}
+}

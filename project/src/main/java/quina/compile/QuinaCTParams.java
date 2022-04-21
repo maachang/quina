@@ -7,45 +7,71 @@ import java.util.List;
  * QuinaCompileTool用パラメータ.
  */
 public class QuinaCTParams {
-	// verbose..
+	/**
+	 * verbose.
+	 */
 	public boolean verbose = false;
 	
-	// Route用クラス名リスト.
+	/**
+	 * Route用クラス名リスト.
+	 */
 	public final List<String> routeList = new ArrayList<String>();
 	
-	// RouteAny用クラス名.
+	/**
+	 * RouteAny用クラス名.
+	 */
 	public String any = null;
 	
-	// RouteError用クラス名リスト.
+	/**
+	 * RouteError用クラス名リスト.
+	 */
 	public final List<String> errList = new ArrayList<String>();
 	
-	// CdiService用クラス名リスト.
+	/**
+	 * CdiService用クラス名リスト.
+	 */
 	public final List<String> cdiList = new ArrayList<String>();
 	
-	// CdiReflect用クラス名リスト.
+	/**
+	 * CdiReflect用クラス名リスト.
+	 */
 	public final List<String> refList = new ArrayList<String>();
 	
-	// QuinaService用クラス名リスト.
+	/**
+	 * QuinaService用クラス名リスト.
+	 */
 	public final List<String> qsrvList = new ArrayList<String>();
 	
-	// CdiHandle用クラス名リスト.
+	/**
+	 * CdiHandle用クラス名リスト.
+	 */
 	public final List<String> hndList = new ArrayList<String>();
 	
-	// ProxyScoped用クラス名リスト.
+	/**
+	 * ProxyScoped用クラス名リスト.
+	 */
 	public final List<String> prxList = new ArrayList<String>();
 	
-	// QuinaLoopScoped用クラス名リスト.
+	/**
+	 * QuinaLoopScoped用クラス名リスト.
+	 */
 	public final List<String> loopList = new ArrayList<String>();
 	
-	// クラス内のresourceファイル群.
+	/**
+	 * クラス内のresourceファイル群.
+	 */
 	public final List<String> regResourceList = new ArrayList<String>();
 	
-	// ResourceItem登録判定.
-	// graalvmのnativeImageコンパイルでリソースファイル定義が必要なので
-	// それを利用する場合trueがセットされる.
+	/**
+	 * ResourceItem登録判定.
+	 * graalvmのnativeImageコンパイルでリソースファイル定義が必要なので
+	 * それを利用する場合trueがセットされる.
+	 */
 	public boolean registerResourceItemFlag;
 	
-	// classLoader.
+	/**
+	 * classLoader.
+	 */
 	public ClassLoader cl;
 	
 	/**

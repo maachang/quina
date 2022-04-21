@@ -24,12 +24,13 @@ import quina.exception.QuinaException;
 import quina.util.FileUtil;
 import quina.util.InstanceOf;
 import quina.util.StringUtil;
+import quina.util.collection.js.JsArray;
 
 /**
- * ProxyScoped定義に対する自動ソースコード生成処理.
+ * proxy_AutoProxySmple.java.smjを利用した
+ * Proxyオブジェクトの出力処理.
  */
-public class CdiOutputJavaSrcByProxy {
-	private CdiOutputJavaSrcByProxy() {}
+public class CdiOutputJavaProxySrc {
 	
 	/**
 	 * 抽出したRoute定義されたComponentをJavaファイルに出力.
@@ -38,9 +39,10 @@ public class CdiOutputJavaSrcByProxy {
 	 * @throws IOException I/O例外.
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
-	public static final void proxyScoped(String outSourceDirectory,
-		QuinaCTParams params)
+	public static final void proxyScoped(
+		String outSourceDirectory, QuinaCTParams params)
 		throws Exception {
+		
 		final List<String> prxList = params.prxList;
 		final int len = prxList == null ? 0 : prxList.size();
 		
@@ -55,9 +57,12 @@ public class CdiOutputJavaSrcByProxy {
 		// Proxyオブジェクトのパッケージディレクトリを生成.
 		createDirectory(outSourceDirectory);
 		
+		// JSパラメータ.
+		JsArray jsParam = new JsArray();
+		
 		// 自動生成オブジェクトの作成.
 		for(int i = 0; i < len; i ++) {
-			autoProxyClass(outSourceDirectory, prxList.get(i), params);
+			autoProxyClass(jsParam, outSourceDirectory, prxList.get(i), params);
 		}
 	}
 	
@@ -67,13 +72,16 @@ public class CdiOutputJavaSrcByProxy {
 	
 	/**
 	 * 抽出したProxyScoped定義されたオブジェクトをJavaファイルに出力.
+	 * @param jsParam SmpleJsを実行するためのパラメータを設定します.
 	 * @param outSourceDirectory 出力先ディレクトリを設定します.
 	 * @param clazzName 対象のクラス名を設定します.
 	 * @param params GenerateGciパラメータを設定します.
+	 * @param jsParam
 	 * @throws IOException I/O例外.
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
-	private static final void autoProxyClass(String outSourceDirectory,
+	private static final void autoProxyClass(
+		JsArray jsParam, String outSourceDirectory,
 		String clazzName,QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
 		String outDir = outSourceDirectory + "/" + QuinaCTConstants.CDI_PROXY_DIRECTORY_NAME;
