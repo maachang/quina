@@ -125,7 +125,7 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 		int start = 0;
 		int pos;
 		while(true) {
-			pos = StringUtil.indexOfNoCote(sql, ";", start);
+			pos = StringUtil.indexOfNoQuate(sql, ";", start);
 			if(pos == -1) {
 				one = sql.substring(start, sql.length()).trim();
 				if(!one.isEmpty()) {

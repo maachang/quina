@@ -9,6 +9,7 @@ import quina.exception.QuinaException;
 import quina.util.DateUtil;
 
 /**
+ * [graalvm専用].
  * JavaのLocalDateをJavascriptで利用するラッパー.
  */
 public class JsWrapperDate implements ProxyDate {

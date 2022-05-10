@@ -30,7 +30,7 @@ public final class SimpleTwoAuth {
 		String user, String domain,
 		int codeLen, int updateTime) {
 		return create(
-			outNextChangeMsec, user, domain,
+			outNextChangeMsec, user, domain, null,
 			codeLen, updateTime, null);
 	}
 	/**
@@ -54,6 +54,65 @@ public final class SimpleTwoAuth {
 	public static final String[] create(
 		int[] outNextChangeMsec,
 		String user, String domain,
+		int codeLen, int updateTime,
+		CustomUserDomain cu) {
+		return create(
+			outNextChangeMsec, user, domain, null,
+			codeLen, updateTime, null);
+	}
+	
+	/**
+	 * 二段階認証用のコード作成.
+	 * @param outNextChangeMsec 次の更新時間(ミリ秒)が返却されます.
+	 *                          [0] 次の更新時間.
+	 *                          [1] 最大更新時間.
+	 * @param user 生成識別となるユーザー名を設定します.
+	 * @param domain 生成識別となるドメイン名を設定します.
+	 * @param machineCode 生成識別となる機器コードを設定します.
+	 *                    このコードは、スマホ登録した等の固有コードを
+	 *                    設定します.
+	 * @param codeLen コード数(数字桁数)を設定します.
+	 * @param updateTime 生成更新されるタイミングを設定します.
+	 *                   設定値は秒で設定します.
+	 * @return String[] 有効な二段階認証コードが返却されます.
+	 *                  [0]は、生成更新タイミングより１つ前のコードです.
+	 *                  [1]は、生成更新タイミングのコードです.
+	 *                  [2]は、生成更新タイミングより１つ後のコードです.
+	 *                  入力結果をチェックする場合は[0]か[1]で判別すれば
+	 *                  良いです.
+	 */
+	public static final String[] create(
+		int[] outNextChangeMsec,
+		String user, String domain, String machineCode,
+		int codeLen, int updateTime) {
+		return create(
+			outNextChangeMsec, user, domain, machineCode,
+			codeLen, updateTime, null);
+	}
+	/**
+	 * 二段階認証用のコード作成.
+	 * @param outNextChangeMsec 次の更新時間(ミリ秒)が返却されます.
+	 *                          [0] 次の更新時間.
+	 *                          [1] 最大更新時間.
+	 * @param user 生成識別となるユーザー名を設定します.
+	 * @param domain 生成識別となるドメイン名を設定します.
+	 * @param machineCode 生成識別となる機器コードを設定します.
+	 *                    このコードは、スマホ登録した等の固有コードを
+	 *                    設定します.
+	 * @param codeLen コード数(数字桁数)を設定します.
+	 * @param updateTime 生成更新されるタイミングを設定します.
+	 *                   設定値は秒で設定します.
+	 * @param cu カスタムでUserとDomainをLong変換する処理を設定します.
+	 * @return String[] 有効な二段階認証コードが返却されます.
+	 *                  [0]は、生成更新タイミングより１つ前のコードです.
+	 *                  [1]は、生成更新タイミングのコードです.
+	 *                  [2]は、生成更新タイミングより１つ後のコードです.
+	 *                  入力結果をチェックする場合は[0]か[1]で判別すれば
+	 *                  良いです.
+	 */
+	public static final String[] create(
+		int[] outNextChangeMsec,
+		String user, String domain, String machineCode,
 		int codeLen, int updateTime,
 		CustomUserDomain cu) {
 		// 引数チェック.
@@ -91,10 +150,10 @@ public final class SimpleTwoAuth {
 		long userDomainCode;
 		if(cu != null) {
 			/// カスタム変換.
-			userDomainCode = cu.convert(user, domain);
+			userDomainCode = cu.convert(user, domain, machineCode);
 		} else {
 			// 既存変換
-			userDomainCode = userDomainByLong(user, domain);
+			userDomainCode = userDomainByLong(user, domain, machineCode);
 		}
 		// ２段階認証コードを取得.
 		return new String[] {
@@ -111,9 +170,9 @@ public final class SimpleTwoAuth {
 			(double)utime) * utime;
 	}
 	
-	// user + domain をlong変換.
+	// user + domain (* machineCode[任意])をlong変換.
 	private static final long userDomainByLong(
-		String user, String domain) {
+		String user, String domain, String machineCode) {
 		// user名を元にdomain名の文字コードを
 		// xorで処理する(userCodeに格納).
 		final int userLen = user.length();
@@ -125,12 +184,28 @@ public final class SimpleTwoAuth {
 		int cnt = 0;
 		final int domainLen = domain.length();
 		for(int i = 0; i < domainLen; i++) {
-			userCode[cnt] += (int)(
+			userCode[cnt] = (int)(
 				(userCode[cnt] ^ domain.charAt(i)) &
 				0x0000ffff);
 			cnt ++;
 			if(cnt >= userLen) {
 				cnt = 0;
+			}
+		}
+		// 生成識別となる機器コード(スマホ登録した等の固有コード)
+		// を設定します.
+		if(machineCode != null && machineCode.length() > 0) {
+			// userCodeにxorで処理するmachineCode名を実行.
+			cnt = 0;
+			final int machineLen = machineCode.length();
+			for(int i = 0; i < machineLen; i++) {
+				userCode[cnt] = (int)(
+					(userCode[cnt] ^ machineCode.charAt(i)) &
+					0x0000ffff);
+				cnt ++;
+				if(cnt >= userLen) {
+					cnt = 0;
+				}
 			}
 		}
 		// userCodeを合算する.
@@ -236,21 +311,27 @@ public final class SimpleTwoAuth {
 		 * 変換処理.
 		 * @param user 生成識別となるユーザー名を設定します.
 		 * @param domain 生成識別となるドメイン名を設定します.
+		 * @param machineCode 生成識別となる機器コードを設定します.
+		 *                    このコードは、スマホ登録した等の固有コードを
+		 *                    設定します.
 		 * @return long 値が返却されます.
 		 */
-		public long convert(String user, String domain);
+		public long convert(String user, String domain,
+			String machineCode);
 	}
 	
 	// test.
-	/**
+	/*
 	public static final void main(String[] args) {
 		int codeLen = 6;
 		int time = 30;
 		int[] out = new int[2];
 		String[] code1 = create(out,
-			"maachang@hogehoge.jp", "hogehoge.jp", codeLen, time);
+			"maachang@hogehoge.jp", "hogehoge.jp", "12345", codeLen, time);
+//		String[] code2 = create(out,
+//			"maachang@mogemoge.com", "mogemoge.com", "98765", codeLen, time);
 		String[] code2 = create(out,
-			"maachang@mogemoge.com", "mogemoge.com", codeLen, time);
+				"maachang@hogehoge.jp", "hogehoge.jp", "12346", codeLen, time);
 		
 		System.out.println("now:     " + (nowTiming(30) * 1000L));
 		System.out.println("current: " + System.currentTimeMillis());
@@ -266,6 +347,6 @@ public final class SimpleTwoAuth {
 		System.out.println("code2[0]: " + code2[0]);
 		System.out.println("code2[1]: " + code2[1]);
 		System.out.println("code2[2]: " + code2[2]);
-	}
-	**/
+	}*/
+	
 }

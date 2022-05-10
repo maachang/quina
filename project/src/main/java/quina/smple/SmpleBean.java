@@ -6,6 +6,10 @@ import java.util.Map.Entry;
 
 import quina.exception.QuinaException;
 import quina.json.Json;
+import quina.util.BooleanUtil;
+import quina.util.DateUtil;
+import quina.util.NumberUtil;
+import quina.util.StringUtil;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesKeyValue;
 
@@ -147,6 +151,40 @@ public abstract class SmpleBean
 	@Override
 	public String toString() {
 		return Json.encode(values);
+	}
+	
+	/**
+	 * SmpleのArgsを変換.
+	 * @param type 定義タイプを設定します.
+	 * @param args 変換オブジェクトを設定します.
+	 * @return Object 変換結果が返却されます.
+	 */
+	public static final Object convertArgs(
+		String type, Object args) {
+		if(args == null) {
+			return null;
+		} else if("boolean".equals(type) || "Boolean".equals(type)) {
+			return BooleanUtil.parseBoolean(args);
+		} else if("byte".equals(type) || "Byte".equals(type)) {
+			return NumberUtil.parseByte(args);
+		} else if("char".equals(type) || "Character".equals(type)) {
+			return (char)(NumberUtil.parseInt(args) & 0x0000ffff);
+		} else if("short".equals(type) || "Short".equals(type)) {
+			return NumberUtil.parseShort(args);
+		} else if("int".equals(type) || "Integer".equals(type)) {
+			return NumberUtil.parseInt(args);
+		} else if("long".equals(type) || "Long".equals(type)) {
+			return NumberUtil.parseLong(args);
+		} else if("float".equals(type) || "Float".equals(type)) {
+			return NumberUtil.parseFloat(args);
+		} else if("double".equals(type) || "Double".equals(type)) {
+			return NumberUtil.parseDouble(args);
+		} else if("String".equals(type) || "java.lang.String".equals(type)) {
+			return StringUtil.parseString(args);
+		} else if("Data".equals(type) || "java.util.Date".equals(type)) {
+			return DateUtil.parseDate(args);
+		}
+		return args;
 	}
 	
 }

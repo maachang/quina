@@ -8,6 +8,7 @@ import org.graalvm.polyglot.proxy.ProxyArray;
 import quina.exception.QuinaException;
 
 /**
+ * [graalvm専用].
  * Javaの配列をJavascriptで利用するラッパー.
  * またjavascript側で呼び出される getメソッド
  * では、取得結果がListやMapや配列やDate系の場合は

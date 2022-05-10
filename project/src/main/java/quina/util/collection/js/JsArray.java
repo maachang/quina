@@ -6,6 +6,7 @@ import org.graalvm.polyglot.proxy.ProxyArray;
 import quina.util.collection.ObjectList;
 
 /**
+ * [graalvm専用].
  * graalvmのjavascript用Arrayオブジェクト.
  * 
  * コメントにある[java]とある部分がJavaプログラム

@@ -9,6 +9,7 @@ import org.graalvm.polyglot.proxy.ProxyObject;
 import quina.exception.QuinaException;
 
 /**
+ * [graalvm専用].
  * JavaのMapをJavascriptで利用するラッパー.
  * またjavascript側で呼び出される getMemberメソッド
  * では、取得結果がListやMapや配列やDate系の場合は

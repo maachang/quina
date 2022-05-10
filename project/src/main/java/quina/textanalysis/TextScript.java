@@ -279,9 +279,43 @@ public class TextScript {
 		if(isEOF()) {
 			return false;
 		}
-		return position == 0 ||
-			position >= scriptLength + 1 ? false :
-			script.charAt(position - 1) == '\\';
+		return
+			position == 0 || position >= scriptLength + 1 ?
+				false :
+				script.charAt(position - 1) == '\\';
+	}
+	
+	/**
+	 * 現在位置の文字列が、クォーテーションが文字表現ものかチェック.
+	 * 
+	 * たとえば
+	 * "a\"bcd\\\"ef\\\"ghi\"jkl"
+	 * のように、文字列を表現する場合において￥マークを
+	 * 設定すると、対象クォーテーションを文字列内で表現できます.
+	 * だけど単純に ￥が前回文字列にあり、対象のクォーテーションで
+	 * ある場合にそれが文字列だとした場合、以下の条件で正しく検出
+	 * 出来ない問題があります.
+	 * 
+	 * "\\"
+	 * 
+	 * なので「前の条件が￥か」を調べるだけでなく、その￥が連続する
+	 * 場合において「奇数」かをチェックするようにします.
+	 * 
+	 * @param srcQuotation チェックするクォーテーション文字列を設定
+	 * @return true の場合 クォーテーションが文字列で定義されています.
+	 */
+	public boolean isStringQuotation(char srcQuotation) {
+		if(getChar() != srcQuotation) {
+			return false;
+		}
+		int yenCount = 0;
+		for(int i = position - 1; i >= 0; i --) {
+			if(script.charAt(i) == '\\') {
+				yenCount ++;
+				continue;
+			}
+		}
+		return (yenCount & 1) == 1;
 	}
 	
 	/**
@@ -504,26 +538,24 @@ public class TextScript {
 	}
 	
 	/**
-	 * コーテーションの文字列がある場合
-	 * コーテーション終端まで移動.
+	 * クォーテーションの文字列がある場合
+	 * クォーテーション終端まで移動.
 	 * @return boolean trueの場合、正しく移動できました.
 	 */
 	public boolean moveToBlockQuotation() {
 		if(isEOF()) {
 			return false;
 		}
-		char c = getChar();
+		char n = getChar();
+		// 対象の開始文字がコーテーションの場合.
 		if(!isBeforeYen() &&
-			(c == '\'' || c =='\"')) {
-			int n = c;
-			int b = c;
+			(n == '\'' || n =='\"')) {
+			// 終端のクォーテーションまで移動.
 			while(next()) {
-				c = getChar();
-				if(b != '\\' && c == n) {
+				if(!isStringQuotation(n)) {
 					next();
 					break;
 				}
-				b = c;
 			}
 			return true;
 		}

@@ -3,8 +3,8 @@ package quina.compile;
 import java.io.File;
 import java.util.List;
 
+import quina.compile.cdi.CdiOutputJavaProxySrc;
 import quina.compile.cdi.CdiOutputJavaSrc;
-import quina.compile.cdi.CdiOutputJavaSrcByAutoProxy;
 import quina.compile.cdi.CdiRemoveFileOrDir;
 import quina.compile.graalvm.GraalvmAppendResourceItem;
 import quina.compile.graalvm.GraalvmOutNativeConfig;
@@ -169,7 +169,8 @@ public class QuinaCT {
 		System.out.println();
 		
 		// ProxyScopedソースコードの自動作成を行う.
-		CdiOutputJavaSrcByAutoProxy.proxyScoped(cmdPms.javaSourceDir, params);
+		//CdiOutputJavaSrcByAutoProxy.proxyScoped(cmdPms.javaSourceDir, params);
+		CdiOutputJavaProxySrc.proxyScoped(cmdPms.javaSourceDir, params);
 		
 		// [Router]ファイル出力.
 		if(!params.isRouteEmpty()) {

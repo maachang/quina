@@ -7,6 +7,7 @@ import org.graalvm.polyglot.proxy.ProxyObject;
 import quina.util.collection.IndexKeyValueList;
 
 /**
+ * [graalvm専用].
  * graalvmのjavascript用オブジェクト.
  * 
  * コメントにある[java]とある部分がJavaプログラム

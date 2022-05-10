@@ -9,8 +9,8 @@ import quina.util.Base64;
 /**
  * Http認証系ユーティリティ.
  */
-public class HttpAuthUtil {
-	private HttpAuthUtil() {}
+public class AuthUtil {
+	private AuthUtil() {}
 	
 	/**
 	 * デフォルトのBasic認証メッセージ.

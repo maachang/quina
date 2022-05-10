@@ -13,20 +13,44 @@
    このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
    あります.
    
-   また、対象の引数は以下の条件が必要となります.
-
-   global.args = {
-     srcClass: Proxy元継承Package名 + クラス名
-     ,srcObjectName: Proxy元継承クラス名(単体)
-     ,initMethod: proxyメソッド名とパラメータ定義 xxx(xyz)的定義
+   また、対象の引数は以下の「◆パラメーター定義」が必要となります.
+   
+ ◆パラメーター定義.
+   
+   global.args = [{
+      srcClass: 継承元のPackage名 + クラス名.
+     ,thisClass: このクラス名.
+     ,initMethod: 初期化パラメーター名.
+        <例>
+        args.initMethod =
+        ```
+        super.setting(
+          (quina.jdbc.QuinaConnection)args.getArgs(0)
+          ,(java.sql.Statement)args.getArgs(1)
+        );
+        ```;
      ,proxyMethodList: [
        proxyメソッドの定義内容
+       定義するメソッド全体を設定する.
+         <例>
+         args.proxyMethodList.add(
+         ```
+         public int addCount() {
+           int ret = count;
+           count += 1;
+           return ret;
+         }
+         ```);
        ・・・・
      ]
      ・・・・
-   }
+   }]
 }
 %><%
+
+// この処理は必ず配列で設定されるので、
+// 最初の配列変換を行う.
+args = args[0];
 
 // タブを生成.
 // @param count タブ数を設定.
@@ -58,14 +82,16 @@ var createTab = function(count) {
 // @return 処理結果が返却される.
 var trimOut = function(
   src, tabCount, bracketsStart, bracketsEnd) {
-  var i, j, len, lenJ, before, befYen, value;
+  var i, j, len, lenJ, before, bCount, befYen, value;
   tabCount = tabCount|0;
-  var bCount = 0;
-  var lst = src.split("\n");
+  var lst = src.trim().split("\n");
   len = lst.length;
-  before = tabCount;
+  before = bCount = tabCount;
   var ret = "";
   for(i = 0; i < len; i ++) {
+    if(i != 0) {
+      ret += "\n";
+    }
     value = lst[i].trim();
     lenJ = value.length;
     befYen = false;
@@ -74,14 +100,13 @@ var trimOut = function(
         bCount += value.charAt(j) == bracketsStart ?
           1 : 0;
         bCount -= value.charAt(j) == bracketsEnd ?
-          1 : 0
+          1 : 0;
       }
       befYen = value.charAt(j) == '\\';
     }
     bCount = bCount < 0 ? 0 : bCount;
-    ret += createTab(
-      tabCount + (before < bCount ? before : bCount))
-    + value + "\n";
+    ret += createTab(before < bCount ? before : bCount)
+      + value;
     before = bCount;
   }
   return ret;
@@ -94,7 +119,7 @@ var trimOut = function(
  * annotation definition class "${args.srcClass}".
  */
 @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
-public final class AutoProxy${args.srcObjectName}
+public final class ${args.thisClass}
 	extends ${args.srcClass} {
 	
 	/**
@@ -104,19 +129,19 @@ public final class AutoProxy${args.srcObjectName}
 	public final void __initialSetting(
 		quina.compile.cdi.annotation.proxy.ProxySettingArgs args) {
 		try {
-${trimOut(args.initMethod, 2, '(', ')');}
+${trimOut(args.initMethod, 3, '(', ')');}
 		} catch(quina.exception.QuinaException qe) {
 			throw qe;
 		} catch(Exception e) {
 			throw new quina.exception.QuinaException(e);
 		}
 	}
-	<%
-		var proxyMethodList = args.proxyMethodList;
-		var len = proxyMethodList.length;
-		for(var i = 0; i < len; i ++) {
-	%>
+<%
+	var proxyMethodList = args.proxyMethodList;
+	var len = proxyMethodList.length;
+	for(var i = 0; i < len; i ++) {
+%>
 	@Override
 ${trimOut(proxyMethodList[i], 1, '{', '}');}
-	<%$end%>
+<%$end%>
 }

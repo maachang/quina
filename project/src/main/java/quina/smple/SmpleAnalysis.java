@@ -34,6 +34,9 @@ public class SmpleAnalysis {
 	 */
 	public static final String JAVA_PACKAGE = "quinax.smple";
 	
+	// smpleパッケージ名.
+	private static final String SMPLE_PACKAGE = "quina.smple";
+	
 	// smple定義用のJsonシンボル.
 	private static final String SMPLE = "$smple";
 	
@@ -42,7 +45,6 @@ public class SmpleAnalysis {
 	
 	// smpleの処理結果を返却する.
 	private static final String SMPLE_$OUT_RESULT = "resultOut";
-	
 	
 	// [java]Smpleオブジェクト.
 	private static final String JAVA_SMPLE_OBJECT = "Smple";
@@ -59,14 +61,14 @@ public class SmpleAnalysis {
 	// [java]デフォルトJava Import群.
 	private static final String[] JAVA_DEFAULT_JAVA_IMPORTS = new String[] {
 		"java.util.*"
-		,"quina.smple.*"
+		,SMPLE_PACKAGE + ".*"
 	};
 	
 	// [java]smpleメソッド引数名.
 	private static final String JAVA_SMPLE_METHOD_ARGS = "args";
 	
 	// [java]smpleBean定義.
-	private static final String JAVA_SMPLE_BEAN_KEY_DEFINE = SMPLE + ".beans.";
+	private static final String JAVA_SMPLE_BEAN_KEY_DEFINE = SMPLE + ".beans";
 	
 	// [javascript]smpleパラメータ名.
 	private static final String JS_SMPLE_PARAMS_NAME = "args";
@@ -85,8 +87,8 @@ public class SmpleAnalysis {
 	 * @return String smpleコンパイル結果が返却されます.
 	 */
 	public static final String compileJava(
-		String[] outClassName, String name, String template) {
-		TextScript ts = new TextScript(template);
+		String[] outClassName, String objectName, String template) {
+		final TextScript ts = new TextScript(template);
 		
 		// ${ ... } の内容を <%= ... %> に変換.
 		changeDollarBrackets(ts);
@@ -95,7 +97,7 @@ public class SmpleAnalysis {
 		Map<String, Object> json = getJavaJson(SMPLE, ts);
 		
 		// smple実行クラス名を設定します.
-		String className = getSmpleJavaObjectName(name, json);
+		String className = getSmpleJavaObjectName(objectName, json);
 		
 		// 読み込みパッケージ名を取得.
 		String packageNames = getJavaImportPackages(json);
@@ -249,30 +251,31 @@ public class SmpleAnalysis {
 		@Override
 		public boolean analysis(TextScript ts) {
 			boolean ret = false;
-			// クォーテーション[" ']
 			// コメント[/* ... */ // #] を
+			// 読み飛ばす.
+			// クォーテーション[" ']を
 			// 読み飛ばす.
 			while(!ts.isEOF()) {
 				// スペース等を読み飛ばす.
 				ts.moveToSkipBlank();
-				// クォーテーション.
-				if(ts.moveToBlockQuotation()) {
-					ret = true;
-					continue;
-				}
 				// [/* ... */]コメント.
 				if(ts.moveToBlockComment()) {
 					ret = true;
 					continue;
 				}
 				// [//]コメント.
-				if(ts.moveToLineTwoSlashComment()) {
+				else if(ts.moveToLineTwoSlashComment()) {
 					ret = true;
 					continue;
 				}
 				// javaの場合は不可.
 				// [#]コメント.
-				if(!javaFlag && ts.moveToLineTwoSlashComment()) {
+				else if(!javaFlag && ts.moveToLineTwoSlashComment()) {
+					ret = true;
+					continue;
+				}
+				// クォーテーション.
+				else if(ts.moveToBlockQuotation()) {
 					ret = true;
 					continue;
 				}
@@ -382,7 +385,7 @@ public class SmpleAnalysis {
 	// Smpleテンプレートを解析してポジションを取得.
 	private static final ObjectList<Integer> getSmplePosList(
 		TextScript ts) {
-		int startPos, endPos;
+		int startPos = -1, endPos = -1;
 		final ObjectList<Integer> ret = new ObjectList<Integer>();
 		ts.clearPosition();
 		// <% ... %> の条件をあるまで検索する.
@@ -399,11 +402,13 @@ public class SmpleAnalysis {
 				
 				// java解析用の条件が存在する場合.
 				if(javaQuotationAndComment.analysis(ts)) {
+					// 条件に該当する場合はやり直し.
 					continue;
 				}
 				
 				// 終端を取得.
 				if(!ts.isString("%>")) {
+					// 終端でない場合は 1つ移動.
 					ts.next();
 					continue;
 				}
@@ -414,6 +419,7 @@ public class SmpleAnalysis {
 				// 位置情報を取得.
 				ret.add(startPos);
 				ret.add(endPos + 2);
+				
 				break;
 			}
 		}
@@ -465,10 +471,16 @@ public class SmpleAnalysis {
 			
 			// 実行スクリプトの頭に = が存在する場合.
 			if(executeScript.startsWith("=")) {
+				// 出力内容の整形.
+				String oneOut = executeScript.substring(1).trim();
+				// 対象出力の終端に;が設定されている場合、除外する.
+				if(oneOut.endsWith(";")) {
+					oneOut= oneOut.substring(0, oneOut.length() - 1).trim();
+				}
 				// 直接結果を出力する.
 				appendTab(buf, tabCount)
 					.append(OUT_SIMBOLE).append(".print(")
-					.append(executeScript.substring(1).trim())
+					.append(oneOut)
 					.append(");\n");
 				
 			// 実行スクリプトの頭に = が存在する場合.
@@ -829,10 +841,11 @@ public class SmpleAnalysis {
 			val = javaVariable(list.get(i));
 			// primitive型の場合はオブジェクト名に変換.
 			key = convertJavaPrimitive(val[0]);
-			// $smple.beans定義の場合.
-			if(key.startsWith(JAVA_SMPLE_BEAN_KEY_DEFINE)) {
-				// $smple.beans定義を切り取る.
-				key = key.substring(JAVA_SMPLE_BEAN_KEY_DEFINE.length())
+			// $smple.beans.定義の場合.
+			if(key.startsWith(JAVA_SMPLE_BEAN_KEY_DEFINE + ".")) {
+				// $smple.beans.定義を切り取る.
+				key = key.substring(
+					JAVA_SMPLE_BEAN_KEY_DEFINE.length() + 1)
 					.trim();
 			}
 			// 変換処理.
@@ -842,7 +855,9 @@ public class SmpleAnalysis {
 				.append(val[1])
 				.append(" = (")
 				.append(key)
-				.append(")convertArgs(\"")
+				.append(")")
+				.append(JAVA_SMPLE_BEAN_OBJECT)
+				.append(".convertArgs(\"")
 				.append(key)
 				.append("\", ")
 				.append(JAVA_SMPLE_METHOD_ARGS)
@@ -899,7 +914,7 @@ public class SmpleAnalysis {
 		}
 		name = buf.toString();
 		c = name.charAt(0);
-		if(c == '_' || !(c >= '0' && c <= '9')) {
+		if(c == '_' || (c >= '0' && c <= '9')) {
 			throw new QuinaException(
 				"Target class name: \"" +
 				name + "\" is incorrect as the class name. ");
@@ -1036,12 +1051,20 @@ public class SmpleAnalysis {
 		String javaObject = compileJava(out, "hoge", script);
 		System.out.println("#package + className: " + out[0]);
 		System.out.println("#javaObject: \n" + javaObject);
-		
-		System.out.println()
-		
-		String jsOut = compileJs(script);
-		System.out.println("#jsOut: \n" + jsOut);
 		*/
+		
+		// 基本テスト(js).
+		String resource = "quina/resources/compile/proxy_AutoProxySmple.java.smj";
+		final String script = ResourceUtil.getString(resource);
+		// 展開.
+		String jsSmple = compileJs(script);
+		System.out.println(jsSmple);
+
+		
+		//System.out.println();
+		
+		//String jsOut = compileJs(script);
+		//System.out.println("#jsOut: \n" + jsOut);
 		
 		// [jsテスト].
 		//String file = "z:/home/maachang/project/quina/LoadCdiReflect.java.smj";
@@ -1050,13 +1073,13 @@ public class SmpleAnalysis {
 		//final String script = FileUtil.getFileString(file);
 		
 		//String resource = "quina/resources/compile/LoadRouter.java.smj";
-		String resource = "quina/resources/compile/LoadCdiService.java.smj";
-		final String script = ResourceUtil.getString(resource);
+//		String resource = "quina/resources/compile/LoadCdiService.java.smj";
+//		final String script = ResourceUtil.getString(resource);
 		
 		
 		// 展開.
-		String jsSmple = compileJs(script);
-		System.out.println(jsSmple);
+//		String jsSmple = compileJs(script);
+//		System.out.println(jsSmple);
 		/*
 		
 		// パラメータ.

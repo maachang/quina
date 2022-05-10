@@ -1,22 +1,14 @@
 package quina.compile.cdi;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
-
-import org.graalvm.polyglot.proxy.Proxy;
 
 import quina.compile.QuinaCTConstants;
 import quina.compile.QuinaCTParams;
 import quina.compile.QuinaCTUtil;
 import quina.exception.QuinaException;
-import quina.smple.SmpleAnalysis;
-import quina.util.FileUtil;
-import quina.util.ResourceUtil;
 import quina.util.collection.js.JsArray;
 import quina.util.collection.js.JsObject;
 
@@ -60,118 +52,10 @@ public final class CdiOutputJavaSrc {
 		return false;
 	}
 	
-	// 出力先のディレクトリ作成.
-	private static final void mkdirs(String name) {
-		try {
-			//FileUtil.mkdirs(name);
-			new File(name).mkdirs();
-		} catch(Exception e) {
-			throw new QuinaException(e);
-		}
-	}
-	
-	// [JS]SMPLEのリソース場所.
-	private static final String SMPLE_RESOURCE_PACKAGE = "quina/resources/compile/";
-	
-	// [JS]SMPLEの拡張子.
-	private static final String SMPLE_JS_EXTENSION = ".smj";
-	
-	// Java出力[js]Smple名を設定してSmpleJSスクリプト取得.
-	private static final String getSmpleJs(String name) {
-		String smpleName = SMPLE_RESOURCE_PACKAGE +
-			name + SMPLE_JS_EXTENSION;
-		String smple = null;
-		System.out.println("> " + smpleName);
-		try {
-			smple = ResourceUtil.getString(smpleName);
-			return SmpleAnalysis.compileJs(smple);
-		} catch(QuinaException qe) {
-			errorSmpleJs(smple);
-			throw qe;
-		} catch(Exception e) {
-			errorSmpleJs(smple);
-			throw new QuinaException(e);
-		}
-	}
-	
-	// SmpleJSを実行して処理結果を取得.
-	private static final String resultSmple(String smple, Proxy proxy) {
-		try {
-			return SmpleAnalysis.executeJsSmple(smple, proxy);
-		} catch(QuinaException qe) {
-			errorSmpleJs(smple);
-			throw qe;
-		} catch(Exception e) {
-			errorSmpleJs(smple);
-			throw new QuinaException(e);
-		}
-	}
-	
-	// smpleError.
-	private static final void errorSmpleJs(String smple) {
-		if(smple == null) {
-			return;
-		}
-		BufferedReader r = null;
-		try {
-			System.out.println("> error script: ");
-			String s;
-			int line = 1;
-			r = new BufferedReader(new StringReader(smple));
-			while((s = r.readLine()) != null) {
-				System.out.println(printLine(line) + ":  " + s);
-				line ++;
-			}
-		} catch(Exception e) {
-			throw new QuinaException(e);
-		} finally {
-			try {
-				r.close();
-			} catch(Exception e) {}
-		}
-	}
-	
-	// ライン番号を出力.
-	private static final String printLine(int no) {
-		return "00000".substring(String.valueOf(no).length()) + no;
-	}
-	
-	// smpleコンパイル結果をファイル出力.
-	private static final void outputSmple(String outFileName, String smple) {
-		try {
-			FileUtil.setFileString(true, outFileName, smple, "UTF8");
-		} catch(Exception e) {
-			throw new QuinaException(e);
-		}
-	}
-	
 	// CDIディレクトリ名を取得.
 	private static final String outCdiDirectory(String outSourceDirectory) {
 		return outSourceDirectory + "/" +
-				QuinaCTConstants.CDI_DIRECTORY_NAME;
-	}
-	
-	// smpleJSを実行してJavaFileを出力.
-	private static final boolean executeSmpleToOutputJavaFile(
-		String outSourceDirectory, String outJavaName, JsArray jsParam) {
-		// 出力条件が存在する場合のみ出力.
-		if(jsParam.objectSize() > 0) {
-			final String outDir = outCdiDirectory(outSourceDirectory);
-			final String outFileName = outDir + "/" + outJavaName;
-			
-			// smpleコンパイルファイルを読み込む.
-			String smple = getSmpleJs(outJavaName);
-			// smpleを実行する.
-			smple = resultSmple(smple, jsParam);
-			
-			// ソース出力先ディレクトリを作成.
-			mkdirs(outDir);
-			
-			// 処理結果を出力.
-			outputSmple(outFileName, smple);
-			return true;
-		}
-		return false;
+			QuinaCTConstants.CDI_DIRECTORY_NAME;
 	}
 	
 	/**
@@ -237,10 +121,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadRouter.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.AUTO_ROUTE_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 	
 	/**
@@ -269,10 +153,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadCdiService.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.CDI_SERVICE_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 	
 	/**
@@ -300,10 +184,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadQuinaService.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.QUINA_SERVICE_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 	
 	/**
@@ -359,10 +243,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadCdiReflect.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.CDI_REFLECT_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 	
 	/**
@@ -390,10 +274,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadCdiAnnotationHandle.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.CDI_HANDLE_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 	
 	/**
@@ -427,10 +311,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadProxyScoped.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.CDI_PROXY_SCOPED_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 	
 	
@@ -459,10 +343,10 @@ public final class CdiOutputJavaSrc {
 		}
 		
 		// [LoadQuinaLoopElement.java]のJavaファイルを出力.
-		executeSmpleToOutputJavaFile(
-			outSourceDirectory,
+		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
+			outCdiDirectory(outSourceDirectory),
 			QuinaCTConstants.QUINA_LOOP_SCOPED_SOURCE_NAME,
-			jsParam);
+			jsParam, null);
 	}
 
 }

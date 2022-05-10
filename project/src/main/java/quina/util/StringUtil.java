@@ -109,46 +109,92 @@ public class StringUtil {
 	}
 
 	/**
-	 * 前後のスペース等を取り除く.
-	 *
+	 * String.trim() と違い、指定ポジションに対するtrimを行います.
+	 * これによって、別途String.substring(...).trim()のような処理では
+	 * なく、指定position(start, end)に対するtrimを行います.
+	 * これによって、メモリ効率の良いtrimが実施出来ます.
+	 * @param startEnd 開始位置、終了位置を設定します.
+	 *                 int[0]: 開始位置, int[1]: 終了位置.
 	 * @param string 対象の文字列を設定します.
-	 * @return String 文字列が返されます.
+	 * @return boolean trueの場合、前後のスペース等が取り除かれた場合
+	 *                 その場合はstartEndパラメータが取り除かれた値と
+	 *                 して、セットされます.
 	 */
-	public static final String trim(String string) {
-		int s = -1;
-		int e = -1;
-		int len = string.length();
-		boolean sFlg = false;
-		for (int i = 0; i < len; i++) {
-			char c = string.charAt(i);
-			if (c != ' ' && c != '　' && c != '\r' && c != '\n' && c != '\t') {
-				s = i;
+	public static final boolean trim(int[] startEnd, String string) {
+		char c;
+		int i, sPos, ePos, srPos, erPos;
+		sPos = srPos = startEnd[0];
+		ePos = erPos = startEnd[1];
+		// 開始位置から、終了位置までチェック.
+		for(i = sPos; i < ePos; i ++) {
+			c = string.charAt(i);
+			// trimしない文字列が見つかった場合.
+			if (c != ' ' && c != '\r' && c != '\n' && c != '\t') {
 				break;
 			}
-			sFlg = true;
+			srPos = i;
 		}
-		if (sFlg && s == -1) {
-			return "";
+		// trimしない文字列が存在しない場合.
+		if(srPos + 1 == ePos) {
+			startEnd[0] = sPos;
+			startEnd[1] = sPos;
+			return true;
 		}
-		boolean eFlg = false;
-		for (int i = len - 1; i >= 0; i--) {
-			char c = string.charAt(i);
-			if (c != ' ' && c != '　' && c != '\r' && c != '\n' && c != '\t') {
-				e = i;
+		// 終了位置から開始位置までチェック.
+		for(i = ePos; i >= sPos; i --) {
+			c = string.charAt(i);
+			// trimしない文字列が見つかった場合.
+			if (c != ' ' && c != '\r' && c != '\n' && c != '\t') {
 				break;
 			}
-			eFlg = true;
+			erPos = i;
 		}
-		if (sFlg == true && eFlg == true) {
-			return string.substring(s, e + 1);
-		} else if (sFlg == true) {
-			return string.substring(s);
-		} else if (eFlg == true) {
-			return string.substring(0, e + 1);
+		// trimの変化が無い場合.
+		if(sPos == srPos && ePos == erPos) {
+			return false;
 		}
-		return string;
+		// trimの変化がある場合.
+		startEnd[0] = srPos;
+		startEnd[1] = erPos;
+		return true;
 	}
-
+	
+	/**
+	 * 現在位置の文字列が、クォーテーションが文字表現ものかチェック.
+	 * 
+	 * たとえば
+	 * "a\"bcd\\\"ef\\\"ghi\"jkl"
+	 * のように、文字列を表現する場合において￥マークを
+	 * 設定すると、対象クォーテーションを文字列内で表現できます.
+	 * だけど単純に ￥が前回文字列にあり、対象のクォーテーションで
+	 * ある場合にそれが文字列だとした場合、以下の条件で正しく検出
+	 * 出来ない問題があります.
+	 * 
+	 * "\\"
+	 * 
+	 * なので「前の条件が￥か」を調べるだけでなく、その￥が連続する
+	 * 場合において「奇数」かをチェックするようにします.
+	 * 
+	 * @param src 対象の文字列を設定します.
+	 * @param pos 対象の文字ポジションを設定します.
+	 * @param srcQuotation チェックするクォーテーション文字列を設定
+	 * @return true の場合 クォーテーションが文字列で定義されています.
+	 */
+	public static final boolean isStringQuotation(
+		String src, int pos, char srcQuotation) {
+		if(src.charAt(pos) != srcQuotation) {
+			return false;
+		}
+		int yenCount = 0;
+		for(int i = pos - 1; i >= 0; i --) {
+			if(src.charAt(i) == '\\') {
+				yenCount ++;
+				continue;
+			}
+		}
+		return (yenCount & 1) == 1;
+	}
+	
 	/**
 	 * URLデコード.
 	 *
@@ -430,12 +476,15 @@ public class StringUtil {
 	 * チェック情報単位で情報を区切ります.
 	 *
 	 * @param out   区切られた情報が格納されます.
-	 * @param mode  区切られた時の文字列が無い場合に、無視するかチェックします. [true]の場合は、無視しません.
+	 * @param mode  区切られた時の文字列が無い場合に、無視するかチェックします.
+	 *              [true]の場合は、無視しません.
 	 *              [false]の場合は、無視します.
 	 * @param str   区切り対象の情報を設置します.
-	 * @param check 区切り対象の文字情報をセットします. 区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
+	 * @param check 区切り対象の文字情報をセットします.
+	 *              区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
 	 */
-	public static final void cutString(List<String> out, boolean mode, String str, String check) {
+	public static final void cutString(
+		List<String> out, boolean mode, String str, String check) {
 		int i, j;
 		int len;
 		int lenJ;
@@ -443,7 +492,8 @@ public class StringUtil {
 		char strCode;
 		char[] checkCode = null;
 		String tmp = null;
-		if (out == null || str == null || (len = str.length()) <= 0 || check == null || check.length() <= 0) {
+		if (out == null || str == null || (len = str.length()) <= 0
+			|| check == null || check.length() <= 0) {
 			throw new IllegalArgumentException();
 		}
 		out.clear();
@@ -503,15 +553,18 @@ public class StringUtil {
 	 * チェック情報単位で情報を区切ります。
 	 *
 	 * @param out     区切られた情報が格納されます.
-	 * @param cote    コーテーション対応であるか設定します. [true]を設定した場合、各コーテーション ( ",' ) で囲った情報内は
+	 * @param cote    コーテーション対応であるか設定します.
+	 *                [true]を設定した場合、各コーテーション ( ",' ) で囲った情報内は
 	 *                区切り文字と判別しません. [false]を設定した場合、コーテーション対応を行いません.
 	 * @param coteFlg コーテーションが入っている場合に、コーテーションを範囲に含むか否かを 設定します.
 	 *                [true]を設定した場合、コーテーション情報も範囲に含みます.
 	 *                [false]を設定した場合、コーテーション情報を範囲としません.
 	 * @param str     区切り対象の情報を設置します.
-	 * @param check   区切り対象の文字情報をセットします. 区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
+	 * @param check   区切り対象の文字情報をセットします.
+	 *                区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
 	 */
-	public static final void cutString(List<String> out, boolean cote, boolean coteFlg, String str, String check) {
+	public static final void cutString(
+		List<String> out, boolean cote, boolean coteFlg, String str, String check) {
 		int i, j;
 		int len;
 		int lenJ;
@@ -524,7 +577,8 @@ public class StringUtil {
 		if (cote == false) {
 			cutString(out, false, str, check);
 		} else {
-			if (out == null || str == null || (len = str.length()) <= 0 || check == null || check.length() <= 0) {
+			if (out == null || str == null || (len = str.length()) <= 0
+				|| check == null || check.length() <= 0) {
 				throw new IllegalArgumentException();
 			}
 			out.clear();
@@ -564,7 +618,8 @@ public class StringUtil {
 							yenFlag = false;
 							coteChr = 0;
 							if (s == i && coteFlg == true) {
-								out.add(new StringBuilder().append(strCode).append(strCode).toString());
+								out.add(new StringBuilder()
+									.append(strCode).append(strCode).toString());
 								s = -1;
 							} else if (s < i) {
 								if (coteFlg == true) {
@@ -629,7 +684,8 @@ public class StringUtil {
 							coteChr = 0;
 							yenFlag = false;
 							if (s == i && coteFlg == true) {
-								out.add(new StringBuilder().append(strCode).append(strCode).toString());
+								out.add(new StringBuilder().append(strCode)
+									.append(strCode).toString());
 								s = -1;
 							} else if (s < i) {
 								if (coteFlg == true) {
@@ -671,9 +727,9 @@ public class StringUtil {
 			tmp = null;
 		}
 	}
-
+	
 	/**
-	 * コーテーション内を検知しないIndexOf.
+	 * クォーテーション内を検知しないIndexOf.
 	 *
 	 * @param base
 	 *            検索元の情報を設定します.
@@ -681,12 +737,13 @@ public class StringUtil {
 	 *            チェック対象の内容を設定します.
 	 * @return int 検索結果の内容が返されます.
 	 */
-	public static final int indexOfNoCote(final String base, final String cc) {
-		return indexOfNoCote(base, cc, 0);
+	public static final int indexOfNoQuate(
+		final String base, final String cc) {
+		return indexOfNoQuate(base, cc, 0);
 	}
 
 	/**
-	 * コーテーション内を検知しないIndexOf.
+	 * クォーテーション内を検知しないIndexOf.
 	 *
 	 * @param base
 	 *            検索元の情報を設定します.
@@ -696,42 +753,36 @@ public class StringUtil {
 	 *            対象のオフセット値を設定します.
 	 * @return int 検索結果の内容が返されます.
 	 */
-	public static final int indexOfNoCote(final String base, final String cc, final int off) {
+	public static final int indexOfNoQuate(
+		final String base, final String cc, final int off) {
 		final int len = base.length();
 		final char[] ck = cc.toCharArray();
 		final int cLen = ck.length;
-		char bef = 0;
+		int j;
+		char c = 0, bef = 0;
 		int cote = -1;
-		boolean yenFlag = false;
 		for (int i = off; i < len; i++) {
-			char c = base.charAt(i);
 			if (cote != -1) {
-				if (bef != '\\' && c == cote) {
-					yenFlag = false;
+				if(isStringQuotation(base, len, (char)cote)) {
 					cote = -1;
-				} else if (c == '\\' && bef == '\\') {
-					yenFlag = true;
-				} else {
-					yenFlag = false;
+					bef = base.charAt(i);
 				}
-			} else if (bef != '\\' && (c == '\'' || c == '\"')) {
-				cote = c;
-			} else if (c == ck[0]) {
-				boolean res = true;
-				for (int j = 1; j < cLen; j++) {
-					if (i + j >= len || ck[j] != base.charAt(i + j)) {
-						res = false;
-						break;
+			} else {
+				c = base.charAt(i);
+				if (bef != '\\' && (c == '\'' || c == '\"')) {
+					cote = c;
+				} else if (c == ck[0]) {
+					boolean res = true;
+					for (j = 1; j < cLen; j++) {
+						if (i + j >= len || ck[j] != base.charAt(i + j)) {
+							res = false;
+							break;
+						}
+					}
+					if (res == true) {
+						return i;
 					}
 				}
-				if (res == true) {
-					return i;
-				}
-			}
-			if (yenFlag) {
-				yenFlag = false;
-				bef = 0;
-			} else {
 				bef = c;
 			}
 		}
@@ -880,7 +931,7 @@ public class StringUtil {
 	public static final void print(
 		Writer w, int tab, String... args)
 		throws IOException {
-		StringBuilder buf = new StringBuilder();
+		final StringBuilder buf = new StringBuilder();
 		print(buf, tab, args);
 		w.append(buf.toString());
 	}
@@ -909,7 +960,7 @@ public class StringUtil {
 	public static final void println(
 		Writer w, int tab, String... args)
 		throws IOException {
-		StringBuilder buf = new StringBuilder();
+		final StringBuilder buf = new StringBuilder();
 		println(buf, tab, args);
 		w.append(buf.toString());
 	}

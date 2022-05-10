@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * [graalvm専用].
  * JavaのオブジェクトをJavascriptで利用するラッパー.
  */
 public final class JsWrapperUtil {

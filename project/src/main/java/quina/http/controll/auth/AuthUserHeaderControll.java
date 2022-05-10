@@ -18,7 +18,7 @@ public interface AuthUserHeaderControll
 			return false;
 		}
 		// ユーザー名・パスワード問い合わせ.
-		return isAuth(header.getString(getUserName()),
-				header.getString(getPasswordName()));
+		return isAuth(header.getString(getUserParam()),
+				header.getString(getPasswordParam()));
 	}
 }
