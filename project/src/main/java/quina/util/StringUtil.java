@@ -183,7 +183,7 @@ public class StringUtil {
 	public static final boolean isStringQuotation(
 		String src, int pos, char srcQuotation) {
 		if(src.charAt(pos) != srcQuotation) {
-			return false;
+			return true;
 		}
 		int yenCount = 0;
 		for(int i = pos - 1; i >= 0; i --) {

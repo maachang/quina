@@ -10,52 +10,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import quina.util.Alphabet;
 import quina.util.DateUtil;
+import quina.util.FileUtil;
 import quina.util.NumberUtil;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesList;
 
 /**
- * Quina専用JSON.
- * 
- * このJSONは通常の「RFC 8259」でのJSONではなく、Java的に利用しやすい
- * 形式でデコード処理を行います.
- * 
- * たとえば通常のJSONだとJSのObject形式だと
- * 
- * {"hoge": "moge"}
- * 
- * のように定義する必要がありますが、このQuina専用JSONの場合は、
- * 
- * {hoge: moge}
- * 
- * な感じで、クォーテーションが不要となります.
- * 
- * ただ、例外としてたとえば以下のように
- * 
- * {hoge: m"o"ge}
- * 
- * のような場合は
- * 
- * {hoge: "m\"o\"ge"}
- * 
- * のように定義する必要があります.
- * 
- * あと、それ以外のJSONの区分文字である
- * 
- * { } [ ] : ,
- * 
- * などの情報を文字列として含みたい場合
- * 
- * [java.util.Map<String\, Object> hoge]
- * 
- * のように \マークを入れる事で連続文字列
- * 
- * ["java.util.Map<String, Object> hoge"]
- * 
- * として認識することができます.
- * 
- * このように通常のJSONと違い、QuinaJsonは、従来よりJavaに特化した
- * もうすこし定義しやすい定義となっています.
+ * Json変換処理.
  */
 @SuppressWarnings("rawtypes")
 public final class Json {
@@ -330,7 +291,7 @@ public final class Json {
 		}
 		// JSON変換I/Oを取得.
 		final JsonCustomAnalysis conv = convJsonAnalysis.get();
-		// 文字列クォーテーション区切り.
+		// 文字列コーテーション区切り.
 		if ((json.startsWith("\"") &&
 				json.endsWith("\""))
 			|| (json.startsWith("\'") &&
@@ -361,7 +322,7 @@ public final class Json {
 		//	"Failed to parse JSON(" + json + "):No:" + no);
 		
 		// 文字列として扱う.
-		// これにより、クォーテーションなしのvalue文字列も
+		// これにより、コーテーションなしのvalue文字列も
 		// 利用可能になります.
 		return conv.jsonToString(json);
 	}
@@ -370,7 +331,7 @@ public final class Json {
 	private static final boolean isStringQuotation(
 		String src, int pos, char srcQuotation) {
 		if(src.charAt(pos) != srcQuotation) {
-			return false;
+			return true;
 		}
 		int yenCount = 0;
 		for(int i = pos - 1; i >= 0; i --) {
@@ -382,48 +343,54 @@ public final class Json {
 		}
 		return (yenCount & 1) == 1;
 	}
-	
+
 	/** JSON_Token_解析処理 **/
 	private static final List<Object> analysisJsonToken(final String json) {
 		int s = -1;
 		char c;
 		int quote = -1;
 		int bef = -1;
-		final int len = json.length();
-		final List<Object> ret = new ArrayList<Object>();
+		int len = json.length();
+		List<Object> ret = new ArrayList<Object>();
 		// Token解析.
 		for (int i = 0; i < len; i++) {
 			c = json.charAt(i);
-			// クォーテーション内.
+			// コーテーション内.
 			if (quote != -1) {
-				// クォーテーションの終端.
+				// コーテーションの終端.
 				if(!isStringQuotation(json, i, (char)quote)) {
-					ret.add(separationBeforeYen(json.substring(s - 1, i + 1)));
+					ret.add(json.substring(s - 1, i + 1));
 					quote = -1;
 					s = i + 1;
 				}
 			}
-			// クォーテーション開始.
-			else if (bef != '\\' && c == '\'' || c == '\"') {
+			// コーテーション開始.
+			else if (bef != '\\' && (c == '\'' || c == '\"')) {
 				quote = c;
-				if (s != -1 && s != i && !isSpace((char)bef)) {
-					ret.add(separationBeforeYen(json.substring(s, i + 1)));
+				if (s != -1 && s != i && bef != ' ' && bef != '　'
+						&& bef != '\t' && bef != '\n' && bef != '\r') {
+					ret.add(json.substring(s, i + 1));
 				}
 				s = i + 1;
 				bef = -1;
 			}
-			// 区切り文字(￥が前にある場合は区切り文字としない).
-			else if (bef != '\\' && isSeparation(c)) {
-				if (s != -1 && s != i && !isSpace((char)bef)) {
-					ret.add(separationBeforeYen(json.substring(s, i)));
+			// ワード区切り.
+			else if (c == '[' || c == ']' || c == '{' || c == '}' || c == '('
+					|| c == ')' || c == ':' || c == ';' || c == ','
+					|| (c == '.' && (bef < '0' || bef > '9'))) {
+				if (s != -1 && s != i && bef != ' ' && bef != '　'
+						&& bef != '\t' && bef != '\n' && bef != '\r') {
+					ret.add(json.substring(s, i));
 				}
 				ret.add(new String(new char[] { c }));
 				s = i + 1;
 			}
 			// 連続空間区切り.
-			else if (isSpace(c)) {
-				if (s != -1 && s != i && !isSpace((char)bef)) {
-					ret.add(separationBeforeYen(json.substring(s, i)));
+			else if (c == ' ' || c == '　' || c == '\t' || c == '\n'
+					|| c == '\r') {
+				if (s != -1 && s != i && bef != ' ' && bef != '　'
+						&& bef != '\t' && bef != '\n' && bef != '\r') {
+					ret.add(json.substring(s, i));
 				}
 				s = -1;
 			}
@@ -436,38 +403,6 @@ public final class Json {
 		return ret;
 	}
 
-	
-	// スペース系文字の場合.
-	private static final boolean isSpace(char c) {
-		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-	}
-	
-	// 区切り文字の場合.
-	// デコード区切り文字は { } [ ] : ,
-	private static final boolean isSeparation(char c) {
-		return 
-			c == '{' || c == '}'
-			|| (c == '[' || c == ']'
-			|| c == ':' || c == ',');
-	}
-	
-	// 区切り文字に対する前に￥がある場合は除外.
-	private static final String separationBeforeYen(String s) {
-		char c;
-		final int len = s.length();
-		final StringBuilder buf = new StringBuilder(s.length());
-		for(int i = 0; i < len; i ++) {
-			c = s.charAt(i);
-			if(c == '\\') {
-				if(i + 1 < len && isSeparation(s.charAt(i + 1))) {
-					continue;
-				}
-			}
-			buf.append(c);
-		}
-		return buf.toString();
-	}
-	
 	/** Json-Token解析. **/
 	private static final Object createJsonInfo(
 		final int[] n, final List<Object> token, final int type, final int no,
@@ -639,11 +574,7 @@ public final class Json {
 
 	/**
 	 * コメント除去.
-	 * 
-	 * コメント除去は[//] [／＊ ... ＊／(小文字)] とh2=trueの
-	 * 場合において[--]がコメントとして対象となります.
-	 * 
-	 * @param h2 [--]のコメントを含む場合は trueを設定します.
+	 *
 	 * @param str コメント除去を行う文字列を設定します.
 	 * @return String 除外された文字列が返却されます.
 	 */
@@ -651,8 +582,8 @@ public final class Json {
 		if (str == null || str.length() <= 0) {
 			return "";
 		}
-		final StringBuilder buf = new StringBuilder();
-		final int len = str.length();
+		StringBuilder buf = new StringBuilder();
+		int len = str.length();
 		int quote = -1;
 		int commentType = -1;
 		int bef = -1;
@@ -674,8 +605,7 @@ public final class Json {
 				case 2: // 複数行コメント.
 					if (c == '\n') {
 						buf.append(c);
-					} else if (len > i + 1 && c == '*' &&
-						str.charAt(i + 1) == '/') {
+					} else if (len > i + 1 && c == '*' && str.charAt(i + 1) == '/') {
 						i++;
 						commentType = -1;
 					}
@@ -683,9 +613,9 @@ public final class Json {
 				}
 				continue;
 			}
-			// シングル／ダブルクォーテーション内の処理.
+			// シングル／ダブルコーテーション内の処理.
 			if (quote != -1) {
-				if (!isStringQuotation(str, i, (char)quote)) {
+				if(!isStringQuotation(str, i, (char)quote)) {
 					quote = -1;
 				}
 				buf.append(c);
@@ -728,12 +658,23 @@ public final class Json {
 				commentType = 1;
 				continue;
 			}
-			// クォーテーション開始.
+			// コーテーション開始.
 			else if ((c == '\'' || c == '\"') && (char) bef != '\\') {
 				quote = (int) (c & 0x0000ffff);
 			}
 			buf.append(c);
 		}
 		return buf.toString();
+	}
+	
+	public static final void main(String[] args) throws Exception {
+		String value = FileUtil.getFileString(
+			"z:/home/maachang/project/quina/test/conf/jdbc.json", "UTF8");
+		value = Json.cutComment(false, value);
+		//System.out.println(value);
+		Map json = (Map)Json.decode(value);
+		System.out.println(json);
+		
+		
 	}
 }

@@ -642,7 +642,7 @@ var _executeSql = function() {
 // 指定クォーテーション以前に文字列と認識される条件かチェック.
 var isStringQuotation = function(src, pos, srcQuotation) {
     if(src.charAt(pos) != srcQuotation) {
-        return false;
+        return true;
     }
     var yenCount = 0;
     for(var i = pos - 1; i >= 0; i --) {

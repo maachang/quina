@@ -308,7 +308,7 @@ public class TextScript {
 	 */
 	public boolean isStringQuotation(char srcQuotation) {
 		if(getChar() != srcQuotation) {
-			return false;
+			return true;
 		}
 		int yenCount = 0;
 		for(int i = position - 1; i >= 0; i --) {
