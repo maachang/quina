@@ -2,7 +2,7 @@ package quina;
 
 import quina.annotation.AnnotationQuina;
 import quina.compile.cdi.annotation.CdiHandleManager;
-import quina.compile.cdi.annotation.CdiReflectManager;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
 import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.exception.QuinaException;
@@ -72,8 +72,8 @@ final class QuinaMembers {
 		new CdiServiceManager();
 	
 	// CDIリフレクションマネージャ.
-	protected final CdiReflectManager cdiRefrectManager =
-		new CdiReflectManager();
+	protected final CdiInjectFieldManager cdiInjectFieldManager =
+		new CdiInjectFieldManager();
 	
 	// CDIアノテーションマネージャ.
 	protected final CdiHandleManager cdiHandleManager =
@@ -236,10 +236,10 @@ final class QuinaMembers {
 	}
 	
 	/**
-	 * CdiReflectManager読み込み.
+	 * CdiInjectFieldManager読み込み.
 	 */
-	public void autoCdiReflect() {
-		cdiRefrectManager.autoCdiReflect();
+	public void autoCdiInjectField() {
+		cdiInjectFieldManager.autoCdiInjectField();
 	}
 	
 	/**

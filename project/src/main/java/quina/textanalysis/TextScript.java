@@ -273,6 +273,8 @@ public class TextScript {
 	
 	/**
 	 * 前の文字が￥文字か取得.
+	 * クォーテーションの終了に対して、チェックする場合は
+	 * isStringQuotation を利用してください.
 	 * @return true の場合 前の文字は￥です.
 	 */
 	public boolean isBeforeYen() {
@@ -314,6 +316,7 @@ public class TextScript {
 				yenCount ++;
 				continue;
 			}
+			break;
 		}
 		return (yenCount & 1) == 1;
 	}

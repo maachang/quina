@@ -16,7 +16,7 @@ import quina.compile.cdi.annotation.proxy.ProxyInitialSetting;
 import quina.compile.cdi.annotation.proxy.ProxyInjectMethod;
 import quina.compile.cdi.annotation.proxy.ProxyOverride;
 import quina.exception.QuinaException;
-import quina.util.InstanceOf;
+import quina.util.CheckReflection;
 import quina.util.StringUtil;
 import quina.util.collection.js.JsArray;
 import quina.util.collection.js.JsObject;
@@ -97,7 +97,7 @@ public class CdiOutputJavaProxySrc {
 		getProxyOverride(overrideList, clazz);
 		
 		// ProxyFieldのクラスがProxyScopedの継承元と一致しない場合.
-		if(!InstanceOf.isInstanceof(clazz, prxField.getType())) {
+		if(!CheckReflection.isInstanceof(clazz, prxField.getType())) {
 			throw new QuinaException(
 				"The type of ProxyField does not match the inheritance "+
 				"source of ProxyScoped.");
@@ -199,7 +199,7 @@ public class CdiOutputJavaProxySrc {
 					throw new QuinaException(
 						"The Field in the @ProxyField definition " +
 						"must be public or protected: " + c.getName());
-				} else if(ret != null && !InstanceOf.equalsField(ret, field)) {
+				} else if(ret != null && !CheckReflection.equalsField(ret, field)) {
 					// 複数のFieldに設定されてる場合、その内容が最初に取得した
 					// 条件と同一でない場合はエラー出力.
 					throw new QuinaException(
@@ -232,7 +232,7 @@ public class CdiOutputJavaProxySrc {
 					throw new QuinaException(
 						"The Method in the @ProxyInitialSetting definition " +
 						"must be public or protected: " + c.getName());
-				} else if(ret != null && !InstanceOf.equalsMethod(ret, method)) {
+				} else if(ret != null && !CheckReflection.equalsMethod(ret, method)) {
 					// 複数のMethodに設定されてる場合、その内容が最初に取得した
 					// 条件と同一でない場合はエラー出力.
 					throw new QuinaException(
@@ -265,7 +265,7 @@ public class CdiOutputJavaProxySrc {
 					throw new QuinaException(
 						"The Method in the @ProxyInjectMethod definition " +
 						"must be public or protected: " + c.getName());
-				} else if(ret != null && !InstanceOf.equalsMethod(ret, method)) {
+				} else if(ret != null && !CheckReflection.equalsMethod(ret, method)) {
 					// 複数のMethodに設定されてる場合、その内容が最初に取得した
 					// 条件と同一でない場合はエラー出力.
 					throw new QuinaException(
@@ -315,7 +315,7 @@ public class CdiOutputJavaProxySrc {
 	private static final boolean isProxyOverride(List<Method> list, Method method) {
 		final int len = list.size();
 		for(int i = 0; i < len; i ++) {
-			if(InstanceOf.equalsMethod(method, list.get(i))) {
+			if(CheckReflection.equalsMethod(method, list.get(i))) {
 				return true;
 			}
 		}
@@ -344,7 +344,7 @@ public class CdiOutputJavaProxySrc {
 			src = imList[i];
 			for(int j = 0; j < tarLen; j ++) {
 				// Exceptionの場合、継承元より継承先が優先される.
-				if(InstanceOf.isInstanceof(src, tarList[j])) {
+				if(CheckReflection.isInstanceof(src, tarList[j])) {
 					return true;
 				}
 			}

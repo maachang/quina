@@ -21,7 +21,7 @@ public class CdiOutputJsSmpleOut {
 		"quina/resources/compile/";
 	
 	// [JS]SMPLEの拡張子.
-	protected static final String SMPLE_JS_EXTENSION = ".smj";
+	protected static final String SMPLE_JS_EXTENSION = "." + SmpleAnalysis.JS_EXTENTION;
 	
 	/**
 	 * [JS]smpleJSを実行してJavaFileを出力.

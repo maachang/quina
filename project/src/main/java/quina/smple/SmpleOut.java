@@ -54,4 +54,9 @@ public class SmpleOut {
 	public String resultOut() {
 		return buf.toString();
 	}
+	
+	@Override
+	public String toString() {
+		return buf.toString();
+	}
 }

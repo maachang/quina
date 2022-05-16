@@ -330,7 +330,7 @@ public final class Json {
 		}
 		// JSON変換I/Oを取得.
 		final JsonCustomAnalysis conv = convJsonAnalysis.get();
-		// 文字列コーテーション区切り.
+		// 文字列クォーテーション区切り.
 		if ((json.startsWith("\"") &&
 				json.endsWith("\""))
 			|| (json.startsWith("\'") &&
@@ -361,35 +361,51 @@ public final class Json {
 		//	"Failed to parse JSON(" + json + "):No:" + no);
 		
 		// 文字列として扱う.
-		// これにより、コーテーションなしのvalue文字列も
+		// これにより、クォーテーションなしのvalue文字列も
 		// 利用可能になります.
 		return conv.jsonToString(json);
 	}
-
+	
+	// クォーテーション区切りの終端かチェック.
+	private static final boolean isStringQuotation(
+		String src, int pos, char srcQuotation) {
+		if(src.charAt(pos) != srcQuotation) {
+			return false;
+		}
+		int yenCount = 0;
+		for(int i = pos - 1; i >= 0; i --) {
+			if(src.charAt(i) == '\\') {
+				yenCount ++;
+				continue;
+			}
+			break;
+		}
+		return (yenCount & 1) == 1;
+	}
+	
 	/** JSON_Token_解析処理 **/
 	private static final List<Object> analysisJsonToken(final String json) {
 		int s = -1;
 		char c;
-		int cote = -1;
+		int quote = -1;
 		int bef = -1;
-		boolean yenFlag = false;
 		final int len = json.length();
 		final List<Object> ret = new ArrayList<Object>();
 		// Token解析.
 		for (int i = 0; i < len; i++) {
 			c = json.charAt(i);
-			// コーテーション内.
-			if (cote != -1) {
-				// コーテーションの終端.
-				if (!yenFlag && cote == c) {
+			// クォーテーション内.
+			if (quote != -1) {
+				// クォーテーションの終端.
+				if(!isStringQuotation(json, i, (char)quote)) {
 					ret.add(separationBeforeYen(json.substring(s - 1, i + 1)));
-					cote = -1;
+					quote = -1;
 					s = i + 1;
 				}
 			}
-			// コーテーション開始.
-			else if (!yenFlag && isQuotation(c)) {
-				cote = c;
+			// クォーテーション開始.
+			else if (bef != '\\' && c == '\'' || c == '\"') {
+				quote = c;
 				if (s != -1 && s != i && !isSpace((char)bef)) {
 					ret.add(separationBeforeYen(json.substring(s, i + 1)));
 				}
@@ -397,7 +413,7 @@ public final class Json {
 				bef = -1;
 			}
 			// 区切り文字(￥が前にある場合は区切り文字としない).
-			else if (!yenFlag && isSeparation(c)) {
+			else if (bef != '\\' && isSeparation(c)) {
 				if (s != -1 && s != i && !isSpace((char)bef)) {
 					ret.add(separationBeforeYen(json.substring(s, i)));
 				}
@@ -416,24 +432,14 @@ public final class Json {
 				s = i;
 			}
 			bef = c;
-			yenFlag = isYen(c);
 		}
 		return ret;
 	}
-	
-	// ￥文字の場合.
-	private static final boolean isYen(char c) {
-		return c =='\\';
-	}
+
 	
 	// スペース系文字の場合.
 	private static final boolean isSpace(char c) {
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-	}
-	
-	// クォーテーション文字の場合.
-	private static final boolean isQuotation(char c) {
-		return c == '\'' || c == '\"';
 	}
 	
 	// 区切り文字の場合.
@@ -451,7 +457,8 @@ public final class Json {
 		final int len = s.length();
 		final StringBuilder buf = new StringBuilder(s.length());
 		for(int i = 0; i < len; i ++) {
-			if(isYen(c = s.charAt(i))) {
+			c = s.charAt(i);
+			if(c == '\\') {
 				if(i + 1 < len && isSeparation(s.charAt(i + 1))) {
 					continue;
 				}
@@ -644,9 +651,9 @@ public final class Json {
 		if (str == null || str.length() <= 0) {
 			return "";
 		}
-		StringBuilder buf = new StringBuilder();
-		int len = str.length();
-		int cote = -1;
+		final StringBuilder buf = new StringBuilder();
+		final int len = str.length();
+		int quote = -1;
 		int commentType = -1;
 		int bef = -1;
 		char c, c2;
@@ -667,7 +674,8 @@ public final class Json {
 				case 2: // 複数行コメント.
 					if (c == '\n') {
 						buf.append(c);
-					} else if (len > i + 1 && c == '*' && str.charAt(i + 1) == '/') {
+					} else if (len > i + 1 && c == '*' &&
+						str.charAt(i + 1) == '/') {
 						i++;
 						commentType = -1;
 					}
@@ -675,10 +683,10 @@ public final class Json {
 				}
 				continue;
 			}
-			// シングル／ダブルコーテーション内の処理.
-			if (cote != -1) {
-				if (c == cote && (char) bef != '\\') {
-					cote = -1;
+			// シングル／ダブルクォーテーション内の処理.
+			if (quote != -1) {
+				if (!isStringQuotation(str, i, (char)quote)) {
+					quote = -1;
 				}
 				buf.append(c);
 				continue;
@@ -720,9 +728,9 @@ public final class Json {
 				commentType = 1;
 				continue;
 			}
-			// コーテーション開始.
+			// クォーテーション開始.
 			else if ((c == '\'' || c == '\"') && (char) bef != '\\') {
-				cote = (int) (c & 0x0000ffff);
+				quote = (int) (c & 0x0000ffff);
 			}
 			buf.append(c);
 		}

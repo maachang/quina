@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * ＠CdiHandleScoped
  * public class ExsampleCdiHandle extends CdiHandle {
  *   ＠Override
- *   public void load(CdiReflectManager man, Object o, Class<?> c)
+ *   public void load(CdiInjectFieldManager man, Object o, Class<?> c)
  *     throws Exception {
  *       .......
  *   }

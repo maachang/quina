@@ -160,7 +160,7 @@ public class StringUtil {
 	}
 	
 	/**
-	 * 現在位置の文字列が、クォーテーションが文字表現ものかチェック.
+	 * 指定位置の文字列が、クォーテーションが文字表現ものかチェック.
 	 * 
 	 * たとえば
 	 * "a\"bcd\\\"ef\\\"ghi\"jkl"
@@ -191,6 +191,7 @@ public class StringUtil {
 				yenCount ++;
 				continue;
 			}
+			break;
 		}
 		return (yenCount & 1) == 1;
 	}
@@ -496,7 +497,6 @@ public class StringUtil {
 			|| check == null || check.length() <= 0) {
 			throw new IllegalArgumentException();
 		}
-		out.clear();
 		lenJ = check.length();
 		checkCode = new char[lenJ];
 		check.getChars(0, lenJ, checkCode, 0);
@@ -552,49 +552,49 @@ public class StringUtil {
 	/**
 	 * チェック情報単位で情報を区切ります。
 	 *
-	 * @param out     区切られた情報が格納されます.
-	 * @param cote    コーテーション対応であるか設定します.
-	 *                [true]を設定した場合、各コーテーション ( ",' ) で囲った情報内は
-	 *                区切り文字と判別しません. [false]を設定した場合、コーテーション対応を行いません.
-	 * @param coteFlg コーテーションが入っている場合に、コーテーションを範囲に含むか否かを 設定します.
-	 *                [true]を設定した場合、コーテーション情報も範囲に含みます.
-	 *                [false]を設定した場合、コーテーション情報を範囲としません.
-	 * @param str     区切り対象の情報を設置します.
-	 * @param check   区切り対象の文字情報をセットします.
-	 *                区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
+	 * @param out      区切られた情報が格納されます.
+	 * @param quote    コーテーション対応であるか設定します.
+	 *                 [true]を設定した場合、各コーテーション ( ",' ) で囲った情報内は
+	 *                 区切り文字と判別しません. [false]を設定した場合、コーテーション対応を行いません.
+	 * @param quoteFlg コーテーションが入っている場合に、コーテーションを範囲に含むか否かを 設定します.
+	 *                 [true]を設定した場合、コーテーション情報も範囲に含みます.
+	 *                 [false]を設定した場合、コーテーション情報を範囲としません.
+	 * @param str      区切り対象の情報を設置します.
+	 * @param check    区切り対象の文字情報をセットします.
+	 *                 区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
 	 */
 	public static final void cutString(
-		List<String> out, boolean cote, boolean coteFlg, String str, String check) {
+		List<String> out, boolean quote, boolean quoteFlg,
+		String str, String check) {
 		int i, j;
 		int len;
 		int lenJ;
 		int s = -1;
-		char coteChr;
+		char quoteChr;
 		char nowChr;
 		char strCode;
 		char[] checkCode = null;
 		String tmp = null;
-		if (cote == false) {
+		if (!quote) {
 			cutString(out, false, str, check);
 		} else {
 			if (out == null || str == null || (len = str.length()) <= 0
 				|| check == null || check.length() <= 0) {
 				throw new IllegalArgumentException();
 			}
-			out.clear();
 			lenJ = check.length();
 			checkCode = new char[lenJ];
 			check.getChars(0, lenJ, checkCode, 0);
 			if (lenJ == 1) {
 				int befCode = -1;
 				boolean yenFlag = false;
-				for (i = 0, s = -1, coteChr = 0; i < len; i++) {
+				for (i = 0, s = -1, quoteChr = 0; i < len; i++) {
 					strCode = str.charAt(i);
 					nowChr = strCode;
 					s = (s == -1) ? i : s;
-					if (coteChr == 0) {
+					if (quoteChr == 0) {
 						if (nowChr == '\'' || nowChr == '\"') {
-							coteChr = nowChr;
+							quoteChr = nowChr;
 							if (s < i) {
 								tmp = str.substring(s, i);
 								out.add(tmp);
@@ -614,15 +614,15 @@ public class StringUtil {
 							}
 						}
 					} else {
-						if (befCode != '\\' && coteChr == nowChr) {
+						if (befCode != '\\' && quoteChr == nowChr) {
 							yenFlag = false;
-							coteChr = 0;
-							if (s == i && coteFlg == true) {
+							quoteChr = 0;
+							if (s == i && quoteFlg == true) {
 								out.add(new StringBuilder()
 									.append(strCode).append(strCode).toString());
 								s = -1;
 							} else if (s < i) {
-								if (coteFlg == true) {
+								if (quoteFlg == true) {
 									tmp = str.substring(s - 1, i + 1);
 								} else {
 									tmp = str.substring(s, i);
@@ -649,13 +649,13 @@ public class StringUtil {
 			} else {
 				int befCode = -1;
 				boolean yenFlag = false;
-				for (i = 0, s = -1, coteChr = 0; i < len; i++) {
+				for (i = 0, s = -1, quoteChr = 0; i < len; i++) {
 					strCode = str.charAt(i);
 					nowChr = strCode;
 					s = (s == -1) ? i : s;
-					if (coteChr == 0) {
+					if (quoteChr == 0) {
 						if (nowChr == '\'' || nowChr == '\"') {
-							coteChr = nowChr;
+							quoteChr = nowChr;
 							if (s < i) {
 								tmp = str.substring(s, i);
 								out.add(tmp);
@@ -680,15 +680,15 @@ public class StringUtil {
 							}
 						}
 					} else {
-						if (befCode != '\\' && coteChr == nowChr) {
-							coteChr = 0;
+						if (befCode != '\\' && quoteChr == nowChr) {
+							quoteChr = 0;
 							yenFlag = false;
-							if (s == i && coteFlg == true) {
+							if (s == i && quoteFlg == true) {
 								out.add(new StringBuilder().append(strCode)
 									.append(strCode).toString());
 								s = -1;
 							} else if (s < i) {
-								if (coteFlg == true) {
+								if (quoteFlg == true) {
 									tmp = str.substring(s - 1, i + 1);
 								} else {
 									tmp = str.substring(s, i);
@@ -715,8 +715,8 @@ public class StringUtil {
 				}
 			}
 			if (s != -1) {
-				if (coteChr != 0 && coteFlg == true) {
-					tmp = str.substring(s - 1, len) + (char) coteChr;
+				if (quoteChr != 0 && quoteFlg == true) {
+					tmp = str.substring(s - 1, len) + (char) quoteChr;
 				} else {
 					tmp = str.substring(s, len);
 				}
@@ -760,17 +760,17 @@ public class StringUtil {
 		final int cLen = ck.length;
 		int j;
 		char c = 0, bef = 0;
-		int cote = -1;
+		int quote = -1;
 		for (int i = off; i < len; i++) {
-			if (cote != -1) {
-				if(isStringQuotation(base, len, (char)cote)) {
-					cote = -1;
+			if (quote != -1) {
+				if(!isStringQuotation(base, len, (char)quote)) {
+					quote = -1;
 					bef = base.charAt(i);
 				}
 			} else {
 				c = base.charAt(i);
 				if (bef != '\\' && (c == '\'' || c == '\"')) {
-					cote = c;
+					quote = c;
 				} else if (c == ck[0]) {
 					boolean res = true;
 					for (j = 1; j < cLen; j++) {

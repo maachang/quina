@@ -6,7 +6,7 @@ import quina.annotation.QuinaServiceScoped;
 import quina.compile.cdi.annotation.AnnotationCdiConstants;
 import quina.compile.cdi.annotation.CdiHandleManager;
 import quina.compile.cdi.annotation.CdiHandleScoped;
-import quina.compile.cdi.annotation.CdiReflectManager;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
 import quina.compile.cdi.annotation.CdiScoped;
 import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.ServiceScoped;
@@ -62,10 +62,10 @@ public class QuinaCTConstants {
 		CdiServiceManager.AUTO_READ_CDI_SERVICE_CLASS + ".java";
 	
 	/**
-	 * AutoCdiReflect出力先Javaソースファイル名.
+	 * AutoCdiInjectField出力先Javaソースファイル名.
 	 */
-	public static final String CDI_REFLECT_SOURCE_NAME =
-		CdiReflectManager.AUTO_READ_CDI_REFLECT_CLASS + ".java";
+	public static final String CDI_INJECT_FIELD_SOURCE_NAME =
+		CdiInjectFieldManager.AUTO_READ_CDI_INJECT_FIELD_CLASS + ".java";
 	
 	/**
 	 * AutoQuinaService出力先Javaソースファイル名.
@@ -98,7 +98,7 @@ public class QuinaCTConstants {
 	public static final String[] OUTPUT_SOURCE_ARRAY = new String[] {
 		AUTO_ROUTE_SOURCE_NAME
 		,CDI_SERVICE_SOURCE_NAME
-		,CDI_REFLECT_SOURCE_NAME
+		,CDI_INJECT_FIELD_SOURCE_NAME
 		,QUINA_SERVICE_SOURCE_NAME
 		,CDI_HANDLE_SOURCE_NAME
 		,CDI_PROXY_SCOPED_SOURCE_NAME

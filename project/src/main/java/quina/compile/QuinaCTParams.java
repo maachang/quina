@@ -33,9 +33,9 @@ public class QuinaCTParams {
 	public final List<String> cdiList = new ArrayList<String>();
 	
 	/**
-	 * CdiReflect用クラス名リスト.
+	 * CdiInjectField用クラス名リスト.
 	 */
-	public final List<String> refList = new ArrayList<String>();
+	public final List<String> injFdList = new ArrayList<String>();
 	
 	/**
 	 * QuinaService用クラス名リスト.
@@ -103,7 +103,7 @@ public class QuinaCTParams {
 	 * @return
 	 */
 	public boolean isEmpty() {
-		return refList.size() == 0 && routeList.size() == 0
+		return injFdList.size() == 0 && routeList.size() == 0
 			&& cdiList.size() == 0 && any == null
 			&& errList.size() == 0 && qsrvList.size() == 0
 			&& hndList.size() == 0 && prxList.size() == 0
@@ -129,11 +129,11 @@ public class QuinaCTParams {
 	}
 	
 	/**
-	 * CdiReflect定義が空の場合.
+	 * CdiInjectField定義が空の場合.
 	 * @return
 	 */
-	public boolean isCdiReflectEmpty() {
-		return refList.size() == 0;
+	public boolean isCdiInjectFieldEmpty() {
+		return injFdList.size() == 0;
 	}
 	
 	/**

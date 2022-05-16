@@ -199,13 +199,13 @@ public class QuinaCT {
 					QuinaCTConstants.QUINA_SERVICE_SOURCE_NAME);
 		}
 		
-		// [CdiReflect]ファイル出力.
-		if(!params.isCdiReflectEmpty()) {
-			CdiOutputJavaSrc.cdiReflect(cmdPms.javaSourceDir, params);
-			System.out.println( " cdiReflect           : " +
+		// [CdiInjectField]ファイル出力.
+		if(!params.isCdiInjectFieldEmpty()) {
+			CdiOutputJavaSrc.cdiInjectField(cmdPms.javaSourceDir, params);
+			System.out.println( " cdiInjectField           : " +
 				new File(cmdPms.javaSourceDir).getCanonicalPath() +
 				"/" + QuinaCTConstants.CDI_DIRECTORY_NAME + "/" +
-					QuinaCTConstants.CDI_REFLECT_SOURCE_NAME);
+					QuinaCTConstants.CDI_INJECT_FIELD_SOURCE_NAME);
 		}
 		
 		// [CdiHandle]ファイル出力.

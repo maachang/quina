@@ -9,7 +9,7 @@ import quina.util.collection.ObjectList;
  * Cdi(Contexts and Dependency Injection)フィールド群を
  * 管理する要素.
  */
-public class CdiReflectElement {
+public class CdiInjectFieldElement {
 	// Cdi フィールド要素.
 	private static final class CdiFieldElement {
 		// アクセスがstaticの場合 true.
@@ -30,7 +30,7 @@ public class CdiReflectElement {
 	/**
 	 * コンストラクタ.
 	 */
-	public CdiReflectElement() {
+	public CdiInjectFieldElement() {
 		this.list = new ObjectList<CdiFieldElement>();
 	}
 	
@@ -38,9 +38,9 @@ public class CdiReflectElement {
 	 * フィールド追加.
 	 * @param staticFlag 対象フィールドが static な場合は true を設定します.
 	 * @param field 対象のフィールドオブジェクトを設定します.
-	 * @return CdiReflectElement このオブジェクトが返却されます.
+	 * @return CdiInjectFieldElement このオブジェクトが返却されます.
 	 */
-	public CdiReflectElement add(boolean staticFlag, Field field) {
+	public CdiInjectFieldElement add(boolean staticFlag, Field field) {
 		if(field == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}

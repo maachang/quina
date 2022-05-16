@@ -28,7 +28,7 @@ public final class CdiOutputJavaSrc {
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(Class<?> c) {
 		if(QuinaCTConstants.isDefineAnnotation(c) ||
-			QuinaCTConstants.isProxyAnnotation(c)) {
+			QuinaCTConstants.isProxyAnnotation(c)) {	
 			QuinaCTUtil.checkPublicClass(c);
 			return true;
 		}
@@ -191,13 +191,13 @@ public final class CdiOutputJavaSrc {
 	}
 	
 	/**
-	 * 抽出したCdiReflect定義されたオブジェクトをJavaファイルに出力.
+	 * 抽出したCdiInjectField定義されたオブジェクトをJavaファイルに出力.
 	 * @param outSourceDirectory 出力先ディレクトリを設定します.
 	 * @param params GenerateGciパラメータを設定します.
 	 * @throws IOException I/O例外.
 	 * @throws ClassNotFoundException クラス非存在例外.
 	 */
-	public static final void cdiReflect(
+	public static final void cdiInjectField(
 		String outSourceDirectory, QuinaCTParams params)
 		throws IOException, ClassNotFoundException {
 		
@@ -206,9 +206,9 @@ public final class CdiOutputJavaSrc {
 		
 		Class<?> c;
 		String clazzName;
-		int len = params.refList.size();
+		int len = params.injFdList.size();
 		for(int i = 0; i < len; i ++) {
-			clazzName = params.refList.get(i);
+			clazzName = params.injFdList.get(i);
 			c = QuinaCTUtil.getClass(clazzName, params);
 			
 			// subClassを含むFieldをすべて取得.
@@ -242,10 +242,10 @@ public final class CdiOutputJavaSrc {
 			}
 		}
 		
-		// [LoadCdiReflect.java]のJavaファイルを出力.
+		// [LoadCdiInjectField.java]のJavaファイルを出力.
 		CdiOutputJsSmpleOut.executeSmpleToOutputJavaFile(
 			outCdiDirectory(outSourceDirectory),
-			QuinaCTConstants.CDI_REFLECT_SOURCE_NAME,
+			QuinaCTConstants.CDI_INJECT_FIELD_SOURCE_NAME,
 			jsParam, null);
 	}
 	

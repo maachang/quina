@@ -42,11 +42,12 @@ import quina.util.collection.IndexKeyValueList;
  * それらのフィールド情報をこのオブジェクトに設定するロードオブジェクトを
  * 作成し、ここにフィールド群を管理します.
  */
-public class CdiReflectManager {
+public class CdiInjectFieldManager {
 	/**
-	 * CDIRefect自動読み込み実行用クラス名.
+	 * CDIInjectReflect自動読み込み実行用クラス名.
 	 */
-	public static final String AUTO_READ_CDI_REFLECT_CLASS = "LoadCdiReflect";
+	public static final String AUTO_READ_CDI_INJECT_FIELD_CLASS =
+		"LoadCdiInjectField";
 
 	/**
 	 * CDIRefect自動読み込み実行用メソッド名.
@@ -54,41 +55,41 @@ public class CdiReflectManager {
 	public static final String AUTO_READ_CDI_REFLECT_METHOD = "load";
 	
 	// Componentや@ServiceScopedアノテーション単位で管理するマネージャ.
-	private IndexKeyValueList<String, CdiReflectElement> manager = new
-		IndexKeyValueList<String, CdiReflectElement>();
+	private IndexKeyValueList<String, CdiInjectFieldElement> manager = new
+		IndexKeyValueList<String, CdiInjectFieldElement>();
 	
 	/**
 	 * コンストラクタ.
 	 */
-	public CdiReflectManager() {
+	public CdiInjectFieldManager() {
 		
 	}
 	
 	/**
-	 * オブジェクトを登録してCdiReflectElementを
+	 * オブジェクトを登録してCdiInjectFieldElementを
 	 * @param c 対象のクラスを設定します.
-	 * @return CdiReflectElement 要素が返却されます.
+	 * @return CdiInjectFieldElement 要素が返却されます.
 	 */
-	public CdiReflectElement register(Class<?> c) {
+	public CdiInjectFieldElement register(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException(
 				"The specified argument is Null.");
 		}
 		String name = c.getName();
-		CdiReflectElement ret = manager.get(name);
+		CdiInjectFieldElement ret = manager.get(name);
 		if(ret == null) {
-			ret = new CdiReflectElement();
+			ret = new CdiInjectFieldElement();
 			manager.put(name, ret);
 		}
 		return ret;
 	}
 	
 	/**
-	 * CdiReflectElementを取得.
+	 * CdiInjectFieldElementを取得.
 	 * @param o 対象のオブジェクトを設定します.
-	 * @return CdiReflectElement 要素が返却されます.
+	 * @return CdiInjectFieldElement 要素が返却されます.
 	 */
-	public CdiReflectElement get(Object o) {
+	public CdiInjectFieldElement get(Object o) {
 		if(o == null) {
 			throw new QuinaException(
 				"The specified argument is Null.");
@@ -97,11 +98,11 @@ public class CdiReflectManager {
 	}
 	
 	/**
-	 * CdiReflectElementを取得.
+	 * CdiInjectFieldElementを取得.
 	 * @param c 対象ののクラスを設定します.
-	 * @return CdiReflectElement 要素が返却されます.
+	 * @return CdiInjectFieldElement 要素が返却されます.
 	 */
-	public CdiReflectElement get(Class<?> c) {
+	public CdiInjectFieldElement get(Class<?> c) {
 		if(c == null) {
 			throw new QuinaException(
 				"The specified argument is Null.");
@@ -132,14 +133,14 @@ public class CdiReflectManager {
 	 * autoCdiService実行.
 	 * @return CdiManager このオブジェクトが返却されます.
 	 */
-	public CdiReflectManager autoCdiReflect() {
+	public CdiInjectFieldManager autoCdiInjectField() {
 		java.lang.Class<?> clazz;
 		java.lang.reflect.Method method;
 		try {
 			// AutoRoute実行用のクラスを取得.
 			clazz = Class.forName(
 				AnnotationCdiConstants.CDI_PACKAGE_NAME + "." +
-				AUTO_READ_CDI_REFLECT_CLASS);
+				AUTO_READ_CDI_INJECT_FIELD_CLASS);
 			// 実行メソッドを取得.
 			method = clazz.getMethod(AUTO_READ_CDI_REFLECT_METHOD);
 		} catch(Exception e) {

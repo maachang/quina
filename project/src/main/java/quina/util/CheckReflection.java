@@ -6,25 +6,11 @@ import java.lang.reflect.Method;
 /**
  * Reflection関連のチェック処理.
  */
-public class InstanceOf {
-	private InstanceOf() {}
+public class CheckReflection {
+	private CheckReflection() {}
 	
 	/**
-	 * class同士の同一性確認.
-	 * @param target 比較対象のクラスを設定します.
-	 * @param src 比較元のクラスを設定します.
-	 * @return boolean trueの場合targetはsrcを継承しています.
-	 */
-	public static final boolean isInstanceof(
-		Class<?> target, Class<?> src) {
-		if(src == null || target == null) {
-			return false;
-		}
-		return src.isAssignableFrom(target);
-	}
-	
-	/**
-	 * class同士の同一性確認.
+	 * ObjectとClassのinstanceof的チェック.
 	 * @param target 比較対象のオブジェクトを設定します.
 	 * @param src 比較元のクラスを設定します.
 	 * @return boolean trueの場合targetはsrcを継承しています.
@@ -34,14 +20,18 @@ public class InstanceOf {
 		if(src == null || target == null) {
 			return false;
 		}
-		return src.isInstance(target);
+		if(target instanceof Class) {
+			return src.isAssignableFrom((Class<?>)target);
+		} else {
+			return src.isInstance(target);
+		}
 	}
 	
 	/**
 	 * ２つのメソッド定義が一致しているかチェック.
 	 * @param a 比較元のMethodを設定します.
 	 * @param b 比較先のMethodを設定します.
-	 * @return boolean true true の場合一致しています.
+	 * @return boolean true の場合一致しています.
 	 */
 	public static final boolean equalsMethod(Method a, Method b) {
 		// メソッド名とパラメータの一致チェック.
@@ -69,7 +59,8 @@ public class InstanceOf {
 	 * @param c 対象のオブジェクトを設定します.
 	 * @return boolean trueの場合一致します.
 	 */
-	public static final boolean equalsFieldType(Field f, Object o) {
+	public static final boolean equalsFieldType(
+		Field f, Object o) {
 		if(o == null) {
 			return false;
 		}
@@ -82,7 +73,11 @@ public class InstanceOf {
 	 * @param c 対象のクラスを設定します.
 	 * @return boolean trueの場合一致します.
 	 */
-	public static final boolean equalsFieldType(Field f, Class<?> c) {
+	public static final boolean equalsFieldType(
+		Field f, Class<?> c) {
+		if(f == null) {
+			return false;
+		}
 		Class<?> fc = f.getType();
 		return fc ==c;
 	}
@@ -93,7 +88,8 @@ public class InstanceOf {
 	 * @param b 比較先のFieldを設定します.
 	 * @return boolean trueの場合一致します.
 	 */
-	public static final boolean equalsField(Field a, Field b) {
+	public static final boolean equalsField(
+		Field a, Field b) {
 		if(a == null || b == null) {
 			return false;
 		}
@@ -107,7 +103,8 @@ public class InstanceOf {
 	 * @param src 比較元のクラスを設定します.
 	 * @return boolean trueの場合targetはsrcを継承しています.
 	 */
-	public static final boolean instanceofField(Field target, Class<?> src) {
+	public static final boolean instanceofByField(
+		Field target, Class<?> src) {
 		if(target == null) {
 			return false;
 		}

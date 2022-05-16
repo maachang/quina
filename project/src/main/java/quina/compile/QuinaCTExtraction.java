@@ -21,6 +21,7 @@ import quina.worker.QuinaLoopElement;
 
 /**
  * Cdiオブジェクトを抽出.
+ * 現状のコンパイル環境からCdiオブジェクトを抽出.
  */
 public class QuinaCTExtraction {
 	private QuinaCTExtraction() {}
@@ -57,13 +58,13 @@ public class QuinaCTExtraction {
 			}
 			
 			// 非アノテーションに対するCdi条件の抽出を実施.
-			if(noAnnotationCdi(params, c, cname)) {
+			if(noAnnotationByInjectField(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
 			
 			// Cdi条件アノテーションの抽出を実施.
-			if(annotationCdi(params, c, cname)) {
+			if(annotationByInjectField(params, c, cname)) {
 				// 対象の場合.
 				continue;
 			}
@@ -80,6 +81,206 @@ public class QuinaCTExtraction {
 				continue;
 			}
 		}
+	}
+	
+	// アノテーションなしのInjectField確認設定を行う.
+	private static final boolean noAnnotationByInjectField(
+		QuinaCTParams params, Class<?> c, String cname) {
+		// 利用可能なアノテーションが定義されている場合.
+		if(QuinaCTConstants.isDefineAnnotation(c) ||
+			QuinaCTConstants.isProxyAnnotation(c)) {
+			// 処理しない.
+			return false;
+		}
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return true;
+		}
+		
+		// アノテーションなしのコンポーネントの場合.
+		if(o instanceof Component ||
+			o instanceof ErrorComponent) {
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+		// アノテーションなしのQuinaServiceの場合.
+		} else if(o instanceof QuinaService) {
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+		// アノテーションなしのCdiHandleの場合.
+		} else if(o instanceof CdiHandle) {
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+		// アノテーションなしのQuinaLoopElement.
+		} else if(o instanceof QuinaLoopElement) {
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+		}
+		//処理完了の場合.
+		return true;
+	}
+	
+	// アノテーションありのInjectField確認設定を行う.
+	private static final boolean annotationByInjectField(
+		QuinaCTParams params, Class<?> c, String cname)
+		throws Exception {
+		// CdiScoped定義のクラスの場合.
+		// 継承アノテーションありで検索.
+		if(QuinaCTUtil.isAnnotation(c, CdiScoped.class)) {
+			System.out.println("  > cdiScoped         : " + cname);
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		
+		// ServiceScoped定義のCdiServiceの場合.
+		// 継承アノテーションありで検索.
+		if(QuinaCTUtil.isAnnotation(c, ServiceScoped.class)) {
+			System.out.println("  > cdiService        : " + cname);
+			// Cdiリストに追加.
+			params.cdiList.add(cname);
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		
+		// ProxyScoped定義の場合.
+		if(c.isAnnotationPresent(ProxyScoped.class)) {
+			System.out.println("  > proxy             : " + cname);
+			// ProxyScopedリストに追加.
+			params.prxList.add(cname);
+			return true;
+		}
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
+		
+		// QuinaServiceScoped定義のQuinaServiceの場合.
+		if(o instanceof QuinaService &&
+			c.isAnnotationPresent(QuinaServiceScoped.class)) {
+			System.out.println("  > quinaService      : " + cname);
+			// QuinaServiceリストに追加.
+			params.qsrvList.add(cname);
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		
+		// CdiHandle定義のCdiAnnotationScopedの場合.
+		if(o instanceof CdiHandle &&
+			c.isAnnotationPresent(CdiHandleScoped.class)) {
+			System.out.println("  > cdiHandle         : " + cname);
+			// CdiHandleリストに追加.
+			params.hndList.add(cname);
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	// アノテーションコンポーネント定義.
+	private static final boolean annotationComponent(
+		QuinaCTParams params, Class<?> c,String cname)
+		throws Exception {
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
+		
+		// 対象がコンポーネントクラスの場合.
+		if(o instanceof Component) {
+			// @Route付属のコンポーネントを登録.
+			if(c.isAnnotationPresent(Route.class)) {
+				Route r = (Route)c.getAnnotation(Route.class);
+				if(r != null) {
+					System.out.println("  > route             : " + cname);
+					System.out.println("                         path: " + r.value());
+				} else {
+					System.out.println("  > route             : " + cname);
+				}
+				// RouterListに登録.
+				params.routeList.add(cname);
+			// @AnyRoute付属のコンポーネントを登録.
+			} else if(c.isAnnotationPresent(AnyRoute.class)) {
+				System.out.println("  > any               : " + cname);
+				// AnyRouteに登録.
+				params.any = cname;
+			}
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		
+		// 対象がエラーコンポーネントの場合.
+		if(o instanceof ErrorComponent) {
+			// @ErrorRoute付属のコンポーネントを登録.
+			if(c.isAnnotationPresent(ErrorRoute.class)) {
+				StringBuilder buf = new StringBuilder();
+				Object[] es = AnnotationRoute.loadErrorRoute(c);
+				int esLen = es == null ? 0 : es.length;
+				for(int e = 0; e < esLen; e ++) {
+					if(e != 0) {
+						buf.append(", ");
+					}
+					if(es[e] instanceof String) {
+						buf.append("\"").append(es[e]).append("\"");
+					} else {
+						buf.append(es[e]);
+					}
+				}
+				System.out.println(
+				"  > error             : " + cname);
+				if(esLen > 0) {
+					System.out.println(
+				"                          " + buf.toString());
+				}
+				buf = null;
+				// ErrorRouteリストに登録.
+				params.errList.add(cname);
+			}
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		return false;
+	}
+	
+	// アノテーションループ要素定義.
+	private static final boolean annotationLoopElement(
+		QuinaCTParams params, Class<?> c, String cname)
+		throws Exception {
+		
+		// クラスのインスタンスを生成.
+		Object o = null;
+		if((o = getObject(params, c)) == null) {
+			// 生成失敗の場合.
+			return false;
+		}
+		
+		// QuinaLoopElementの場合.
+		if(o instanceof QuinaLoopElement) {
+			// ＠QuinaLoopScoped付属のQuinaLoopElementを登録.
+			if(c.isAnnotationPresent(QuinaLoopScoped.class)) {
+				System.out.println("  > quinaLoopElement  : " + cname);
+				// Loopリストに登録.
+				params.loopList.add(cname);
+			}
+			// InjectFieldリストに追加.
+			params.injFdList.add(cname);
+			return true;
+		}
+		return false;
 	}
 	
 	// クラスオブジェクトを取得.
@@ -133,205 +334,5 @@ public class QuinaCTExtraction {
 			// 読み込まれたら対象クラス名を出力.
 			System.out.println("  > loadNativeConf    : " + cname);
 		}
-	}
-	
-	// アノテーションなしのCdi定義.
-	private static final boolean noAnnotationCdi(
-		QuinaCTParams params, Class<?> c, String cname) {
-		// 利用可能なアノテーションが定義されている場合.
-		if(QuinaCTConstants.isDefineAnnotation(c) ||
-			QuinaCTConstants.isProxyAnnotation(c)) {
-			// 処理しない.
-			return false;
-		}
-		
-		// クラスのインスタンスを生成.
-		Object o = null;
-		if((o = getObject(params, c)) == null) {
-			// 生成失敗の場合.
-			return true;
-		}
-		
-		// アノテーションなしのコンポーネントの場合.
-		if(o instanceof Component ||
-			o instanceof ErrorComponent) {
-			// Reflectリストに追加.
-			params.refList.add(cname);
-		// アノテーションなしのQuinaServiceの場合.
-		} else if(o instanceof QuinaService) {
-			// Reflectリストに追加.
-			params.refList.add(cname);
-		// アノテーションなしのCdiHandleの場合.
-		} else if(o instanceof CdiHandle) {
-			// Reflectリストに追加.
-			params.refList.add(cname);
-		// アノテーションなしのQuinaLoopElement.
-		} else if(o instanceof QuinaLoopElement) {
-			// Reflectリストに追加.
-			params.refList.add(cname);
-		}
-		//処理完了の場合.
-		return true;
-	}
-	
-	// アノテーションCDI定義.
-	private static final boolean annotationCdi(
-		QuinaCTParams params, Class<?> c, String cname)
-		throws Exception {
-		// CdiScoped定義のクラスの場合.
-		// 継承アノテーションありで検索.
-		if(QuinaCTUtil.isAnnotation(c, CdiScoped.class)) {
-			System.out.println("  > cdiScoped         : " + cname);
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		
-		// ServiceScoped定義のCdiServiceの場合.
-		// 継承アノテーションありで検索.
-		if(QuinaCTUtil.isAnnotation(c, ServiceScoped.class)) {
-			System.out.println("  > cdiService        : " + cname);
-			// Cdiリストに追加.
-			params.cdiList.add(cname);
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		
-		// ProxyScoped定義の場合.
-		if(c.isAnnotationPresent(ProxyScoped.class)) {
-			System.out.println("  > proxy             : " + cname);
-			// ProxyScopedリストに追加.
-			params.prxList.add(cname);
-			return true;
-		}
-		
-		// クラスのインスタンスを生成.
-		Object o = null;
-		if((o = getObject(params, c)) == null) {
-			// 生成失敗の場合.
-			return false;
-		}
-		
-		// QuinaServiceScoped定義のQuinaServiceの場合.
-		if(o instanceof QuinaService &&
-			c.isAnnotationPresent(QuinaServiceScoped.class)) {
-			System.out.println("  > quinaService      : " + cname);
-			// QuinaServiceリストに追加.
-			params.qsrvList.add(cname);
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		
-		// CdiHandle定義のCdiAnnotationScopedの場合.
-		if(o instanceof CdiHandle &&
-			c.isAnnotationPresent(CdiHandleScoped.class)) {
-			System.out.println("  > cdiHandle         : " + cname);
-			// CdiHandleリストに追加.
-			params.hndList.add(cname);
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		
-		return false;
-	}
-	
-	// アノテーションコンポーネント定義.
-	private static final boolean annotationComponent(
-		QuinaCTParams params, Class<?> c,String cname)
-		throws Exception {
-		
-		// クラスのインスタンスを生成.
-		Object o = null;
-		if((o = getObject(params, c)) == null) {
-			// 生成失敗の場合.
-			return false;
-		}
-		
-		// 対象がコンポーネントクラスの場合.
-		if(o instanceof Component) {
-			// @Route付属のコンポーネントを登録.
-			if(c.isAnnotationPresent(Route.class)) {
-				Route r = (Route)c.getAnnotation(Route.class);
-				if(r != null) {
-					System.out.println("  > route             : " + cname);
-					System.out.println("                         path: " + r.value());
-				} else {
-					System.out.println("  > route             : " + cname);
-				}
-				// RouterListに登録.
-				params.routeList.add(cname);
-			// @AnyRoute付属のコンポーネントを登録.
-			} else if(c.isAnnotationPresent(AnyRoute.class)) {
-				System.out.println("  > any               : " + cname);
-				// AnyRouteに登録.
-				params.any = cname;
-			}
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		
-		// 対象がエラーコンポーネントの場合.
-		if(o instanceof ErrorComponent) {
-			// @ErrorRoute付属のコンポーネントを登録.
-			if(c.isAnnotationPresent(ErrorRoute.class)) {
-				StringBuilder buf = new StringBuilder();
-				Object[] es = AnnotationRoute.loadErrorRoute(c);
-				int esLen = es == null ? 0 : es.length;
-				for(int e = 0; e < esLen; e ++) {
-					if(e != 0) {
-						buf.append(", ");
-					}
-					if(es[e] instanceof String) {
-						buf.append("\"").append(es[e]).append("\"");
-					} else {
-						buf.append(es[e]);
-					}
-				}
-				System.out.println(
-				"  > error             : " + cname);
-				if(esLen > 0) {
-					System.out.println(
-				"                          " + buf.toString());
-				}
-				buf = null;
-				// ErrorRouteリストに登録.
-				params.errList.add(cname);
-			}
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		return false;
-	}
-	
-	// アノテーションループ要素定義.
-	private static final boolean annotationLoopElement(
-		QuinaCTParams params, Class<?> c, String cname)
-		throws Exception {
-		
-		// クラスのインスタンスを生成.
-		Object o = null;
-		if((o = getObject(params, c)) == null) {
-			// 生成失敗の場合.
-			return false;
-		}
-		
-		// QuinaLoopElementの場合.
-		if(o instanceof QuinaLoopElement) {
-			// ＠QuinaLoopScoped付属のQuinaLoopElementを登録.
-			if(c.isAnnotationPresent(QuinaLoopScoped.class)) {
-				System.out.println("  > quinaLoopElement  : " + cname);
-				// Loopリストに登録.
-				params.loopList.add(cname);
-			}
-			// Reflectリストに追加.
-			params.refList.add(cname);
-			return true;
-		}
-		return false;
 	}
 }

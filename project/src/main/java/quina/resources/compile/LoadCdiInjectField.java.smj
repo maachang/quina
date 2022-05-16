@@ -1,10 +1,10 @@
 <%#
- ■LoadCdiReflect.java ファイル作成用のjs用smple.
+ ■LoadCdiInjectField.java ファイル作成用のjs用smple.
    
    CDI(Contexts and Dependency Injection)に対する
    Fieldに関するQuina用のAnnotation定義が存在する
    ものに対して、quina.compile.cdi.annotation.
-   CdiReflectManagerで管理します.
+   CdiInjectFieldManagerで管理します.
    
    このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
    あります.
@@ -24,24 +24,24 @@
 %>package quinax;
 
 import quina.Quina;
-import quina.compile.cdi.annotation.CdiReflectManager;
-import quina.compile.cdi.annotation.CdiReflectElement;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
+import quina.compile.cdi.annotation.CdiInjectFieldElement;
 
 /**
- * Reads the CDI reflection information.
+ * Read the CDI injection field information.
  */
-public final class LoadCdiReflect {
-	private LoadCdiReflect() {}
+public final class LoadCdiInjectField {
+	private LoadCdiInjectField() {}
 	
 	/**
-	 * Reads the CDI reflection information.
+	 * Read the CDI injection field information.
 	 *
 	 * @exception Exception If the cdi reflect registration fails.
 	 */
 	public static final void load() throws Exception {
 		Class<?> cls;
-		CdiReflectElement element;
-		final CdiReflectManager man = Quina.get().getCdiReflectManager();
+		CdiInjectFieldElement element;
+		final CdiInjectFieldManager man = Quina.get().getCdiInjectFieldManager();
 		<%for(var i = 0; i < args.length; i ++) {%>
 		// Register the field group of the target class "${args[i].name}".
 		cls = ${args[i].name}.class;

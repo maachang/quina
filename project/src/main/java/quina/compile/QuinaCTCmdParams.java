@@ -11,8 +11,6 @@ import quina.util.FileUtil;
 
 /**
  * Quina Compile Tool コマンドパラメータ.
- * @author maachang
- *
  */
 class QuinaCTCmdParams {
 	/** 詳細表示フラグ. **/
@@ -143,7 +141,8 @@ class QuinaCTCmdParams {
 		// javaソースディレクトリが指定されていない場合.
 		if(javaSourceDir == null) {
 			outHelp();
-			System.err.println("[ERROR] The output destination Java source directory has not been set.");
+			System.err.println("[ERROR] The output destination Java source " +
+				"directory has not been set.");
 			return null;
 		// javaソースディレクトリが存在しない場合.
 		} else if(!new File(javaSourceDir).isDirectory()) {

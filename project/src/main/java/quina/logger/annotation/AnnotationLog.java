@@ -3,7 +3,7 @@ package quina.logger.annotation;
 import java.lang.reflect.Field;
 
 import quina.Quina;
-import quina.compile.cdi.annotation.CdiReflectElement;
+import quina.compile.cdi.annotation.CdiInjectFieldElement;
 import quina.exception.QuinaException;
 import quina.logger.Log;
 import quina.logger.LogDefineElement;
@@ -124,7 +124,8 @@ public class AnnotationLog {
 	private static final void injectLogDefineByClass(
 		Object o, Class<?> c, LogDefine def) {
 		Field targetField = null;
-		final CdiReflectElement list = Quina.get().getCdiReflectManager().get(c);
+		final CdiInjectFieldElement list = Quina.get()
+			.getCdiInjectFieldManager().get(c);
 		if(list == null) {
 			return;
 		}
@@ -162,8 +163,8 @@ public class AnnotationLog {
 	private static final void injectLogDefineByField(Object o, Class<?> c) {
 		LogDefine def;
 		Field targetField;
-		final CdiReflectElement list = Quina.get()
-			.getCdiReflectManager().get(c);
+		final CdiInjectFieldElement list = Quina.get()
+			.getCdiInjectFieldManager().get(c);
 		if(list == null) {
 			return;
 		}

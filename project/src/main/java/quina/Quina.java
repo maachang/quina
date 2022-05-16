@@ -1,7 +1,7 @@
 package quina;
 
 import quina.compile.cdi.annotation.CdiHandleManager;
-import quina.compile.cdi.annotation.CdiReflectManager;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
 import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.component.file.EtagManagerInfo;
@@ -297,12 +297,12 @@ public final class Quina {
 	
 	/**
 	 * CDI（Contexts and Dependency Injection）
-	 * リフレクションマネージャを取得.
-	 * @return CdiReflectManager CDIリフレクション
+	 * インジェクトフィールドマネージャを取得.
+	 * @return CdiReflectManager CDIインジェクトフィールド
 	 *                           マネージャが返却されます.
 	 */
-	public CdiReflectManager getCdiReflectManager() {
-		return quinaMembers.cdiRefrectManager;
+	public CdiInjectFieldManager getCdiInjectFieldManager() {
+		return quinaMembers.cdiInjectFieldManager;
 	}
 	
 	/**

@@ -11,7 +11,7 @@ import quina.annotation.ConfigElement.ConfigElementArray;
 import quina.annotation.QuinaServiceSelection.QuinaServiceSelectionArray;
 import quina.annotation.SystemProperty.SystemPropertyArray;
 import quina.compile.cdi.annotation.CdiHandleScoped;
-import quina.compile.cdi.annotation.CdiReflectElement;
+import quina.compile.cdi.annotation.CdiInjectFieldElement;
 import quina.compile.cdi.annotation.CdiScoped;
 import quina.exception.QuinaException;
 import quina.http.MimeTypes;
@@ -393,8 +393,8 @@ public class AnnotationQuina {
 		QuinaConfig conf;
 		ConfigElement[] elist;
 		Field targetField;
-		final CdiReflectElement list = Quina.get()
-			.getCdiReflectManager().get(c);
+		final CdiInjectFieldElement list = Quina.get()
+			.getCdiInjectFieldManager().get(c);
 		if(list == null) {
 			return;
 		}

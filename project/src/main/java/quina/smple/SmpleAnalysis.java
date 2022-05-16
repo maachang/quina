@@ -30,7 +30,17 @@ import quina.util.collection.ObjectList;
 public class SmpleAnalysis {
 	
 	/**
-	 * java パッケージ名.
+	 * [java]smple拡張子.
+	 */
+	public static final String JAVA_EXTENTION = "sml";
+	
+	/**
+	 * [javaScript]smple拡張子.
+	 */
+	public static final String JS_EXTENTION = "smj";
+	
+	/**
+	 * smple展開先のjava パッケージ名.
 	 */
 	public static final String JAVA_PACKAGE = "quinax.smple";
 	
@@ -1067,7 +1077,7 @@ public class SmpleAnalysis {
 		//System.out.println("#jsOut: \n" + jsOut);
 		
 		// [jsテスト].
-		//String file = "z:/home/maachang/project/quina/LoadCdiReflect.java.smj";
+		//String file = "z:/home/maachang/project/quina/LoadInjectField.java.smj";
 		
 		// 読み込み.
 		//final String script = FileUtil.getFileString(file);
