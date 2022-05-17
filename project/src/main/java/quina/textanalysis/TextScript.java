@@ -550,7 +550,7 @@ public class TextScript {
 			return false;
 		}
 		char n = getChar();
-		// 対象の開始文字がコーテーションの場合.
+		// 対象の開始文字がクォーテーションの場合.
 		if(!isBeforeYen() &&
 			(n == '\'' || n =='\"')) {
 			// 終端のクォーテーションまで移動.
@@ -755,7 +755,7 @@ public class TextScript {
 			while(!isEOF()) {
 				// ユーザー解析で移動.
 				// 括弧内の例外条件を読み飛ばす.
-				// たとえばコーテーションやコメントなど.
+				// たとえばクォーテーションやコメントなど.
 				// 読み飛ばす定義された内容を読み飛ばす.
 				if(ua != null) {
 					ua.analysis(this);

@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import quina.util.Alphabet;
 import quina.util.DateUtil;
-import quina.util.FileUtil;
 import quina.util.NumberUtil;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesList;
@@ -194,7 +193,7 @@ public final class Json {
 			buf.append(conv.numberToString((Number)target));
 		} else if (target instanceof String) {
 			buf.append(conv.stringToString(
-				Indent.upIndentDoubleCote((String)target)));
+				Indent.upIndentDoubleQuote((String)target)));
 		} else if (target instanceof java.util.Date) {
 			buf.append(conv.dateToString((java.util.Date)target));
 		} else if (target instanceof Boolean) {
@@ -213,7 +212,7 @@ public final class Json {
 			}
 		} else {
 			buf.append(conv.stringToString(
-				Indent.upIndentDoubleCote(target.toString())));
+				Indent.upIndentDoubleQuote(target.toString())));
 		}
 	}
 
@@ -291,7 +290,7 @@ public final class Json {
 		}
 		// JSON変換I/Oを取得.
 		final JsonCustomAnalysis conv = convJsonAnalysis.get();
-		// 文字列コーテーション区切り.
+		// 文字列クォーテーション区切り.
 		if ((json.startsWith("\"") &&
 				json.endsWith("\""))
 			|| (json.startsWith("\'") &&
@@ -322,7 +321,7 @@ public final class Json {
 		//	"Failed to parse JSON(" + json + "):No:" + no);
 		
 		// 文字列として扱う.
-		// これにより、コーテーションなしのvalue文字列も
+		// これにより、クォーテーションなしのvalue文字列も
 		// 利用可能になります.
 		return conv.jsonToString(json);
 	}
@@ -355,16 +354,16 @@ public final class Json {
 		// Token解析.
 		for (int i = 0; i < len; i++) {
 			c = json.charAt(i);
-			// コーテーション内.
+			// クォーテーション内.
 			if (quote != -1) {
-				// コーテーションの終端.
+				// クォーテーションの終端.
 				if(!isStringQuotation(json, i, (char)quote)) {
 					ret.add(json.substring(s - 1, i + 1));
 					quote = -1;
 					s = i + 1;
 				}
 			}
-			// コーテーション開始.
+			// クォーテーション開始.
 			else if (bef != '\\' && (c == '\'' || c == '\"')) {
 				quote = c;
 				if (s != -1 && s != i && bef != ' ' && bef != '　'
@@ -605,7 +604,8 @@ public final class Json {
 				case 2: // 複数行コメント.
 					if (c == '\n') {
 						buf.append(c);
-					} else if (len > i + 1 && c == '*' && str.charAt(i + 1) == '/') {
+					} else if (len > i + 1 && c == '*' &&
+						str.charAt(i + 1) == '/') {
 						i++;
 						commentType = -1;
 					}
@@ -613,7 +613,7 @@ public final class Json {
 				}
 				continue;
 			}
-			// シングル／ダブルコーテーション内の処理.
+			// シングル／ダブルクォーテーション内の処理.
 			if (quote != -1) {
 				if(!isStringQuotation(str, i, (char)quote)) {
 					quote = -1;
@@ -658,23 +658,12 @@ public final class Json {
 				commentType = 1;
 				continue;
 			}
-			// コーテーション開始.
+			// クォーテーション開始.
 			else if ((c == '\'' || c == '\"') && (char) bef != '\\') {
 				quote = (int) (c & 0x0000ffff);
 			}
 			buf.append(c);
 		}
 		return buf.toString();
-	}
-	
-	public static final void main(String[] args) throws Exception {
-		String value = FileUtil.getFileString(
-			"z:/home/maachang/project/quina/test/conf/jdbc.json", "UTF8");
-		value = Json.cutComment(false, value);
-		//System.out.println(value);
-		Map json = (Map)Json.decode(value);
-		System.out.println(json);
-		
-		
 	}
 }

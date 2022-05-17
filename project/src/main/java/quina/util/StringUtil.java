@@ -553,12 +553,12 @@ public class StringUtil {
 	 * チェック情報単位で情報を区切ります。
 	 *
 	 * @param out      区切られた情報が格納されます.
-	 * @param quote    コーテーション対応であるか設定します.
-	 *                 [true]を設定した場合、各コーテーション ( ",' ) で囲った情報内は
-	 *                 区切り文字と判別しません. [false]を設定した場合、コーテーション対応を行いません.
-	 * @param quoteFlg コーテーションが入っている場合に、コーテーションを範囲に含むか否かを 設定します.
-	 *                 [true]を設定した場合、コーテーション情報も範囲に含みます.
-	 *                 [false]を設定した場合、コーテーション情報を範囲としません.
+	 * @param quote    クォーテーション対応であるか設定します.
+	 *                 [true]を設定した場合、各クォーテーション ( ",' ) で囲った情報内は
+	 *                 区切り文字と判別しません. [false]を設定した場合、クォーテーション対応を行いません.
+	 * @param quoteFlg クォーテーションが入っている場合に、クォーテーションを範囲に含むか否かを 設定します.
+	 *                 [true]を設定した場合、クォーテーション情報も範囲に含みます.
+	 *                 [false]を設定した場合、クォーテーション情報を範囲としません.
 	 * @param str      区切り対象の情報を設置します.
 	 * @param check    区切り対象の文字情報をセットします.
 	 *                 区切り対象文字を複数設定する事により、それらに対応した区切りとなります.
@@ -810,7 +810,7 @@ public class StringUtil {
 		}
 		StringBuilder buf = new StringBuilder();
 		int len = str.length();
-		int cote = -1;
+		int quote = -1;
 		int commentType = -1;
 		int bef = -1;
 		char c, c2;
@@ -839,10 +839,10 @@ public class StringUtil {
 				}
 				continue;
 			}
-			// シングル／ダブルコーテーション内の処理.
-			if (cote != -1) {
-				if (c == cote && (char) bef != '\\') {
-					cote = -1;
+			// シングル／ダブルクォーテーション内の処理.
+			if (quote != -1) {
+				if (c == quote && (char) bef != '\\') {
+					quote = -1;
 				}
 				buf.append(c);
 				continue;
@@ -883,9 +883,9 @@ public class StringUtil {
 				commentType = 1;
 				continue;
 			}
-			// コーテーション開始.
+			// クォーテーション開始.
 			else if ((c == '\'' || c == '\"') && (char) bef != '\\') {
-				cote = (int) (c & 0x0000ffff);
+				quote = (int) (c & 0x0000ffff);
 			}
 			buf.append(c);
 		}
