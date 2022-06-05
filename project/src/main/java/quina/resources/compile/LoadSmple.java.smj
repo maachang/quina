@@ -16,7 +16,7 @@
    
    また、対象の引数は以下の条件が必要となります.
    global.args = [
-     Smpleファイル(拡張子sml)のquinax.smple＋smpleファイル名(拡張子除く変換結果)
+     登録Smple名,
      Smpleファイル(拡張子sml)のquinax.smple＋smpleファイル名(拡張子除く変換結果)
      ・・・・
    ]
@@ -24,6 +24,8 @@
    また `smpleファイル名(拡張子除く変換結果)` は以下の条件で変換されます.
      [0-9], [a-z], [A-Z], [_$] 以外の文字は、全て '_' に変換します.
 %>package quinax;
+
+import quina.smple.SmpleFactory;
 
 /**
  * Load the compiled Smple group and make it available.
@@ -39,11 +41,11 @@ public final class LoadSmple {
 	public static final void load() throws Exception {
 		
 		// Get the Smple Factory.
-		final SmpleFactory factory = quina.smple.SmpleFactory.getInstance();
+		final SmpleFactory.SmpleFactory factory = SmpleFactory.getInstance();
 		
-		<%for(var i = 0; i < args.length; i ++) {%>
+		<%for(var i = 0; i < args.length; i += 2) {%>
 		// Register the target "${args[i]}" Smple object in the Smple factory.
-		factory.register(new ${args[i]}());
+		factory.register("${args[i]}", new ${args[i + 1]}());
 		<%$end%>
 	}
 }

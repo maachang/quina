@@ -5,13 +5,13 @@ import quina.util.AtomicNumber;
 public class QuinaWorkerConstants {
 	
 	/** 最小ワーカー数. **/
-	public static final int MIN_WORKER_LENGTH = 16;
+	public static final int MIN_WORKER_LENGTH = 24;
 
 	/** デフォルトのワーカー数. **/
 	public static final int DEF_WORKER_LENGTH;
 	
 	/** ワーカー係数. **/
-	private static final int WORKER_COEFFICIENT = 2;
+	private static final int WORKER_COEFFICIENT = 3;
 	
 	// MIN_WORKER_THREAD_LENGTHより少ない数になる場合は
 	// MIN_WORKER_THREAD_LENGTH をセット.

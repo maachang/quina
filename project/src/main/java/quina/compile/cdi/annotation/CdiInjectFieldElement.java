@@ -114,7 +114,7 @@ public class CdiInjectFieldElement {
 					// static フィールドにアクセス.
 					return em.field.get(null);
 				} else {
-					// クラスフィールドにアクセス.
+					// オブジェクトフィールドにアクセス.
 					return em.field.get(target);
 				}
 			} else {
@@ -123,6 +123,8 @@ public class CdiInjectFieldElement {
 					"The specified item number (" +
 					no + ") is out of range. ");
 			}
+		} catch(QuinaException qe) {
+			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
 		}
@@ -142,7 +144,7 @@ public class CdiInjectFieldElement {
 					// static フィールドにアクセス.
 					em.field.set(null, value);
 				} else {
-					// クラスフィールドにアクセス.
+					// オブジェクトフィールドにアクセス.
 					em.field.set(target, value);
 				}
 			} else {
@@ -151,6 +153,8 @@ public class CdiInjectFieldElement {
 					"The specified item number (" +
 					no + ") is out of range. ");
 			}
+		} catch(QuinaException qe) {
+			throw qe;
 		} catch(Exception e) {
 			throw new QuinaException(e);
 		}

@@ -32,27 +32,17 @@ public final class SmpleFactory {
 	
 	/**
 	 * Smpleを登録.
-	 * 登録名はinstanceオブジェクトのクラス名(package+class)
-	 * が設定されます.
-	 * @param instance smpleインスタンスを設定します.
-	 */
-	public void register(Smple instance) {
-		register(instance != null ?
-			instance.getClass().getName() : null,
-		instance);
-	}
-	
-	/**
-	 * Smpleを登録.
 	 * @param name Smple名を設定します.
 	 * @param instance smpleインスタンスを設定します.
 	 */
 	public void register(String name, Smple instance) {
+		// 入力エラー.
 		if(name == null || name.isBlank() || instance == null) {
 			throw new QuinaException("The argument is null.");
 		} else if(fixFlag.get()) {
 			throw new QuinaException("It has already been confirmed.");
 		}
+		// 登録.
 		manager.put(SmpleAnalysis.getJavaClassName(name), instance);
 	}
 	
