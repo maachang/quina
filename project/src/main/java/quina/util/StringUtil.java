@@ -763,7 +763,7 @@ public class StringUtil {
 		int quote = -1;
 		for (int i = off; i < len; i++) {
 			if (quote != -1) {
-				if(!isStringQuotation(base, len, (char)quote)) {
+				if(!isStringQuotation(base, i, (char)quote)) {
 					quote = -1;
 					bef = base.charAt(i);
 				}

@@ -2,6 +2,7 @@ package quina.jdbc;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -12,6 +13,8 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
+import quina.exception.QuinaException;
+import quina.jdbc.kind.QuinaJDBCKind;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
 
@@ -264,7 +267,15 @@ public class QuinaDataSource implements DataSource {
 			} else {
 				p.put("password", passwd);
 			}
-			ret = config.getKind().getDriver().connect(
+			QuinaJDBCKind kind = config.getKind();
+			if(kind == null) {
+				throw new QuinaException("Failed to get kind: " + config.getName());
+			}
+			Driver driver = kind.getDriver();
+			if(driver == null) {
+				throw new QuinaException("Failed to get driver: " + config.getName());
+			}
+			ret = driver.connect(
 				url + config.getUrlParams(), p);
 		}
 		ret.setReadOnly(config.isReadOnly());
