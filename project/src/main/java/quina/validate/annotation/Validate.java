@@ -18,10 +18,10 @@ import quina.validate.annotation.Validate.ValidateArray;
  * コンポーネントに対してValidate条件を設定します.
  * <例>
  * 
- * @Validate(name="id", type=VType.Number, conditions=">= 10")
- * @Validate(name="name", type=VType.String, conditions="not null",
+ * ＠Validate(name="id", type=VType.Number, conditions=">= 10")
+ * ＠Validate(name="name", type=VType.String, conditions="not null",
  *           message="名前が設定されていません")
- * @Validate(name="abc", type=VType.String, noset="moge")
+ * ＠Validate(name="abc", type=VType.String, noset="moge")
  * public class JsonGetSync implements RESTfulGetSync {
  *   public Object get(Request req, SyncResponse res, Params params) {
  *     return new ResultJson("params", params);

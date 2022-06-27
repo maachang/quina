@@ -267,11 +267,11 @@ public class QuinaDataSource implements DataSource {
 			} else {
 				p.put("password", passwd);
 			}
-			QuinaJDBCKind kind = config.getKind();
+			final QuinaJDBCKind kind = config.getKind();
 			if(kind == null) {
 				throw new QuinaException("Failed to get kind: " + config.getName());
 			}
-			Driver driver = kind.getDriver();
+			final Driver driver = kind.getDriver();
 			if(driver == null) {
 				throw new QuinaException("Failed to get driver: " + config.getName());
 			}
