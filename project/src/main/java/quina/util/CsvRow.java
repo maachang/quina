@@ -49,15 +49,16 @@ public final class CsvRow implements TypesKeyValue<Object, String> {
 		return header;
 	}
 
+	// カラムに対する番号を取得.
 	private int getColumnNo(Object key) {
-		Integer n;
 		if (key == null) {
 			return -1;
 		}
 		// 数値だった場合は、番号で処理.
-		else if ((n = NumberUtil.parseInt(key)) != null) {
-			if (n >= 0 && n < header.size()) {
-				return n;
+		else if (NumberUtil.isNumeric(key)) {
+			int no = NumberUtil.parseInt(key);
+			if (no >= 0 && no < header.size()) {
+				return no;
 			}
 			return -1;
 		}
@@ -70,7 +71,10 @@ public final class CsvRow implements TypesKeyValue<Object, String> {
 		if (n == -1) {
 			return null;
 		}
-		return rowData.get(n);
+		String ret = rowData.get(n);
+		// ""aaa"" のようになってるので、それを変換対応する.
+		return StringUtil.changeString(ret, "\"\"", "\"");
+
 	}
 
 	public boolean containsKey(Object key) {

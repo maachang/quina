@@ -365,6 +365,9 @@ public class NumberUtil {
 					ret += (v * (float) (c - '0'));
 					v *= 10f;
 				} else {
+					try {
+						return Float.parseFloat(num);
+					} catch(Exception e) {}
 					throw new NumberException("Float conversion failed: " + num);
 				}
 			}
@@ -376,6 +379,9 @@ public class NumberUtil {
 					ret += (v * (float) (c - '0'));
 					v *= 10f;
 				} else {
+					try {
+						return Float.parseFloat(num);
+					} catch(Exception e) {}
 					throw new NumberException("Float conversion failed: " + num);
 				}
 			}
@@ -387,6 +393,9 @@ public class NumberUtil {
 					dret += (v * (float) (c - '0'));
 					v *= 10f;
 				} else {
+					try {
+						return Float.parseFloat(num);
+					} catch(Exception e) {}
 					throw new NumberException("Float conversion failed: " + num);
 				}
 			}
@@ -444,6 +453,9 @@ public class NumberUtil {
 					ret += (v * (double) (c - '0'));
 					v *= 10d;
 				} else {
+					try {
+						return Double.parseDouble(num);
+					} catch(Exception e) {}
 					throw new NumberException("Double conversion failed: " + num);
 				}
 			}
@@ -455,6 +467,9 @@ public class NumberUtil {
 					ret += (v * (double) (c - '0'));
 					v *= 10d;
 				} else {
+					try {
+						return Double.parseDouble(num);
+					} catch(Exception e) {}
 					throw new NumberException("Double conversion failed: " + num);
 				}
 			}
@@ -466,6 +481,9 @@ public class NumberUtil {
 					dret += (v * (double) (c - '0'));
 					v *= 10d;
 				} else {
+					try {
+						return Double.parseDouble(num);
+					} catch(Exception e) {}
 					throw new NumberException("Double conversion failed: " + num);
 				}
 			}
