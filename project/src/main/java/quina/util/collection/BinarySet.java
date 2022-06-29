@@ -1,4 +1,4 @@
-package quina.util;
+package quina.util.collection;
 
 import java.util.Arrays;
 

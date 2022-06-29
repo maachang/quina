@@ -2,6 +2,7 @@ package quina.util;
 
 import java.util.List;
 
+import quina.util.collection.BinarySet;
 import quina.util.collection.TypesKeyValue;
 
 /**

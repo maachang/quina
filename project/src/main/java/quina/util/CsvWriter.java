@@ -20,7 +20,6 @@ public class CsvWriter implements Closeable, AutoCloseable {
 	 * コンストラクタ.
 	 *
 	 * @param n    対象のファイル名を設定します.
-	 * @param cset 文字charsetを設定します.
 	 * @param c    Csvのカットコードを設定します.
 	 * @throws IOException
 	 */
@@ -37,7 +36,9 @@ public class CsvWriter implements Closeable, AutoCloseable {
 	 * @throws IOException
 	 */
 	public CsvWriter(String n, String cset, String c) throws IOException {
-		this(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(n), cset)), c);
+		this(new BufferedWriter(
+			new OutputStreamWriter(
+				new FileOutputStream(n), cset)), c);
 	}
 
 	/**
