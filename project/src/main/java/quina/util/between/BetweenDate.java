@@ -3,24 +3,12 @@ package quina.util.between;
 import quina.util.DateUtil;
 
 /**
- * 日付の範囲かをチェック.
+ * 日付の範囲チェック.
  */
-@SuppressWarnings("deprecation")
 public class BetweenDate<V> implements Between<V> {
-	// start未定義の条件.
-	private static final long NOSET_START_DATE = new
-		java.util.Date("1970/01/01").getTime();
-	
-	// end未指定の条件.
-	private static final long NOSET_END_DATE = new
-		java.util.Date("2099/12/31 23:59:59").getTime();
-	// 開始日付.
-	private final long start;
-	// 終了日付.
-	private final long end;
-	
-	// 紐づくValue.
-	private V value;
+	// coreBetween.
+	private final CoreBetween<Long, V> core =
+		new CoreBetween<Long, V>();
 	
 	/**
 	 * コンストラクタ.
@@ -33,38 +21,13 @@ public class BetweenDate<V> implements Between<V> {
 	/**
 	 * コンストラクタ.
 	 * @param start 開始日付を設定します.
-	 * @param value 対象の要素を設定します.
-	 */
-	public BetweenDate(java.util.Date start, V value) {
-		this(start, null, value);
-	}
-	
-	/**
-	 * コンストラクタ.
-	 * @param start 開始日付を設定します.
 	 * @param end 終了日付を設定します.
 	 * @param value 対象の要素を設定します.
 	 */
 	public BetweenDate(java.util.Date start, java.util.Date end, V value) {
-		long a = start == null ? NOSET_START_DATE : start.getTime();
-		long b = end == null ? NOSET_END_DATE : end.getTime();
-		if(a > b) {
-			final long n = b;
-			b = a;
-			a = n;
-		}
-		this.start = a;
-		this.end = b;
-		this.value = value;
-	}
-	
-	/**
-	 * コンストラクタ.
-	 * @param start 開始日付を設定します.
-	 * @param value 対象の要素を設定します.
-	 */
-	public BetweenDate(String start, V value) {
-		this(start, null, value);
+		Long a = start == null ? null : start.getTime();
+		Long b = end == null ? null : end.getTime();
+		core.init(a, b, value);
 	}
 	
 	/**
@@ -91,8 +54,7 @@ public class BetweenDate<V> implements Between<V> {
 		} else if(!(o instanceof java.util.Date)) {
 			return false;
 		}
-		final long n = ((java.util.Date)o).getTime();
-		return (start <= n && end >= n);
+		return core.between(((java.util.Date)o).getTime());
 	}
 	
 	/**
@@ -101,6 +63,6 @@ public class BetweenDate<V> implements Between<V> {
 	 */
 	@Override
 	public final V getValue() {
-		return value;
+		return core.getValue();
 	}
 }

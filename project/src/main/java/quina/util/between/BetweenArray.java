@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Between群.
+ * Between群を束ねて評価するオブジェクト.
  */
 @SuppressWarnings("unchecked")
 public class BetweenArray<V> {
@@ -40,6 +40,7 @@ public class BetweenArray<V> {
 	 * 対象範囲内に当てはまるValueを取得.
 	 * @param o 範囲内なのか条件を設定します.
 	 * @return V 範囲内の要素が返却されます.
+	 *           範囲外の場合はnull返却されます.
 	 */
 	public V rangeValue(Object o) {
 		Between<V> bt;
