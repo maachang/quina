@@ -199,7 +199,7 @@ public final class FileUtil {
 		char c;
 		name = new File(name).getCanonicalPath();
 		final int len = name.length();
-		StringBuilder buf = new StringBuilder(len + 2);
+		StringBuilder buf = new StringBuilder();
 		if(!name.startsWith("/")) {
 			buf.append("/");
 		} else if(name.indexOf("\\") == -1) {
