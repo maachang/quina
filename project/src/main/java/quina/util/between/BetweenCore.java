@@ -3,7 +3,7 @@ package quina.util.between;
 /**
  * betweenコア処理.
  */
-final class CoreBetween<F extends Comparable<F>, V> {
+final class BetweenCore<F extends Comparable<F>, V> {
 	/**
 	 * between開始条件.
 	 */

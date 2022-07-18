@@ -60,7 +60,7 @@
     >
       <classpath refid="path.lib" />
     </javac>
-    <antcall target="copyResource" />
+    <antcall target="copyResourceFiles" />
   </target>
   
   <!-- ===================================================================== -->
@@ -96,17 +96,17 @@
   </target>
 
   <!-- ===================================================================== -->
-  <!-- resource copy.                                                        -->
+  <!-- copy resource files.                                                   -->
   <!-- ===================================================================== -->
-  <target name="copyResource">
-    <delete dir="${dest.resources.dir}" />
-    <mkdir dir="${dest.resources.dir}" />
-    <copy overwrite="yes"
-      todir="${dest.resources.dir}">
-			<fileset dir="${src.resources.dir}"/>
+  <target name="copyResourceFiles">
+    <copy overwrite="true" todir="${dest.dir}" preservelastmodified="true">
+			<fileset dir="${src.dir}">
+        <exclude name="**/*.java" />
+      </fileset>
 		</copy>
   </target>
-  
+
+
   <!-- ===================================================================== -->
   <!-- clean work file.                                                      -->
   <!-- ===================================================================== -->

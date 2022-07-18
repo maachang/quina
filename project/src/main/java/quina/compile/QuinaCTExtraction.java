@@ -29,57 +29,60 @@ public class QuinaCTExtraction {
 	/**
 	 * Cdiオブジェクトを抽出.
 	 * @param params QuinaCompileToolパラメータを設定します.
-	 * @param classList 抽出されたクラス名のリストを設定します.
 	 * @throws Exception 例外.
 	 */
 	public static final void extraction(
-		QuinaCTParams params, List<String> classList)
+		QuinaCTParams params)
 		throws Exception {
 		Class<?> c;
 		String cname;
-		final int len = classList == null ?
-			0 : classList.size();
-		// 読み込まれたクラス名群の内容を走査する.
-		for(int i = 0; i < len; i ++) {
-			// クラス名を取得.
-			cname = classList.get(i);
-			// クラスオブジェクトを取得.
-			if((c = getClass(params, cname)) == null) {
-				// クラス取得失敗の場合は処理しない.
-				continue;
+		try {
+			final List<String> classList = params.classFileList;
+			final int len = classList.size();
+			// 読み込まれたクラス名群の内容を走査する.
+			for(int i = 0; i < len; i ++) {
+				// クラス名を取得.
+				cname = classList.get(i);
+				// クラスオブジェクトを取得.
+				if((c = getClass(params, cname)) == null) {
+					// クラス取得失敗の場合は処理しない.
+					continue;
+				}
+				
+				// NativeImageコンフィグ用アノテーション定義を読み込む.
+				executeExecuteStep(params, c, cname);
+				
+				// このクラスがAnnotation定義自体の場合は処理しない.
+				if(c.isAnnotation()) {
+					continue;
+				}
+				
+				// 非アノテーションに対するCdi条件の抽出を実施.
+				if(noAnnotationByInjectField(params, c, cname)) {
+					// 対象の場合.
+					continue;
+				}
+				
+				// Cdi条件アノテーションの抽出を実施.
+				if(annotationByInjectField(params, c, cname)) {
+					// 対象の場合.
+					continue;
+				}
+				
+				// アノテーションコンポーネントクラスの抽出を実施.
+				if(annotationComponent(params, c, cname)) {
+					// 対象の場合.
+					continue;
+				}
+				
+				// アノテーションループ要素クラスの抽出を実施.
+				if(annotationLoopElement(params, c, cname)) {
+					// 対象の場合.
+					continue;
+				}
 			}
-			
-			// NativeImageコンフィグ用アノテーション定義を読み込む.
-			executeExecuteStep(params, c, cname);
-			
-			// このクラスがAnnotation定義自体の場合は処理しない.
-			if(c.isAnnotation()) {
-				continue;
-			}
-			
-			// 非アノテーションに対するCdi条件の抽出を実施.
-			if(noAnnotationByInjectField(params, c, cname)) {
-				// 対象の場合.
-				continue;
-			}
-			
-			// Cdi条件アノテーションの抽出を実施.
-			if(annotationByInjectField(params, c, cname)) {
-				// 対象の場合.
-				continue;
-			}
-			
-			// アノテーションコンポーネントクラスの抽出を実施.
-			if(annotationComponent(params, c, cname)) {
-				// 対象の場合.
-				continue;
-			}
-			
-			// アノテーションループ要素クラスの抽出を実施.
-			if(annotationLoopElement(params, c, cname)) {
-				// 対象の場合.
-				continue;
-			}
+		} finally {
+			params.classFileList.clear();
 		}
 	}
 	
@@ -87,8 +90,8 @@ public class QuinaCTExtraction {
 	private static final boolean noAnnotationByInjectField(
 		QuinaCTParams params, Class<?> c, String cname) {
 		// 利用可能なアノテーションが定義されている場合.
-		if(QuinaCTConstants.isDefineAnnotation(c) ||
-			QuinaCTConstants.isProxyAnnotation(c)) {
+		if(QuinaCTDefine.isAnnotation(c) ||
+			QuinaCTDefine.isProxyAnnotation(c)) {
 			// 処理しない.
 			return false;
 		}

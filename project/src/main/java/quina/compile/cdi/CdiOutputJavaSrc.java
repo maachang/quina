@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 
 import quina.compile.QuinaCTConstants;
+import quina.compile.QuinaCTDefine;
 import quina.compile.QuinaCTParams;
 import quina.compile.QuinaCTUtil;
 import quina.exception.QuinaException;
@@ -27,8 +28,8 @@ public final class CdiOutputJavaSrc {
 	// 対象のクラスがPublic定義で空のpublicコンストラクタが
 	// 利用可能かチェック.
 	private static final boolean isPublicClass(Class<?> c) {
-		if(QuinaCTConstants.isDefineAnnotation(c) ||
-			QuinaCTConstants.isProxyAnnotation(c)) {	
+		if(QuinaCTDefine.isAnnotation(c) ||
+			QuinaCTDefine.isProxyAnnotation(c)) {	
 			QuinaCTUtil.checkPublicClass(c);
 			return true;
 		}

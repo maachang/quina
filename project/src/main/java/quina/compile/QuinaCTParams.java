@@ -58,9 +58,19 @@ public class QuinaCTParams {
 	public final List<String> loopList = new ArrayList<String>();
 	
 	/**
+	 * クラス内のクラスファイル群.
+	 */
+	public final List <String> classFileList = new ArrayList<String>();
+	
+	/**
 	 * クラス内のresourceファイル群.
 	 */
 	public final List<String> regResourceList = new ArrayList<String>();
+	
+	/**
+	 * クラス内のsmple拡張子ファイル群.
+	 */
+	public final List<String> smpleList = new ArrayList<String>();
 	
 	/**
 	 * ResourceItem登録判定.
@@ -92,7 +102,7 @@ public class QuinaCTParams {
 	
 	/**
 	 * 詳細表示.
-	 * @return
+	 * @return boolean trueの場合有効です.
 	 */
 	public boolean isVerbose() {
 		return verbose;
@@ -108,6 +118,7 @@ public class QuinaCTParams {
 			&& errList.size() == 0 && qsrvList.size() == 0
 			&& hndList.size() == 0 && prxList.size() == 0
 			&& regResourceList.size() == 0 && loopList.size() == 0
+			&& smpleList.size() == 0
 		;
 	}
 	
@@ -169,10 +180,28 @@ public class QuinaCTParams {
 	}
 	
 	/**
+	 * ClassFile定義が空の場合.
+	 * @return
+	 */
+	public boolean isClassFileEmpty() {
+		return classFileList.size() == 0;
+	}
+
+	
+	/**
 	 * ResourceItem定義が空の場合.
 	 * @return
 	 */
 	public boolean isRegResourceItemEmpty() {
 		return regResourceList.size() == 0;
 	}
+	
+	/**
+	 * smple定義が空の場合.
+	 * @return
+	 */
+	public boolean isSmpleEmpty() {
+		return smpleList.size() == 0;
+	}
+
 }

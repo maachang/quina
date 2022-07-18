@@ -7,8 +7,8 @@ import quina.util.DateUtil;
  */
 public class BetweenDate<V> implements Between<V> {
 	// coreBetween.
-	private final CoreBetween<Long, V> core =
-		new CoreBetween<Long, V>();
+	private final BetweenCore<Long, V> core =
+		new BetweenCore<Long, V>();
 	
 	/**
 	 * コンストラクタ.

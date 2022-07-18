@@ -18,6 +18,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
+
+import quina.exception.QuinaException;
 
 /**
  * ファイルユーティリティ.
@@ -592,5 +596,62 @@ public final class FileUtil {
 	public static final void copy(String src, String dest)
 		throws Exception {
 		_copy(getFullPath(src), getFullPath(dest));
+	}
+	
+	/**
+	 * 取り込み判別を行うインターフェイス.
+	 */
+	@FunctionalInterface
+	public static interface TakeIn {
+		/**
+		 * 判別処理.
+		 * @param fileName 対象のファイル名を設定します.
+		 * @return boolean 取り込み対象の場合は true返却.
+		 */
+		public boolean determine(String fileName);
+	}
+	
+	/**
+	 * 対象ディレクトリ以下を走査して、取り込み判別を元に
+	 * ファイル名を取り込む.
+	 * @param directory 対象のディレクトリ名を設定します.
+	 * @param takeIn 取り込み判別を設定します.
+	 * @return List<String> 取り込まれたファイル名が返却されます.
+	 */
+	public static final List<String> takeInFile(
+		String directory, TakeIn takeIn) {
+		List<String> ret = new ArrayList<String>();
+		try {
+			_takeInFile(ret, takeIn, getFullPath(directory));
+			return ret;
+		} catch(QuinaException qe) {
+			throw qe;
+		} catch(Exception e) {
+			throw new QuinaException(e);
+		}
+	}
+	
+	// 対象ディレクトリ以下を走査して、取り込み判別を元に
+	// ファイル名を取り込む.
+	private static final void _takeInFile(
+		List<String> out, TakeIn takeIn, String target)
+		throws Exception {
+		if (isFile(target)) {
+			if(takeIn.determine(target.toLowerCase())) {
+				out.add(target);
+			}
+		} else {
+			String[] list = list(target);
+			if (list != null && list.length > 0) {
+				if (!target.endsWith("/")) {
+					target = target + "/";
+				}
+				int len = list.length;
+				for (int i = 0; i < len; i++) {
+					_takeInFile(out, takeIn, target + list[i]);
+				}
+			}
+		}
+
 	}
 }

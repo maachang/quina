@@ -8,8 +8,8 @@ import quina.util.NumberUtil;
  */
 public class BetweenLong<V> implements Between<V> {
 	// coreBetween.
-	private final CoreBetween<Long, V> core =
-		new CoreBetween<Long, V>();
+	private final BetweenCore<Long, V> core =
+		new BetweenCore<Long, V>();
 	
 	/**
 	 * コンストラクタ.

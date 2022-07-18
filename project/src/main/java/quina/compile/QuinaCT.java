@@ -1,7 +1,6 @@
 package quina.compile;
 
 import java.io.File;
-import java.util.List;
 
 import quina.compile.cdi.CdiOutputJavaProxySrc;
 import quina.compile.cdi.CdiOutputJavaSrc;
@@ -123,12 +122,11 @@ public class QuinaCT {
 				cmdPms.jarFileArray);
 			
 			// クラス一覧を取得.
-			List<String> clazzList = QuinaCTUtil.findClassList(
+			QuinaCTClassLoad.findClassList(new QuinaClassPathHandler(params),
 				params, cmdPms.clazzDir, cmdPms.jarFileArray);
 			
 			// ClassDirから、対象となるクラスを抽出.
-			QuinaCTExtraction.extraction(params, clazzList);
-			clazzList = null;
+			QuinaCTExtraction.extraction(params);
 			
 			// 出力先のソースコードを全削除.
 			CdiRemoveFileOrDir.removeOutAutoJavaSource(cmdPms.javaSourceDir);
@@ -251,7 +249,6 @@ public class QuinaCT {
 		}
 		// エラーが発生した場合は、生成されるGCi情報を破棄する.
 		try {
-			// 
 			CdiRemoveFileOrDir.removeOutAutoJavaSource(javaSourceDir);
 		} catch(Exception e) {}
 		try {

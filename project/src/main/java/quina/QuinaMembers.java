@@ -18,6 +18,7 @@ import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
+import quina.util.Flag;
 import quina.util.TwoStepsFlag;
 import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerService;
@@ -32,6 +33,9 @@ final class QuinaMembers {
 	
 	// メインオブジェクト.
 	protected Object mainObject;
+	
+	// trueの場合はHttpServerを起動します.
+	private final Flag httpServerMode = new Flag(true);
 	
 	// 初期化実行フラグ.
 	private final TwoStepsFlag initFlag = new TwoStepsFlag();
@@ -109,6 +113,24 @@ final class QuinaMembers {
 	public QuinaMembers() {
 		// Httpサーバーサービスの初期化処理.
 		httpServerService.init(quinaWorkerService);
+	}
+	
+	/**
+	 * Httpサーバーモード.
+	 * @param mode trueの場合はHttpServerを起動します.
+	 * @return QuinaMembers このオブジェクトが返却されます.
+	 */
+	public QuinaMembers setHttpServerMode(boolean mode) {
+		httpServerMode.set(mode);
+		return this;
+	}
+	
+	/**
+	 * Httpサーバーモードを取得.
+	 * @return boolean trueの場合はHttpServerを起動します.
+	 */
+	public boolean isHttpServerMode() {
+		return httpServerMode.get();
 	}
 	
 	/**

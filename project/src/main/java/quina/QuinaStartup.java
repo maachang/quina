@@ -15,7 +15,7 @@ import quina.worker.QuinaWorkerService;
  */
 final class QuinaStartup {
 	
-	// QuinaMembers.
+	// Quinaメンバー変数情報が格納サれます.
 	private final QuinaMembers quinaMembers;
 	
 	/**
@@ -26,6 +26,15 @@ final class QuinaStartup {
 		this.quinaMembers = quinaMembers;
 	}
 	
+	/**
+	 * コンストラクタ.
+	 * @param httpServerMode httpサーバを起動させる場合は trueを設定します.
+	 * @param quinaMembers QuinaMembersを設定します.
+	 */
+	QuinaStartup(boolean httpServerMode, QuinaMembers quinaMembers) {
+		quinaMembers.setHttpServerMode(httpServerMode);
+		this.quinaMembers = quinaMembers;
+	}
 	
 	/**
 	 * 全てのQuinaサービスを開始処理してシャットダウン待機処理.

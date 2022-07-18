@@ -1,37 +1,28 @@
 package quina.compile;
 
 import quina.QuinaServiceManager;
-import quina.annotation.QuinaLoopScoped;
-import quina.annotation.QuinaServiceScoped;
 import quina.compile.cdi.annotation.AnnotationCdiConstants;
 import quina.compile.cdi.annotation.CdiHandleManager;
-import quina.compile.cdi.annotation.CdiHandleScoped;
 import quina.compile.cdi.annotation.CdiInjectFieldManager;
-import quina.compile.cdi.annotation.CdiScoped;
 import quina.compile.cdi.annotation.CdiServiceManager;
-import quina.compile.cdi.annotation.ServiceScoped;
 import quina.compile.cdi.annotation.proxy.AnnotationProxyScopedConstants;
-import quina.compile.cdi.annotation.proxy.ProxyScoped;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.route.annotation.AnnotationRoute;
-import quina.route.annotation.AnyRoute;
-import quina.route.annotation.ErrorRoute;
-import quina.route.annotation.Route;
 import quina.worker.QuinaWorkerService;
 
 /**
- * GenerateCdi定義関連.
+ * QuinaCT(CompieTool)定義関連.
  */
 public class QuinaCTConstants {
 	private QuinaCTConstants() {}
 	
 	/**
-	 * GenerateCdiバージョン.
+	 * QuinaCT(CompieTool)バージョン.
 	 */
 	public static final String VERSION = "0.0.1";
 	
 	/**
-	 *  GenerateCdiコマンド名.
+	 * QuinaCT(CompieTool)コマンド名.
 	 */
 	public static final String COMMAND_NAME = "qct";
 	
@@ -109,32 +100,4 @@ public class QuinaCTConstants {
 	 * デフォルトのNativeConfigDirectory.
 	 */
 	public static final String DEF_NATIVE_CONFIG_DIR = "nativeImageConfig";
-
-	/**
-	 * GenerateCdiで利用対象のアノテーションが定義されているかチェック.
-	 * @param c 確認するクラスを設定します.
-	 * @return boolean true の場合、GenerateCdiで利用可能なアノテーションが
-	 *                 存在します.
-	 */
-	public static final boolean isDefineAnnotation(Class<?> c) {
-		return c.isAnnotationPresent(Route.class)
-			|| c.isAnnotationPresent(AnyRoute.class)
-			|| c.isAnnotationPresent(ErrorRoute.class)
-			|| c.isAnnotationPresent(QuinaServiceScoped.class)
-			|| c.isAnnotationPresent(CdiHandleScoped.class)
-			|| c.isAnnotationPresent(QuinaLoopScoped.class)
-			|| QuinaCTUtil.isAnnotation(c, ServiceScoped.class)
-			|| QuinaCTUtil.isAnnotation(c, CdiScoped.class)
-		;
-	}
-	
-	/**
-	 * ProxyScopedで利用対象のアノテーションが定義されてるかチェック.
-	 * @param c 確認するクラスを設定します.
-	 * @return boolean true の場合、ProxyScopedで利用可能なアノテーションが
-	 *                 存在します.
-	 */
-	public static final boolean isProxyAnnotation(Class<?> c) {
-		return c.isAnnotationPresent(ProxyScoped.class);
-	}
 }

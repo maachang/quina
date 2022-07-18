@@ -50,7 +50,7 @@ class QuinaCTCmdParams {
 		// jarディレクトリリストからjarファイル名群を取得.
 		String[] jarFileArray;
 		if(jarDirArray.length > 0) {
-			jarFileArray = QuinaCTUtil.findJarFiles(jarDirArray);
+			jarFileArray = QuinaCTClassLoad.findJarFiles(jarDirArray);
 		} else {
 			jarFileArray = new String[0];
 		}
