@@ -8,14 +8,14 @@ import quina.compile.QuinaCTClassLoad.AbstractClassPathHandler;
 public class QuinaClassPathHandler
 	extends AbstractClassPathHandler {
 	
-	// クラス.
-	private static final String CLASS = ".class";
+	// クラス(.class).
+	private static final String CLASS = "class";
 	
-	// プロパティ.
-	private static final String PROP = ".properties";
+	// プロパティ(.properties).
+	private static final String PROP = "properties";
 	
-	// smple.
-	private static final String SMPLE = ".sml";
+	// smple(.sml).
+	private static final String SMPLE = "sml";
 	
 	/**
 	 * コンストラクタ.

@@ -7,7 +7,6 @@ import quina.component.ComponentType;
 import quina.component.RegisterComponent;
 import quina.component.error.ErrorComponent;
 import quina.exception.CoreException;
-import quina.exception.QuinaException;
 import quina.http.HttpAnalysis;
 import quina.http.HttpCustomAnalysisParams;
 import quina.http.HttpElement;
@@ -107,20 +106,6 @@ public final class HttpServerCore {
 				}
 				// レスポンスをセット.
 				em.setResponse(res);
-			}
-			// HttpServerContextが作成可能な場合.
-			if(!HttpServerContext.isCreate(em)) {
-				// ここで生成できない場合は不具合か
-				// 何らかの理由でコネクションが閉じてる
-				// 場合があります.
-				throw new QuinaException(
-					"Failed to create HttpContext.");
-			}
-			
-			// HttpServerContextが登録されてない場合.
-			if(HttpServerContext.get() == null) {
-				// HttpServerContextに登録.
-				HttpServerContext.create(em);
 			}
 			
 			// パラメータを取得.

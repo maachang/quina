@@ -6,9 +6,7 @@ import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.QuinaException;
-import quina.http.HttpContext;
 import quina.http.controll.ipv4.IpPermissionControllService;
-import quina.http.server.HttpServerContext;
 import quina.route.Router;
 import quina.shutdown.ShutdownManagerInfo;
 import quina.thread.QuinaLoopManager;
@@ -160,29 +158,6 @@ public final class Quina {
 	 */
 	public static final Args args() {
 		return SNGL.getArgs();
-	}
-	
-	/**
-	 * HttpContextを取得.
-	 * このContextは、QuinaWorkerService内で実行される
-	 * ものに関して、利用することが出来ます.
-	 * なので、他のスレッドでこの処理を呼び出す場合は
-	 * この処理は利用出来ません.
-	 * 
-	 * その場合は以下のような形で実装することで対応
-	 * 出来ます.
-	 * 
-	 * <code><pre>
-	 * final HttpContext ctx = Quina.getContext();
-	 * xxxx.execute(() -> {
-	 *   ctx.anyResponse().send("hoge");
-	 * }
-	 * </pre></code>
-	 * 
-	 * @return HttpContext HttpContextが返却されます.
-	 */
-	public static final HttpContext getHttpContext() {
-		return HttpServerContext.get();
 	}
 	
 	/**

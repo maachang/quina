@@ -14,7 +14,6 @@ import quina.shutdown.ShutdownCall;
 import quina.shutdown.ShutdownManager;
 import quina.storage.MemoryStorageService;
 import quina.storage.StorageConstants;
-import quina.thread.QuinaContextHandler;
 import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
@@ -372,8 +371,8 @@ final class QuinaMembers {
 	 */
 	public void initQuinaWorkerService() {
 		// 共通ワーカーハンドラをセット.
-		this.quinaWorkerService.setHandler(
-			new QuinaContextHandler());
+		//this.quinaWorkerService.setHandler(
+		//	new QuinaContextHandler());
 		
 		// QuinaLoopScopedアノテーションを反映.
 		this.quinaWorkerService.autoQuinaLoopElement();

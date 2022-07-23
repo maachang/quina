@@ -125,6 +125,14 @@ public class QuinaCT {
 			QuinaCTClassLoad.findClassList(new QuinaClassPathHandler(params),
 				params, cmdPms.clazzDir, cmdPms.jarFileArray);
 			
+			System.out.println(" classFile            : " +
+				params.classFileList.size() + " pieces");
+			System.out.println(" resourceFile         : " +
+				params.classFileList.size() + " pieces");
+			System.out.println(" smple                : " +
+					params.classFileList.size() + " pieces");
+			System.out.println();
+			
 			// ClassDirから、対象となるクラスを抽出.
 			QuinaCTExtraction.extraction(params);
 			

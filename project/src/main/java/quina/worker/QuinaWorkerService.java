@@ -21,7 +21,8 @@ import quina.util.collection.TypesClass;
 public class QuinaWorkerService
 	implements QuinaService, QuinaLoopManager {
 	// Quinaワーカーハンドラ.
-	private QuinaWorkerHandler handle;
+	// 初期値はBlankハンドラ.
+	private QuinaWorkerHandler handle = new QuinaBlankWorkerHandler();
 	// Quinaワーカー実行用要素群.
 	private ObjectList<QuinaWorkerCallHandler> callHandles;
 	// Quinaワーカーマネージャ.

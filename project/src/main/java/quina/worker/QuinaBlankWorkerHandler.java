@@ -1,17 +1,14 @@
-package quina.thread;
+package quina.worker;
 
 import quina.exception.QuinaException;
-import quina.http.server.HttpServerContext;
 import quina.logger.Log;
 import quina.logger.LogFactory;
-import quina.worker.QuinaWorkerCall;
-import quina.worker.QuinaWorkerHandler;
 
 /**
- * QuinaContextに対するワーカーハンドル.
+ * 空のQuinaワーカーハンドラー.
  */
-public class QuinaContextHandler
-	extends QuinaWorkerHandler {
+final class QuinaBlankWorkerHandler
+	implements QuinaWorkerHandler {
 	
 	// ログオブジェクト.
 	protected final Log log = LogFactory.getInstance().get();
@@ -59,19 +56,7 @@ public class QuinaContextHandler
 	 */
 	@Override
 	public void pushCall(int no, QuinaWorkerCall em) {
-		// HttpServerContextをワーカーコールにセット.
-		final HttpServerContext ctx =
-			HttpServerContext.get();
-		if(ctx != null) {
-			em.setContext(ctx);
-		}
-	}
-	
-	// コンテキストをクリア.
-	private static final void clearContext(QuinaWorkerCall em) {
-		// クリア.
-		em.setContext(null);
-		HttpServerContext.clear();
+		// 何もしない.
 	}
 	
 	/**
@@ -82,23 +67,7 @@ public class QuinaContextHandler
 	 */
 	@Override
 	public void startCommonCall(int no, QuinaWorkerCall em) {
-		// ワーカーコール要素が無効な場合.
-		if(em.isDestroy(no)) {
-			// Contextクリア.
-			clearContext(em);
-			return;
-		}
-		// workerCallからContextを取得.
-		HttpServerContext ctx =
-			(HttpServerContext)em.getContext();
-		
-		// workerCallのコンテキストが存在する場合.
-		if(ctx != null) {
-			// このスレッドのコンテキストとして設定.
-			HttpServerContext.set(ctx);
-			// スレッドスコープ開始.
-			ctx.startThreadScope();
-		}
+		// 何もしない.
 	}
 	
 	/**
@@ -109,37 +78,7 @@ public class QuinaContextHandler
 	 */
 	@Override
 	public void endCommonCall(int no, QuinaWorkerCall em) {
-		// ワーカーコール要素が無効な場合.
-		if(em.isDestroy(no)) {
-			// Contextクリア.
-			clearContext(em);
-			return;
-		}
-		// workerCallに存在するContextを取得.
-		HttpServerContext ctx =
-			(HttpServerContext)em.getContext();
-		
-		// workerCallのコンテキストが存在しないで
-		if(ctx == null) {
-			
-			// このスレッドのコンテキストを取得.
-			HttpServerContext thisCtx =
-				HttpServerContext.get();
-			
-			// このスレッドのコンテキストが存在する場合.
-			if(thisCtx != null) {
-				// １つのスレッドスコープを終了.
-				thisCtx.exitThreadScope();
-			}
-			
-		// workerCallのコンテキストが存在する場合.
-		} else if(ctx != null) {
-			
-			// １つのスレッドスコープを終了.
-			ctx.exitThreadScope();
-		}
-		// このスレッドのコンテキストをクリア.
-		HttpServerContext.clear();
+		// 何もしない.
 	}
 	
 	/**

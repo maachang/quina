@@ -84,29 +84,19 @@ public class QuinaTestLmd {
 		.route("/promise", (AnyComponent)(req, res) -> {
 			// promiseテスト.
 			Promise p = new Promise((action) -> {
-				System.out.println("[promise1]threadScope: " +
-						Quina.getHttpContext().getThreadScope());
 				action.resolve("abc");
 			})
 			.then((action, value) -> {
-				System.out.println("[promise2]threadScope: " +
-						Quina.getHttpContext().getThreadScope());
 				action.resolve(value + " moge");
 			})
 			.then((action, value) -> {
-				System.out.println("[promise3]threadScope: " +
-						Quina.getHttpContext().getThreadScope());
 				action.resolve(value);
 			})
 			.error((action, error) -> {
-				System.out.println("[promise4]threadScope: " +
-						Quina.getHttpContext().getThreadScope());
 				res.setContentType("text/html");
 				res.sendError(error);
 			})
 			.then((action, value) -> {
-				System.out.println("[promise5]threadScope: " +
-						Quina.getHttpContext().getThreadScope());
 				value = value + " xxx";
 				res.setContentType("text/html");
 				res.send("" + value);
@@ -119,8 +109,6 @@ public class QuinaTestLmd {
 			res.setContentType("text/html");
 			res.send("" + o);
 			**/
-			System.out.println("[component]threadScope: " +
-					Quina.getHttpContext().getThreadScope());
 		})
 
 		// http://127.0.0.1:3333/promiseAll

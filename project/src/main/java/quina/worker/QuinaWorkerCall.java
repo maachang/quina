@@ -1,30 +1,9 @@
 package quina.worker;
 
-import quina.thread.QuinaContext;
-
 /**
  * Quinaコール.
  */
 public abstract class QuinaWorkerCall {
-	// QuinaContext.
-	private QuinaContext context;
-	
-	/**
-	 * QuinaContextを設定.
-	 * @param context 対象のQuinaContextを設定します.
-	 */
-	public void setContext(QuinaContext context) {
-		this.context = context;
-	}
-	
-	/**
-	 * QuinaContextを取得.
-	 * @return QuinaContext 設定されてるQuinaContextが
-	 *                      返却されます.
-	 */
-	public QuinaContext getContext() {
-		return context;
-	}
 	
 	/**
 	 * 設定されたワーカーNoを取得.

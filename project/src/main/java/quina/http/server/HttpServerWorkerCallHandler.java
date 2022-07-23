@@ -92,9 +92,6 @@ public class HttpServerWorkerCallHandler
 	 */
 	@Override
 	public void destroy(int no, QuinaWorkerCall em) {
-		// destroy処理でContextをクリアする.
-		em.setContext(null);
-		HttpServerContext.clear();
 		// 破棄処理を実施.
 		super.destroy(no, em);
 	}
