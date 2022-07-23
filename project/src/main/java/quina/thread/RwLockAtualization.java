@@ -1,4 +1,4 @@
-package quina;
+package quina.thread;
 
 import java.util.concurrent.locks.ReadWriteLock;
 

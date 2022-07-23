@@ -1,9 +1,8 @@
-package quina;
+package quina.thread;
 
 import java.io.IOException;
 
 import quina.util.Flag;
-import quina.worker.QuinaWait;
 
 /**
  * QuinaService用スレッド.

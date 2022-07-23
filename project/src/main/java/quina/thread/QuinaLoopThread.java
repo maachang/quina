@@ -1,8 +1,7 @@
-package quina.worker;
+package quina.thread;
 
 import java.io.IOException;
 
-import quina.QuinaServiceThread;
 import quina.exception.QuinaException;
 import quina.util.collection.ObjectList;
 

@@ -1,4 +1,4 @@
-package quina;
+package quina.thread;
 
 /**
  * QuinaThreadステータス.

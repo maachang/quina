@@ -1,6 +1,7 @@
 package quina;
 
 import quina.exception.QuinaException;
+import quina.thread.RwLockAtualization;
 
 /**
  * QuinaService.

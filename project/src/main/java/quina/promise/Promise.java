@@ -2,9 +2,9 @@ package quina.promise;
 
 import quina.Quina;
 import quina.exception.QuinaException;
+import quina.thread.QuinaWait;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
-import quina.worker.QuinaWait;
 
 /**
  * Quina専用のPromise処理.

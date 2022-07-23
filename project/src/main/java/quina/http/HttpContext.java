@@ -3,7 +3,7 @@ package quina.http;
 import quina.http.server.response.AnyResponse;
 import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.SyncResponse;
-import quina.worker.QuinaContext;
+import quina.thread.QuinaContext;
 
 /**
  * HttpContext.

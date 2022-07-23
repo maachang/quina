@@ -1,4 +1,4 @@
-package quina.worker;
+package quina.thread;
 
 /**
  * QuinaContext.

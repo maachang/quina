@@ -1,5 +1,7 @@
 package quina.worker;
 
+import quina.thread.QuinaContext;
+
 /**
  * Quinaコール.
  */

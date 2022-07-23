@@ -11,7 +11,7 @@ import quina.http.server.response.RESTfulResponse;
 import quina.http.server.response.RESTfulResponseImpl;
 import quina.http.server.response.SyncResponse;
 import quina.http.server.response.SyncResponseImpl;
-import quina.worker.QuinaContext;
+import quina.thread.QuinaContext;
 
 /**
  * HttpServerContext.
@@ -26,8 +26,7 @@ public class HttpServerContext implements HttpContext {
 	 * @param context 対象のQuinaContextを設定します.
 	 * @return HttpContext HttpContextが返却されます.
 	 */
-	public static final HttpContext set(
-		QuinaContext context) {
+	public static final HttpContext set(QuinaContext context) {
 		if(context == null) {
 			throw new QuinaException("The argument is null.");
 		}

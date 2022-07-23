@@ -17,7 +17,7 @@ import quina.route.annotation.AnnotationRoute;
 import quina.route.annotation.AnyRoute;
 import quina.route.annotation.ErrorRoute;
 import quina.route.annotation.Route;
-import quina.worker.QuinaLoopElement;
+import quina.thread.QuinaLoopElement;
 
 /**
  * Cdiオブジェクトを抽出.

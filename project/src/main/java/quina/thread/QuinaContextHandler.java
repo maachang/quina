@@ -1,4 +1,4 @@
-package quina;
+package quina.thread;
 
 import quina.exception.QuinaException;
 import quina.http.server.HttpServerContext;
@@ -10,7 +10,7 @@ import quina.worker.QuinaWorkerHandler;
 /**
  * QuinaContextに対するワーカーハンドル.
  */
-class QuinaContextHandler
+public class QuinaContextHandler
 	extends QuinaWorkerHandler {
 	
 	// ログオブジェクト.

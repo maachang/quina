@@ -1,6 +1,6 @@
 package quina.util;
 
-import quina.worker.QuinaWait;
+import quina.thread.QuinaWait;
 
 /**
  * ２段階フラグ.

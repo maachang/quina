@@ -1,6 +1,4 @@
-package quina.worker;
-
-import quina.QuinaThreadStatus;
+package quina.thread;
 
 /**
  * QuinaLoopThreadでループ実行する１つの要素.
