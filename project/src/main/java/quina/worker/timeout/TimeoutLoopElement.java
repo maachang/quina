@@ -7,14 +7,14 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import quina.exception.QuinaException;
-import quina.thread.QuinaLoopElement;
+import quina.thread.QuinaBackgroundElement;
 import quina.thread.QuinaThreadStatus;
 
 /**
  * TimeoutLoop処理要素.
  */
 public class TimeoutLoopElement
-	implements QuinaLoopElement {
+	implements QuinaBackgroundElement {
 	
 	// タイムアウト値.
 	private long timeout;

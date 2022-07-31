@@ -6,20 +6,20 @@ import quina.exception.QuinaException;
 import quina.util.collection.ObjectList;
 
 /**
- * 対象要素をループ実行するスレッド.
+ * 対象要素群をループ実行しつづけるバックグラウンド用スレッド.
  */
-public class QuinaLoopThread
+public class QuinaBackgroundThread
 	extends QuinaServiceThread<Object> {
 	
 	// ループ実行用の要素群.
-	private ObjectList<QuinaLoopElement> loopList =
-		new ObjectList<QuinaLoopElement>();
+	private ObjectList<QuinaBackgroundElement> loopList =
+		new ObjectList<QuinaBackgroundElement>();
 	
 	/**
 	 * ループ実行要素の登録.
 	 * @param em ループ実行用の要素を設定します.
 	 */
-	public void regLoopElement(QuinaLoopElement em) {
+	public void regLoopElement(QuinaBackgroundElement em) {
 		if(em == null) {
 			throw new QuinaException(
 				"The specified argument is null.");
@@ -31,7 +31,7 @@ public class QuinaLoopThread
 		// 既に登録済みの場合.
 		int len = loopList.size();
 		for(int i = 0; i < len; i ++) {
-			if(loopList.get(i) ==em) {
+			if(loopList.get(i) == em) {
 				return;
 			}
 		}

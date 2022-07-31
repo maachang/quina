@@ -3,7 +3,7 @@ package quina.smple;
 /**
  * Smple出力オブジェクト.
  */
-public class SmpleOut {
+public final class SmpleOut {
 	// バッファオブジェクト.
 	private StringBuilder buf = new StringBuilder();
 	

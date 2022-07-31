@@ -1,13 +1,13 @@
 package quina.thread;
 
 /**
- * QuinaLoopThreadでループ実行する１つの要素.
+ * QuinaBackgroundThreadでループ実行する１つの要素.
  */
-public interface QuinaLoopElement {
+public interface QuinaBackgroundElement {
 	
 	/**
-	 * Loop実行.
-	 * @param status QuinaThreadステータスが設定されます.
+	 * Background実行.
+	 * @param status QuinaThreadステータスを設定されます.
 	 * @exception Throwable 例外.
 	 */
 	public void execute(QuinaThreadStatus status)

@@ -1,6 +1,6 @@
 package quina.storage;
 
-import quina.thread.QuinaLoopElement;
+import quina.thread.QuinaBackgroundElement;
 import quina.thread.QuinaThreadStatus;
 
 /**
@@ -8,7 +8,7 @@ import quina.thread.QuinaThreadStatus;
  * LoopElement.
  */
 final class MemoryStorageLoopElement
-	implements QuinaLoopElement {
+	implements QuinaBackgroundElement {
 	
 	// タイムアウト時間.
 	protected long timeout;

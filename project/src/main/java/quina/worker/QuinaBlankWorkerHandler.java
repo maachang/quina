@@ -6,6 +6,7 @@ import quina.logger.LogFactory;
 
 /**
  * 空のQuinaワーカーハンドラー.
+ * デフォルトで利用されます.
  */
 final class QuinaBlankWorkerHandler
 	implements QuinaWorkerHandler {

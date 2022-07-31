@@ -1,6 +1,7 @@
 package quina.smple;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,26 +36,15 @@ public class SmpleAnalysis {
 	public static final String JAVA_EXTENTION = "sml";
 	
 	/**
-	 * [javaScript]smple拡張子.
-	 */
-	public static final String JS_EXTENTION = "smj";
-	
-	/**
-	 * smple展開先のjava パッケージ名.
+	 * [java]smple展開先のjava パッケージ名.
 	 */
 	public static final String JAVA_PACKAGE = "quinax.smple";
 	
-	// smpleパッケージ名.
-	private static final String SMPLE_PACKAGE = "quina.smple";
+	// [java]このsmpleインポート用パッケージ名.
+	private static final String THIS_IMPORT_SMPLE_PACKAGE = "quina.smple";
 	
-	// smple定義用のJsonシンボル.
+	// [java]smple定義用のJsonシンボル.
 	private static final String SMPLE = "$smple";
-	
-	// smple出力シンボル.
-	private static final String OUT_SIMBOLE = "$out";
-	
-	// smpleの処理結果を返却する.
-	private static final String SMPLE_$OUT_RESULT = "resultOut";
 	
 	// [java]Smpleオブジェクト.
 	private static final String JAVA_SMPLE_OBJECT = "Smple";
@@ -71,7 +61,7 @@ public class SmpleAnalysis {
 	// [java]デフォルトJava Import群.
 	private static final String[] JAVA_DEFAULT_JAVA_IMPORTS = new String[] {
 		"java.util.*"
-		,SMPLE_PACKAGE + ".*"
+		,THIS_IMPORT_SMPLE_PACKAGE + ".*"
 	};
 	
 	// [java]smpleメソッド引数名.
@@ -80,116 +70,172 @@ public class SmpleAnalysis {
 	// [java]smpleBean定義.
 	private static final String JAVA_SMPLE_BEAN_KEY_DEFINE = SMPLE + ".beans";
 	
+	
+	/**
+	 * [javaScript]smple拡張子.
+	 */
+	public static final String JS_EXTENTION = "smj";
+	
 	// [javascript]smpleパラメータ名.
 	private static final String JS_SMPLE_PARAMS_NAME = "args";
 	
+	
+	// [共通]smple出力シンボル.
+	private static final String OUT_SIMBOLE = "$out";
+	
+	// [共通]smpleの処理結果を返却する.
+	private static final String SMPLE_$OUT_RESULT = "resultOut";
+	
 	/**
 	 * smple for Javaコンパイル実行.
-	 * @param outClassName new String[1]を定義することで、生成された
-	 *                     javaオブジェクトのパッケージ名＋クラス名が
-	 *                     取得できます.
-	 * @param name このSmpleのオブジェクト名となる条件を設定します.
-	 *             smple内に $smple.name 定義が行われてる場合はこの条件は
-	 *             不要です.
-	 *             またこの条件は主に smpleをリソース管理している場合の
-	 *             パッケージ名とsmpleファイル名を指定します.
+	 * @param out (new String[1])を定義することで、生成された
+	 *            javaオブジェクトのパッケージ名＋クラス名を
+	 *            [0]に設定されます.
+	 *
+	 *            また(new String[2])を定義することで、
+	 *            json.name条件か、存在しない場合はobjectNameを[1]に設定します.
+	 * @param objectName このSmpleのオブジェクト名となる条件を設定します.
+	 *                   smple内に $smple.name 定義が行われてる場合はこの条件は
+	 *                   不要です.
+	 *                   またこの条件は主に smpleをリソース管理している場合の
+	 *                   パッケージ名とsmpleファイル名を指定します.
 	 * @param template テンプレート情報を設定します.
 	 * @return String smpleコンパイル結果が返却されます.
 	 */
 	public static final String compileJava(
-		String[] outClassName, String objectName, String template) {
-		final TextScript ts = new TextScript(template);
-		
-		// ${ ... } の内容を <%= ... %> に変換.
-		changeDollarBrackets(ts);
-		
-		// $smpleのJSON定義を取得.
-		Map<String, Object> json = getJavaJson(SMPLE, ts);
-		
-		// smple実行クラス名を設定します.
-		String className = getSmpleJavaObjectName(objectName, json);
-		
-		// 読み込みパッケージ名を取得.
-		String packageNames = getJavaImportPackages(json);
-		
-		// javaBeansを取得.
-		String[] beans = convertJavaBean(1, json);
-		
-		// javaArgs変換を取得.
-		String args = getJavaConvertArgs(2, json);
-		
-		// 有効な<% ... %> のポジションを取得.
-		ObjectList<Integer> list = getSmplePosList(ts);
-		
-		// プログラム実行が可能なスクリプト変換.
-		String smple = convertSmpleByExecuteProgram(
-			2, ts, list);
-		list = null;
-		
-		// 結合.
-		StringBuilder buf = new StringBuilder();
-		
-		// package名をセット.
-		buf.append("package ")
-			.append(JAVA_PACKAGE)
-			.append(";\n\n");
-		
-		// import package名をセット.
-		buf.append(packageNames)
-			.append("\n");
-		packageNames = null;
-		
-		// クラス名定義をセット.
-		buf.append(getJavaSmpleClass(0, className));
-		
-		// 各自JavaBeanをセット.
-		int len = beans.length;
-		for(int i = 0; i < len; i ++) {
-			if(i == 0) {
-				buf.append("\n");
+		String[] out, String objectName, String template) {
+		try {
+			final TextScript ts = new TextScript(template);
+			
+			// ${ ... } の内容を <%= ... %> に変換.
+			changeDollarBrackets(ts);
+			
+			// $smpleのJSON定義を取得.
+			Map<String, Object> json = getJavaJson(SMPLE, ts);
+			
+			// smple実行クラス名を設定します.
+			String className = getSmpleJavaObjectName(objectName, json);
+			
+			// クラス名を返却する場合.
+			if(out != null && out.length > 0) {
+				// 出力先のパッケージ名＋クラス名を[0]にセット.
+				out[0] = JAVA_PACKAGE + "." + className;
+				
+				// @inject(キー名)としたい、キー名を取得したい場合.
+				// [1]にセット.
+				if(out.length > 1) {
+					// キー名.
+					String keyName = null;
+					// json.nameを取得.
+					Object o = json.get("name");
+					if(o != null && o instanceof String) {
+						// キー名としてjson.nameをセット.
+						keyName = (String)o;
+						// json.nameが存在しない場合.
+						// 対象のsmpleリソースパスをキーとして設定.
+						if(keyName == null ||
+							(keyName = keyName.trim()).isEmpty()) {
+							keyName = objectName;
+						}
+					}
+					// キー名取得に失敗した場合.
+					if(keyName == null ||
+						(keyName = keyName.trim()).isEmpty()) {
+						throw new QuinaException(
+							"The object name to expand the sample is not defined.");
+					}
+					// [1]にキー名をセット.
+					out[1] = keyName;
+				}
 			}
-			buf.append(beans[i])
+			
+			// 読み込みパッケージ名を取得.
+			String packageNames = getJavaImportPackages(json);
+			
+			// javaBeansを取得.
+			String[] beans = convertJavaBean(1, json);
+			
+			// javaArgs変換を取得.
+			String args = getJavaConvertArgs(2, json);
+			
+			// 有効な<% ... %> のポジションを取得.
+			ObjectList<Integer> list = getSmplePosList(ts);
+			
+			// プログラム実行が可能なスクリプト変換.
+			String smple = convertSmpleByExecuteProgram(
+				2, ts, list);
+			list = null;
+			
+			// 結合.
+			StringBuilder buf = new StringBuilder();
+			
+			// package名をセット.
+			buf.append("package ")
+				.append(JAVA_PACKAGE)
+				.append(";\n\n");
+			
+			// import package名をセット.
+			buf.append(packageNames)
 				.append("\n");
+			packageNames = null;
+			
+			// クラス名定義をセット.
+			buf.append(getJavaSmpleClass(0, className));
+			
+			// 各自JavaBeanをセット.
+			int len = beans.length;
+			for(int i = 0; i < len; i ++) {
+				if(i == 0) {
+					buf.append("\n");
+				}
+				buf.append(beans[i])
+					.append("\n");
+			}
+			
+			// bean生成メソッドをセット.
+			buf.append(getJavaCreateSmpleMethod(1, json))
+				.append("\n");
+			
+			// 実行メソッド名をセット.
+			appendTab(buf, 1)
+				.append(getJavaSmpleMethod())
+				.append("\n");
+			
+			// args変換定義をセット.
+			buf.append(args)
+				.append("\n");
+			
+			// SmpleOutオブジェクトを生成.
+			appendTab(buf, 2)
+				.append(getJavaSmpleOut())
+				.append("\n");
+			
+			// 実行可能なsmple定義をセット.
+			buf.append(smple);
+			
+			// SmpleOutを文字列変換する定義をセット.
+			buf.append("\n")
+				.append(resultJavaSmpleOut(2));
+			
+			// メソッド終端をセット.
+			buf.append(endIndent(1));
+			
+			// クラス終端をセット.
+			buf.append(endIndent(0));
+			
+			// SmpleからJava変換された内容を返却.
+			return buf.toString();
+		} catch(Exception e) {
+			// outがnull以外の場合.
+			if(out != null) {
+				Arrays.fill(out, null);
+			}
+			if(e instanceof QuinaException) {
+				throw (QuinaException)e;
+			} else {
+				throw new QuinaException(e);
+			}
 		}
-		
-		// bean生成メソッドをセット.
-		buf.append(getJavaCreateSmpleMethod(1, json))
-			.append("\n");
-		
-		// 実行メソッド名をセット.
-		appendTab(buf, 1)
-			.append(getJavaSmpleMethod())
-			.append("\n");
-		
-		// args変換定義をセット.
-		buf.append(args)
-			.append("\n");
-		
-		// SmpleOutオブジェクトを生成.
-		appendTab(buf, 2)
-			.append(getJavaSmpleOut())
-			.append("\n");
-		
-		// 実行可能なsmple定義をセット.
-		buf.append(smple);
-		
-		// SmpleOutを文字列変換する定義をセット.
-		buf.append("\n")
-			.append(resultJavaSmpleOut(2));
-		
-		// メソッド終端をセット.
-		buf.append(endIndent(1));
-		
-		// クラス終端をセット.
-		buf.append(endIndent(0));
-		
-		// クラス名を返却する場合.
-		if(outClassName != null && outClassName.length > 0) {
-			// 出力対象のパッケージ名＋クラス名を返却.
-			outClassName[0] = JAVA_PACKAGE + "." + className;
-		}
-		
-		return buf.toString();
 	}
 	
 	/**
@@ -198,51 +244,56 @@ public class SmpleAnalysis {
 	 * @return String smpleコンパイル結果が返却されます.
 	 */
 	public static final String compileJs(String template) {
-		TextScript ts = new TextScript(template);
-		
-		// ${ ... } の内容を <%= ... %> に変換.
-		changeDollarBrackets(ts);
-		
-		// $smpleのJSON定義を取得.
-		Map<String, Object> json = getJavaJson(SMPLE, ts);
-		
-		// 有効な<% ... %> のポジションを取得.
-		ObjectList<Integer> list = getSmplePosList(ts);
-		
-		// プログラム実行が可能なスクリプト変換.
-		String smple = convertSmpleByExecuteProgram(
-			0, ts, list);
-		list = null;
-		
-		// 結合.
-		StringBuilder buf = new StringBuilder();
-		
-		// header.
-		buf.append(getJsHeaderScript());
-		
-		// $smpleJSONが存在する場合.
-		if(json != null) {
-			// jsonを展開.
-			buf.append(SMPLE)
-				.append(" = ")
-				.append(JsonOut.toString(json))
-				.append("\n");
+		try {
+			TextScript ts = new TextScript(template);
+			
+			// ${ ... } の内容を <%= ... %> に変換.
+			changeDollarBrackets(ts);
+			
+			// $smpleのJSON定義を取得.
+			Map<String, Object> json = getJavaJson(SMPLE, ts);
+			
+			// 有効な<% ... %> のポジションを取得.
+			ObjectList<Integer> list = getSmplePosList(ts);
+			
+			// プログラム実行が可能なスクリプト変換.
+			String smple = convertSmpleByExecuteProgram(
+				0, ts, list);
+			list = null;
+			
+			// 結合.
+			StringBuilder buf = new StringBuilder();
+			
+			// header.
+			buf.append(getJsHeaderScript());
+			
+			// $smpleJSONが存在する場合.
+			if(json != null) {
+				// jsonを展開.
+				buf.append(SMPLE)
+					.append(" = ")
+					.append(JsonOut.toString(json))
+					.append("\n");
+			}
+			
+			// smpleOut.
+			buf.append(getJsSmpleOutScript());
+			
+			// テンプレートスクリプト.
+			buf.append('\n')
+				.append(smple)
+				.append(resultJSSmpleOut(0));
+			
+			// footer.
+			buf.append(getJsFooterScript());
+			
+			return buf.toString();
+		} catch(QuinaException qe) {
+			throw qe;
+		} catch(Exception e) {
+			throw new QuinaException(e);
 		}
-		
-		// smpleOut.
-		buf.append(getJsSmpleOutScript());
-		
-		// テンプレートスクリプト.
-		buf.append('\n')
-			.append(smple)
-			.append(resultJSSmpleOut(0));
-		
-		// footer.
-		buf.append(getJsFooterScript());
-		
-		return buf.toString();
 	}
-
 	
 	// クォーテーションとコメントに対応した読み込み処理.
 	private static final class QuotationAndComment
@@ -907,7 +958,7 @@ public class SmpleAnalysis {
 	}
 	
 	// Javaクラス名で利用可能な文字以外はアンダーバー変換
-	protected static final String getJavaClassName(String name) {
+	protected static final String convertJavaClassName(String name) {
 		char c;
 		StringBuilder buf = new StringBuilder();
 		final int len = name.length();
@@ -941,9 +992,10 @@ public class SmpleAnalysis {
 		String name = null;
 		// json.nameで取得.
 		Object o = json.get("name");
-		if(o == null || !(o instanceof String)) {
+		if(o != null && o instanceof String) {
 			name = (String)o;
-			if(name == null || name.isEmpty()) {
+			if(name == null ||
+				(name = name.trim()).isEmpty()) {
 				name = null;
 			}
 		}
@@ -953,13 +1005,14 @@ public class SmpleAnalysis {
 			name = smpleResourcePath;
 		}
 		// 存在しない場合.
-		if(name == null || name.isEmpty()) {
+		if(name == null || name.isEmpty() ||
+			(name = name.trim()).isEmpty()) {
 			throw new QuinaException(
 				"The object name to expand the sample is not defined.");
 		}
 		// Javaのクラス名で使えない文字は全て「アンダーバー」変換.
 		// 半角英数字(a～z,A～Z,0～9)とアンダーバー(_)とドル記号($)以外.
-		return getJavaClassName(name);
+		return convertJavaClassName(name);
 	}
 	
 	// [js]smple先頭定義.

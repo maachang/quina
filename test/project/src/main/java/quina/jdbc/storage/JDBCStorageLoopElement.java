@@ -3,7 +3,7 @@ package quina.jdbc.storage;
 import quina.jdbc.io.IoStatement;
 import quina.jdbc.io.QueryResult;
 import quina.storage.StorageConstants;
-import quina.thread.QuinaLoopElement;
+import quina.thread.QuinaBackgroundElement;
 import quina.thread.QuinaThreadStatus;
 import quina.util.collection.ObjectList;
 
@@ -12,7 +12,7 @@ import quina.util.collection.ObjectList;
  * LoopElement.
  */
 final class JDBCStorageLoopElement
-	implements QuinaLoopElement {
+	implements QuinaBackgroundElement {
 	
 	// タイムアウト時間.
 	protected long timeout;

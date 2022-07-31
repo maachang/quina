@@ -17,7 +17,7 @@ import quina.route.annotation.AnnotationRoute;
 import quina.route.annotation.AnyRoute;
 import quina.route.annotation.ErrorRoute;
 import quina.route.annotation.Route;
-import quina.thread.QuinaLoopElement;
+import quina.thread.QuinaBackgroundElement;
 
 /**
  * Cdiオブジェクトを抽出.
@@ -117,7 +117,7 @@ public class QuinaCTExtraction {
 			// InjectFieldリストに追加.
 			params.injFdList.add(cname);
 		// アノテーションなしのQuinaLoopElement.
-		} else if(o instanceof QuinaLoopElement) {
+		} else if(o instanceof QuinaBackgroundElement) {
 			// InjectFieldリストに追加.
 			params.injFdList.add(cname);
 		}
@@ -272,7 +272,7 @@ public class QuinaCTExtraction {
 		}
 		
 		// QuinaLoopElementの場合.
-		if(o instanceof QuinaLoopElement) {
+		if(o instanceof QuinaBackgroundElement) {
 			// ＠QuinaLoopScoped付属のQuinaLoopElementを登録.
 			if(c.isAnnotationPresent(QuinaLoopScoped.class)) {
 				System.out.println("  > quinaLoopElement  : " + cname);

@@ -6,6 +6,7 @@ import quina.util.collection.IndexKeyValueList;
 
 /**
  * Smpleファクトリ.
+ * Smple展開済みオブジェクトを管理します.
  */
 public final class SmpleFactory {
 	
@@ -43,7 +44,7 @@ public final class SmpleFactory {
 			throw new QuinaException("It has already been confirmed.");
 		}
 		// 登録.
-		manager.put(SmpleAnalysis.getJavaClassName(name), instance);
+		manager.put(name, instance);
 	}
 	
 	/**
@@ -70,8 +71,7 @@ public final class SmpleFactory {
 		if(name == null || name.isBlank()) {
 			throw new QuinaException("The argument is null.");
 		}
-		return manager.get(
-			SmpleAnalysis.getJavaClassName(name));
+		return manager.get(name);
 	}
 	
 	/**
@@ -100,37 +100,6 @@ public final class SmpleFactory {
 	}
 	
 	/**
-	 * Smpleオブジェクトを取得.
-	 * @param name Smple名を設定します.
-	 * @return Smple Smpleオブジェクトが返却されます.
-	 */
-	public static final Smple getSmple(String name) {
-		return SNGL.get(name);
-	}
-	
-	/**
-	 * SmpleBeanを取得.
-	 * @param smpleName Smple名を設定します.
-	 * @param beanName SmpleBean名を設定します.
-	 * @return SmpleBean 空のSmpleBeanオブジェクトが返却されます.
-	 */
-	public static final SmpleBean getSmpleBean(
-		String smpleName, String beanName) {
-		return SNGL.smpleBean(smpleName, beanName);
-	}
-	
-	/**
-	 * SmpleBeanを取得.
-	 * @param smple 対象のSmpleを設定します.
-	 * @param beanName SmpleBean名を設定します.
-	 * @return SmpleBean 空のSmpleBeanオブジェクトが返却されます.
-	 */
-	public static final SmpleBean getSmpleBean(
-		Smple smple, String beanName) {
-		return SNGL.smpleBean(smple, beanName);
-	}
-	
-	/**
 	 * Smple登録数を取得.
 	 * @return int Smple登録数が返却されます.
 	 */
@@ -150,4 +119,14 @@ public final class SmpleFactory {
 		}
 		return ret;
 	}
+	
+	/**
+	 * Smpleオブジェクトを取得.
+	 * @param name Smple名を設定します.
+	 * @return Smple Smpleオブジェクトが返却されます.
+	 */
+	public static final Smple getSmple(String name) {
+		return SNGL.get(name);
+	}
+	
 }

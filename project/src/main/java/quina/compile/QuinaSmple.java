@@ -1,7 +1,7 @@
 package quina.compile;
 
 /**
- * Smpleテンプレート
+ * Smpleテンプレートの読み込みと解析と反映.
  */
 public class QuinaSmple {
 

@@ -9,7 +9,7 @@ import quina.exception.QuinaException;
 import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.route.Router;
 import quina.shutdown.ShutdownManagerInfo;
-import quina.thread.QuinaLoopManager;
+import quina.thread.QuinaBackgroundManager;
 import quina.util.Args;
 import quina.worker.QuinaWorkerCall;
 
@@ -248,7 +248,7 @@ public final class Quina {
 	 * QuinaLoopManagerを取得.
 	 * @return QuinaLoopManager QuinaLoopManagerが返却されます.
 	 */
-	public QuinaLoopManager getQuinaLoopManager() {
+	public QuinaBackgroundManager getQuinaLoopManager() {
 		return quinaMembers.quinaWorkerService;
 	}
 	
