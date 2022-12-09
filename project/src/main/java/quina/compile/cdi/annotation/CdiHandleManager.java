@@ -157,7 +157,7 @@ public class CdiHandleManager {
 		if(o == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
-		inject(Quina.get().getCdiReflectManager(), o, o.getClass());
+		inject(Quina.get().getCdiInjectFieldManager(), o, o.getClass());
 	}
 	
 	/**
@@ -169,18 +169,18 @@ public class CdiHandleManager {
 		if(c == null) {
 			throw new QuinaException("The specified argument is Null.");
 		}
-		inject(Quina.get().getCdiReflectManager(), null, c);
+		inject(Quina.get().getCdiInjectFieldManager(), null, c);
 	}
 	
 	/**
 	 * AnnotationのCdi定義を反映されます.
-	 * @param man CdiReflectManagerが設定されます.
+	 * @param man CdiInjectFieldManagerが設定されます.
 	 * @param o Cdi定義を読み込むオブジェクトを設定します.
 	 *          null の場合 Cdi対象のフィールドはstatic のみ
 	 *          ローディングされます.
 	 * @param c Cdi定義の読み込みクラスを設定します.
 	 */
-	private void inject(CdiReflectManager man, Object o, Class<?> c) {
+	private void inject(CdiInjectFieldManager man, Object o, Class<?> c) {
 		// Objectが存在する場合.
 		// この定義の場合はオブジェクトのフィールドに対して
 		// 注入の処理を実行します.

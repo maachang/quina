@@ -639,6 +639,22 @@ var _executeSql = function() {
         });
 }
 
+// 指定クォーテーション以前に文字列と認識される条件かチェック.
+var isStringQuotation = function(src, pos, srcQuotation) {
+    if(src.charAt(pos) != srcQuotation) {
+        return true;
+    }
+    var yenCount = 0;
+    for(var i = pos - 1; i >= 0; i --) {
+        if(src.charAt(i) == '\\') {
+            yenCount ++;
+            continue;
+        }
+        break;
+    }
+    return (yenCount & 1) == 1;
+}
+
 // cut sql comment.
 var cutSqlComment = function(sql) {
     if(isNull(sql) || sql.length == 0) {
@@ -647,18 +663,17 @@ var cutSqlComment = function(sql) {
     var c;
     var len = sql.length;
     var befYen = false;
-    var cote = null;
+    var quate = null;
     var lineCmt = false;
     var cmt = false;
     var ret = "";
     for(var i = 0; i < len; i ++) {
         c = sql.charAt(i);
-        // single or double coating.
-        if(cote != null) {
-            // end coating.
-            // not [\\"] or [\\']
-            if(!befYen && c == cote) {
-                cote = null;
+        // single or double quoating.
+        if(quate != null) {
+            // end quoating.
+            if(!isStringQuotation(sql, i, quate)) {
+                quate = null;
             }
             ret += c;
             // before yen code.
@@ -683,10 +698,10 @@ var cutSqlComment = function(sql) {
             }
             // before yen code.
             befYen = (c == "\\");
-        // start coating.
+        // start quoating.
         // not [\\"] or [\\']
         } else if(!befYen && (c == "\"" || c == "\'")) {
-            cote = c;
+            quate = c;
             ret += c;
             // before yen code.
             befYen = (c == "\\");

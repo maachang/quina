@@ -8,6 +8,9 @@ import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.compile.cdi.annotation.AnnotationCdiConstants;
 import quina.exception.QuinaException;
+import quina.thread.QuinaBackgroundElement;
+import quina.thread.QuinaBackgroundManager;
+import quina.thread.QuinaBackgroundThread;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
 import quina.util.collection.TypesClass;
@@ -16,15 +19,16 @@ import quina.util.collection.TypesClass;
  * QuinaWorkerサービス.
  */
 public class QuinaWorkerService
-	implements QuinaService, QuinaLoopManager {
+	implements QuinaService, QuinaBackgroundManager {
 	// Quinaワーカーハンドラ.
-	private QuinaWorkerHandler handle;
+	// 初期値はBlankハンドラ.
+	private QuinaWorkerHandler handle = new QuinaBlankWorkerHandler();
 	// Quinaワーカー実行用要素群.
 	private ObjectList<QuinaWorkerCallHandler> callHandles;
 	// Quinaワーカーマネージャ.
 	private QuinaWorkerManager manager;
 	// QuinaLoopスレッド.
-	private QuinaLoopThread loopThread = new QuinaLoopThread();
+	private QuinaBackgroundThread loopThread = new QuinaBackgroundThread();
 
 	// コンフィグ定義.
 	private final QuinaConfig config = new QuinaConfig(
@@ -212,7 +216,7 @@ public class QuinaWorkerService
 	 * ループ実行要素の登録.
 	 * @param em ループ実行用の要素を設定します.
 	 */
-	public void regLoopElement(QuinaLoopElement em) {
+	public void regLoopElement(QuinaBackgroundElement em) {
 		wlock();
 		try {
 			loopThread.regLoopElement(em);
@@ -310,7 +314,7 @@ public class QuinaWorkerService
 	@Override
 	public boolean awaitStartup(long timeout) {
 		QuinaWorkerManager m = null;
-		QuinaLoopThread lt;
+		QuinaBackgroundThread lt;
 		rlock();
 		try {
 			m = manager;
@@ -378,7 +382,7 @@ public class QuinaWorkerService
 	@Override
 	public boolean awaitExit(long timeout) {
 		QuinaWorkerManager m = null;
-		QuinaLoopThread lt;
+		QuinaBackgroundThread lt;
 		rlock();
 		try {
 			m = manager;

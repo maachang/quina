@@ -1,0 +1,45 @@
+<%#
+ ■LoadCdiAnnotationHandle.java ファイル作成用のjs用smple.
+   
+   CDI(Contexts and Dependency Injection)に対する
+   @CdiHandleScoped定義されたオブジェクトのシングルトン
+   オブジェクトを `CdiHandleManager` で管理します.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   あります.
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     // @CdiHandleScoped定義されたオブジェクト名.
+     package + クラス名,
+     package + クラス名,
+      ・・・・
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.compile.cdi.annotation.CdiHandleManager;
+
+/**
+ * CdiHandleScoped Annotation Registers the defined service object.
+ */
+public final class LoadCdiAnnotationHandle {
+	private LoadCdiAnnotationHandle() {}
+	
+	/**
+	 * CdiHandleScoped Annotation Registers the defined service object.
+	 *
+	 * @exception Exception If the service registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// Cdi Handle Manager to be registered.
+		final CdiHandleManager chdManager = Quina.get().getCdiHandleManager();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the "${args[i]}"
+		// object in the @CdiHandleScoped.
+		chdManager.put(new ${args[i]}());
+		<%$end%>
+	}
+}

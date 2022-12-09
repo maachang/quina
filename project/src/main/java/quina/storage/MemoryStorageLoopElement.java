@@ -1,14 +1,14 @@
 package quina.storage;
 
-import quina.QuinaThreadStatus;
-import quina.worker.QuinaLoopElement;
+import quina.thread.QuinaBackgroundElement;
+import quina.thread.QuinaThreadStatus;
 
 /**
  * MemoryStorageManagerのタイムアウト監視する
  * LoopElement.
  */
 final class MemoryStorageLoopElement
-	implements QuinaLoopElement {
+	implements QuinaBackgroundElement {
 	
 	// タイムアウト時間.
 	protected long timeout;

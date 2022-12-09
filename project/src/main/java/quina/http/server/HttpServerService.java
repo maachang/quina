@@ -171,6 +171,8 @@ public class HttpServerService implements QuinaService {
 					config.getInt("recvBuffer"), config.getBoolean("keepAlive"),
 					config.getBool("tcpNoDeley"), server, c,
 					quinaWorkerService);
+				// 最大プライオリティ.
+				cr.setPriority(10);
 				// サーバーコアを設定.
 				this.core = cr;
 				// NioTimeoutThreadを生成.

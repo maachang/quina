@@ -15,17 +15,51 @@ import quina.util.StringUtil;
  * Validateタイプ.
  */
 public enum VType {
+	/**
+	 * 文字列.
+	 */
 	String(1, "string"),
+	/**
+	 * Bool.
+	 */
 	Boolean(2, "boolean"),
+	/**
+	 * 数字.
+	 */
 	Number(10, "number"),
+	/**
+	 * 32bit整数.
+	 */
 	Integer(11, "integer"),
+	/**
+	 * 64bit整数.
+	 */
 	Long(12, "long"),
+	/**
+	 * 浮動小数点.
+	 */
 	Float(13, "float"),
+	/**
+	 * 64bit浮動小数点.
+	 */
+	Double(14, "double"),
+	/**
+	 * java.util.Date.
+	 */
 	Date(20, "date"),
+	/**
+	 * java.util.Map.
+	 */
 	Map(30, "map"),
+	/**
+	 * java.util.List.
+	 */
 	List(31, "list");
 
+	
+	// タイプID.
 	private int type;
+	// タイプ名.
 	private String name;
 
 	private VType(int type, String name) {
@@ -60,24 +94,26 @@ public enum VType {
 	 * @return VType VTypeが返却されます.
 	 */
 	public static final VType getStringByVType(String type) {
-		if (Alphabet.eqArray(type, "str", "string") != -1) {
+		if (Alphabet.eq(type, "long")) {
+			return Long;
+		} else if (Alphabet.eq(type, "float")) {
+			return Float;
+		} else if (Alphabet.eq(type, "double")) {
+			return Double;
+		} else if (Alphabet.eq(type, "map")) {
+			return Map;
+		} else if (Alphabet.eqArray(type, "str", "string") != -1) {
 			return String;
 		} else if (Alphabet.eqArray(type, "num", "number") != -1) {
 			return Number;
 		} else if (Alphabet.eqArray(type, "int", "integer") != -1) {
 			return Integer;
-		} else if (Alphabet.eq(type, "long")) {
-			return Long;
-		} else if (Alphabet.eqArray(type, "float", "double") != -1) {
-			return Float;
-		} else if (Alphabet.eq(type, "date")) {
-			return Date;
-		} else if (Alphabet.eqArray(type, "bool", "boolean") != -1) {
-			return Boolean;
-		} else if (Alphabet.eq(type, "map")) {
-			return Map;
 		} else if (Alphabet.eqArray(type, "array", "list") != -1) {
 			return List;
+		} else if (Alphabet.eqArray(type, "bool", "boolean") != -1) {
+			return Boolean;
+		} else if (Alphabet.eqArray(type, "date", "datetime", "timestamp") != -1) {
+			return Date;
 		} else {
 			return String;
 		}
@@ -145,6 +181,18 @@ public enum VType {
 				}
 				break;
 			case Float:
+				if (NumberUtil.isNumeric(value)) {
+					Float v1 = NumberUtil.parseFloat(value);
+					Double v2 = NumberUtil.parseDouble(value);
+					if((double)v1 == v2) {
+						return v1;
+					}
+					return v2;
+				} else {
+					value = null;
+				}
+				break;
+			case Double:
 				if (NumberUtil.isNumeric(value)) {
 					value = NumberUtil.parseDouble(value);
 				} else {

@@ -7,45 +7,81 @@ import java.util.List;
  * QuinaCompileTool用パラメータ.
  */
 public class QuinaCTParams {
-	// verbose..
+	/**
+	 * verbose.
+	 */
 	public boolean verbose = false;
 	
-	// Route用クラス名リスト.
+	/**
+	 * Route用クラス名リスト.
+	 */
 	public final List<String> routeList = new ArrayList<String>();
 	
-	// RouteAny用クラス名.
+	/**
+	 * RouteAny用クラス名.
+	 */
 	public String any = null;
 	
-	// RouteError用クラス名リスト.
+	/**
+	 * RouteError用クラス名リスト.
+	 */
 	public final List<String> errList = new ArrayList<String>();
 	
-	// CdiService用クラス名リスト.
+	/**
+	 * CdiService用クラス名リスト.
+	 */
 	public final List<String> cdiList = new ArrayList<String>();
 	
-	// CdiReflect用クラス名リスト.
-	public final List<String> refList = new ArrayList<String>();
+	/**
+	 * CdiInjectField用クラス名リスト.
+	 */
+	public final List<String> injFdList = new ArrayList<String>();
 	
-	// QuinaService用クラス名リスト.
+	/**
+	 * QuinaService用クラス名リスト.
+	 */
 	public final List<String> qsrvList = new ArrayList<String>();
 	
-	// CdiHandle用クラス名リスト.
+	/**
+	 * CdiHandle用クラス名リスト.
+	 */
 	public final List<String> hndList = new ArrayList<String>();
 	
-	// ProxyScoped用クラス名リスト.
+	/**
+	 * ProxyScoped用クラス名リスト.
+	 */
 	public final List<String> prxList = new ArrayList<String>();
 	
-	// QuinaLoopScoped用クラス名リスト.
+	/**
+	 * QuinaLoopScoped用クラス名リスト.
+	 */
 	public final List<String> loopList = new ArrayList<String>();
 	
-	// クラス内のresourceファイル群.
+	/**
+	 * クラス内のクラスファイル群.
+	 */
+	public final List <String> classFileList = new ArrayList<String>();
+	
+	/**
+	 * クラス内のresourceファイル群.
+	 */
 	public final List<String> regResourceList = new ArrayList<String>();
 	
-	// ResourceItem登録判定.
-	// graalvmのnativeImageコンパイルでリソースファイル定義が必要なので
-	// それを利用する場合trueがセットされる.
+	/**
+	 * クラス内のsmple拡張子ファイル群.
+	 */
+	public final List<String> smpleList = new ArrayList<String>();
+	
+	/**
+	 * ResourceItem登録判定.
+	 * graalvmのnativeImageコンパイルでリソースファイル定義が必要なので
+	 * それを利用する場合trueがセットされる.
+	 */
 	public boolean registerResourceItemFlag;
 	
-	// classLoader.
+	/**
+	 * classLoader.
+	 */
 	public ClassLoader cl;
 	
 	/**
@@ -66,7 +102,7 @@ public class QuinaCTParams {
 	
 	/**
 	 * 詳細表示.
-	 * @return
+	 * @return boolean trueの場合有効です.
 	 */
 	public boolean isVerbose() {
 		return verbose;
@@ -77,11 +113,12 @@ public class QuinaCTParams {
 	 * @return
 	 */
 	public boolean isEmpty() {
-		return refList.size() == 0 && routeList.size() == 0
+		return injFdList.size() == 0 && routeList.size() == 0
 			&& cdiList.size() == 0 && any == null
 			&& errList.size() == 0 && qsrvList.size() == 0
 			&& hndList.size() == 0 && prxList.size() == 0
 			&& regResourceList.size() == 0 && loopList.size() == 0
+			&& smpleList.size() == 0
 		;
 	}
 	
@@ -103,11 +140,11 @@ public class QuinaCTParams {
 	}
 	
 	/**
-	 * CdiReflect定義が空の場合.
+	 * CdiInjectField定義が空の場合.
 	 * @return
 	 */
-	public boolean isCdiReflectEmpty() {
-		return refList.size() == 0;
+	public boolean isCdiInjectFieldEmpty() {
+		return injFdList.size() == 0;
 	}
 	
 	/**
@@ -143,10 +180,28 @@ public class QuinaCTParams {
 	}
 	
 	/**
+	 * ClassFile定義が空の場合.
+	 * @return
+	 */
+	public boolean isClassFileEmpty() {
+		return classFileList.size() == 0;
+	}
+
+	
+	/**
 	 * ResourceItem定義が空の場合.
 	 * @return
 	 */
 	public boolean isRegResourceItemEmpty() {
 		return regResourceList.size() == 0;
 	}
+	
+	/**
+	 * smple定義が空の場合.
+	 * @return
+	 */
+	public boolean isSmpleEmpty() {
+		return smpleList.size() == 0;
+	}
+
 }

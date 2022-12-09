@@ -1,0 +1,64 @@
+<%#
+ ■LoadProxyScoped.java ファイル作成用のjs用smple.
+   
+   javaReflectionのDynamicProxyはgraalvmのnative-mage
+   で利用しようとする場合、nativeコンパイル時に個別の設定が
+   必要となります.
+   
+   quinaでは `@ProxyScoped` を設定することで、DynamicProxy
+   に類似した機能が利用可能となります.
+   
+   そしてこのsmpleはこれらのProxyオブジェクトを管理するための
+   Javaプログラムを出力するための内容です.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     {
+       name: @ProxyScopedが定義されたPackage名 + クラス名,
+       // このオブジェクト名は単体名の定義.
+       proxyName: 自動生成されたProxyオブジェクト名,
+     }
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
+
+/**
+ * ProxyScoped Annotation Registers the defined service object.
+ */
+public final class LoadProxyScoped {
+	private LoadProxyScoped() {}
+	
+	/**
+	 * ProxyScoped Annotation Registers the define object.
+	 *
+	 * @exception Exception If the registration fails.
+	 */
+	public static final void load() throws Exception {
+		
+		// Proxy Scoped Manager to be registered.
+		final ProxyScopedManager prxManager = Quina.get().getProxyScopedManager();
+		
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the "${args[i].name}"
+		// object in the @ProxyScoped.
+		prxManager.put("${args[i].name}",
+			new quina.compile.cdi.annotation.proxy.QuinaProxy() {
+				public Class<?> getProxyClass() {
+					return ${args[i].proxyName}.class;
+				}
+				public Object newInstance(
+					quina.compile.cdi.annotation.proxy.ProxySettingArgs args) {
+					${args[i].proxyName} ret = new
+						${args[i].proxyName}();
+					ret.__initialSetting(args);
+					return ret;
+				}
+			}
+		);
+		<%$end%>
+	}
+}

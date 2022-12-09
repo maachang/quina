@@ -162,7 +162,7 @@
   </target>
 
   <!-- ===================================================================== -->
-  <!-- delete quinaCT.                                                      -->
+  <!-- delete quinaCT.                                                       -->
   <!-- ===================================================================== -->
   <target name="delQuinaCT">
     <java classname="quina.compile.QuinaCT" fork="true">
@@ -178,7 +178,7 @@
   </target>
 
   <!-- ===================================================================== -->
-  <!-- execute quinaRCP.                                                      -->
+  <!-- execute quinaRCP.                                                     -->
   <!-- ===================================================================== -->
   <target name="quinaRCP">
     <java classname="quina.compile.QuinaRCP" fork="true">

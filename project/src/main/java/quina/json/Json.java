@@ -193,7 +193,7 @@ public final class Json {
 			buf.append(conv.numberToString((Number)target));
 		} else if (target instanceof String) {
 			buf.append(conv.stringToString(
-				Indent.upIndentDoubleCote((String)target)));
+				Indent.upIndentDoubleQuote((String)target)));
 		} else if (target instanceof java.util.Date) {
 			buf.append(conv.dateToString((java.util.Date)target));
 		} else if (target instanceof Boolean) {
@@ -212,7 +212,7 @@ public final class Json {
 			}
 		} else {
 			buf.append(conv.stringToString(
-				Indent.upIndentDoubleCote(target.toString())));
+				Indent.upIndentDoubleQuote(target.toString())));
 		}
 	}
 
@@ -290,7 +290,7 @@ public final class Json {
 		}
 		// JSON変換I/Oを取得.
 		final JsonCustomAnalysis conv = convJsonAnalysis.get();
-		// 文字列コーテーション区切り.
+		// 文字列クォーテーション区切り.
 		if ((json.startsWith("\"") &&
 				json.endsWith("\""))
 			|| (json.startsWith("\'") &&
@@ -321,34 +321,51 @@ public final class Json {
 		//	"Failed to parse JSON(" + json + "):No:" + no);
 		
 		// 文字列として扱う.
-		// これにより、コーテーションなしのvalue文字列も
+		// これにより、クォーテーションなしのvalue文字列も
 		// 利用可能になります.
 		return conv.jsonToString(json);
+	}
+	
+	// クォーテーション区切りの終端かチェック.
+	private static final boolean isStringQuotation(
+		String src, int pos, char srcQuotation) {
+		if(src.charAt(pos) != srcQuotation) {
+			return true;
+		}
+		int yenCount = 0;
+		for(int i = pos - 1; i >= 0; i --) {
+			if(src.charAt(i) == '\\') {
+				yenCount ++;
+				continue;
+			}
+			break;
+		}
+		return (yenCount & 1) == 1;
 	}
 
 	/** JSON_Token_解析処理 **/
 	private static final List<Object> analysisJsonToken(final String json) {
 		int s = -1;
 		char c;
-		int cote = -1;
+		int quote = -1;
 		int bef = -1;
 		int len = json.length();
 		List<Object> ret = new ArrayList<Object>();
 		// Token解析.
 		for (int i = 0; i < len; i++) {
 			c = json.charAt(i);
-			// コーテーション内.
-			if (cote != -1) {
-				// コーテーションの終端.
-				if (bef != '\\' && cote == c) {
+			// クォーテーション内.
+			if (quote != -1) {
+				// クォーテーションの終端.
+				if(!isStringQuotation(json, i, (char)quote)) {
 					ret.add(json.substring(s - 1, i + 1));
-					cote = -1;
+					quote = -1;
 					s = i + 1;
 				}
 			}
-			// コーテーション開始.
+			// クォーテーション開始.
 			else if (bef != '\\' && (c == '\'' || c == '\"')) {
-				cote = c;
+				quote = c;
 				if (s != -1 && s != i && bef != ' ' && bef != '　'
 						&& bef != '\t' && bef != '\n' && bef != '\r') {
 					ret.add(json.substring(s, i + 1));
@@ -566,7 +583,7 @@ public final class Json {
 		}
 		StringBuilder buf = new StringBuilder();
 		int len = str.length();
-		int cote = -1;
+		int quote = -1;
 		int commentType = -1;
 		int bef = -1;
 		char c, c2;
@@ -587,7 +604,8 @@ public final class Json {
 				case 2: // 複数行コメント.
 					if (c == '\n') {
 						buf.append(c);
-					} else if (len > i + 1 && c == '*' && str.charAt(i + 1) == '/') {
+					} else if (len > i + 1 && c == '*' &&
+						str.charAt(i + 1) == '/') {
 						i++;
 						commentType = -1;
 					}
@@ -595,10 +613,10 @@ public final class Json {
 				}
 				continue;
 			}
-			// シングル／ダブルコーテーション内の処理.
-			if (cote != -1) {
-				if (c == cote && (char) bef != '\\') {
-					cote = -1;
+			// シングル／ダブルクォーテーション内の処理.
+			if (quote != -1) {
+				if(!isStringQuotation(str, i, (char)quote)) {
+					quote = -1;
 				}
 				buf.append(c);
 				continue;
@@ -640,9 +658,9 @@ public final class Json {
 				commentType = 1;
 				continue;
 			}
-			// コーテーション開始.
+			// クォーテーション開始.
 			else if ((c == '\'' || c == '\"') && (char) bef != '\\') {
-				cote = (int) (c & 0x0000ffff);
+				quote = (int) (c & 0x0000ffff);
 			}
 			buf.append(c);
 		}

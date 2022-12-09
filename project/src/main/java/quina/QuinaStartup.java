@@ -2,7 +2,7 @@ package quina;
 
 import quina.component.file.EtagManagerInfo;
 import quina.exception.QuinaException;
-import quina.http.controll.ipv4.IpPermissionAccessControllService;
+import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
 import quina.route.Router;
@@ -15,7 +15,7 @@ import quina.worker.QuinaWorkerService;
  */
 final class QuinaStartup {
 	
-	// QuinaMembers.
+	// Quinaメンバー変数情報が格納サれます.
 	private final QuinaMembers quinaMembers;
 	
 	/**
@@ -26,6 +26,15 @@ final class QuinaStartup {
 		this.quinaMembers = quinaMembers;
 	}
 	
+	/**
+	 * コンストラクタ.
+	 * @param httpServerMode httpサーバを起動させる場合は trueを設定します.
+	 * @param quinaMembers QuinaMembersを設定します.
+	 */
+	QuinaStartup(boolean httpServerMode, QuinaMembers quinaMembers) {
+		quinaMembers.setHttpServerMode(httpServerMode);
+		this.quinaMembers = quinaMembers;
+	}
 	
 	/**
 	 * 全てのQuinaサービスを開始処理してシャットダウン待機処理.
@@ -53,7 +62,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -122,7 +131,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -192,7 +201,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -228,7 +237,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		
@@ -275,7 +284,7 @@ final class QuinaStartup {
 		final HttpServerService httpServerService =
 			quinaMembers.httpServerService;
 		// IpV4パーミッションアクセスコントロールサービス.
-		final IpPermissionAccessControllService
+		final IpPermissionControllService
 			ipPermissionAccessControllService =
 				quinaMembers.ipPermissionAccessControllService;
 		

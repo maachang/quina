@@ -33,11 +33,11 @@ LIB_DIR=./lib
 # JARライブラリ群.
 JAR_FILES=`readJar ${THIS_JAR_DIR}`:`readJar ${JAR_DIR}`:`readJar ${LIB_DIR}`
 
-# maxMemory.
-EXM="6144m"
+# gc.
+OPTIONS="--gc=serial"
 
 # ヒープメモリ.
-OPTIONS="${OPTIONS} -J-Xmx${EXM}"
+OPTIONS="${OPTIONS} -R:MaximumHeapSizePercent=80"
 
 # 詳細表示.
 OPTIONS="${OPTIONS} --verbose"

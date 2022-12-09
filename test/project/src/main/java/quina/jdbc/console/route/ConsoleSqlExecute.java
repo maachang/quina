@@ -69,7 +69,7 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 	@Override
 	public Object post(Request req, SyncResponse res, Params params) {
 		// IPアクセス制御.
-		service.checkAccessControll(req);
+		service.checkAccessControll(req, res);
 		// ログインセッションの認証.
 		if(!service.isLoginToken(req, res)) {
 			// 失敗した場合.
@@ -125,7 +125,7 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 		int start = 0;
 		int pos;
 		while(true) {
-			pos = StringUtil.indexOfNoCote(sql, ";", start);
+			pos = StringUtil.indexOfNoQuate(sql, ";", start);
 			if(pos == -1) {
 				one = sql.substring(start, sql.length()).trim();
 				if(!one.isEmpty()) {
@@ -145,23 +145,23 @@ public class ConsoleSqlExecute implements RESTfulPostSync {
 	// １つのSQLの改行等をクリア.
 	private static final String trimSql(String sql) {
 		char c;
-		int cote = -1;
+		int quote = -1;
 		boolean beforeYen = false;
 		StringBuilder buf = new StringBuilder();
 		final int len = sql.length();
 		for(int i = 0; i < len; i ++) {
 			c = sql.charAt(i);
-			if(cote != -1) {
-				if(!beforeYen && c == cote) {
+			if(quote != -1) {
+				if(!beforeYen && c == quote) {
 					buf.append("\'");
-					cote = -1;
+					quote = -1;
 				} else {
 					buf.append(c);
 				}
 			} else if(c =='\r') {
 				buf.append("");
 			} else if(!beforeYen && (c =='\"' || c == '\'')) {
-				cote = c;
+				quote = c;
 				buf.append("\'");
 			} else if(c == '\t' || c == '\n') {
 				buf.append(" ");

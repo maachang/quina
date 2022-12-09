@@ -1,0 +1,63 @@
+<%#
+ ■LoadCdiInjectField.java ファイル作成用のjs用smple.
+   
+   CDI(Contexts and Dependency Injection)に対する
+   Fieldに関するQuina用のAnnotation定義が存在する
+   ものに対して、quina.compile.cdi.annotation.
+   CdiInjectFieldManagerで管理します.
+   
+   このsmple(.smj)は[js用]なので、js向けの実装・解析を行う必要が
+   あります.
+   
+   また、対象の引数は以下の条件が必要となります.
+   global.args = [
+     {
+       // 対象Field元のオブジェクト名.
+       name: 対象のクラス名 + パッケージ名,
+       // CDI対象のField条件.
+       fields: [
+         name: 対象フィールド名.
+         isStatic: 対象フィールドがstaticアクセスの場合 `true`.
+       ]
+     }
+   ]
+%>package quinax;
+
+import quina.Quina;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
+import quina.compile.cdi.annotation.CdiInjectFieldElement;
+
+/**
+ * Read the CDI injection field information.
+ */
+public final class LoadCdiInjectField {
+	private LoadCdiInjectField() {}
+	
+	/**
+	 * Read the CDI injection field information.
+	 *
+	 * @exception Exception If the cdi reflect registration fails.
+	 */
+	public static final void load() throws Exception {
+		Class<?> cls;
+		CdiInjectFieldElement element;
+		final CdiInjectFieldManager man = Quina.get().getCdiInjectFieldManager();
+		<%for(var i = 0; i < args.length; i ++) {%>
+		// Register the field group of the target class "${args[i].name}".
+		cls = ${args[i].name}.class;
+		element = man.register(cls);
+		<%
+			var fields = args[i].fields;
+			for(var j = 0; j < fields.length; j ++) {
+		%>
+		<%if(fields[j].name == undefined) {%>
+		element.add(false, cls.getDeclaredField("${fields[j]}"));
+		<%} else {%>
+		element.add(${fields[j].isStatic == true ? true : false}, cls.getDeclaredField("${fields[j].name}"));
+		<%
+				}
+			}
+		}
+		%>
+	}
+}

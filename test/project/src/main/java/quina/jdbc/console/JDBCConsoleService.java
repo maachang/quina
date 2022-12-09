@@ -353,9 +353,9 @@ public class JDBCConsoleService {
 	 * アクセスが可能かチェック.
 	 * @param req HttpServletRequestを設定します.
 	 */
-	public void checkAccessControll(Request req) {
+	public void checkAccessControll(Request req, Response<?> res) {
 		boolean result = QuinaJDBCConsoleService
-			.getService().getAccessControll().isAccess(req);
+			.getService().getAccessControll().isAccess(req, res);
 		if(!result) {
 			throw new HttpException(403, "Access is not allowed.");
 		}

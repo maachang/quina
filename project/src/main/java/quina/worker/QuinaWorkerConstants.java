@@ -5,16 +5,19 @@ import quina.util.AtomicNumber;
 public class QuinaWorkerConstants {
 	
 	/** 最小ワーカー数. **/
-	public static final int MIN_WORKER_LENGTH = 16;
+	public static final int MIN_WORKER_LENGTH = 24;
 
 	/** デフォルトのワーカー数. **/
 	public static final int DEF_WORKER_LENGTH;
+	
+	/** ワーカー係数. **/
+	private static final int WORKER_COEFFICIENT = 3;
 	
 	// MIN_WORKER_THREAD_LENGTHより少ない数になる場合は
 	// MIN_WORKER_THREAD_LENGTH をセット.
 	static {
 		final int len = (int)(java.lang.Runtime.getRuntime().
-			availableProcessors() * 8);
+			availableProcessors() * WORKER_COEFFICIENT);
 		if(len < MIN_WORKER_LENGTH) {
 			DEF_WORKER_LENGTH = MIN_WORKER_LENGTH;
 		} else {

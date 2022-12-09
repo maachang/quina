@@ -1,5 +1,6 @@
 package quina.jdbc.kind;
 
+import quina.exception.QuinaException;
 import quina.util.Alphabet;
 import quina.util.AtomicObject;
 
@@ -44,7 +45,6 @@ public class MsSqlKind implements QuinaJDBCKind {
 				return driver;
 			} catch(Exception e) {
 			}
-			return null;
 		}
 		return driver;
 	}

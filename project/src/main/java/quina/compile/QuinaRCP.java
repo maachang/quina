@@ -24,7 +24,7 @@ public class QuinaRCP {
 	/**
 	 * CopyResourceバージョン.
 	 */
-	public static final String VERSION = "0.0.1";
+	public static final String VERSION = QuinaCTConstants.VERSION;
 	
 	/**
 	 *  CopyResourceコマンド名.
@@ -224,10 +224,17 @@ public class QuinaRCP {
 		String packageName, String fileName) {
 		if(fileName.endsWith(".class")) {
 			fileName = fileName.substring(0, fileName.length() - 6);
-		} else if(fileName.endsWith(".properties")) {
-			fileName = fileName.substring(0, fileName.length() - 11);
+		} else {
+			if(packageName == null || packageName.isEmpty()) {
+				throw new QuinaException(
+					"The target file is not a class file: " + fileName);
+			} else {
+				throw new QuinaException(
+					"The target file is not a class file: " +
+					packageName + "." + fileName);
+			}
 		}
-		if(packageName.isEmpty()) {
+		if(packageName == null || packageName.isEmpty()) {
 			return fileName;
 		}
 		return packageName + "." + fileName;

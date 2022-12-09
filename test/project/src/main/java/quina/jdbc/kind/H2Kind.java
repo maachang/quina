@@ -46,7 +46,6 @@ public class H2Kind implements QuinaJDBCKind {
 				return driver;
 			} catch(Exception e) {
 			}
-			return null;
 		}
 		return driver;
 	}

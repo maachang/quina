@@ -28,7 +28,7 @@ public class ConsoleHtmlTest extends FileComponent {
 	@Override
 	public void call(Request req, Response<?> res) {
 		// ipアクセス制御.
-		service.checkAccessControll(req);
+		service.checkAccessControll(req, res);
 		// 問題なければファイル返却.
 		super.call(req, res);
 	}

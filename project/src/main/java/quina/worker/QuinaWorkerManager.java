@@ -3,8 +3,9 @@ package quina.worker;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import quina.QuinaServiceThread;
 import quina.exception.QuinaException;
+import quina.thread.QuinaServiceThread;
+import quina.thread.QuinaWait;
 import quina.util.AtomicNumber;
 import quina.util.Flag;
 import quina.util.collection.IndexKeyValueList;

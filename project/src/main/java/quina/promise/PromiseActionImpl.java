@@ -2,11 +2,11 @@ package quina.promise;
 
 import quina.Quina;
 import quina.exception.QuinaException;
+import quina.thread.QuinaWait;
 import quina.util.AtomicNumber64;
 import quina.util.AtomicObject;
 import quina.util.Flag;
 import quina.util.collection.ObjectList;
-import quina.worker.QuinaWait;
 
 /**
  * Promiseアクション実装.

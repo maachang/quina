@@ -1,18 +1,18 @@
 package quina.jdbc.storage;
 
-import quina.QuinaThreadStatus;
 import quina.jdbc.io.IoStatement;
 import quina.jdbc.io.QueryResult;
 import quina.storage.StorageConstants;
+import quina.thread.QuinaBackgroundElement;
+import quina.thread.QuinaThreadStatus;
 import quina.util.collection.ObjectList;
-import quina.worker.QuinaLoopElement;
 
 /**
  * JDBCStorageManagerのタイムアウト監視する
  * LoopElement.
  */
 final class JDBCStorageLoopElement
-	implements QuinaLoopElement {
+	implements QuinaBackgroundElement {
 	
 	// タイムアウト時間.
 	protected long timeout;

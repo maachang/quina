@@ -13,6 +13,7 @@ import quina.http.Response;
 import quina.http.server.response.AbstractResponse;
 import quina.http.server.response.ResponseUtil;
 import quina.route.annotation.AnnotationRoute;
+import quina.util.ResourceUtil;
 import quina.util.StringUtil;
 
 /**
@@ -102,9 +103,9 @@ public class ResourceFileComponent implements Component {
 			res.setContentType(mimeType);
 		}
 		// 拡張子がgzのファイルが存在しない場合.
-		if(!isResourceFile(path + ".gz")) {
+		if(!ResourceUtil.isFile(path + ".gz")) {
 			// 対象のファイルが存在しない場合.
-			if(!isResourceFile(path)) {
+			if(!ResourceUtil.isFile(path)) {
 				// 404エラーを返却.
 				throw new HttpException(404);
 			}
@@ -122,7 +123,7 @@ public class ResourceFileComponent implements Component {
 		}
 		InputStream in = null;
 		try {
-			in = getResourceFile(path);
+			in = ResourceUtil.getInputStream(path);
 			ResponseUtil.sendInputStream(
 				(AbstractResponse<?>)res, in,
 				(long)in.available());
@@ -134,22 +135,5 @@ public class ResourceFileComponent implements Component {
 			}
 			throw new HttpException(e);
 		}
-	}
-	
-	// リソースファイルが存在するかチェック.
-	private static final boolean isResourceFile(
-		String resourceName) {
-		return Thread.currentThread()
-			.getContextClassLoader()
-			.getResource(resourceName) != null;
-	}
-	
-	// リソースファイルを取得.
-	private static final InputStream getResourceFile(
-		String resourceName) {
-		return Thread
-			.currentThread()
-			.getContextClassLoader()
-			.getResourceAsStream(resourceName);
 	}
 }

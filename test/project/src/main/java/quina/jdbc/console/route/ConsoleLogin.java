@@ -53,7 +53,7 @@ public class ConsoleLogin implements RESTfulGetSync {
 	@Override
 	public Object get(Request req, SyncResponse res, Params params) {
 		// IPアクセス制御.
-		service.checkAccessControll(req);
+		service.checkAccessControll(req, res);
 		// 指定ユーザー＋パスワードでのログイン認証に失敗.
 		if(!service.isAuthLogin(
 			params.getString("user"), params.getString("password"))) {

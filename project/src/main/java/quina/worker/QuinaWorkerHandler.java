@@ -3,26 +3,26 @@ package quina.worker;
 /**
  * Quinaワーカーハンドラ.
  */
-public abstract class QuinaWorkerHandler {
+public interface QuinaWorkerHandler {
 	/**
 	 * ワーカーマネージャ初期化時の呼び出し処理。
 	 * @param len ワーカースレッド数が設定されます.
 	 */
-	public void initWorkerCall(int len) {
+	default void initWorkerCall(int len) {
 	}
 
 	/**
 	 * １つのワーカスレッド開始時の呼び出し.
 	 * @param no ワーカースレッドNoが設定されます.
 	 */
-	public void startThreadCall(int no) {
+	default void startThreadCall(int no) {
 	}
 
 	/**
 	 * １つのワーカスレッド終了時の呼び出し.
 	 * @param no ワーカースレッドNoが設定されます.
 	 */
-	public void endThreadCall(int no) {
+	default void endThreadCall(int no) {
 	}
 	
 	/**
@@ -30,7 +30,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	public void pushCall(int no, QuinaWorkerCall em) {
+	default void pushCall(int no, QuinaWorkerCall em) {
 	}
 	
 	/**
@@ -39,7 +39,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	public void startCommonCall(int no, QuinaWorkerCall em) {
+	default void startCommonCall(int no, QuinaWorkerCall em) {
 	}
 	
 	/**
@@ -48,7 +48,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	public void endCommonCall(int no, QuinaWorkerCall em) {
+	default void endCommonCall(int no, QuinaWorkerCall em) {
 	}
 	
 	/**
@@ -56,7 +56,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	public void destroy(int no, QuinaWorkerCall em) {
+	default void destroy(int no, QuinaWorkerCall em) {
 		em.destroy(no);
 	}
 
@@ -66,7 +66,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param em QuinaWorkerElementを設定します.
 	 * @return boolean [true]の場合は既に破棄されています.
 	 */
-	public boolean isDestroy(int no, QuinaWorkerCall em) {
+	default boolean isDestroy(int no, QuinaWorkerCall em) {
 		return em.isDestroy(no);
 	}
 	
@@ -75,7 +75,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	public void startCall(int no, QuinaWorkerCall em) {
+	default void startCall(int no, QuinaWorkerCall em) {
 		em.startCall(no);
 	}
 	
@@ -84,7 +84,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param no ワーカースレッドNoが設定されます.
 	 * @param em QuinaWorkerElementを設定します.
 	 */
-	public void endCall(int no, QuinaWorkerCall em) {
+	default void endCall(int no, QuinaWorkerCall em) {
 		em.endCall(no);
 	}
 
@@ -94,7 +94,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param em QuinaWorkerElementを設定します.
 	 * @return boolean falseの場合実行処理は失敗しました.
 	 */
-	public boolean executeCall(int no, QuinaWorkerCall em) {
+	default boolean executeCall(int no, QuinaWorkerCall em) {
 		return em.executeCall(no);
 	}
 	
@@ -104,7 +104,7 @@ public abstract class QuinaWorkerHandler {
 	 * @param em QuinaWorkerElementを設定します.
 	 * @param t 例外(Throwable)が設定されます.
 	 */
-	public void errorCall(
+	default void errorCall(
 		int no, QuinaWorkerCall em, Throwable t) {
 		em.errorCall(no, t);
 	}

@@ -68,8 +68,8 @@ public class AnnotationCdi {
 		Field targetField;
 		Object serviceObject;
 		final CdiServiceManager man = Quina.get().getCdiServiceManager();
-		final CdiReflectElement list = Quina.get()
-			.getCdiReflectManager().get(c);
+		final CdiInjectFieldElement list = Quina.get()
+			.getCdiInjectFieldManager().get(c);
 		if(list == null) {
 			return;
 		}

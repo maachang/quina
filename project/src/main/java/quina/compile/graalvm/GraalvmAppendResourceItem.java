@@ -6,8 +6,8 @@ import quina.compile.QuinaCTParams;
 import quina.compile.graalvm.item.ResourceItem;
 
 /**
- * graalvmのNativeImageに認識させるjar内のpropertiesファイル名を
- * 反映する.
+ * graalvmのNativeImageに認識させるjar内の
+ * propertiesファイル名を反映する.
  */
 public class GraalvmAppendResourceItem {
 	private GraalvmAppendResourceItem() {}

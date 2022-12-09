@@ -2,11 +2,11 @@ package quina;
 
 import quina.annotation.AnnotationQuina;
 import quina.compile.cdi.annotation.CdiHandleManager;
-import quina.compile.cdi.annotation.CdiReflectManager;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
 import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.exception.QuinaException;
-import quina.http.controll.ipv4.IpPermissionAccessControllService;
+import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.http.server.HttpServerService;
 import quina.logger.LogFactory;
 import quina.route.Router;
@@ -18,6 +18,7 @@ import quina.util.Args;
 import quina.util.AtomicObject;
 import quina.util.Env;
 import quina.util.FileUtil;
+import quina.util.Flag;
 import quina.util.TwoStepsFlag;
 import quina.worker.QuinaWorkerCall;
 import quina.worker.QuinaWorkerService;
@@ -32,6 +33,9 @@ final class QuinaMembers {
 	
 	// メインオブジェクト.
 	protected Object mainObject;
+	
+	// trueの場合はHttpServerを起動します.
+	private final Flag httpServerMode = new Flag(true);
 	
 	// 初期化実行フラグ.
 	private final TwoStepsFlag initFlag = new TwoStepsFlag();
@@ -56,9 +60,9 @@ final class QuinaMembers {
 		new ShutdownManager();
 
 	// IpV4パーミッションアクセスコントロールサービス.
-	protected final IpPermissionAccessControllService
+	protected final IpPermissionControllService
 		ipPermissionAccessControllService =
-			new IpPermissionAccessControllService();
+			new IpPermissionControllService();
 	
 	// Quinaメインオブジェクトコマンド引数管理.
 	protected Args args;
@@ -72,8 +76,8 @@ final class QuinaMembers {
 		new CdiServiceManager();
 	
 	// CDIリフレクションマネージャ.
-	protected final CdiReflectManager cdiRefrectManager =
-		new CdiReflectManager();
+	protected final CdiInjectFieldManager cdiInjectFieldManager =
+		new CdiInjectFieldManager();
 	
 	// CDIアノテーションマネージャ.
 	protected final CdiHandleManager cdiHandleManager =
@@ -109,6 +113,24 @@ final class QuinaMembers {
 	public QuinaMembers() {
 		// Httpサーバーサービスの初期化処理.
 		httpServerService.init(quinaWorkerService);
+	}
+	
+	/**
+	 * Httpサーバーモード.
+	 * @param mode trueの場合はHttpServerを起動します.
+	 * @return QuinaMembers このオブジェクトが返却されます.
+	 */
+	public QuinaMembers setHttpServerMode(boolean mode) {
+		httpServerMode.set(mode);
+		return this;
+	}
+	
+	/**
+	 * Httpサーバーモードを取得.
+	 * @return boolean trueの場合はHttpServerを起動します.
+	 */
+	public boolean isHttpServerMode() {
+		return httpServerMode.get();
 	}
 	
 	/**
@@ -236,10 +258,10 @@ final class QuinaMembers {
 	}
 	
 	/**
-	 * CdiReflectManager読み込み.
+	 * CdiInjectFieldManager読み込み.
 	 */
-	public void autoCdiReflect() {
-		cdiRefrectManager.autoCdiReflect();
+	public void autoCdiInjectField() {
+		cdiInjectFieldManager.autoCdiInjectField();
 	}
 	
 	/**
@@ -349,8 +371,8 @@ final class QuinaMembers {
 	 */
 	public void initQuinaWorkerService() {
 		// 共通ワーカーハンドラをセット.
-		this.quinaWorkerService.setHandler(
-			new QuinaContextHandler());
+		//this.quinaWorkerService.setHandler(
+		//	new QuinaContextHandler());
 		
 		// QuinaLoopScopedアノテーションを反映.
 		this.quinaWorkerService.autoQuinaLoopElement();

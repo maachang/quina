@@ -8,11 +8,11 @@ import quina.QuinaConfig;
 import quina.QuinaService;
 import quina.QuinaUtil;
 import quina.annotation.QuinaServiceScoped;
-import quina.http.controll.AccessControll;
-import quina.http.controll.AnyAccessControll;
+import quina.http.controll.HttpControll;
+import quina.http.controll.AnyHttpControll;
 import quina.http.controll.NoneAccessControll;
-import quina.http.controll.ipv4.IpLocalHostAccessControll;
-import quina.http.controll.ipv4.IpPrivateAccessControll;
+import quina.http.controll.ipv4.IpLocalHostControll;
+import quina.http.controll.ipv4.IpPrivateControll;
 import quina.util.Flag;
 import quina.util.collection.IndexMap;
 import quina.util.collection.TypesClass;
@@ -48,7 +48,7 @@ public class QuinaJDBCConsoleService
 	);
 	
 	// IPアドレスアクセス制御処理.
-	private AccessControll ipAccessControll;
+	private HttpControll ipAccessControll;
 	
 	// サービス開始フラグ.
 	private final Flag startFlag = new Flag(false);
@@ -85,13 +85,13 @@ public class QuinaJDBCConsoleService
 			boolean globalAddress = config.getBoolean("globalAddress");
 			// フルアクセス許可.
 			if(globalAddress && privateAddress && localHost) {
-				ipAccessControll = AnyAccessControll.getInstance();
+				ipAccessControll = AnyHttpControll.getInstance();
 			// イントラネット内のアクセス許可.
 			} else if(privateAddress && localHost) {
-				ipAccessControll = IpPrivateAccessControll.getInstance();
+				ipAccessControll = IpPrivateControll.getInstance();
 			// 127.0.0.1のみアクセス許可
 			} else if(localHost) {
-				ipAccessControll = IpLocalHostAccessControll.getInstance();
+				ipAccessControll = IpLocalHostControll.getInstance();
 			// アクセス不可.
 			} else {
 				ipAccessControll = NoneAccessControll.getInstance();
@@ -107,7 +107,7 @@ public class QuinaJDBCConsoleService
 	 * @return AccessControll アクセスコントロール
 	 *                          オブジェクトが返却されます.
 	 */
-	public AccessControll getAccessControll() {
+	public HttpControll getAccessControll() {
 		rlock();
 		try {
 			return ipAccessControll;

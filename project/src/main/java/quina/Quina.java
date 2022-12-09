@@ -1,18 +1,16 @@
 package quina;
 
 import quina.compile.cdi.annotation.CdiHandleManager;
-import quina.compile.cdi.annotation.CdiReflectManager;
+import quina.compile.cdi.annotation.CdiInjectFieldManager;
 import quina.compile.cdi.annotation.CdiServiceManager;
 import quina.compile.cdi.annotation.proxy.ProxyScopedManager;
 import quina.component.file.EtagManagerInfo;
 import quina.exception.QuinaException;
-import quina.http.HttpContext;
-import quina.http.controll.ipv4.IpPermissionAccessControllService;
-import quina.http.server.HttpServerContext;
+import quina.http.controll.ipv4.IpPermissionControllService;
 import quina.route.Router;
 import quina.shutdown.ShutdownManagerInfo;
+import quina.thread.QuinaBackgroundManager;
 import quina.util.Args;
-import quina.worker.QuinaLoopManager;
 import quina.worker.QuinaWorkerCall;
 
 /**
@@ -163,29 +161,6 @@ public final class Quina {
 	}
 	
 	/**
-	 * HttpContextを取得.
-	 * このContextは、QuinaWorkerService内で実行される
-	 * ものに関して、利用することが出来ます.
-	 * なので、他のスレッドでこの処理を呼び出す場合は
-	 * この処理は利用出来ません.
-	 * 
-	 * その場合は以下のような形で実装することで対応
-	 * 出来ます.
-	 * 
-	 * <code><pre>
-	 * final HttpContext ctx = Quina.getContext();
-	 * xxxx.execute(() -> {
-	 *   ctx.anyResponse().send("hoge");
-	 * }
-	 * </pre></code>
-	 * 
-	 * @return HttpContext HttpContextが返却されます.
-	 */
-	public static final HttpContext getHttpContext() {
-		return HttpServerContext.get();
-	}
-	
-	/**
 	 * コマンドライン引数管理オブジェクトを取得.
 	 * @return Args コマンドライン引数管理オブジェクトが返却されます.
 	 */
@@ -273,7 +248,7 @@ public final class Quina {
 	 * QuinaLoopManagerを取得.
 	 * @return QuinaLoopManager QuinaLoopManagerが返却されます.
 	 */
-	public QuinaLoopManager getQuinaLoopManager() {
+	public QuinaBackgroundManager getQuinaLoopManager() {
 		return quinaMembers.quinaWorkerService;
 	}
 	
@@ -297,12 +272,12 @@ public final class Quina {
 	
 	/**
 	 * CDI（Contexts and Dependency Injection）
-	 * リフレクションマネージャを取得.
-	 * @return CdiReflectManager CDIリフレクション
+	 * インジェクトフィールドマネージャを取得.
+	 * @return CdiReflectManager CDIインジェクトフィールド
 	 *                           マネージャが返却されます.
 	 */
-	public CdiReflectManager getCdiReflectManager() {
-		return quinaMembers.cdiRefrectManager;
+	public CdiInjectFieldManager getCdiInjectFieldManager() {
+		return quinaMembers.cdiInjectFieldManager;
 	}
 	
 	/**
@@ -348,9 +323,9 @@ public final class Quina {
 	 * @return IpPermissionAccessControllService
 	 *     IpV4パーミッションアクセスコントロールサービスが返却されます.
 	 */
-	public IpPermissionAccessControllService
+	public IpPermissionControllService
 		getIpPermissionAccessControllService() {
-		final IpPermissionAccessControllService ret =
+		final IpPermissionControllService ret =
 			quinaMembers.ipPermissionAccessControllService;
 		// コンフィグ読み込みがFixしてない場合はエラー.
 		if(!ret.isLoadConfig()) {

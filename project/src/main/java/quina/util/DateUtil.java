@@ -1,5 +1,7 @@
 package quina.util;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -7,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
@@ -234,13 +237,19 @@ public class DateUtil {
 	 */
 	public static final java.util.Date toISO8601(String s) {
 		OffsetDateTime odm = null;
-		if(s.indexOf("+") == -1) {
+		if(!s.endsWith("Z") && s.indexOf("+") == -1) {
 			// +09:00 などが無い場合は
 			// LocalDateTimeのフォーマッタで変換を試みる.
-			odm = OffsetDateTime.parse(
-				s, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+			try {
+				odm = OffsetDateTime.parse(
+					s, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+			} catch(Exception e) {
+				// 失敗したらOffsetDateTimeのフォーマッタで変換を試みる.
+				odm = OffsetDateTime.parse(
+					s, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			}
 		} else {
-			// +09:00 がある場合は
+			// +09:00 や文字の最後に Z がある場合は
 			// OffsetDateTimeのフォーマッタで変換を試みる.
 			odm = OffsetDateTime.parse(
 				s, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
@@ -301,46 +310,97 @@ public class DateUtil {
 			d.toInstant(), ZoneId.systemDefault());
 		return odm.format(fm);
 	}
-
+	
 	/**
-	 * 文字列からDateオブジェクトに変換.
-	 * @param s 文字列を設定します.
-	 * @param fm DateTimeFormatter を設定します.
-	 * @return Date Dateオブジェクトが返却されます.
+	 * convert DateTime.
 	 */
-	public static final java.util.Date toDate(String s, DateTimeFormatter fm) {
-		OffsetDateTime odm = OffsetDateTime.parse(s, fm);
-		return java.util.Date.from(odm.toInstant());
+	private static final class ConvertDateTime {
+		private boolean dateTime;
+		private DateTimeFormatter formatter;
+		
+		/**
+		 * コンストラクタ.
+		 * @param dateTime DateTimeのフォーマットの場合はtrue.
+		 * @param format 対象のフォーマットを設定します.
+		 */
+		public ConvertDateTime(boolean dateTime, String format) {
+			this.dateTime = dateTime;
+			formatter = DateTimeFormatter.ofPattern(format);
+		}
+		
+		/**
+		 * 文字列からDateオブジェクトに変換.
+		 * @param s 文字列を設定します.
+		 * @param fm DateTimeFormatter を設定します.
+		 * @return Date Dateオブジェクトが返却されます.
+		 */
+		private static final java.util.Date toDate(String s, DateTimeFormatter fm) {
+			LocalDate localDate = LocalDate.parse(s, fm);
+			return Date.from(
+				localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+		}
+
+		/**
+		 * 文字列からDateオブジェクトに変換.
+		 * @param s 文字列を設定します.
+		 * @param fm DateTimeFormatter を設定します.
+		 * @return Date Dateオブジェクトが返却されます.
+		 */
+		private static final java.util.Date toDateTime(String s, DateTimeFormatter fm) {
+			//OffsetDateTime odm = OffsetDateTime.parse(s, fm);
+			//return java.util.Date.from(odm.toInstant());
+			LocalDateTime localDateTime = LocalDateTime.parse(s, fm);
+			ZoneId zone = ZoneId.systemDefault();
+			ZonedDateTime zonedDateTime = ZonedDateTime.of(localDateTime, zone);
+			Instant instant = zonedDateTime.toInstant();
+			return Date.from(instant);
+		}
+		
+		/**
+		 * 文字列をDateオブジェクト変換.
+		 * @param s 対象の文字列を設定します.
+		 * @return Date Dateオブジェクトが返却されます.
+		 */
+		public Date convert(String s) {
+			if(dateTime) {
+				return toDateTime(s, formatter);
+			} else {
+				return toDate(s, formatter);
+			}
+		}
 	}
 
 	// 汎用変換処理.
-	private static final DateTimeFormatter[] BASIC_DTF = new DateTimeFormatter[] {
-		DateTimeFormatter.ofPattern("yyyy-MM-dd")
-		,DateTimeFormatter.ofPattern("yyyy/MM/dd")
-		,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-		,DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+	private static final ConvertDateTime[] BASIC_DTF = new ConvertDateTime[] {
+		new ConvertDateTime(false, "yyyy-MM-dd")
+		,new ConvertDateTime(false, "yyyy/MM/dd")
+		,new ConvertDateTime(true, "yyyy-MM-dd HH:mm:ss")
+		,new ConvertDateTime(true, "yyyy/MM/dd HH:mm:ss")
 	};
 
 	// 数値文字列.
-	private static final DateTimeFormatter[] NUMBER_DTF = new DateTimeFormatter[] {
-		DateTimeFormatter.ofPattern("yyyyMMdd")
-		,DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+	private static final ConvertDateTime[] NUMBER_DTF = new ConvertDateTime[] {
+		new ConvertDateTime(false, "yyyyMMdd")
+		,new ConvertDateTime(true, "yyyyMMddHHmmss")
 	};
 
 
 	// 拡張変換文字から日付変換フォーマット.
-	private static final Queue<DateTimeFormatter> EXTENTION_DTF =
-		new ConcurrentLinkedQueue<DateTimeFormatter>();
+	private static final Queue<ConvertDateTime> EXTENTION_DTF =
+		new ConcurrentLinkedQueue<ConvertDateTime>();
 
 	/**
 	 * parseDateでの拡張文字列から日付変換フォーマットを設定します.
+	 * @param dateTime dateTime形式の場合はtrueを設定します.
 	 * @param format 日付フォーマットを設定します.
+	 * @return boolean 正しく追加できた場合 trueが返却されます.
 	 */
-	public static final void setExtensionDtf(String format) {
+	public static final boolean setExtensionDtf(boolean dateTime, String format) {
 		if(format == null || !format.isEmpty()) {
-			return;
+			return false;
 		}
-		EXTENTION_DTF.offer(DateTimeFormatter.ofPattern(format));
+		EXTENTION_DTF.offer(new ConvertDateTime(dateTime, format));
+		return true;
 	}
 
 	/**
@@ -363,7 +423,7 @@ public class DateUtil {
 				int len = NUMBER_DTF.length;
 				for(int i = 0; i < len; i ++) {
 					try {
-						return toDate(s, NUMBER_DTF[i]);
+						return NUMBER_DTF[i].convert(s);
 					} catch(Exception e) {}
 				}
 				return new java.util.Date(NumberUtil.parseLong(s));
@@ -374,14 +434,15 @@ public class DateUtil {
 			int len = BASIC_DTF.length;
 			for(int i = 0; i < len; i ++) {
 				try {
-					return toDate(s, BASIC_DTF[i]);
-				} catch(Exception e) {}
+					return BASIC_DTF[i].convert(s);
+				} catch(Exception e) {
+				}
 			}
 			if(EXTENTION_DTF.size() > 0) {
-				Iterator<DateTimeFormatter> it = EXTENTION_DTF.iterator();
+				Iterator<ConvertDateTime> it = EXTENTION_DTF.iterator();
 				while(it.hasNext()) {
 					try {
-						return toDate(s, it.next());
+						return it.next().convert(s);
 					} catch(Exception e) {}
 				}
 			}

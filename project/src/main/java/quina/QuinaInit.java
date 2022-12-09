@@ -59,8 +59,8 @@ final class QuinaInit {
 			// quinaMainクラスを設定.
 			quinaMembers.setMainClass(mainClass, mainObject);
 			
-			// CdiReflectManager読み込み.
-			quinaMembers.autoCdiReflect();
+			// CdiInjectFieldManager読み込み.
+			quinaMembers.autoCdiInjectField();
 			// AutoCdiService読み込み.
 			quinaMembers.autoCdiService();
 			
